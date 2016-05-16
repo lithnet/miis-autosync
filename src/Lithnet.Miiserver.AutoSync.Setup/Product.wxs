@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
+  <Product Id="*"
+           Name="Lithnet FIM/MIM AutoSync Service"
+           Language="1033"
+           Version="1.0.5963"
+           Manufacturer="Lithnet"
+           UpgradeCode="028A57DF-28CE-47B0-9B3E-18B523A643D4">
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" Platform="x64" />
+    <Media Id="1" Cabinet="Cab1.cab" EmbedCab="yes" />
+    <MajorUpgrade Schedule="afterInstallInitialize"
+                DowngradeErrorMessage="A later version of [ProductName] is already installed" />
+
+    <PropertyRef Id="WIX_IS_NETFRAMEWORK_45_OR_LATER_INSTALLED"/>
+    <Condition Message="This application requires .NET Framework 4.5. Please install the .NET Framework then run this installer again.">
+      <![CDATA[Installed OR WIX_IS_NETFRAMEWORK_45_OR_LATER_INSTALLED]]>
+    </Condition>
+
+    <Property Id="SERVICE_PASSWORD" Hidden="yes" Secure="yes"/>
+    <Property Id="SERVICE_NAME" Secure="yes" Value="miisautosync"/>
+
+    <Property Id="FIMINSTALLDIR" Secure="yes">
+      <RegistrySearch Id="FimInstallDirFromRegistry"
+                      Root="HKLM"
+                      Key="SYSTEM\CurrentControlSet\services\FIMSynchronizationService\Parameters"
+                      Name="Path"
+                      Type="directory" />
+    </Property>
+
+    <Property Id="SERVICE_USERNAME" Secure="yes">
+      <RegistrySearch Id="ExistingServiceAccount"
+                      Root="HKLM"
+                      Key="SYSTEM\CurrentControlSet\services\miisautosync"
+                      Name="ObjectName"
+                      Type="raw" />
+    </Property>
+
+    <Property Id="SYNCVERSION" Secure="yes">
+      <DirectorySearch Id="MiiserverVersion" Path="[FIMINSTALLDIR]">
+        <DirectorySearch Id="binFolder" AssignToProperty="no" Path="bin">
+          <FileSearch Name="miiserver.exe" MinVersion="4.1.3441.0"/>
+        </DirectorySearch>
+      </DirectorySearch>
+    </Property>
+
+
+    <Condition Message="This application requires the Forefront Identity Manager 2010 R2 4.1.3441 or later to be installed">
+      <![CDATA[Installed OR SYNCVERSION]]>
+    </Condition>
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles64Folder" >
+        <Directory Id="LITHNETROOT" Name="Lithnet">
+          <Directory Id="APPROOT" Name="MiisAutoSync">
+            <Directory Id="APPLOGS" Name="Logs"/>
+          </Directory>
+        </Directory>
+      </Directory>
+    </Directory>
+
+  </Product>
+
+  <Fragment>
+    <ComponentGroup Id="ProductComponents" Directory="APPLICATIONFOLDER" >
+      <ComponentGroupRef Id="Lithnet.Miiserver.AutoSync.Binaries"/>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

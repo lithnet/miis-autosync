@@ -1,0 +1,142 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{9A7026F9-297E-4D2A-849C-7B0287CD3F9D}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Lithnet.Miiserver.AutoSync</RootNamespace>
+    <AssemblyName>Lithnet.Miiserver.AutoSync</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AllowedReferenceRelatedFileExtensions>.pdb</AllowedReferenceRelatedFileExtensions>
+    <TargetFrameworkProfile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="AngleSharp, Version=0.9.5.41771, Culture=neutral, PublicKeyToken=e83494dcdc6d31ea, processorArchitecture=MSIL">
+      <HintPath>..\packages\AngleSharp.0.9.5\lib\net45\AngleSharp.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Lithnet.Logging, Version=1.0.5774.20685, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\Lithnet.Miiserver.Client\packages\Lithnet.Logging.1.0.5774.20685\lib\net40\Lithnet.Logging.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Lithnet.Miiserver.Client, Version=1.0.5980.21339, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Lithnet.Miiserver.Client.1.0.5980.21339\lib\net45\Lithnet.Miiserver.Client.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Lithnet.ResourceManagement.Client, Version=1.0.5922.36551, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\Lithnet.Miiserver.Client\packages\Lithnet.ResourceManagement.Client.1.0.5922.36551\lib\net40\Lithnet.ResourceManagement.Client.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.ResourceManagement, Version=4.1.3653.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\lithnetrmc\lib\Microsoft.ResourceManagement.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="PreMailer.Net, Version=1.5.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\PreMailer.Net.1.5.3\lib\net45\PreMailer.Net.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.DirectoryServices.Protocols" />
+    <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\WindowsPowerShell\3.0\System.Management.Automation.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ADListenerConfiguration.cs" />
+    <Compile Include="Enums\AutoImportScheduling.cs" />
+    <Compile Include="MessageBuilder.cs" />
+    <Compile Include="PersistentSearch\CallBackEventBridge.cs" />
+    <Compile Include="MAController.cs" />
+    <Compile Include="PersistentSearch\PersistentSearchChangeType.cs" />
+    <Compile Include="PersistentSearch\PersistentSearchControl.cs" />
+    <Compile Include="PersistentSearch\PersistentSearchOptions.cs" />
+    <Compile Include="EventArgs\ExecutionParameters.cs" />
+    <Compile Include="EventArgs\ExecutionTriggerEventArgs.cs" />
+    <Compile Include="Settings.cs" />
+    <Compile Include="Triggers\ActiveDirectoryChangeTrigger.cs" />
+    <Compile Include="Global.cs" />
+    <Compile Include="MAExecutionTriggerDiscovery.cs" />
+    <Compile Include="MAConfigDiscovery.cs" />
+    <Compile Include="MAConfigParameters.cs" />
+    <Compile Include="Enums\MARunProfileType.cs" />
+    <Compile Include="Triggers\PowerShellExecutionTrigger.cs" />
+    <Compile Include="Triggers\ScheduledExecutionTrigger.cs" />
+    <Compile Include="Triggers\IntervalExecutionTrigger.cs" />
+    <Compile Include="Triggers\FimServicePendingImportTrigger.cs" />
+    <Compile Include="Triggers\IMAExecutionTrigger.cs" />
+    <Compile Include="MAExecutor.cs" />
+    <Compile Include="AutoSyncService.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="AutoSyncService.Designer.cs">
+      <DependentUpon>AutoSyncService.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="EventArgs\SyncCompleteEventArgs.cs" />
+    <Compile Include="UnexpectedChangeException.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="Examples\ACMA-WeeklyFS.ps1" />
+    <None Include="Examples\ACMA.ps1" />
+    <None Include="Examples\ACMA-NightlyFI.ps1" />
+    <None Include="Examples\ADMA.ps1" />
+    <None Include="Examples\LdapMA-PersistentSearch.ps1" />
+    <None Include="Examples\ADMA-DeltaImportEvery5Minutes.ps1" />
+    <None Include="Examples\ACMA-CheckPendingImports.ps1" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="FodyWeavers.xml" />
+    <EmbeddedResource Include="Resources\ErrorTableFragment.html" />
+    <EmbeddedResource Include="Resources\StepTableFragment.html" />
+    <EmbeddedResource Include="Resources\RunSummaryFragment.html" />
+    <EmbeddedResource Include="Resources\EmailTemplate.html" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
