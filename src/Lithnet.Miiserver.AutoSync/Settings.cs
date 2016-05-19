@@ -36,6 +36,24 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
+        public static int ExecutionStaggerInterval
+        {
+            get
+            {
+                string s = ConfigurationManager.AppSettings["executionStaggerInterval"];
+
+                int value;
+
+                if (int.TryParse(s, out value))
+                {
+                    return value >= 1 ? value : 1;
+                }
+                else
+                {
+                    return 2;
+                }
+            }
+        }
 
         public static int UnmanagedChangesCheckInterval
         {

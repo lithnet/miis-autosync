@@ -44,10 +44,10 @@
       </DirectorySearch>
     </Property>
 
-
     <Condition Message="This application requires the Forefront Identity Manager 2010 R2 4.1.3441 or later to be installed">
       <![CDATA[Installed OR SYNCVERSION]]>
     </Condition>
+    <Property Id="WIXUI_INSTALLDIR" Value="APPROOT" />
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFiles64Folder" >
@@ -58,12 +58,39 @@
         </Directory>
       </Directory>
     </Directory>
+    
+    <UI >
+      <UIRef Id="WixUI_Common" />
+      <Property Id="WixUI_Mode" Value="Custom" />
+
+      <TextStyle Id="WixUI_Font_Normal" FaceName="Tahoma" Size="8" />
+      <TextStyle Id="WixUI_Font_Bigger" FaceName="Tahoma" Size="9" Bold="yes" />
+      <TextStyle Id="WixUI_Font_Title"  FaceName="Tahoma" Size="9" Bold="yes" />
+
+      <Property Id="DefaultUIFont" Value="WixUI_Font_Normal" />
+      <DialogRef Id="ProgressDlg" />
+      <DialogRef Id="ErrorDlg" />
+      <DialogRef Id="FilesInUse" />
+      <DialogRef Id="FatalError" />
+      <DialogRef Id="UserExit" />
+
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="ServiceDetailsDialog">NOT Installed</Publish>
+      <Publish Dialog="ServiceDetailsDialog" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="1">NOT INSTALLED</Publish>
+      <Publish Dialog="ServiceDetailsDialog" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="1">NOT INSTALLED</Publish>
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="ServiceDetailsDialog" Order="1"></Publish>
+      <Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="999">1</Publish>
+    </UI>
+
+    <Feature Id="AutoSync" Title="Lithnet Miiserver AutoSync" Level="1">
+      <ComponentGroupRef Id="Binaries" />
+    </Feature>
+
 
   </Product>
 
-  <Fragment>
-    <ComponentGroup Id="ProductComponents" Directory="APPLICATIONFOLDER" >
+  <!--<Fragment>
+    <ComponentGroup Id="ProductComponents" Directory="APPROOT" >
       <ComponentGroupRef Id="Lithnet.Miiserver.AutoSync.Binaries"/>
     </ComponentGroup>
-  </Fragment>
+  </Fragment>-->
 </Wix>

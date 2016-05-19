@@ -4,14 +4,14 @@
    xmlns:http='http://schemas.microsoft.com/wix/HttpExtension'>
   <Fragment>
     <DirectoryRef Id="APPROOT">
-      <Component Id="EventSource" Guid="6bcb1e30cf334b8eb87d95afc68b65a2" >
+      <Component Id="EventSource" Guid="*" Win64="yes" >
         <Util:EventSource xmlns:Util="http://schemas.microsoft.com/wix/UtilExtension"
-                    Name="miisautomation" Log="Application" EventMessageFile="[NETFRAMEWORK45FULLINSTALLROOTDIR64]EventLogMessages.dll" KeyPath="yes"/>
+                    Name="miis-autosync" Log="Application" EventMessageFile="[NETFRAMEWORK45FULLINSTALLROOTDIR64]EventLogMessages.dll" KeyPath="yes"/>
       </Component>
 
-      <Component Id="cmpb05fc8933594449d9aad05ca620a4331" Guid="*">
+      <Component Id="cmpb05fc8933594449d9aad05ca620a4331" Guid="*" Win64="yes">
         <File Id="filda5afc97726743f09a85d512593be8c8" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)\Lithnet.Miiserver.AutoSync.exe" />
-        <ServiceInstall Id="AcmaServiceInstall"
+        <ServiceInstall Id="autosync"
                         DisplayName="Lithnet MIIS AutoSync"
                         Account="[SERVICE_USERNAME]"
                         Password="[SERVICE_PASSWORD]"
@@ -20,29 +20,38 @@
                         Start="auto"
                         Arguments="/service"
                         Type="ownProcess"
-                        Description="Automatically operates the the FIM/MIM synchronization service"
+                        Description="Automatically operates the FIM/MIM synchronization service"
                         Vital="yes"
                         Interactive="no">
         </ServiceInstall>
-        <ServiceControl Id="ServiceControlEvents" Name="[SERVICE_NAME]" Start="install" Stop="both" Remove="uninstall" Wait="yes"/>
+        <ServiceControl Id="ServiceControlEvents" Name="[SERVICE_NAME]" Stop="both" Remove="uninstall" Wait="yes"/>
         <util:User Id="ServiceUser" Name="[SERVICE_USERNAME]" Password="[SERVICE_PASSWORD]" CreateUser="no" LogonAsService="yes" UpdateIfExists="yes" />
         <CreateFolder Directory="APPLOGS">
           <util:PermissionEx User="[SERVICE_USERNAME]" GenericAll="yes" />
         </CreateFolder>
       </Component>
 
-      <Component Id="cmpb79b2c604b1748aa9606e987e86aad3a" Guid="*">
+      <Component Id="cmpb79b2c604b1748aa9606e987e86aad3a" Guid="*" Win64="yes">
         <File Id="fil2fbf1906386e4df0a0fb6a5aa8c86dc7" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)\Lithnet.Miiserver.AutoSync.exe.config" />
       </Component>
-      <Component Id="cmp9dd8add400f84984af1aae73a3e33027" Guid="*">
+      <Component Id="cmp9dd8add400f84984af1aae73a3e33027" Guid="*" Win64="yes">
         <File Id="fildc56e03c4167405b9970142148d2c84b" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)\Lithnet.Miiserver.Client.dll" />
       </Component>
-      <Component Id="cmpb64af8d3558e474cb4abafb6a86c4c95" Guid="*">
+      <Component Id="cmpb64af8d3558e474cb4abafb6a86c4c95" Guid="*" Win64="yes">
         <File Id="fil9fbbd15a54394a42b971da7c81b974a9" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)\Lithnet.Logging.dll" />
       </Component>
-      <Component Id="cmp4f1b2f80467447c7a19d67ba7526a520" Guid="*">
+      <Component Id="cmp4f1b2f80467447c7a19d67ba7526a520" Guid="*" Win64="yes">
         <File Id="fil68b8bfb54b9f42919bb796335be9afac" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)\Lithnet.ResourceManagement.Client.dll" />
       </Component>
     </DirectoryRef>
+
+    <ComponentGroup Id="Binaries">
+      <ComponentRef Id="EventSource"/>
+      <ComponentRef Id="cmpb05fc8933594449d9aad05ca620a4331"/>
+      <ComponentRef Id="cmpb79b2c604b1748aa9606e987e86aad3a"/>
+      <ComponentRef Id="cmp9dd8add400f84984af1aae73a3e33027"/>
+      <ComponentRef Id="cmpb64af8d3558e474cb4abafb6a86c4c95"/>
+      <ComponentRef Id="cmp4f1b2f80467447c7a19d67ba7526a520"/>
+    </ComponentGroup>
   </Fragment>
 </Wix>

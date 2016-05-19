@@ -11,16 +11,17 @@ namespace Lithnet.Miiserver.AutoSync
 {
     public partial class AutoSyncService : ServiceBase
     {
-        internal static AutoSyncService ServiceInstance { get; private set;}
+        internal static AutoSyncService ServiceInstance { get; private set; }
 
         public AutoSyncService()
         {
-            InitializeComponent();
+            this.InitializeComponent();
             AutoSyncService.ServiceInstance = this;
         }
 
         protected override void OnStart(string[] args)
         {
+            Program.Start();
         }
 
         protected override void OnStop()

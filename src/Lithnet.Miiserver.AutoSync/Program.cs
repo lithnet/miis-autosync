@@ -24,44 +24,46 @@ namespace Lithnet.Miiserver.AutoSync
         /// </summary>
         public static void Main(string[] args)
         {
-            bool runService = false;
-            if (args != null && args.Contains("/service"))
-            {
-                runService = true;
-            }
+            bool runService = args != null && args.Contains("/service");
 
             if (!runService)
             {
                 Lithnet.Logging.Logger.OutputToConsole = true;
             }
 
-            EnumerateMAs();
+            if (runService)
+            {
+                ServiceBase[] servicesToRun = new ServiceBase[]
+                {
+                    new AutoSyncService()
+                };
 
+                ServiceBase.Run(servicesToRun);
+            }
+            else
+            {
+                Start();
+                System.Threading.Thread.Sleep(System.Threading.Timeout.Infinite);
+            }
+        }
+
+        internal static void Start()
+        {
             if (Settings.RunHistoryNumberOfDaysToKeep > 0)
             {
                 Logger.WriteLine("Run history auto-cleanup enabled");
-                Program.runHistoryCleanupTimer = new Timer();
-                Program.runHistoryCleanupTimer.AutoReset = true;
+                Program.runHistoryCleanupTimer = new Timer
+                {
+                    AutoReset = true
+                };
+
                 Program.runHistoryCleanupTimer.Elapsed += RunHistoryCleanupTimer_Elapsed;
                 Program.runHistoryCleanupTimer.Interval = TimeSpan.FromHours(8).TotalMilliseconds;
                 Program.runHistoryCleanupTimer.Start();
                 Program.ClearRunHistory();
             }
 
-            if (runService)
-            {
-                ServiceBase[] ServicesToRun;
-                ServicesToRun = new ServiceBase[]
-                {
-                    new AutoSyncService()
-                };
-
-                ServiceBase.Run(ServicesToRun);
-            }
-            else
-            {
-                System.Threading.Thread.Sleep(System.Threading.Timeout.Infinite);
-            }
+            EnumerateMAs();
         }
 
         private static void RunHistoryCleanupTimer_Elapsed(object sender, ElapsedEventArgs e)
@@ -71,20 +73,22 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static void ClearRunHistory()
         {
-            if (Settings.RunHistoryNumberOfDaysToKeep > 0)
+            if (Settings.RunHistoryNumberOfDaysToKeep <= 0)
             {
-                Logger.WriteLine("Clearing run history older than {0} days", Settings.RunHistoryNumberOfDaysToKeep);
-                DateTime clearBeforeDate = DateTime.UtcNow.AddDays(-Settings.RunHistoryNumberOfDaysToKeep);
+                return;
+            }
 
-                if (Settings.RunHistorySavePath != null)
-                {
-                    string file = Path.Combine(Settings.RunHistorySavePath, string.Format("history-{0}.xml", DateTime.Now.ToString("yyyy-MM-ddThh.mm.ss")));
-                    SyncServer.ClearRunHistory(clearBeforeDate, file);
-                }
-                else
-                {
-                    SyncServer.ClearRunHistory(clearBeforeDate);
-                }
+            Logger.WriteLine("Clearing run history older than {0} days", Settings.RunHistoryNumberOfDaysToKeep);
+            DateTime clearBeforeDate = DateTime.UtcNow.AddDays(-Settings.RunHistoryNumberOfDaysToKeep);
+
+            if (Settings.RunHistorySavePath != null)
+            {
+                string file = Path.Combine(Settings.RunHistorySavePath, string.Format("history-{0}.xml", DateTime.Now.ToString("yyyy-MM-ddThh.mm.ss")));
+                SyncServer.ClearRunHistory(clearBeforeDate, file);
+            }
+            else
+            {
+                SyncServer.ClearRunHistory(clearBeforeDate);
             }
         }
 
@@ -103,7 +107,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        private static void EnumerateMAs()
+        internal static void EnumerateMAs()
         {
             foreach (ManagementAgent ma in ManagementAgent.GetManagementAgents())
             {
@@ -111,19 +115,21 @@ namespace Lithnet.Miiserver.AutoSync
 
                 MAConfigParameters config = MAConfigDiscovery.GetConfig(ma, configItems);
 
-                if (config != null)
+                if (config == null)
                 {
-                    if (!config.Disabled)
-                    {
-                        IList<IMAExecutionTrigger> triggers = MAExecutionTriggerDiscovery.GetExecutionTriggers(ma, config, configItems);
-                        MAExecutor x = new MAExecutor(ma, config);
-                        x.AttachTrigger(triggers.ToArray());
-                        maExecutors.Add(x);
-                    }
-                    else
-                    {
-                        Logger.WriteLine("{0}: Skipping management agent because it has been disabled in config", ma.Name);
-                    }
+                    continue;
+                }
+
+                if (!config.Disabled)
+                {
+                    IList<IMAExecutionTrigger> triggers = MAExecutionTriggerDiscovery.GetExecutionTriggers(ma, config, configItems);
+                    MAExecutor x = new MAExecutor(ma, config);
+                    x.AttachTrigger(triggers.ToArray());
+                    Program.maExecutors.Add(x);
+                }
+                else
+                {
+                    Logger.WriteLine("{0}: Skipping management agent because it has been disabled in config", ma.Name);
                 }
             }
 
@@ -135,7 +141,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static IEnumerable<object> GetMAConfigParameters(ManagementAgent ma)
         {
-            string expectedFileName = Path.Combine(Global.ScriptDirectory, string.Format("{0}.ps1", Global.CleanMAName(ma.Name)));
+            string expectedFileName = Path.Combine(Global.ScriptDirectory, $"Config-{Global.CleanMAName(ma.Name)}.ps1");
             if (!File.Exists(expectedFileName))
             {
                 yield break;
@@ -149,7 +155,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             if (powershell.Runspace.SessionStateProxy.InvokeCommand.GetCommand("Get-MAConfiguration", CommandTypes.All) == null)
             {
-                throw new ArgumentException(string.Format("The file '{0}' must contain a function called Get-MAConfiguration", expectedFileName));
+                throw new ArgumentException($"The file '{expectedFileName}' must contain a function called Get-MAConfiguration");
             }
 
             powershell.AddCommand("Get-MAConfiguration");

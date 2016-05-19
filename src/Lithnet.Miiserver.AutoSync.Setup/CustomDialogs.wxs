@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <UI>
+      <Dialog Id="ServiceDetailsDialog" Width="370" Height="270" Title="Service account">
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)" >
+
+        </Control>
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)" />
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
+          <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
+        </Control>
+
+        <Control Id="Description" Type="Text" X="25" Y="23" Width="280" Height="15" Transparent="yes" NoPrefix="yes"
+                 Text="Specify the service account" />
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Transparent="yes" NoPrefix="yes" Text="Service account" />
+        <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44" TabSkip="no" Text="!(loc.InstallDirDlgBannerBitmap)" />
+        <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+
+        <Control Id="SvcAccountLabel" Type="Text" X="45" Y="73" Width="300" Height="15" TabSkip="no" Text="Service account (domain\username or username@domain)" />
+        <Control Id="SvcAccountEdit" Type="Edit" X="45" Y="85" Width="220" Height="18" Property="SERVICE_USERNAME" Text="{100}" />
+
+        <Control Id="SvcPasswordLabel" Type="Text" X="45" Y="110" Width="100" Height="15" TabSkip="no" Text="Service account password" />
+        <Control Id="SvcPasswordEdit" Type="Edit" X="45" Y="122" Width="220" Height="18" Property="SERVICE_PASSWORD" Text="{100}"  Password="yes" />
+
+        <Control Id="WarningLabel" Type="Text" X="20" Y="160" Width ="240" Height="40" TabSkip="no"
+                Text="Warning: The credentials will not be verfied by the installer. Ensure the provided credentials are correct" />
+      </Dialog>
+    </UI>
+  </Fragment>
+</Wix>

@@ -239,12 +239,12 @@ namespace Lithnet.Miiserver.AutoSync
                 // Signal the local lock that an event is running
                 this.localOperationLock.Reset();
 
-                // Grab the staggered execution lock, and hold for one second
-                // This ensures that no MA can start within one second of another MA
+                // Grab the staggered execution lock, and hold for x seconds
+                // This ensures that no MA can start within x seconds of another MA
                 // to avoid deadlock conditions
                 lock (MAExecutor.globalStaggeredExecutionLock)
                 {
-                    Thread.Sleep(1000);
+                    Thread.Sleep(Settings.ExecutionStaggerInterval);
                 }
 
                 if (this.ma.RunProfiles[e.RunProfileName].RunSteps.Any(t => t.IsImportStep))

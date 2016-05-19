@@ -115,13 +115,13 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="Examples\ACMA-WeeklyFS.ps1" />
-    <None Include="Examples\ACMA.ps1" />
-    <None Include="Examples\ACMA-NightlyFI.ps1" />
-    <None Include="Examples\ADMA.ps1" />
-    <None Include="Examples\LdapMA-PersistentSearch.ps1" />
-    <None Include="Examples\ADMA-DeltaImportEvery5Minutes.ps1" />
-    <None Include="Examples\ACMA-CheckPendingImports.ps1" />
+    <None Include="Examples\Trigger-ACMA-WeeklyFS.ps1" />
+    <None Include="Examples\Trigger-ACMA.ps1" />
+    <None Include="Examples\Trigger-ACMA-NightlyFI.ps1" />
+    <None Include="Examples\Trigger-ADMA.ps1" />
+    <None Include="Examples\Trigger-LdapMA-PersistentSearch.ps1" />
+    <None Include="Examples\Trigger-ADMA-DeltaImportEvery5Minutes.ps1" />
+    <None Include="Examples\Trigger-ACMA-CheckPendingImports.ps1" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

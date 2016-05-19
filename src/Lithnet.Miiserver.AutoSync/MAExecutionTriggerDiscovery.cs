@@ -37,21 +37,17 @@ namespace Lithnet.Miiserver.AutoSync
         {
             List<IMAExecutionTrigger> triggers = new List<IMAExecutionTrigger>();
 
-            foreach (string filename in Directory.EnumerateFiles(Global.ScriptDirectory, string.Format("{0}-*.ps1", Global.CleanMAName(ma.Name)), SearchOption.TopDirectoryOnly))
+            foreach (string filename in Directory.EnumerateFiles(Global.ScriptDirectory, $"Trigger-{Global.CleanMAName(ma.Name)}-*.ps1", SearchOption.TopDirectoryOnly))
             {
-                PowerShellExecutionTrigger t = new PowerShellExecutionTrigger();
-                t.ScriptPath = Path.Combine(Global.ScriptDirectory, filename);
+                PowerShellExecutionTrigger t = new PowerShellExecutionTrigger
+                {
+                    ScriptPath = Path.Combine(Global.ScriptDirectory, filename)
+                };
+
                 triggers.Add(t);
             }
 
-            if (triggers.Count > 0)
-            {
-                return triggers;
-            }
-            else
-            {
-                return null;
-            }
+            return triggers.Count > 0 ? triggers : null;
         }
 
         private static IList<IMAExecutionTrigger> DoAutoTriggerDiscovery(ManagementAgent ma, MAConfigParameters config)
@@ -81,7 +77,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         internal static int GetTriggerInterval(ManagementAgent ma)
         {
-            var rh = ma.GetRunHistory(200);
+            IEnumerable<RunDetails> rh = ma.GetRunHistory(200);
 
             int deltaCount = 0;
             int deltaTotalTime = 0;
@@ -98,7 +94,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 foreach (StepDetails sd in rd.StepDetails)
                 {
-                    if (sd.StepDefinition == null)
+                    if (sd.StepDefinition == null || sd.EndDate == null || sd.StartDate == null)
                     {
                         continue;
                     }
@@ -137,7 +133,7 @@ namespace Lithnet.Miiserver.AutoSync
             return ((deltaTotalTime / deltaCount)) + (MAExecutionTriggerDiscovery.DefaultIntervalMinutes * 60);
         }
 
-        private static IList<IMAExecutionTrigger> GetDefaultTriggers(ManagementAgent ma, MAConfigParameters config, IEnumerable<object> configItems)
+        private static IEnumerable<IMAExecutionTrigger> GetDefaultTriggers(ManagementAgent ma, MAConfigParameters config, IEnumerable<object> configItems)
         {
             List<IMAExecutionTrigger> triggers = new List<IMAExecutionTrigger>();
 
@@ -153,9 +149,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             else if (ma.Category == "AD")
             {
-                ADListenerConfiguration listenerConfig;
-
-                listenerConfig = configItems.OfType<ADListenerConfiguration>().FirstOrDefault();
+                ADListenerConfiguration listenerConfig = configItems.OfType<ADListenerConfiguration>().FirstOrDefault();
 
                 if (listenerConfig == null)
                 {
@@ -176,8 +170,8 @@ namespace Lithnet.Miiserver.AutoSync
             XmlDocument d = new XmlDocument();
             d.LoadXml(madata);
 
-            int eafCount = d.SelectNodes("/export-ma/ma-data/export-attribute-flow/export-flow-set/export-flow").Count;
-            int iafCount = d.SelectNodes(string.Format("/export-ma/mv-data/import-attribute-flow/import-flow-set/import-flows/import-flow[@src-ma='{0}']", ma.ID.ToMmsGuid())).Count;
+            int eafCount = d.SelectNodes("/export-ma/ma-data/export-attribute-flow/export-flow-set/export-flow")?.Count ?? 0;
+            int iafCount = d.SelectNodes($"/export-ma/mv-data/import-attribute-flow/import-flow-set/import-flows/import-flow[@src-ma='{ma.ID.ToMmsGuid()}']")?.Count ?? 0;
 
             return iafCount > eafCount;
         }
@@ -186,7 +180,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             XmlNode privateData = ma.GetPrivateData();
 
-            return privateData.SelectSingleNode("fimma-configuration/connection-info/serviceHost").InnerText;
+            return privateData.SelectSingleNode("fimma-configuration/connection-info/serviceHost")?.InnerText;
         }
 
         private static ADListenerConfiguration GetADConfiguration(ManagementAgent ma)
@@ -201,9 +195,9 @@ namespace Lithnet.Miiserver.AutoSync
 
             XmlNode partitionNode = d.SelectSingleNode("/export-ma/ma-data/ma-partition-data/partition[selected=1 and custom-data/adma-partition-data[is-domain=1]]");
 
-            config.HostName = d.SelectSingleNode("/export-ma/ma-data/private-configuration/adma-configuration/forest-name").InnerText;
-            config.BaseDN = partitionNode.SelectSingleNode("name").InnerText;
-            config.ObjectClasses = partitionNode.SelectNodes("filter/object-classes/object-class").OfType<XmlElement>().Where(t => t.InnerText != "container" && t.InnerText != "domainDNS" && t.InnerText != "organizationalUnit").Select(u => u.InnerText).ToArray();
+            config.HostName = d.SelectSingleNode("/export-ma/ma-data/private-configuration/adma-configuration/forest-name")?.InnerText;
+            config.BaseDN = partitionNode?.SelectSingleNode("name")?.InnerText;
+            config.ObjectClasses = partitionNode?.SelectNodes("filter/object-classes/object-class")?.OfType<XmlElement>().Where(t => t.InnerText != "container" && t.InnerText != "domainDNS" && t.InnerText != "organizationalUnit").Select(u => u.InnerText).ToArray();
             config.LastLogonTimestampOffsetSeconds = 300;
 
             return config;
