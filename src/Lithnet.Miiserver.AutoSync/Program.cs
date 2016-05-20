@@ -25,11 +25,13 @@ namespace Lithnet.Miiserver.AutoSync
         public static void Main(string[] args)
         {
             bool runService = args != null && args.Contains("/service");
+            Logger.LogPath = Settings.LogFile;
 
             if (!runService)
             {
-                Lithnet.Logging.Logger.OutputToConsole = true;
+                Logger.OutputToConsole = true;
             }
+
 
             if (runService)
             {

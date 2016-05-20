@@ -4,7 +4,7 @@
   <Product Id="*"
            Name="Lithnet FIM/MIM AutoSync Service"
            Language="1033"
-           Version="1.0.5963"
+           Version="1.0.5964"
            Manufacturer="Lithnet"
            UpgradeCode="028A57DF-28CE-47B0-9B3E-18B523A643D4">
     <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" Platform="x64" />
@@ -47,19 +47,22 @@
     <Condition Message="This application requires the Forefront Identity Manager 2010 R2 4.1.3441 or later to be installed">
       <![CDATA[Installed OR SYNCVERSION]]>
     </Condition>
-    <Property Id="WIXUI_INSTALLDIR" Value="APPROOT" />
+    <Property Id="WIXUI_INSTALLDIR" Value="APPROOTDIR" />
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFiles64Folder" >
-        <Directory Id="LITHNETROOT" Name="Lithnet">
-          <Directory Id="APPROOT" Name="MiisAutoSync">
-            <Directory Id="APPLOGS" Name="Logs"/>
+        <Directory Id="LITHNETROOTDIR" Name="Lithnet">
+          <Directory Id="APPROOTDIR" Name="MiisAutoSync">
+            <Directory Id="CONFIGDIR" Name="Config">
+              <Directory Id="EXAMPLESDIR" Name="Examples"/>
+            </Directory>
+            <Directory Id="APPLOGDIR" Name="Logs"/>
           </Directory>
         </Directory>
       </Directory>
     </Directory>
-    
-    <UI >
+
+    <UI>
       <UIRef Id="WixUI_Common" />
       <Property Id="WixUI_Mode" Value="Custom" />
 
@@ -76,20 +79,23 @@
 
       <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="ServiceDetailsDialog">NOT Installed</Publish>
       <Publish Dialog="ServiceDetailsDialog" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="1">NOT INSTALLED</Publish>
-      <Publish Dialog="ServiceDetailsDialog" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="1">NOT INSTALLED</Publish>
-      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="ServiceDetailsDialog" Order="1"></Publish>
+      <Publish Dialog="ServiceDetailsDialog" Control="Next" Event="NewDialog" Value="ConfigPathDialog" Order="1">NOT INSTALLED</Publish>
+      <Publish Dialog="ConfigPathDialog" Control="Back" Event="NewDialog" Value="ServiceDetailsDialog" Order="1"></Publish>
+      <Publish Dialog="ConfigPathDialog" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="1"></Publish>
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="ConfigPathDialog" Order="1"></Publish>
       <Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="999">1</Publish>
     </UI>
 
     <Feature Id="AutoSync" Title="Lithnet Miiserver AutoSync" Level="1">
       <ComponentGroupRef Id="Binaries" />
+      <ComponentGroupRef Id="Examples" />
     </Feature>
 
 
   </Product>
 
   <!--<Fragment>
-    <ComponentGroup Id="ProductComponents" Directory="APPROOT" >
+    <ComponentGroup Id="ProductComponents" Directory="APPROOTDIR" >
       <ComponentGroupRef Id="Lithnet.Miiserver.AutoSync.Binaries"/>
     </ComponentGroup>
   </Fragment>-->

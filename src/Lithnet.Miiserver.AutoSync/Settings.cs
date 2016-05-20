@@ -7,13 +7,46 @@ using System.Configuration;
 
 namespace Lithnet.Miiserver.AutoSync
 {
+    using System.IO;
+    using System.Reflection;
+
     public static class Settings
     {
+        public static string LogFile
+        {
+            get
+            {
+                string logFile = ConfigurationManager.AppSettings["logFile"];
+
+                if (logFile != null)
+                {
+                    return logFile;
+                }
+
+                string codeBase = Assembly.GetExecutingAssembly().CodeBase;
+                UriBuilder uri = new UriBuilder(codeBase);
+                string path = Uri.UnescapeDataString(uri.Path);
+                string dirName = Path.GetDirectoryName(path);
+                return Path.Combine(dirName, "Logs\\autosync.log");
+            }
+        }
+        
         public static int MailMaxErrorItems
         {
             get
             {
-                return 10;
+                string s = ConfigurationManager.AppSettings["mailMaxErrors"];
+
+                int value = 0;
+
+                if (int.TryParse(s, out value))
+                {
+                    return value;
+                }
+                else
+                {
+                    return 10;
+                }
             }
         }
 
@@ -74,52 +107,16 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public static string RunHistorySavePath
-        {
-            get
-            {
-                return ConfigurationManager.AppSettings["runHistoryExportPath"];
-            }
-        }
+        public static string RunHistorySavePath => ConfigurationManager.AppSettings["runHistoryExportPath"];
 
-        public static string MailServer
-        {
-            get
-            {
-                return ConfigurationManager.AppSettings["mailServer"];
-            }
-        }
+        public static string MailServer => ConfigurationManager.AppSettings["mailServer"];
 
-        public static bool MailSendOncePerStateChange
-        {
-            get
-            {
-                return ConfigurationManager.AppSettings["mailSendOncePerStateChange"] == null ? true : Convert.ToBoolean(ConfigurationManager.AppSettings["mailSendOncePerStateChange"]);
-            }
-        }
+        public static bool MailSendOncePerStateChange => ConfigurationManager.AppSettings["mailSendOncePerStateChange"] == null || Convert.ToBoolean(ConfigurationManager.AppSettings["mailSendOncePerStateChange"]);
 
-        public static string MailFrom
-        {
-            get
-            {
-                return ConfigurationManager.AppSettings["mailFrom"];
-            }
-        }
+        public static string MailFrom => ConfigurationManager.AppSettings["mailFrom"];
 
-        public static string[] MailTo
-        {
-            get
-            {
-                return ConfigurationManager.AppSettings["mailTo"]?.Split(';');
-            }
-        }
+        public static string[] MailTo => ConfigurationManager.AppSettings["mailTo"]?.Split(';');
 
-        public static string[] MailIgnoreReturnCodes
-        {
-            get
-            {
-                return ConfigurationManager.AppSettings["mailIgnoreReturnCodes"]?.Split(';');
-            }
-        }
+        public static string[] MailIgnoreReturnCodes => ConfigurationManager.AppSettings["mailIgnoreReturnCodes"]?.Split(';');
     }
 }

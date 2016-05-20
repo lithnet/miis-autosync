@@ -2,9 +2,9 @@
 {
     # Runs a full sync every saturday night at 3am
     $targetDayOfWeek = [int32][DayOfWeek]::Saturday;
-	$hourOfDay = 3;
+    $hourOfDay = 3;
 
-	# Do not modify below this line
+    # Do not modify below this line
     [DateTime]$current = [DateTime]::Now;
     [DateTime]$target = $current.Date.AddHours($hourOfDay); 
     

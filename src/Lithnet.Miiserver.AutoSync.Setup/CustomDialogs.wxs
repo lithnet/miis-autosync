@@ -3,9 +3,7 @@
   <Fragment>
     <UI>
       <Dialog Id="ServiceDetailsDialog" Width="370" Height="270" Title="Service account">
-        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)" >
-
-        </Control>
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)" />
         <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)" />
         <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
           <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
@@ -26,6 +24,25 @@
 
         <Control Id="WarningLabel" Type="Text" X="20" Y="160" Width ="240" Height="40" TabSkip="no"
                 Text="Warning: The credentials will not be verfied by the installer. Ensure the provided credentials are correct" />
+      </Dialog>
+
+      <Dialog Id="ConfigPathDialog" Width="370" Height="270" Title="Configuration Path">
+        <Control Type="Text" Id="lblInstructions" Width="348" Height="13" X="10" Y="10">
+          <Text>Enter the path where the configuration files for the service are stored</Text>
+        </Control>
+        <Control Type="Text" Id="lblDirectory" Width="69" Height="9" X="10" Y="40" Text="Config path:">
+        </Control>
+        <Control Type="PathEdit" Id="TxtDir" Width="155" Height="15" X="105" Y="57" Property="CONFIGDIR"/>
+        <Control Id="btnDirBrowse" Type="PushButton" Width="56" Height="17" X="260" Y="57" Text="Browse..." >
+          <Publish Property="_BrowseProperty" Value="CONFIGDIR" Order="1">1</Publish>
+          <Publish Event="SpawnDialog" Value="BrowseDlg" Order="2">1</Publish>
+        </Control>
+        <Control Type="Line" Id="line" Width="362" Height="2" X="4" Y="229" />
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)" />
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)" />
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
+          <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
+        </Control>
       </Dialog>
     </UI>
   </Fragment>

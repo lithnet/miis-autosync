@@ -3,7 +3,7 @@
      xmlns:util='http://schemas.microsoft.com/wix/UtilExtension'
    xmlns:http='http://schemas.microsoft.com/wix/HttpExtension'>
   <Fragment>
-    <DirectoryRef Id="APPROOT">
+    <DirectoryRef Id="APPROOTDIR">
       <Component Id="EventSource" Guid="*" Win64="yes" >
         <Util:EventSource xmlns:Util="http://schemas.microsoft.com/wix/UtilExtension"
                     Name="miis-autosync" Log="Application" EventMessageFile="[NETFRAMEWORK45FULLINSTALLROOTDIR64]EventLogMessages.dll" KeyPath="yes"/>
@@ -26,32 +26,67 @@
         </ServiceInstall>
         <ServiceControl Id="ServiceControlEvents" Name="[SERVICE_NAME]" Stop="both" Remove="uninstall" Wait="yes"/>
         <util:User Id="ServiceUser" Name="[SERVICE_USERNAME]" Password="[SERVICE_PASSWORD]" CreateUser="no" LogonAsService="yes" UpdateIfExists="yes" />
-        <CreateFolder Directory="APPLOGS">
+        <CreateFolder Directory="APPLOGDIR">
           <util:PermissionEx User="[SERVICE_USERNAME]" GenericAll="yes" />
         </CreateFolder>
+        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="ConfigPath" Type="string" Value="[CONFIGDIR]" />
+
       </Component>
 
       <Component Id="cmpb79b2c604b1748aa9606e987e86aad3a" Guid="*" Win64="yes">
-        <File Id="fil2fbf1906386e4df0a0fb6a5aa8c86dc7" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)\Lithnet.Miiserver.AutoSync.exe.config" />
+        <File Id="fil2fbf1906386e4df0a0fb6a5aa8c86dc7" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Lithnet.Miiserver.AutoSync.exe.config" />
       </Component>
-      <Component Id="cmp9dd8add400f84984af1aae73a3e33027" Guid="*" Win64="yes">
-        <File Id="fildc56e03c4167405b9970142148d2c84b" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)\Lithnet.Miiserver.Client.dll" />
+      <!--<Component Id="cmp9dd8add400f84984af1aae73a3e33027" Guid="*" Win64="yes">
+        <File Id="fildc56e03c4167405b9970142148d2c84b" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Lithnet.Miiserver.Client.dll" />
       </Component>
       <Component Id="cmpb64af8d3558e474cb4abafb6a86c4c95" Guid="*" Win64="yes">
-        <File Id="fil9fbbd15a54394a42b971da7c81b974a9" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)\Lithnet.Logging.dll" />
+        <File Id="fil9fbbd15a54394a42b971da7c81b974a9" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Lithnet.Logging.dll" />
       </Component>
       <Component Id="cmp4f1b2f80467447c7a19d67ba7526a520" Guid="*" Win64="yes">
-        <File Id="fil68b8bfb54b9f42919bb796335be9afac" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)\Lithnet.ResourceManagement.Client.dll" />
+        <File Id="fil68b8bfb54b9f42919bb796335be9afac" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Lithnet.ResourceManagement.Client.dll" />
+      </Component>-->
+    </DirectoryRef>
+
+    <DirectoryRef Id="EXAMPLESDIR">
+      <Component Id="cmp93a419ae5b964e959aabd53f864b56be" Guid="*" Win64="yes">
+        <File Id="fil609af776b4a447ceb346ae795fc0ec18" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Examples\Config-ACMA.ps1" />
+      </Component>
+      <Component Id="cmpa5bba24f5e21416285e99f20f545a824" Guid="*" Win64="yes">
+        <File Id="fil38f1503471f2447f8dafcd16c011922f" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Examples\Config-ADMA.ps1" />
+      </Component>
+      <Component Id="cmp9dd1e29218a449c986cd9bc051352eb0" Guid="*" Win64="yes">
+        <File Id="fildf31df98d2494fda8671bee4394fb457" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Examples\Trigger-ACMA-CheckPendingImports.ps1" />
+      </Component>
+      <Component Id="cmp07273887e0564fbb9656af18b9d08aff" Guid="*" Win64="yes">
+        <File Id="fil5786c4463780477787c20d0a22ce2638" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Examples\Trigger-ACMA-NightlyFI.ps1" />
+      </Component>
+      <Component Id="cmp7019fe445dcb4e44b69f13a1ebf8cdd6" Guid="*" Win64="yes">
+        <File Id="fil0198757e9cb34c11bcc3ad16b857c78b" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Examples\Trigger-ACMA-WeeklyFS.ps1" />
+      </Component>
+      <Component Id="cmp532534fc471f40b4af0421bb84ac9f8f" Guid="*" Win64="yes">
+        <File Id="fil8646fbb6a2964a7c8edb94b551a0a70d" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Examples\Trigger-ADMA-DeltaImportEvery5Minutes.ps1" />
+      </Component>
+      <Component Id="cmp075b47251b67418d80ae8418bf820b6f" Guid="*" Win64="yes">
+        <File Id="filc067392ac3b344b1ad07d05175c623de" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Examples\Trigger-LdapMA-PersistentSearch.ps1" />
       </Component>
     </DirectoryRef>
 
+    <ComponentGroup Id="Examples">
+      <ComponentRef Id="cmp93a419ae5b964e959aabd53f864b56be"/>
+      <ComponentRef Id="cmpa5bba24f5e21416285e99f20f545a824"/>
+      <ComponentRef Id="cmp9dd1e29218a449c986cd9bc051352eb0"/>
+      <ComponentRef Id="cmp07273887e0564fbb9656af18b9d08aff"/>
+      <ComponentRef Id="cmp7019fe445dcb4e44b69f13a1ebf8cdd6"/>
+      <ComponentRef Id="cmp532534fc471f40b4af0421bb84ac9f8f"/>
+      <ComponentRef Id="cmp075b47251b67418d80ae8418bf820b6f"/>
+    </ComponentGroup>
     <ComponentGroup Id="Binaries">
       <ComponentRef Id="EventSource"/>
       <ComponentRef Id="cmpb05fc8933594449d9aad05ca620a4331"/>
       <ComponentRef Id="cmpb79b2c604b1748aa9606e987e86aad3a"/>
-      <ComponentRef Id="cmp9dd8add400f84984af1aae73a3e33027"/>
+      <!--<ComponentRef Id="cmp9dd8add400f84984af1aae73a3e33027"/>
       <ComponentRef Id="cmpb64af8d3558e474cb4abafb6a86c4c95"/>
-      <ComponentRef Id="cmp4f1b2f80467447c7a19d67ba7526a520"/>
+      <ComponentRef Id="cmp4f1b2f80467447c7a19d67ba7526a520"/>-->
     </ComponentGroup>
   </Fragment>
 </Wix>
