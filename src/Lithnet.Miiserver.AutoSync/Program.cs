@@ -12,8 +12,6 @@ using System.Timers;
 
 namespace Lithnet.Miiserver.AutoSync
 {
-    using System.Security.Principal;
-
     public static class Program
     {
         private static List<MAExecutor> maExecutors = new List<MAExecutor>();
@@ -115,7 +113,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             if (Settings.SaveRunHistory && Settings.RunHistorySavePath != null)
             {
-                string file = Path.Combine(Settings.RunHistorySavePath, string.Format("history-{0}.xml", DateTime.Now.ToString("yyyy-MM-ddThh.mm.ss")));
+                string file = Path.Combine(Settings.RunHistorySavePath, $"history-{DateTime.Now.ToString("yyyy-MM-ddThh.mm.ss")}.xml");
                 SyncServer.ClearRunHistory(clearBeforeDate, file);
             }
             else

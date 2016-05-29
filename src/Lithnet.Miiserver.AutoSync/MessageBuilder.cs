@@ -2,30 +2,32 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Diagnostics;
-using Lithnet.Miiserver.Client;
-using System.Xml;
 using System.Reflection;
 using System.IO;
+using Lithnet.Miiserver.Client;
 using PreMailer.Net;
 
 namespace Lithnet.Miiserver.AutoSync
 {
     public static class MessageBuilder
     {
-        private const string simpleRow = "<tr><td>{0}</td><td>{1}</td></tr>";
-       // private const string cdataRow = "<tr><td>{0}</td><td><![CDATA[{1}]]></td></tr>";
-        private const string firstRow = "<tr>{0}<td>{1}</td><td>{2}</td></tr>";
-        private const string twoColumnHeader = "<td rowspan=\"{0}\" valign=\"top\">{1}</td><td rowspan=\"{0}\" colspan=\"2\" valign=\"top\">{2}</td>";
-        private const string threeColumnHeader = "<td rowspan=\"{0}\" valign=\"top\">{1}</td><td rowspan=\"{0}\" valign=\"top\">{2}</td><td rowspan=\"{0}\" valign=\"top\">{3}</td>";
+        private const string SimpleRow = "<tr><td>{0}</td><td>{1}</td></tr>";
+        private const string FirstRow = "<tr>{0}<td>{1}</td><td>{2}</td></tr>";
+        private const string TwoColumnHeader = "<td rowspan=\"{0}\" valign=\"top\">{1}</td><td rowspan=\"{0}\" colspan=\"2\" valign=\"top\">{2}</td>";
+        private const string ThreeColumnHeader = "<td rowspan=\"{0}\" valign=\"top\">{1}</td><td rowspan=\"{0}\" valign=\"top\">{2}</td><td rowspan=\"{0}\" valign=\"top\">{3}</td>";
 
         private static string GetTemplate(string name)
         {
             Assembly assembly = Assembly.GetExecutingAssembly();
-            string resourceName = string.Format("Lithnet.Miiserver.AutoSync.Resources.{0}.html", name);
+            string resourceName = $"Lithnet.Miiserver.AutoSync.Resources.{name}.html";
 
             using (Stream stream = assembly.GetManifestResourceStream(resourceName))
             {
+                if (stream == null)
+                {
+                    throw new InvalidOperationException($"The resource {resourceName} was missing from the assembly");
+                }
+
                 using (StreamReader reader = new StreamReader(stream))
                 {
                     return reader.ReadToEnd();
@@ -97,13 +99,13 @@ namespace Lithnet.Miiserver.AutoSync
         {
             StringBuilder builder = new StringBuilder();
 
-            string stepDetails = string.Format(twoColumnHeader, 6, d.StepNumber, d.StepDefinition.StepTypeDescription);
-            builder.AppendFormat(firstRow, stepDetails, "Export adds", d.ExportCounters.ExportAdd);
-            builder.AppendFormat(simpleRow, "Export deletes", d.ExportCounters.ExportDelete);
-            builder.AppendFormat(simpleRow, "Export delete-adds", d.ExportCounters.ExportDeleteAdd);
-            builder.AppendFormat(simpleRow, "Export rename", d.ExportCounters.ExportRename);
-            builder.AppendFormat(simpleRow, "Export update", d.ExportCounters.ExportUpdate);
-            builder.AppendFormat(simpleRow, "Export failures", d.ExportCounters.ExportFailure);
+            string stepDetails = string.Format(MessageBuilder.TwoColumnHeader, 6, d.StepNumber, d.StepDefinition.StepTypeDescription);
+            builder.AppendFormat(MessageBuilder.FirstRow, stepDetails, "Export adds", d.ExportCounters.ExportAdd);
+            builder.AppendFormat(MessageBuilder.SimpleRow, "Export deletes", d.ExportCounters.ExportDelete);
+            builder.AppendFormat(MessageBuilder.SimpleRow, "Export delete-adds", d.ExportCounters.ExportDeleteAdd);
+            builder.AppendFormat(MessageBuilder.SimpleRow, "Export rename", d.ExportCounters.ExportRename);
+            builder.AppendFormat(MessageBuilder.SimpleRow, "Export update", d.ExportCounters.ExportUpdate);
+            builder.AppendFormat(MessageBuilder.SimpleRow, "Export failures", d.ExportCounters.ExportFailure);
 
             return builder.ToString();
         }
@@ -112,14 +114,14 @@ namespace Lithnet.Miiserver.AutoSync
         {
             StringBuilder builder = new StringBuilder();
 
-            string stepDetails = string.Format(twoColumnHeader, 7, d.StepNumber, d.StepDefinition.StepTypeDescription);
-            builder.AppendFormat(firstRow, stepDetails, "Import adds", d.StagingCounters.StageAdd);
-            builder.AppendFormat(simpleRow, "Import deletes", d.StagingCounters.StageDelete);
-            builder.AppendFormat(simpleRow, "Import delete-adds", d.StagingCounters.StageDeleteAdd);
-            builder.AppendFormat(simpleRow, "Import rename", d.StagingCounters.StageRename);
-            builder.AppendFormat(simpleRow, "Import update", d.StagingCounters.StageUpdate);
-            builder.AppendFormat(simpleRow, "Import no change", d.StagingCounters.StageNoChange);
-            builder.AppendFormat(simpleRow, "Import failures", d.StagingCounters.StageFailure);
+            string stepDetails = string.Format(MessageBuilder.TwoColumnHeader, 7, d.StepNumber, d.StepDefinition.StepTypeDescription);
+            builder.AppendFormat(MessageBuilder.FirstRow, stepDetails, "Import adds", d.StagingCounters.StageAdd);
+            builder.AppendFormat(MessageBuilder.SimpleRow, "Import deletes", d.StagingCounters.StageDelete);
+            builder.AppendFormat(MessageBuilder.SimpleRow, "Import delete-adds", d.StagingCounters.StageDeleteAdd);
+            builder.AppendFormat(MessageBuilder.SimpleRow, "Import rename", d.StagingCounters.StageRename);
+            builder.AppendFormat(MessageBuilder.SimpleRow, "Import update", d.StagingCounters.StageUpdate);
+            builder.AppendFormat(MessageBuilder.SimpleRow, "Import no change", d.StagingCounters.StageNoChange);
+            builder.AppendFormat(MessageBuilder.SimpleRow, "Import failures", d.StagingCounters.StageFailure);
 
             return builder.ToString();
         }
@@ -224,43 +226,43 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 StringBuilder errorBuilder = new StringBuilder();
 
-                errorBuilder.AppendFormat(simpleRow, "DN", error.DN);
-                errorBuilder.AppendFormat(simpleRow, "Error type", error.ErrorType);
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "DN", error.DN);
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Error type", error.ErrorType);
 
                 if (error.CDError != null)
                 {
-                    errorBuilder.AppendFormat(simpleRow, "Error code", error.CDError.ErrorCode);
-                    errorBuilder.AppendFormat(simpleRow, "Error literal", error.CDError.ErrorLiteral);
-                    errorBuilder.AppendFormat(simpleRow, "Server error detail", error.CDError.ServerErrorDetail);
+                    errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Error code", error.CDError.ErrorCode);
+                    errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Error literal", error.CDError.ErrorLiteral);
+                    errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Server error detail", error.CDError.ServerErrorDetail);
 
                     if (error.CDError.Value != null)
                     {
-                        errorBuilder.AppendFormat(simpleRow, "Value", error.CDError.Value.ToCommaSeparatedString());
+                        errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Value", error.CDError.Value.ToCommaSeparatedString());
                     }
                 }
 
                 if (error.LineNumber > 0)
                 {
-                    errorBuilder.AppendFormat(simpleRow, "Line number", error.LineNumber);
+                    errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Line number", error.LineNumber);
                 }
 
                 if (error.ColumnNumber > 0)
                 {
-                    errorBuilder.AppendFormat(simpleRow, "Column number", error.ColumnNumber);
+                    errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Column number", error.ColumnNumber);
                 }
 
                 if (error.AttributeName != null)
                 {
-                    errorBuilder.AppendFormat(simpleRow, "Attribute name", error.AttributeName);
+                    errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Attribute name", error.AttributeName);
                 }
 
-                errorsBuilder.AppendLine(string.Format(MessageBuilder.GetTemplate("ErrorTableFragment"), errorBuilder.ToString()));
+                errorsBuilder.AppendLine(string.Format(MessageBuilder.GetTemplate("ErrorTableFragment"), errorBuilder));
                 errorsBuilder.AppendLine("<br/>");
             }
 
             if (remainingErrors > 0)
             {
-                errorsBuilder.AppendFormat("There are {0} more errors that are not shown in this report<br/>", remainingErrors);
+                errorsBuilder.Append($"There are {remainingErrors} more errors that are not shown in this report<br/>");
             }
 
             return errorsBuilder.ToString();
@@ -294,26 +296,26 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 StringBuilder errorBuilder = new StringBuilder();
 
-                errorBuilder.AppendFormat(simpleRow, "DN", error.DN);
-                errorBuilder.AppendFormat(simpleRow, "Error type", error.ErrorType);
-                errorBuilder.AppendFormat(simpleRow, "Date occurred", error.DateOccurred.ToString());
-                errorBuilder.AppendFormat(simpleRow, "Retry count", error.RetryCount);
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "DN", error.DN);
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Error type", error.ErrorType);
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Date occurred", error.DateOccurred);
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Retry count", error.RetryCount);
 
                 if (error.ExtensionErrorInfo != null)
                 {
-                    errorBuilder.AppendFormat(simpleRow, "Extension name", error.ExtensionErrorInfo.ExtensionName);
-                    errorBuilder.AppendFormat(simpleRow, "Context", error.ExtensionErrorInfo.ExtensionContext);
-                    errorBuilder.AppendFormat(simpleRow, "Call site", error.ExtensionErrorInfo.ExtensionCallSite.ToString());
-                    errorBuilder.AppendFormat(simpleRow, "Stack trace", error.ExtensionErrorInfo.CallStack);
+                    errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Extension name", error.ExtensionErrorInfo.ExtensionName);
+                    errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Context", error.ExtensionErrorInfo.ExtensionContext);
+                    errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Call site", error.ExtensionErrorInfo.ExtensionCallSite);
+                    errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Stack trace", error.ExtensionErrorInfo.CallStack);
                 }
 
-                errorsBuilder.AppendLine(string.Format(MessageBuilder.GetTemplate("ErrorTableFragment"), errorBuilder.ToString()));
+                errorsBuilder.AppendLine(string.Format(MessageBuilder.GetTemplate("ErrorTableFragment"), errorBuilder));
                 errorsBuilder.AppendLine("<br/>");
             }
 
             if (remainingErrors > 0)
             {
-                errorsBuilder.AppendFormat("There are {0} more errors that are not shown in this report<br/>", remainingErrors);
+                errorsBuilder.Append($"There are {remainingErrors} more errors that are not shown in this report<br/>");
             }
 
             return errorsBuilder.ToString();
@@ -347,27 +349,27 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 StringBuilder errorBuilder = new StringBuilder();
 
-                errorBuilder.AppendFormat(simpleRow, "DN", error.DN);
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "DN", error.DN);
               
-                errorBuilder.AppendFormat(simpleRow, "Error type", error.ErrorType);
-                errorBuilder.AppendFormat(simpleRow, "Date occurred", error.DateOccurred.ToString());
-                errorBuilder.AppendFormat(simpleRow, "First occurred", error.FirstOccurred.ToString());
-                errorBuilder.AppendFormat(simpleRow, "Retry count", error.RetryCount);
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Error type", error.ErrorType);
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Date occurred", error.DateOccurred);
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "First occurred", error.FirstOccurred);
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Retry count", error.RetryCount);
 
                 if (error.CDError != null)
                 {
-                    errorBuilder.AppendFormat(simpleRow, "Error code", error.CDError.ErrorCode);
-                    errorBuilder.AppendFormat(simpleRow, "Error literal", error.CDError.ErrorLiteral);
-                    errorBuilder.AppendFormat(simpleRow, "Server error detail", error.CDError.ServerErrorDetail);
+                    errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Error code", error.CDError.ErrorCode);
+                    errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Error literal", error.CDError.ErrorLiteral);
+                    errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Server error detail", error.CDError.ServerErrorDetail);
                 }
 
-                errorsBuilder.AppendLine(string.Format(MessageBuilder.GetTemplate("ErrorTableFragment"), errorBuilder.ToString()));
+                errorsBuilder.AppendLine(string.Format(MessageBuilder.GetTemplate("ErrorTableFragment"), errorBuilder));
                 errorsBuilder.AppendLine("<br/>");
             }
 
             if (remainingErrors > 0)
             {
-                errorsBuilder.AppendFormat("There are {0} more errors that are not shown in this report<br/>", remainingErrors);
+                errorsBuilder.Append($"There are {remainingErrors} more errors that are not shown in this report<br/>");
             }
 
             return errorsBuilder.ToString();
@@ -377,26 +379,26 @@ namespace Lithnet.Miiserver.AutoSync
         {
             StringBuilder builder = new StringBuilder();
 
-            string stepDetails = string.Format(threeColumnHeader, 10, d.StepNumber, d.StepDefinition.StepTypeDescription, "Inbound");
-            builder.AppendFormat(firstRow, stepDetails, "Projections", d.InboundFlowCounters.TotalProjections);
-            builder.AppendFormat(simpleRow, "Joins", d.InboundFlowCounters.TotalJoins);
-            builder.AppendFormat(simpleRow, "Filtered disconnectors", d.InboundFlowCounters.DisconnectorFiltered);
-            builder.AppendFormat(simpleRow, "Disconnectors", d.InboundFlowCounters.DisconnectedRemains);
-            builder.AppendFormat(simpleRow, "Connectors with flow updates", d.InboundFlowCounters.ConnectorFlow);
-            builder.AppendFormat(simpleRow, "Connectors without flow updates", d.InboundFlowCounters.ConnectorNoFlow);
-            builder.AppendFormat(simpleRow, "Filtered connectors", d.InboundFlowCounters.TotalFilteredConnectors);
-            builder.AppendFormat(simpleRow, "Deleted connectors", d.InboundFlowCounters.TotalDeletedConnectors);
-            builder.AppendFormat(simpleRow, "Metaverse object deletes", d.InboundFlowCounters.TotalMVObjectDeletes);
-            builder.AppendFormat(simpleRow, "Flow errors", d.InboundFlowCounters.FlowFailure);
+            string stepDetails = string.Format(MessageBuilder.ThreeColumnHeader, 10, d.StepNumber, d.StepDefinition.StepTypeDescription, "Inbound");
+            builder.AppendFormat(MessageBuilder.FirstRow, stepDetails, "Projections", d.InboundFlowCounters.TotalProjections);
+            builder.AppendFormat(MessageBuilder.SimpleRow, "Joins", d.InboundFlowCounters.TotalJoins);
+            builder.AppendFormat(MessageBuilder.SimpleRow, "Filtered disconnectors", d.InboundFlowCounters.DisconnectorFiltered);
+            builder.AppendFormat(MessageBuilder.SimpleRow, "Disconnectors", d.InboundFlowCounters.DisconnectedRemains);
+            builder.AppendFormat(MessageBuilder.SimpleRow, "Connectors with flow updates", d.InboundFlowCounters.ConnectorFlow);
+            builder.AppendFormat(MessageBuilder.SimpleRow, "Connectors without flow updates", d.InboundFlowCounters.ConnectorNoFlow);
+            builder.AppendFormat(MessageBuilder.SimpleRow, "Filtered connectors", d.InboundFlowCounters.TotalFilteredConnectors);
+            builder.AppendFormat(MessageBuilder.SimpleRow, "Deleted connectors", d.InboundFlowCounters.TotalDeletedConnectors);
+            builder.AppendFormat(MessageBuilder.SimpleRow, "Metaverse object deletes", d.InboundFlowCounters.TotalMVObjectDeletes);
+            builder.AppendFormat(MessageBuilder.SimpleRow, "Flow errors", d.InboundFlowCounters.FlowFailure);
 
             foreach (OutboundFlowCounters item in d.OutboundFlowCounters)
             {
-                string f = string.Format(threeColumnHeader, 5, string.Empty, string.Empty, "Outbound: " + item.ManagementAgent);
-                builder.AppendFormat(firstRow, f, "Export attribute flow", item.ConnectorFlow);
-                builder.AppendFormat(simpleRow, "Provisioning adds", (item.ProvisionedAddFlow + item.ProvisionedAddNoFlow));
-                builder.AppendFormat(simpleRow, "Provisioning renames", (item.ProvisionRenameFlow + item.ProvisionedRenameNoFlow));
-                builder.AppendFormat(simpleRow, "Provisioning disconnects", item.ProvisionedDisconnect);
-                builder.AppendFormat(simpleRow, "Provisioning delete-adds", (item.ProvisionedDeleteAddFlow + item.ProvisionedDeleteAddNoFlow));
+                string f = string.Format(MessageBuilder.ThreeColumnHeader, 5, string.Empty, string.Empty, "Outbound: " + item.ManagementAgent);
+                builder.AppendFormat(MessageBuilder.FirstRow, f, "Export attribute flow", item.ConnectorFlow);
+                builder.AppendFormat(MessageBuilder.SimpleRow, "Provisioning adds", (item.ProvisionedAddFlow + item.ProvisionedAddNoFlow));
+                builder.AppendFormat(MessageBuilder.SimpleRow, "Provisioning renames", (item.ProvisionRenameFlow + item.ProvisionedRenameNoFlow));
+                builder.AppendFormat(MessageBuilder.SimpleRow, "Provisioning disconnects", item.ProvisionedDisconnect);
+                builder.AppendFormat(MessageBuilder.SimpleRow, "Provisioning delete-adds", (item.ProvisionedDeleteAddFlow + item.ProvisionedDeleteAddNoFlow));
 
             }
 

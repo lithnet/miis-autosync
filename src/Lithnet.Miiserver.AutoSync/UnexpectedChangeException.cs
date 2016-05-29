@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -11,12 +7,10 @@ namespace Lithnet.Miiserver.AutoSync
         public bool ShouldTerminateService { get; set; }
 
         public UnexpectedChangeException()
-        : base()
         {
         }
 
         public UnexpectedChangeException(bool shouldTerminateService)
-        : base()
         {
             this.ShouldTerminateService = shouldTerminateService;
         }

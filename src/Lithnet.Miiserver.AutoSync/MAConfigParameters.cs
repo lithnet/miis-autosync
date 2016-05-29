@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Linq;
-using System.Text;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -42,40 +40,22 @@ namespace Lithnet.Miiserver.AutoSync
             this.ScheduledImportRunProfileName = config["ScheduledImportRunProfileName"] as string;
             this.DeltaImportRunProfileName = config["DeltaImportRunProfileName"] as string;
             this.ExportRunProfileName = config["ExportRunProfileName"] as string;
-            this.Disabled = config["Disabled"] == null ? false : Convert.ToBoolean(config["Disabled"]);
+            this.Disabled = config["Disabled"] != null && Convert.ToBoolean(config["Disabled"]);
             this.AutoImportScheduling = config["AutoImportScheduling"] == null ? AutoImportScheduling.Default : (AutoImportScheduling)Enum.Parse(typeof(AutoImportScheduling), config["AutoImportScheduling"].ToString(), true);
-            this.DisableDefaultTriggers = config["DisableDefaultTriggers"] == null ? false : Convert.ToBoolean(config["DisableDefaultTriggers"]);
+            this.DisableDefaultTriggers = config["DisableDefaultTriggers"] != null && Convert.ToBoolean(config["DisableDefaultTriggers"]);
             this.AutoImportIntervalMinutes = config["AutoImportIntervalMinutes"] == null ? 0 : Convert.ToInt32(config["AutoImportIntervalMinutes"]);
         }
 
-        internal bool CanExport
-        {
-            get
-            {
-                return this.ExportRunProfileName != null;
-            }
-        }
+        internal bool CanExport => this.ExportRunProfileName != null;
 
-        internal bool CanImport
-        {
-            get
-            {
-                return this.ScheduledImportRunProfileName != null || this.FullImportRunProfileName != null;
-            }
-        }
+        internal bool CanImport => this.ScheduledImportRunProfileName != null || this.FullImportRunProfileName != null;
 
-        internal bool CanAutoRun
-        {
-            get
-            {
-                return this.DeltaSyncRunProfileName != null ||
-                    this.ConfirmingImportRunProfileName != null ||
-                    this.FullSyncRunProfileName != null ||
-                    this.FullImportRunProfileName != null ||
-                    this.ScheduledImportRunProfileName != null ||
-                    this.ExportRunProfileName != null;
-            }
-        }
+        internal bool CanAutoRun => this.DeltaSyncRunProfileName != null ||
+                                    this.ConfirmingImportRunProfileName != null ||
+                                    this.FullSyncRunProfileName != null ||
+                                    this.FullImportRunProfileName != null ||
+                                    this.ScheduledImportRunProfileName != null ||
+                                    this.ExportRunProfileName != null;
 
         internal string GetRunProfileName(MARunProfileType type)
         {
@@ -95,7 +75,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 case MARunProfileType.FullSync:
                     return this.FullSyncRunProfileName;
-                
+
                 default:
                 case MARunProfileType.None:
                     throw new ArgumentException("Unknown run profile type");

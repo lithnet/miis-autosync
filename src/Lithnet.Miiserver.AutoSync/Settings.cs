@@ -1,16 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
+using System.Reflection;
 using System.Configuration;
+using Microsoft.Win32;
 
 namespace Lithnet.Miiserver.AutoSync
 {
-    using System.IO;
-    using System.Reflection;
-    using Microsoft.Win32;
-
     internal static class Settings
     {
         private static RegistryKey key;
@@ -43,7 +38,8 @@ namespace Lithnet.Miiserver.AutoSync
                 UriBuilder uri = new UriBuilder(codeBase);
                 string path = Uri.UnescapeDataString(uri.Path);
                 string dirName = Path.GetDirectoryName(path);
-                return Path.Combine(dirName, "Logs\\autosync.log");
+
+                return Path.Combine(dirName ?? Global.AssemblyDirectory, "Logs\\autosync.log");
             }
         }
 
@@ -62,7 +58,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 string s = Settings.BaseKey.GetValue("MailMaxErrors") as string;
 
-                int value = 0;
+                int value;
 
                 return int.TryParse(s, out value) ? value : 0;
             }
@@ -74,7 +70,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 string s = Settings.BaseKey.GetValue("RunHistoryAge") as string;
 
-                int value = 0;
+                int value;
 
                 return int.TryParse(s, out value) ? value : 0;
             }
@@ -105,7 +101,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 string s = Settings.BaseKey.GetValue("UnmanagedChangesCheckIntervalMinutes") as string;
 
-                int value = 0;
+                int value;
 
                 if (int.TryParse(s, out value))
                 {
@@ -128,7 +124,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 string s = Settings.BaseKey.GetValue("MailServerPort") as string;
 
-                int value = 0;
+                int value;
 
                 if (int.TryParse(s, out value))
                 {

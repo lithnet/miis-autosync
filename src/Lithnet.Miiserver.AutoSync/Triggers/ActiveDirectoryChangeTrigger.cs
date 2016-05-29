@@ -1,31 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Timers;
-using Lithnet.ResourceManagement.Client;
 using Lithnet.Logging;
 using System.DirectoryServices.Protocols;
-using System.Xml;
 
 namespace Lithnet.Miiserver.AutoSync
 {
     public class ActiveDirectoryChangeTrigger : IMAExecutionTrigger
     {
-        private const string lastLogonAttributeName = "lastLogon";
-        private const string lastLogonTimeStampAttributeName = "lastLogonTimeStamp";
-        private const string badPasswordAttribute = "badPasswordTime";
-        private const string objectClassAttribute = "objectClass";
+        private const string LastLogonAttributeName = "lastLogon";
+        private const string LastLogonTimeStampAttributeName = "lastLogonTimeStamp";
+        private const string BadPasswordAttribute = "badPasswordTime";
+        private const string ObjectClassAttribute = "objectClass";
 
-        private int LastLogonTimestampOffset;
+        private int lastLogonTimestampOffset;
 
         public event ExecutionTriggerEventHandler TriggerExecution;
 
-        public Timer checkTimer;
+        private Timer checkTimer;
 
         private ADListenerConfiguration config;
 
-        private bool hasChanges = false;
+        private bool hasChanges;
 
         private LdapConnection connection;
 
@@ -33,7 +30,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public ActiveDirectoryChangeTrigger(ADListenerConfiguration config)
         {
-            this.LastLogonTimestampOffset = config.LastLogonTimestampOffsetSeconds;
+            this.lastLogonTimestampOffset = config.LastLogonTimestampOffsetSeconds;
             config.Validate();
             this.config = config;
         }
@@ -71,12 +68,14 @@ namespace Lithnet.Miiserver.AutoSync
                 this.config.BaseDN,
                 "(objectClass=*)",
                  SearchScope.Subtree,
-                new string[] { objectClassAttribute, lastLogonAttributeName, lastLogonTimeStampAttributeName, badPasswordAttribute }
-                );
+                 ActiveDirectoryChangeTrigger.ObjectClassAttribute, 
+                 ActiveDirectoryChangeTrigger.LastLogonAttributeName, 
+                 ActiveDirectoryChangeTrigger.LastLogonTimeStampAttributeName, 
+                 ActiveDirectoryChangeTrigger.BadPasswordAttribute);
 
             request.Controls.Add(new DirectoryNotificationControl());
 
-            IAsyncResult result = this.connection.BeginSendRequest(
+            this.connection.BeginSendRequest(
                 request,
                 TimeSpan.FromDays(100),
                 PartialResultProcessing.ReturnPartialResultsAndNotifyCallback, this.Notify,
@@ -100,67 +99,69 @@ namespace Lithnet.Miiserver.AutoSync
                     return;
                 }
 
-                DateTime lastLogonOldestDate = DateTime.UtcNow.AddSeconds(-this.LastLogonTimestampOffset);
+                DateTime lastLogonOldestDate = DateTime.UtcNow.AddSeconds(-this.lastLogonTimestampOffset);
 
                 foreach (SearchResultEntry r in col.OfType<SearchResultEntry>())
                 {
-                    IEnumerable<string> objectClasses = r.Attributes[objectClassAttribute].GetValues(typeof(string)).OfType<string>();
+                    IList<string> objectClasses = r.Attributes[ActiveDirectoryChangeTrigger.ObjectClassAttribute].GetValues(typeof(string)).OfType<string>().ToList();
 
-                    if (this.config.ObjectClasses.Intersect(objectClasses, StringComparer.OrdinalIgnoreCase).Any())
+                    if (!this.config.ObjectClasses.Intersect(objectClasses, StringComparer.OrdinalIgnoreCase).Any())
                     {
-                        if (objectClasses.Contains("computer", StringComparer.OrdinalIgnoreCase) && !this.config.ObjectClasses.Contains("computer", StringComparer.OrdinalIgnoreCase))
+                        continue;
+                    }
+
+                    if (objectClasses.Contains("computer", StringComparer.OrdinalIgnoreCase) && !this.config.ObjectClasses.Contains("computer", StringComparer.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    DateTime date1 = DateTime.MinValue;
+
+                    if (r.Attributes.Contains(ActiveDirectoryChangeTrigger.LastLogonAttributeName))
+                    {
+                        string ts = r.Attributes[ActiveDirectoryChangeTrigger.LastLogonAttributeName][0] as string;
+                        date1 = DateTime.FromFileTimeUtc(Convert.ToInt64(ts));
+
+                        if (date1 > lastLogonOldestDate)
                         {
                             continue;
                         }
-
-                        DateTime date1 = DateTime.MinValue;
-
-                        if (r.Attributes.Contains(lastLogonAttributeName))
-                        {
-                            string ts = r.Attributes[lastLogonAttributeName][0] as string;
-                            date1 = DateTime.FromFileTimeUtc(Convert.ToInt64(ts));
-
-                            if (date1 > lastLogonOldestDate)
-                            {
-                                continue;
-                            }
-                        }
-
-                        DateTime date2 = DateTime.MinValue;
-
-                        if (r.Attributes.Contains(lastLogonTimeStampAttributeName))
-                        {
-                            string ts = r.Attributes[lastLogonTimeStampAttributeName][0] as string;
-                            date2 = DateTime.FromFileTimeUtc(Convert.ToInt64(ts));
-
-                            if (date2 > lastLogonOldestDate)
-                            {
-                                continue;
-                            }
-                        }
-
-
-                        DateTime date3 = DateTime.MinValue;
-
-                        if (r.Attributes.Contains(badPasswordAttribute))
-                        {
-                            string ts = r.Attributes[badPasswordAttribute][0] as string;
-                            date3 = DateTime.FromFileTimeUtc(Convert.ToInt64(ts));
-
-                            if (date3 > lastLogonOldestDate)
-                            {
-                                continue;
-                            }
-                        }
-                        
-                        Logger.WriteLine("AD change: {0}", r.DistinguishedName);
-                        Logger.WriteLine("LL: {0}", LogLevel.Debug, date1.ToLocalTime());
-                        Logger.WriteLine("TS: {0}", LogLevel.Debug, date2.ToLocalTime());
-                        Logger.WriteLine("BP: {0}", LogLevel.Debug, date3.ToLocalTime());
-
-                        this.hasChanges = true;
-                        return;
                     }
+
+                    DateTime date2 = DateTime.MinValue;
+
+                    if (r.Attributes.Contains(ActiveDirectoryChangeTrigger.LastLogonTimeStampAttributeName))
+                    {
+                        string ts = r.Attributes[ActiveDirectoryChangeTrigger.LastLogonTimeStampAttributeName][0] as string;
+                        date2 = DateTime.FromFileTimeUtc(Convert.ToInt64(ts));
+
+                        if (date2 > lastLogonOldestDate)
+                        {
+                            continue;
+                        }
+                    }
+
+
+                    DateTime date3 = DateTime.MinValue;
+
+                    if (r.Attributes.Contains(ActiveDirectoryChangeTrigger.BadPasswordAttribute))
+                    {
+                        string ts = r.Attributes[ActiveDirectoryChangeTrigger.BadPasswordAttribute][0] as string;
+                        date3 = DateTime.FromFileTimeUtc(Convert.ToInt64(ts));
+
+                        if (date3 > lastLogonOldestDate)
+                        {
+                            continue;
+                        }
+                    }
+                        
+                    Logger.WriteLine("AD change: {0}", r.DistinguishedName);
+                    Logger.WriteLine("LL: {0}", LogLevel.Debug, date1.ToLocalTime());
+                    Logger.WriteLine("TS: {0}", LogLevel.Debug, date2.ToLocalTime());
+                    Logger.WriteLine("BP: {0}", LogLevel.Debug, date3.ToLocalTime());
+
+                    this.hasChanges = true;
+                    return;
                 }
             }
             catch (LdapException ex)
@@ -201,8 +202,12 @@ namespace Lithnet.Miiserver.AutoSync
                 Logger.EndThreadLog();
             }
             this.SetupListener();
-            this.checkTimer = new Timer(minimumTriggerInterval * 1000);
-            this.checkTimer.AutoReset = true;
+            this.checkTimer = new Timer
+            {
+                AutoReset = true,
+                Interval  = minimumTriggerInterval * 1000
+            };
+
             this.checkTimer.Elapsed += this.checkTimer_Elapsed;
             this.checkTimer.Start();
         }

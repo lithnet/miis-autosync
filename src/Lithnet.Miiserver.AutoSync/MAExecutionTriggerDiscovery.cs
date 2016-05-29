@@ -1,14 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Lithnet.Miiserver.Client;
 using Lithnet.Logging;
 using System.IO;
-using System.Management.Automation;
-using System.Management.Automation.Runspaces;
-using System.Management.Automation.Host;
-using System.Collections.ObjectModel;
 using System.Xml;
 
 namespace Lithnet.Miiserver.AutoSync
@@ -142,22 +137,27 @@ namespace Lithnet.Miiserver.AutoSync
                 return triggers;
             }
 
-            if (ma.Category == "FIM")
+            switch (ma.Category)
             {
-                FimServicePendingImportTrigger t1 = new FimServicePendingImportTrigger(MAExecutionTriggerDiscovery.GetFimServiceHostName(ma));
-                triggers.Add(t1);
-            }
-            else if (ma.Category == "AD")
-            {
-                ADListenerConfiguration listenerConfig = configItems.OfType<ADListenerConfiguration>().FirstOrDefault();
+                case "FIM":
+                    FimServicePendingImportTrigger t1 = new FimServicePendingImportTrigger(MAExecutionTriggerDiscovery.GetFimServiceHostName(ma));
+                    triggers.Add(t1);
+                    break;
 
-                if (listenerConfig == null)
-                {
-                    listenerConfig = GetADConfiguration(ma);
-                }
+                case "AD":
+                    ADListenerConfiguration listenerConfig = configItems.OfType<ADListenerConfiguration>().FirstOrDefault();
 
-                ActiveDirectoryChangeTrigger t2 = new ActiveDirectoryChangeTrigger(listenerConfig);
-                triggers.Add(t2);
+                    if (listenerConfig == null)
+                    {
+                        listenerConfig = MAExecutionTriggerDiscovery.GetADConfiguration(ma);
+                    }
+
+                    ActiveDirectoryChangeTrigger t2 = new ActiveDirectoryChangeTrigger(listenerConfig);
+                    triggers.Add(t2);
+                    break;
+
+                default:
+                    break;
             }
 
             return triggers;

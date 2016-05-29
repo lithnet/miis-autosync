@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Management.Automation;
-using System.Management.Automation.Runspaces;
-using System.Management.Automation.Host;
 using System.Threading.Tasks;
 using System.Threading;
 using Lithnet.Logging;
@@ -17,13 +12,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public string ScriptPath { get; set; }
 
-        public string Name
-        {
-            get
-            {
-                return System.IO.Path.GetFileName(this.ScriptPath);
-            }
-        }
+        public string Name => System.IO.Path.GetFileName(this.ScriptPath);
 
         public event ExecutionTriggerEventHandler TriggerExecution;
 
@@ -59,11 +48,12 @@ namespace Lithnet.Miiserver.AutoSync
 
                             ExecutionParameters p = result.BaseObject as ExecutionParameters;
 
-                            if (p != null)
+                            if (p == null)
                             {
-                                this.Fire(p);
                                 continue;
                             }
+
+                            this.Fire(p);
                         }
 
                         Thread.Sleep(5000);
@@ -88,20 +78,14 @@ namespace Lithnet.Miiserver.AutoSync
         {
             ExecutionTriggerEventHandler registeredHandlers = this.TriggerExecution;
 
-            if (registeredHandlers != null)
-            {
-                registeredHandlers(this, new ExecutionTriggerEventArgs(runProfileName));
-            }
+            registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(runProfileName));
         }
 
         public void Fire(ExecutionParameters p)
         {
             ExecutionTriggerEventHandler registeredHandlers = this.TriggerExecution;
 
-            if (registeredHandlers != null)
-            {
-                registeredHandlers(this, new ExecutionTriggerEventArgs(p));
-            }
+            registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(p));
         }
     }
 }

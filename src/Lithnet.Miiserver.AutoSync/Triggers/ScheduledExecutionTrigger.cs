@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Timers;
 using Lithnet.Logging;
 
@@ -9,7 +6,7 @@ namespace Lithnet.Miiserver.AutoSync
 {
     public class ScheduledExecutionTrigger : IMAExecutionTrigger
     {
-        public Timer checkTimer;
+        private Timer checkTimer;
 
         public DateTime StartDateTime { get; set; }
 
@@ -17,7 +14,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public string RunProfileName { get; set; }
 
-        private double remainingMiliseconds { get; set; }
+        private double RemainingMiliseconds { get; set; }
 
         public ScheduledExecutionTrigger()
         {
@@ -25,7 +22,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void SetRemainingMiliseconds()
         {
-            if (this.Interval.TotalSeconds == 0)
+            if (this.Interval.TotalSeconds < 1)
             {
                 throw new ArgumentException("The interval cannot be zero");
             }
@@ -44,17 +41,14 @@ namespace Lithnet.Miiserver.AutoSync
             }
 
             Logger.WriteLine("Scheduling event for " + triggerTime, LogLevel.Debug);
-            this.remainingMiliseconds = (triggerTime - now).TotalMilliseconds;
+            this.RemainingMiliseconds = (triggerTime - now).TotalMilliseconds;
         }
 
         private void checkTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             ExecutionTriggerEventHandler registeredHandlers = this.TriggerExecution;
 
-            if (registeredHandlers != null)
-            {
-                registeredHandlers(this, new ExecutionTriggerEventArgs(this.RunProfileName));
-            }
+            registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(this.RunProfileName));
 
             this.Start();
         }
@@ -62,31 +56,30 @@ namespace Lithnet.Miiserver.AutoSync
         public void Start()
         {
             this.SetRemainingMiliseconds();
-            this.checkTimer = new Timer(this.remainingMiliseconds);
+            this.checkTimer = new Timer
+            {
+                Interval = this.RemainingMiliseconds,
+                AutoReset = false
+            };
 
-            this.checkTimer.AutoReset = false;
             this.checkTimer.Elapsed += this.checkTimer_Elapsed;
             this.checkTimer.Start();
         }
 
         public void Stop()
         {
-            if (this.checkTimer != null)
+            if (this.checkTimer == null)
             {
-                if (this.checkTimer.Enabled)
-                {
-                    this.checkTimer.Stop();
-                }
+                return;
+            }
+
+            if (this.checkTimer.Enabled)
+            {
+                this.checkTimer.Stop();
             }
         }
 
-        public string Name
-        {
-            get
-            {
-                return "Scheduled trigger";
-            }
-        }
+        public string Name => "Scheduled trigger";
 
         public event ExecutionTriggerEventHandler TriggerExecution;
     }

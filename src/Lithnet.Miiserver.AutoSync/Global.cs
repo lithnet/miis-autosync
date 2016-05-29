@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Reflection;
 using System.IO;
 
@@ -10,13 +7,6 @@ namespace Lithnet.Miiserver.AutoSync
     public static class Global
     {
         private static Random random = new Random();
-
-        //static Global()
-        //{
-        //    Global.ScriptDirectory = Global.AssemblyDirectory;
-        //}
-
-        //public static string ScriptDirectory { get; set; }
 
         public static string AssemblyDirectory
         {

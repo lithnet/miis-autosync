@@ -1,19 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Timers;
-using Lithnet.ResourceManagement.Client;
+﻿using System.Timers;
 using Lithnet.Logging;
 
 namespace Lithnet.Miiserver.AutoSync
 {
     public class IntervalExecutionTrigger : IMAExecutionTrigger
     {
-        public Timer checkTimer;
+        private Timer checkTimer;
 
-        public int TriggerInterval { get; set; }
-        
+        private int TriggerInterval { get; }
+
         public MARunProfileType RunProfileTargetType { get; set; }
 
         public IntervalExecutionTrigger(MARunProfileType type, int intervalSeconds)
@@ -26,41 +21,37 @@ namespace Lithnet.Miiserver.AutoSync
         {
             ExecutionTriggerEventHandler registeredHandlers = this.TriggerExecution;
 
-            if (registeredHandlers != null)
-            {
-                registeredHandlers(this, new ExecutionTriggerEventArgs(this.RunProfileTargetType));
-            }
+            registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(this.RunProfileTargetType));
         }
 
         public void Start()
         {
             Logger.WriteLine("Starting interval timer for {0} at {1} seconds", LogLevel.Debug, this.RunProfileTargetType, this.TriggerInterval);
 
-            this.checkTimer = new Timer(this.TriggerInterval * 1000);
+            this.checkTimer = new Timer
+            {
+                Interval = this.TriggerInterval * 1000,
+                AutoReset = true
+            };
 
-            this.checkTimer.AutoReset = true;
             this.checkTimer.Elapsed += this.checkTimer_Elapsed;
             this.checkTimer.Start();
         }
 
         public void Stop()
         {
-            if (this.checkTimer != null)
+            if (this.checkTimer == null)
             {
-                if (this.checkTimer.Enabled)
-                {
-                    this.checkTimer.Stop();
-                }
+                return;
+            }
+
+            if (this.checkTimer.Enabled)
+            {
+                this.checkTimer.Stop();
             }
         }
 
-        public string Name
-        {
-            get
-            {
-                return string.Format("{0} second interval", this.TriggerInterval);
-            }
-        }
+        public string Name => $"{this.TriggerInterval} second interval";
 
         public event ExecutionTriggerEventHandler TriggerExecution;
     }

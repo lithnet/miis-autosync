@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.DirectoryServices.Protocols;
+﻿using System.DirectoryServices.Protocols;
 
 namespace Lithnet.Miiserver.AutoSync
 {

@@ -1,15 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.IO;
 using System.Management.Automation;
-using System.Management.Automation.Runspaces;
-using System.Management.Automation.Host;
-using System.Threading.Tasks;
-using System.Threading;
 using Lithnet.Logging;
 using Lithnet.Miiserver.Client;
-using System.IO;
 
 namespace Lithnet.Miiserver.AutoSync
 {

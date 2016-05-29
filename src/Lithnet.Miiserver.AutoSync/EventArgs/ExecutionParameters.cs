@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Lithnet.Miiserver.AutoSync
 {
     public class ExecutionParameters
     {
-        public bool Exclusive { get; set; }
+        public bool Exclusive { get; set;  }
 
         public string RunProfileName { get; set; }
 
@@ -45,7 +42,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             if (p2 == null)
             {
-                return base.Equals(obj);
+                return object.ReferenceEquals(this, obj);
             }
 
             return (string.Equals(this.RunProfileName, p2.RunProfileName, StringComparison.OrdinalIgnoreCase) &&
@@ -55,13 +52,15 @@ namespace Lithnet.Miiserver.AutoSync
 
         public override int GetHashCode()
         {
-            string hashcode = string.Format("{0}{1}{2}", this.RunProfileName, this.RunProfileType.ToString(), this.Exclusive.ToString());
+            // ReSharper disable NonReadonlyMemberInGetHashCode
+            string hashcode = $"{this.RunProfileName}{this.RunProfileType}{this.Exclusive}";
+            // ReSharper restore NonReadonlyMemberInGetHashCode
             return hashcode.GetHashCode();
         }
 
         public static bool operator ==(ExecutionParameters a, ExecutionParameters b)
         {
-            if (Object.ReferenceEquals(a, b))
+            if (object.ReferenceEquals(a, b))
             {
                 return true;
             }

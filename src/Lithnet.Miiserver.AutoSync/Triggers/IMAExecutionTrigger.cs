@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Lithnet.Miiserver.AutoSync
+﻿namespace Lithnet.Miiserver.AutoSync
 {
     public delegate void ExecutionTriggerEventHandler(object sender, ExecutionTriggerEventArgs e);
 
