@@ -84,6 +84,8 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void Notify(IAsyncResult result)
         {
+            PartialResultsCollection col;
+
             try
             {
                 if (this.stopped)
@@ -91,9 +93,9 @@ namespace Lithnet.Miiserver.AutoSync
                     this.connection.EndSendRequest(result);
                     return;
                 }
-
-                PartialResultsCollection col = this.connection.GetPartialResults(result);
-
+                
+                col = this.connection.GetPartialResults(result);
+                
                 if (this.hasChanges)
                 {
                     return;
@@ -154,7 +156,7 @@ namespace Lithnet.Miiserver.AutoSync
                             continue;
                         }
                     }
-                        
+
                     Logger.WriteLine("AD change: {0}", r.DistinguishedName);
                     Logger.WriteLine("LL: {0}", LogLevel.Debug, date1.ToLocalTime());
                     Logger.WriteLine("TS: {0}", LogLevel.Debug, date2.ToLocalTime());
@@ -174,6 +176,10 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     throw;
                 }
+            }
+            finally
+            {
+                col = null;
             }
         }
 

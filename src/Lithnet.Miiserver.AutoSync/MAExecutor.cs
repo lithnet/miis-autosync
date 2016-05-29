@@ -269,8 +269,10 @@ namespace Lithnet.Miiserver.AutoSync
                     Logger.WriteLine("{0}: {1} returned {2}", this.ma.Name, e.RunProfileName, ex.Result);
                 }
 
-                RunDetails r = this.ma.GetLastRun();
-                this.PerformPostRunActions(r);
+                using (RunDetails r = this.ma.GetLastRun())
+                {
+                    this.PerformPostRunActions(r);
+                }
             }
             catch (OperationCanceledException)
             {
@@ -337,8 +339,10 @@ namespace Lithnet.Miiserver.AutoSync
 
                     if (!this.token.IsCancellationRequested)
                     {
-                        RunDetails ur = this.ma.GetLastRun();
-                        this.PerformPostRunActions(ur);
+                        using (RunDetails ur = this.ma.GetLastRun())
+                        {
+                            this.PerformPostRunActions(ur);
+                        }
                     }
                 }
                 finally

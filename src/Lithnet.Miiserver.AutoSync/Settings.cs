@@ -60,7 +60,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 int value;
 
-                return int.TryParse(s, out value) ? value : 0;
+                return int.TryParse(s, out value) ? value : 10;
             }
         }
 
