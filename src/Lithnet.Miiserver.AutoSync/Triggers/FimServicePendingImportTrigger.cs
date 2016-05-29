@@ -24,7 +24,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.fimSvcHostName = hostname;
         }
 
-        private void checkTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        private void checkTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             try
             {
@@ -39,8 +39,8 @@ namespace Lithnet.Miiserver.AutoSync
                 }
                 else
                 {
-                    xpath = string.Format("/Request[msidmCompletedTime > '{0}']", lastCheckDateTime.Value.ToResourceManagementServiceDateFormat(false));
-                    Logger.WriteLine("Searching for changes since {0}", LogLevel.Debug, lastCheckDateTime.Value.ToResourceManagementServiceDateFormat(false));
+                    xpath = string.Format("/Request[msidmCompletedTime > '{0}']", this.lastCheckDateTime.Value.ToResourceManagementServiceDateFormat(false));
+                    Logger.WriteLine("Searching for changes since {0}", LogLevel.Debug, this.lastCheckDateTime.Value.ToResourceManagementServiceDateFormat(false));
                 }
 
                 ISearchResultCollection r = c.GetResources(xpath, 1, new string[] { "msidmCompletedTime" }, "msidmCompletedTime", false);
@@ -68,9 +68,9 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void Start()
         {
-            this.checkTimer = new System.Timers.Timer(this.TimerIntervalSeconds * 1000);
+            this.checkTimer = new Timer(this.TimerIntervalSeconds * 1000);
             this.checkTimer.AutoReset = true;
-            this.checkTimer.Elapsed += checkTimer_Elapsed;
+            this.checkTimer.Elapsed += this.checkTimer_Elapsed;
             this.checkTimer.Start();
         }
 

@@ -11,12 +11,12 @@ namespace Lithnet.Miiserver.AutoSync
     {
         private static Random random = new Random();
 
-        static Global()
-        {
-            Global.ScriptDirectory = Global.AssemblyDirectory;
-        }
+        //static Global()
+        //{
+        //    Global.ScriptDirectory = Global.AssemblyDirectory;
+        //}
 
-        public static string ScriptDirectory { get; set; }
+        //public static string ScriptDirectory { get; set; }
 
         public static string AssemblyDirectory
         {

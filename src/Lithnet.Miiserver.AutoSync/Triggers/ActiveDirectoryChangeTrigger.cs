@@ -38,7 +38,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.config = config;
         }
 
-        private void checkTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        private void checkTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             if (this.hasChanges)
             {
@@ -51,10 +51,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             ExecutionTriggerEventHandler registeredHandlers = this.TriggerExecution;
 
-            if (registeredHandlers != null)
-            {
-                registeredHandlers(this, new ExecutionTriggerEventArgs(MARunProfileType.DeltaImport));
-            }
+            registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(MARunProfileType.DeltaImport));
         }
 
         private void SetupListener()
@@ -82,8 +79,7 @@ namespace Lithnet.Miiserver.AutoSync
             IAsyncResult result = this.connection.BeginSendRequest(
                 request,
                 TimeSpan.FromDays(100),
-                PartialResultProcessing.ReturnPartialResultsAndNotifyCallback,
-                Notify,
+                PartialResultProcessing.ReturnPartialResultsAndNotifyCallback, this.Notify,
                 request);
         }
 
@@ -158,9 +154,9 @@ namespace Lithnet.Miiserver.AutoSync
                         }
                         
                         Logger.WriteLine("AD change: {0}", r.DistinguishedName);
-                        Logger.WriteLine("LL: {0}", date1.ToLocalTime());
-                        Logger.WriteLine("TS: {0}", date2.ToLocalTime());
-                        Logger.WriteLine("BP: {0}", date3.ToLocalTime());
+                        Logger.WriteLine("LL: {0}", LogLevel.Debug, date1.ToLocalTime());
+                        Logger.WriteLine("TS: {0}", LogLevel.Debug, date2.ToLocalTime());
+                        Logger.WriteLine("BP: {0}", LogLevel.Debug, date3.ToLocalTime());
 
                         this.hasChanges = true;
                         return;
@@ -205,9 +201,9 @@ namespace Lithnet.Miiserver.AutoSync
                 Logger.EndThreadLog();
             }
             this.SetupListener();
-            this.checkTimer = new System.Timers.Timer(minimumTriggerInterval * 1000);
+            this.checkTimer = new Timer(minimumTriggerInterval * 1000);
             this.checkTimer.AutoReset = true;
-            this.checkTimer.Elapsed += checkTimer_Elapsed;
+            this.checkTimer.Elapsed += this.checkTimer_Elapsed;
             this.checkTimer.Start();
         }
 
@@ -224,12 +220,6 @@ namespace Lithnet.Miiserver.AutoSync
             this.stopped = true;
         }
 
-        public string Name
-        {
-            get
-            {
-                return "AD change detection";
-            }
-        }
+        public string Name => "AD change detection";
     }
 }

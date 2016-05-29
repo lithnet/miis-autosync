@@ -22,7 +22,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.RunProfileTargetType = type;
         }
 
-        private void checkTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        private void checkTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             ExecutionTriggerEventHandler registeredHandlers = this.TriggerExecution;
 
@@ -36,10 +36,10 @@ namespace Lithnet.Miiserver.AutoSync
         {
             Logger.WriteLine("Starting interval timer for {0} at {1} seconds", LogLevel.Debug, this.RunProfileTargetType, this.TriggerInterval);
 
-            this.checkTimer = new System.Timers.Timer(this.TriggerInterval * 1000);
+            this.checkTimer = new Timer(this.TriggerInterval * 1000);
 
             this.checkTimer.AutoReset = true;
-            this.checkTimer.Elapsed += checkTimer_Elapsed;
+            this.checkTimer.Elapsed += this.checkTimer_Elapsed;
             this.checkTimer.Start();
         }
 

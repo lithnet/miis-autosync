@@ -47,7 +47,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.remainingMiliseconds = (triggerTime - now).TotalMilliseconds;
         }
 
-        private void checkTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        private void checkTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             ExecutionTriggerEventHandler registeredHandlers = this.TriggerExecution;
 
@@ -62,10 +62,10 @@ namespace Lithnet.Miiserver.AutoSync
         public void Start()
         {
             this.SetRemainingMiliseconds();
-            this.checkTimer = new System.Timers.Timer(this.remainingMiliseconds);
+            this.checkTimer = new Timer(this.remainingMiliseconds);
 
             this.checkTimer.AutoReset = false;
-            this.checkTimer.Elapsed += checkTimer_Elapsed;
+            this.checkTimer.Elapsed += this.checkTimer_Elapsed;
             this.checkTimer.Start();
         }
 

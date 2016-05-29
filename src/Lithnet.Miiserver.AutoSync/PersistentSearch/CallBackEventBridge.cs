@@ -15,14 +15,14 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void CallbackInternal(IAsyncResult result)
         {
-            CallbackComplete(result);
+            this.CallbackComplete(result);
         }
 
         public AsyncCallback Callback
         {
             get
             {
-                return new AsyncCallback(CallbackInternal);
+                return new AsyncCallback(this.CallbackInternal);
             }
         }
 

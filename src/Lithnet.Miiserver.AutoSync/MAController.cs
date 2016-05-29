@@ -31,25 +31,27 @@ namespace Lithnet.Miiserver.AutoSync
         {
             this.ma = ma;
 
-            this.ScriptPath = Path.Combine(Global.ScriptDirectory, Global.CleanMAName(ma.Name) + ".ps1");
+            this.ScriptPath = Path.Combine(Settings.ConfigPath, Global.CleanMAName(ma.Name) + ".ps1");
 
-            if (File.Exists(this.ScriptPath))
+            if (!File.Exists(this.ScriptPath))
             {
-                this.powershell = PowerShell.Create();
-                this.powershell.AddScript(System.IO.File.ReadAllText(this.ScriptPath));
-                this.powershell.Invoke();
+                return;
+            }
 
-                if (this.powershell.Runspace.SessionStateProxy.InvokeCommand.GetCommand("ShouldExecute", CommandTypes.All) != null)
-                {
-                    Logger.WriteLine("{0}: Registering ShouldExecute handler", this.ma.Name);
-                    supportsShouldExecute = true;
-                }
+            this.powershell = PowerShell.Create();
+            this.powershell.AddScript(File.ReadAllText(this.ScriptPath));
+            this.powershell.Invoke();
 
-                if (this.powershell.Runspace.SessionStateProxy.InvokeCommand.GetCommand("ExecutionComplete", CommandTypes.All) != null)
-                {
-                    Logger.WriteLine("{0}: Registering ExecutionComplete handler", this.ma.Name);
-                    supportsExecutionComplete = true;
-                }
+            if (this.powershell.Runspace.SessionStateProxy.InvokeCommand.GetCommand("ShouldExecute", CommandTypes.All) != null)
+            {
+                Logger.WriteLine("{0}: Registering ShouldExecute handler", this.ma.Name);
+                this.supportsShouldExecute = true;
+            }
+
+            if (this.powershell.Runspace.SessionStateProxy.InvokeCommand.GetCommand("ExecutionComplete", CommandTypes.All) != null)
+            {
+                Logger.WriteLine("{0}: Registering ExecutionComplete handler", this.ma.Name);
+                this.supportsExecutionComplete = true;
             }
         }
 
@@ -60,18 +62,18 @@ namespace Lithnet.Miiserver.AutoSync
                 return false;
             }
 
-            if (this.powershell == null || !supportsShouldExecute)
+            if (this.powershell == null || !this.supportsShouldExecute)
             {
                 return true;
             }
 
-            powershell.Commands.Clear();
-            powershell.AddCommand("ShouldExecute");
-            powershell.AddArgument(runProfileName);
+            this.powershell.Commands.Clear();
+            this.powershell.AddCommand("ShouldExecute");
+            this.powershell.AddArgument(runProfileName);
 
             try
             {
-                foreach (PSObject result in powershell.Invoke())
+                foreach (PSObject result in this.powershell.Invoke())
                 {
                     bool? res = result.BaseObject as bool?;
 
@@ -112,18 +114,18 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void ExecutionComplete(RunDetails d)
         {
-            if (this.powershell == null || !supportsExecutionComplete)
+            if (this.powershell == null || !this.supportsExecutionComplete)
             {
                 return;
             }
 
-            powershell.Commands.Clear();
-            powershell.AddCommand("ExecutionComplete");
-            powershell.AddArgument(d);
+            this.powershell.Commands.Clear();
+            this.powershell.AddCommand("ExecutionComplete");
+            this.powershell.AddArgument(d);
 
             try
             {
-                powershell.Invoke();
+                this.powershell.Invoke();
             }
             catch (RuntimeException ex)
             {

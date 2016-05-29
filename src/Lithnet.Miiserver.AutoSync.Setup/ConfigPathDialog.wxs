@@ -1,0 +1,43 @@
+﻿<?xml version="1.0"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <UI>
+      <Dialog Id="ConfigPathDialog" Width="370" Height="270" Title="Configuration Path">
+        <Control Type="Text" Id="lblInstructions" Width="278" Height="10" X="15" Y="53">
+          <Text>Specify the path where the configuration files for the service are stored</Text>
+        </Control>
+        <Control Type="Text" Id="lblDirectory" Width="51" Height="15" X="15" Y="66" Text="Config path:" />
+        <Control Type="PathEdit" Id="txtConfigPath" Width="204" Height="15" X="86" Y="66" Property="CONFIGDIR" />
+        <Control Id="btnBrowseConfigPath" Type="PushButton" Width="56" Height="17" X="297" Y="64" Text="Browse...">
+          <Publish Property="_BrowseProperty" Value="CONFIGDIR" Order="1">1</Publish>
+          <Publish Event="SpawnDialog" Value="BrowseDlg" Order="2">1</Publish>
+        </Control>
+        <Control Type="Line" Id="line" Width="362" Height="2" X="4" Y="229" />
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)" />
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)" />
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
+          <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
+        </Control>
+        <Control Id="label2" Type="Text" Height="21" Width="65" X="16" Y="180" Text="Run history path:" />
+        <Control Id="label1" Type="Text" Height="15" Width="51" X="15" Y="104" Text="Log file path:" />
+        <Control Id="txtRunHistoryPath" Type="Edit" Height="15" Width="204" X="86" Y="178" Property="RUNHISTORYDIR" />
+        <Control Id="txtLogFilePath" Type="Edit" Height="15" Width="204" X="86" Y="104" Property="APPLOGDIR"/>
+        <Control Id="btBrowseRunHistoryPath" Type="PushButton" Height="17" Width="56" X="294" Y="178" Text="Browse..." >
+          <Publish Property="_BrowseProperty" Value="RUNHISTORYDIR" Order="1">1</Publish>
+          <Publish Event="SpawnDialog" Value="BrowseDlg" Order="2">1</Publish>
+        </Control>
+        <Control Id="btBrowseLogFilePath" Type="PushButton" Height="17" Width="56" X="297" Y="104" Text="Browse..." >
+          <Publish Property="_BrowseProperty" Value="APPLOGDIR" Order="1">1</Publish>
+          <Publish Event="SpawnDialog" Value="BrowseDlg" Order="2">1</Publish>
+        </Control>
+        <Control Id="Title" Type="Text" Height="15" Width="200" X="16" Y="7" Text="Configuration settings" />
+        <Control Id="BannerBitmap" Type="Bitmap" Height="44" Width="370" X="0" Y="0" Text="!(loc.InstallDirDlgBannerBitmap)" />
+        <Control Id="label6" Type="Text" Height="13" Width="82" X="134" Y="138" Text="days (zero to disable)" />
+        <Control Id="label5" Type="Text" Height="13" Width="82" X="15" Y="138" Text="Clear run history after" />
+        <Control Id="label3" Type="Text" Height="13" Width="348" X="16" Y="92" Text="Specify the path that the application will write its logs to" />
+        <Control Id="txtRunHistoryDays" Type="Edit" Height="15" Width="35" X="98" Y="136"  Property="RUNHISTORYDAYS"/>
+        <Control Id="ckSaveRunHistory" Type="CheckBox" Height="18" Width="162" X="16" Y="155" Text="Save run history before clearing" CheckBoxValue="1" Property="SAVERUNHISTORY"/>
+      </Dialog>
+    </UI>
+  </Fragment>
+</Wix>

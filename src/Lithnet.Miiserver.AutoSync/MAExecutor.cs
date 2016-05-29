@@ -61,7 +61,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.controller = new MAController(ma);
             this.localOperationLock = new ManualResetEvent(true);
             MAExecutor.allMaLocalOperationLocks.Add(this.localOperationLock);
-            MAExecutor.SyncComplete += MAExecutor_SyncComplete;
+            MAExecutor.SyncComplete += this.MAExecutor_SyncComplete;
             this.SetupImportSchedule();
             this.SetupUnmanagedChangesCheckTimer();
         }
@@ -69,7 +69,7 @@ namespace Lithnet.Miiserver.AutoSync
         private void SetupUnmanagedChangesCheckTimer()
         {
             this.UnmanagedChangesCheckTimer = new System.Timers.Timer();
-            this.UnmanagedChangesCheckTimer.Elapsed += UnmanagedChangesCheckTimer_Elapsed;
+            this.UnmanagedChangesCheckTimer.Elapsed += this.UnmanagedChangesCheckTimer_Elapsed;
             this.UnmanagedChangesCheckTimer.AutoReset = true;
             this.UnmanagedChangesCheckTimer.Interval = Global.RandomizeOffset(Settings.UnmanagedChangesCheckInterval);
             this.UnmanagedChangesCheckTimer.Start();
@@ -88,7 +88,7 @@ namespace Lithnet.Miiserver.AutoSync
                     (this.ma.ImportAttributeFlows.Select(t => t.ImportFlows).Count() >= this.ma.ExportAttributeFlows.Select(t => t.ExportFlows).Count()))
                 {
                     this.ImportCheckTimer = new System.Timers.Timer();
-                    this.ImportCheckTimer.Elapsed += ImportCheckTimer_Elapsed;
+                    this.ImportCheckTimer.Elapsed += this.ImportCheckTimer_Elapsed;
                     int importSeconds = this.Configuration.AutoImportIntervalMinutes > 0 ? this.Configuration.AutoImportIntervalMinutes * 60 : MAExecutionTriggerDiscovery.GetTriggerInterval(this.ma);
                     this.ImportCheckTimer.Interval = Global.RandomizeOffset(importSeconds * 1000);
                     this.ImportCheckTimer.AutoReset = true;
@@ -141,7 +141,7 @@ namespace Lithnet.Miiserver.AutoSync
                 try
                 {
                     Logger.WriteLine("{0}: Registering execution trigger '{1}'", this.ma.Name, t.Name);
-                    t.TriggerExecution += notifier_TriggerExecution;
+                    t.TriggerExecution += this.notifier_TriggerExecution;
                     t.Start();
                 }
                 catch (Exception ex)
@@ -244,7 +244,7 @@ namespace Lithnet.Miiserver.AutoSync
                 // to avoid deadlock conditions
                 lock (MAExecutor.globalStaggeredExecutionLock)
                 {
-                    Thread.Sleep(Settings.ExecutionStaggerInterval);
+                    Thread.Sleep(Settings.ExecutionStaggerInterval * 1000);
                 }
 
                 if (this.ma.RunProfiles[e.RunProfileName].RunSteps.Any(t => t.IsImportStep))
@@ -278,7 +278,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 if (ex.InnerException is UnexpectedChangeException)
                 {
-                    ProcessUnexpectedChangeException((UnexpectedChangeException)ex.InnerException);
+                    this.ProcessUnexpectedChangeException((UnexpectedChangeException)ex.InnerException);
                 }
                 else
                 {
@@ -288,7 +288,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (UnexpectedChangeException ex)
             {
-                ProcessUnexpectedChangeException(ex);
+                this.ProcessUnexpectedChangeException(ex);
             }
             catch (Exception ex)
             {
@@ -649,19 +649,14 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void SendMail(RunDetails r)
         {
-            if (Settings.MailFrom == null || Settings.MailTo == null || Settings.MailServer == null)
+            if (!MAExecutor.ShouldSendMail(r))
             {
                 return;
             }
 
-            if (Settings.MailIgnoreReturnCodes != null && Settings.MailIgnoreReturnCodes.Contains(r.LastStepStatus, StringComparer.OrdinalIgnoreCase))
+            if (this.perProfileLastRunStatus.ContainsKey(r.RunProfileName))
             {
-                return;
-            }
-
-            if (perProfileLastRunStatus.ContainsKey(r.RunProfileName))
-            {
-                if (perProfileLastRunStatus[r.RunProfileName] == r.LastStepStatus)
+                if (this.perProfileLastRunStatus[r.RunProfileName] == r.LastStepStatus)
                 {
                     if (Settings.MailSendOncePerStateChange)
                     {
@@ -671,15 +666,55 @@ namespace Lithnet.Miiserver.AutoSync
                 }
                 else
                 {
-                    perProfileLastRunStatus[r.RunProfileName] = r.LastStepStatus;
+                    this.perProfileLastRunStatus[r.RunProfileName] = r.LastStepStatus;
                 }
             }
             else
             {
-                perProfileLastRunStatus.Add(r.RunProfileName, r.LastStepStatus);
+                this.perProfileLastRunStatus.Add(r.RunProfileName, r.LastStepStatus);
             }
 
             BuildAndSendMessage(r);
+        }
+
+        private static bool ShouldSendMail(RunDetails r)
+        {
+            if (!MAExecutor.CanSendMail())
+            {
+                return false;
+            }
+
+            if (Settings.MailIgnoreReturnCodes != null && Settings.MailIgnoreReturnCodes.Contains(r.LastStepStatus, StringComparer.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool CanSendMail()
+        {
+            if (!Settings.MailEnabled)
+            {
+                return false;
+            }
+
+            if (!Settings.UseAppConfigMailSettings)
+            {
+                if (Settings.MailFrom == null || Settings.MailTo == null || Settings.MailServer == null)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                if (Settings.MailTo == null)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private static void BuildAndSendMessage(RunDetails r)
@@ -691,15 +726,24 @@ namespace Lithnet.Miiserver.AutoSync
                     m.To.Add(address);
                 }
 
-                m.From = new MailAddress(Settings.MailFrom);
+                if (!Settings.UseAppConfigMailSettings)
+                {
+                    m.From = new MailAddress(Settings.MailFrom);
+                }
 
-                m.Subject = string.Format("{0} {1}: {2}", r.MAName, r.RunProfileName, r.LastStepStatus);
+                m.Subject = $"{r.MAName} {r.RunProfileName}: {r.LastStepStatus}";
                 m.IsBodyHtml = true;
                 m.Body = MessageBuilder.GetMessageBody(r);
 
                 using (SmtpClient client = new SmtpClient())
                 {
-                    client.Host = Settings.MailServer;
+
+                    if (!Settings.UseAppConfigMailSettings)
+                    {
+                        client.Host = Settings.MailServer;
+                        client.Port = Settings.MailServerPort;
+                    }
+
                     client.Send(m);
                 }
             }

@@ -61,7 +61,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public static bool operator ==(ExecutionParameters a, ExecutionParameters b)
         {
-            if (System.Object.ReferenceEquals(a, b))
+            if (Object.ReferenceEquals(a, b))
             {
                 return true;
             }

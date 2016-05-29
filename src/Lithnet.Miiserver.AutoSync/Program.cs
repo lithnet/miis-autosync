@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceProcess;
-using System.Text;
 using Lithnet.Miiserver.Client;
 using Lithnet.Logging;
 using System.IO;
@@ -13,6 +12,8 @@ using System.Timers;
 
 namespace Lithnet.Miiserver.AutoSync
 {
+    using System.Security.Principal;
+
     public static class Program
     {
         private static List<MAExecutor> maExecutors = new List<MAExecutor>();
@@ -26,46 +27,75 @@ namespace Lithnet.Miiserver.AutoSync
         {
             bool runService = args != null && args.Contains("/service");
             Logger.LogPath = Settings.LogFile;
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
             if (!runService)
             {
                 Logger.OutputToConsole = true;
             }
 
-
             if (runService)
             {
-                ServiceBase[] servicesToRun = new ServiceBase[]
+                try
                 {
-                    new AutoSyncService()
-                };
-
-                ServiceBase.Run(servicesToRun);
+                    Logger.WriteLine("Starting service base");
+                    ServiceBase[] servicesToRun = { new AutoSyncService() };
+                    ServiceBase.Run(servicesToRun);
+                    Logger.WriteLine("Exiting service");
+                }
+                catch (Exception ex)
+                {
+                    Logger.WriteException(ex);
+                    throw;
+                }
             }
             else
             {
+                Logger.WriteLine("Starting standalone process");
                 Start();
                 System.Threading.Thread.Sleep(System.Threading.Timeout.Infinite);
             }
         }
 
+        private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            Logger.WriteException((Exception)e.ExceptionObject);
+        }
+
         internal static void Start()
         {
-            if (Settings.RunHistoryNumberOfDaysToKeep > 0)
+            try
             {
-                Logger.WriteLine("Run history auto-cleanup enabled");
-                Program.runHistoryCleanupTimer = new Timer
+                if (!IsInFimAdminsGroup())
                 {
-                    AutoReset = true
-                };
+                    throw new UnauthorizedAccessException("The user must be a member of the FIMSyncAdmins group");
+                }
 
-                Program.runHistoryCleanupTimer.Elapsed += RunHistoryCleanupTimer_Elapsed;
-                Program.runHistoryCleanupTimer.Interval = TimeSpan.FromHours(8).TotalMilliseconds;
-                Program.runHistoryCleanupTimer.Start();
-                Program.ClearRunHistory();
+                if (Settings.RunHistoryNumberOfDaysToKeep > 0)
+                {
+                    Logger.WriteLine("Run history auto-cleanup enabled");
+                    Program.runHistoryCleanupTimer = new Timer
+                    {
+                        AutoReset = true
+                    };
+
+                    Program.runHistoryCleanupTimer.Elapsed += RunHistoryCleanupTimer_Elapsed;
+                    Program.runHistoryCleanupTimer.Interval = TimeSpan.FromHours(8).TotalMilliseconds;
+                    Program.runHistoryCleanupTimer.Start();
+                }
+
+                EnumerateMAs();
             }
+            catch (Exception ex)
+            {
+                Logger.WriteException(ex);
+                throw;
+            }
+        }
 
-            EnumerateMAs();
+        private static bool IsInFimAdminsGroup()
+        {
+            return SyncServer.IsAdmin();
         }
 
         private static void RunHistoryCleanupTimer_Elapsed(object sender, ElapsedEventArgs e)
@@ -83,7 +113,7 @@ namespace Lithnet.Miiserver.AutoSync
             Logger.WriteLine("Clearing run history older than {0} days", Settings.RunHistoryNumberOfDaysToKeep);
             DateTime clearBeforeDate = DateTime.UtcNow.AddDays(-Settings.RunHistoryNumberOfDaysToKeep);
 
-            if (Settings.RunHistorySavePath != null)
+            if (Settings.SaveRunHistory && Settings.RunHistorySavePath != null)
             {
                 string file = Path.Combine(Settings.RunHistorySavePath, string.Format("history-{0}.xml", DateTime.Now.ToString("yyyy-MM-ddThh.mm.ss")));
                 SyncServer.ClearRunHistory(clearBeforeDate, file);
@@ -97,7 +127,7 @@ namespace Lithnet.Miiserver.AutoSync
         public static void LoadAndStartMAs()
         {
             maExecutors = new List<MAExecutor>();
-            Lithnet.Logging.Logger.OutputToConsole = true;
+            Logger.OutputToConsole = true;
             EnumerateMAs();
         }
 
@@ -135,7 +165,7 @@ namespace Lithnet.Miiserver.AutoSync
                 }
             }
 
-            foreach (MAExecutor x in maExecutors)
+            foreach (MAExecutor x in Program.maExecutors)
             {
                 x.Start();
             }
@@ -143,7 +173,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static IEnumerable<object> GetMAConfigParameters(ManagementAgent ma)
         {
-            string expectedFileName = Path.Combine(Global.ScriptDirectory, $"Config-{Global.CleanMAName(ma.Name)}.ps1");
+            string expectedFileName = Path.Combine(Settings.ConfigPath, $"Config-{Global.CleanMAName(ma.Name)}.ps1");
             if (!File.Exists(expectedFileName))
             {
                 yield break;
@@ -152,7 +182,7 @@ namespace Lithnet.Miiserver.AutoSync
             Logger.WriteLine("{0}: Getting configuration from {1}", ma.Name, expectedFileName);
 
             PowerShell powershell = PowerShell.Create();
-            powershell.AddScript(System.IO.File.ReadAllText(expectedFileName));
+            powershell.AddScript(File.ReadAllText(expectedFileName));
             powershell.Invoke();
 
             if (powershell.Runspace.SessionStateProxy.InvokeCommand.GetCommand("Get-MAConfiguration", CommandTypes.All) == null)

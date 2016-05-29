@@ -21,7 +21,9 @@
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="CustomDialogs.wxs" />
+    <Compile Include="ConfigPathDialog.wxs" />
+    <Compile Include="MailSettingsDialog.wxs" />
+    <Compile Include="ServiceDetailsDialog.wxs" />
     <Compile Include="Components.wxs" />
     <Compile Include="Product.wxs" />
   </ItemGroup>

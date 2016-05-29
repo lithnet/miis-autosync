@@ -29,22 +29,30 @@
         <CreateFolder Directory="APPLOGDIR">
           <util:PermissionEx User="[SERVICE_USERNAME]" GenericAll="yes" />
         </CreateFolder>
-        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="ConfigPath" Type="string" Value="[CONFIGDIR]" />
 
+        <CreateFolder Directory="CONFIGDIR">
+          <util:PermissionEx User="[SERVICE_USERNAME]" GenericAll="yes" />
+        </CreateFolder>
+
+        <CreateFolder Directory="RUNHISTORYDIR">
+          <util:PermissionEx User="[SERVICE_USERNAME]" GenericAll="yes" />
+        </CreateFolder>
+        
+        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="ConfigPath" Type="string" Value="[CONFIGDIR]" />
+        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="LogPath" Type="string" Value="[APPLOGDIR]" />
+        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="RunHistoryPath" Type="string" Value="[RUNHISTORYDIR]" />
+        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="RunHistoryAge" Type="string" Value="[RUNHISTORYDAYS]" />
+        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="RunHistorySave" Type="string" Value="[SAVERUNHISTORY]" />
+        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="MailEnabled" Type="string" Value="[EMAIL_ENABLE]" />
+        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="MailTo" Type="string" Value="[MAIL_TO]" />
+        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="MailFrom" Type="string" Value="[MAIL_FROM]" />
+        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="MailServer" Type="string" Value="[MAIL_SERVER]" />
+        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="MailServerPort" Type="string" Value="[MAIL_SERVER_PORT]" />
       </Component>
 
       <Component Id="cmpb79b2c604b1748aa9606e987e86aad3a" Guid="*" Win64="yes">
-        <File Id="fil2fbf1906386e4df0a0fb6a5aa8c86dc7" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Lithnet.Miiserver.AutoSync.exe.config" />
+        <File Id="App.config" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Lithnet.Miiserver.AutoSync.exe.config" />
       </Component>
-      <!--<Component Id="cmp9dd8add400f84984af1aae73a3e33027" Guid="*" Win64="yes">
-        <File Id="fildc56e03c4167405b9970142148d2c84b" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Lithnet.Miiserver.Client.dll" />
-      </Component>
-      <Component Id="cmpb64af8d3558e474cb4abafb6a86c4c95" Guid="*" Win64="yes">
-        <File Id="fil9fbbd15a54394a42b971da7c81b974a9" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Lithnet.Logging.dll" />
-      </Component>
-      <Component Id="cmp4f1b2f80467447c7a19d67ba7526a520" Guid="*" Win64="yes">
-        <File Id="fil68b8bfb54b9f42919bb796335be9afac" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Lithnet.ResourceManagement.Client.dll" />
-      </Component>-->
     </DirectoryRef>
 
     <DirectoryRef Id="EXAMPLESDIR">
@@ -84,9 +92,6 @@
       <ComponentRef Id="EventSource"/>
       <ComponentRef Id="cmpb05fc8933594449d9aad05ca620a4331"/>
       <ComponentRef Id="cmpb79b2c604b1748aa9606e987e86aad3a"/>
-      <!--<ComponentRef Id="cmp9dd8add400f84984af1aae73a3e33027"/>
-      <ComponentRef Id="cmpb64af8d3558e474cb4abafb6a86c4c95"/>
-      <ComponentRef Id="cmp4f1b2f80467447c7a19d67ba7526a520"/>-->
     </ComponentGroup>
   </Fragment>
 </Wix>

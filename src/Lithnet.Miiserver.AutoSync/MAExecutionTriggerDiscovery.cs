@@ -37,11 +37,11 @@ namespace Lithnet.Miiserver.AutoSync
         {
             List<IMAExecutionTrigger> triggers = new List<IMAExecutionTrigger>();
 
-            foreach (string filename in Directory.EnumerateFiles(Global.ScriptDirectory, $"Trigger-{Global.CleanMAName(ma.Name)}-*.ps1", SearchOption.TopDirectoryOnly))
+            foreach (string filename in Directory.EnumerateFiles(Settings.ConfigPath, $"Trigger-{Global.CleanMAName(ma.Name)}-*.ps1", SearchOption.TopDirectoryOnly))
             {
                 PowerShellExecutionTrigger t = new PowerShellExecutionTrigger
                 {
-                    ScriptPath = Path.Combine(Global.ScriptDirectory, filename)
+                    ScriptPath = Path.Combine(Settings.ConfigPath, filename)
                 };
 
                 triggers.Add(t);

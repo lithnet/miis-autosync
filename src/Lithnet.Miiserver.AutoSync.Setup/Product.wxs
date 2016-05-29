@@ -4,12 +4,13 @@
   <Product Id="*"
            Name="Lithnet FIM/MIM AutoSync Service"
            Language="1033"
-           Version="1.0.5964"
+           Version="1.0.5990"
            Manufacturer="Lithnet"
            UpgradeCode="028A57DF-28CE-47B0-9B3E-18B523A643D4">
     <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" Platform="x64" />
     <Media Id="1" Cabinet="Cab1.cab" EmbedCab="yes" />
-    <MajorUpgrade Schedule="afterInstallInitialize"
+    
+    <MajorUpgrade Schedule="afterInstallInitialize" AllowSameVersionUpgrades="yes"
                 DowngradeErrorMessage="A later version of [ProductName] is already installed" />
 
     <PropertyRef Id="WIX_IS_NETFRAMEWORK_45_OR_LATER_INSTALLED"/>
@@ -25,15 +26,8 @@
                       Root="HKLM"
                       Key="SYSTEM\CurrentControlSet\services\FIMSynchronizationService\Parameters"
                       Name="Path"
-                      Type="directory" />
-    </Property>
-
-    <Property Id="SERVICE_USERNAME" Secure="yes">
-      <RegistrySearch Id="ExistingServiceAccount"
-                      Root="HKLM"
-                      Key="SYSTEM\CurrentControlSet\services\miisautosync"
-                      Name="ObjectName"
-                      Type="raw" />
+                      Type="directory"
+                      Win64="yes" />
     </Property>
 
     <Property Id="SYNCVERSION" Secure="yes">
@@ -42,6 +36,106 @@
           <FileSearch Name="miiserver.exe" MinVersion="4.1.3441.0"/>
         </DirectorySearch>
       </DirectorySearch>
+    </Property>
+    
+    <Property Id="SERVICE_USERNAME" Secure="yes">
+      <RegistrySearch Id="ExistingServiceAccount"
+                      Root="HKLM"
+                      Key="SYSTEM\CurrentControlSet\services\miisautosync"
+                      Name="ObjectName"
+                      Type="raw" 
+                      Win64="yes"/>
+    </Property>
+
+    <Property Id="CONFIGDIR" Secure="yes">
+      <RegistrySearch Id="cc2822e81fba442fb1a17ea49a649a4d"
+                      Root="HKLM"
+                      Key="Software\Lithnet\MiisAutoSync"
+                      Name="ConfigPath"
+                      Type="raw" 
+                      Win64="yes"/>
+    </Property>
+
+    <Property Id="APPLOGDIR" Secure="yes">
+      <RegistrySearch Id="e7c30a80b48c48a3853e0ad02792c90a"
+                      Root="HKLM"
+                      Key="Software\Lithnet\MiisAutoSync"
+                      Name="LogPath"
+                      Type="raw"
+                      Win64="yes" />
+    </Property>
+
+
+    <Property Id="RUNHISTORYDIR" Secure="yes">
+      <RegistrySearch Id="d14b322eac5649f3ade406e1b9ff5cf3"
+                      Root="HKLM"
+                      Key="Software\Lithnet\MiisAutoSync"
+                      Name="RunHistoryPath"
+                      Type="raw"
+                      Win64="yes" />
+    </Property>
+
+    <Property Id="RUNHISTORYDAYS" Secure="yes">
+      <RegistrySearch Id="c29341e6c75843ea9ee1a7a6f2739102"
+                      Root="HKLM"
+                      Key="Software\Lithnet\MiisAutoSync"
+                      Name="RunHistoryAge"
+                      Type="raw"
+                      Win64="yes" />
+    </Property>
+
+    <Property Id="SAVERUNHISTORY" Secure="yes">
+      <RegistrySearch Id="c29d96e46aba417eb4601e3a91551109"
+                      Root="HKLM"
+                      Key="Software\Lithnet\MiisAutoSync"
+                      Name="RunHistorySave"
+                      Type="raw"
+                      Win64="yes" />
+    </Property>
+
+    <Property Id="EMAIL_ENABLE" Secure="yes">
+      <RegistrySearch Id="cb93738d9ba246d0974f7faa3c8cb099"
+                      Root="HKLM"
+                      Key="Software\Lithnet\MiisAutoSync"
+                      Name="MailEnabled"
+                      Type="raw"
+                      Win64="yes" />
+    </Property>
+
+    <Property Id="MAIL_TO" Secure="yes">
+      <RegistrySearch Id="d51a36347152436dbbcace3c00edf518"
+                      Root="HKLM"
+                      Key="Software\Lithnet\MiisAutoSync"
+                      Name="MailTo"
+                      Type="raw"
+                      Win64="yes" />
+    </Property>
+
+    <Property Id="MAIL_FROM" Secure="yes">
+      <RegistrySearch Id="ec3c796787d14dd099ce8448feb5a46d"
+                      Root="HKLM"
+                      Key="Software\Lithnet\MiisAutoSync"
+                      Name="MailFrom"
+                      Type="raw" 
+                      Win64="yes"/>
+    </Property>
+
+    <Property Id="MAIL_SERVER" Secure="yes">
+      <RegistrySearch Id="e30fa5feb68d4c57b6e75f69ab2438aa"
+                      Root="HKLM"
+                      Key="Software\Lithnet\MiisAutoSync"
+                      Name="MailServer"
+                      Type="raw" 
+                      Win64="yes"/>
+    </Property>
+
+    <Property Id="MAIL_SERVER_PORT" Secure="yes">
+      <RegistrySearch Id="fbf44c2819544e7b8e9b7d0628a12304"
+                      Root="HKLM"
+                      Key="Software\Lithnet\MiisAutoSync"
+                      Name="MailServerPort"
+                      Type="raw" 
+                      Win64="yes" />
     </Property>
 
     <Condition Message="This application requires the Forefront Identity Manager 2010 R2 4.1.3441 or later to be installed">
@@ -57,6 +151,7 @@
               <Directory Id="EXAMPLESDIR" Name="Examples"/>
             </Directory>
             <Directory Id="APPLOGDIR" Name="Logs"/>
+            <Directory Id="RUNHISTORYDIR" Name="RunHistory"/>
           </Directory>
         </Directory>
       </Directory>
@@ -79,10 +174,12 @@
 
       <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="ServiceDetailsDialog">NOT Installed</Publish>
       <Publish Dialog="ServiceDetailsDialog" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="1">NOT INSTALLED</Publish>
-      <Publish Dialog="ServiceDetailsDialog" Control="Next" Event="NewDialog" Value="ConfigPathDialog" Order="1">NOT INSTALLED</Publish>
+      <Publish Dialog="ServiceDetailsDialog" Control="Next" Event="NewDialog" Value="ConfigPathDialog" Order="4">PASSWORD_COMPARE = "1"</Publish>
       <Publish Dialog="ConfigPathDialog" Control="Back" Event="NewDialog" Value="ServiceDetailsDialog" Order="1"></Publish>
-      <Publish Dialog="ConfigPathDialog" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="1"></Publish>
-      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="ConfigPathDialog" Order="1"></Publish>
+      <Publish Dialog="ConfigPathDialog" Control="Next" Event="NewDialog" Value="MailSettingsDialog" Order="1"></Publish>
+      <Publish Dialog="MailSettingsDialog" Control="Back" Event="NewDialog" Value="ConfigPathDialog" Order="1"></Publish>
+      <Publish Dialog="MailSettingsDialog" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="1"></Publish>
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MailSettingsDialog" Order="1"></Publish>
       <Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="999">1</Publish>
     </UI>
 
