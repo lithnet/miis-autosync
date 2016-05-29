@@ -157,7 +157,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string value = Settings.BaseKey.GetValue("MailFrom") as string;
+                string value = Settings.BaseKey.GetValue("IgnoreReturnCodes") as string;
 
                 return value?.Split(';') ?? new[] { "completed-no-objects", "success" };
             }
