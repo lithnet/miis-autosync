@@ -27,11 +27,11 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string logFile = ConfigurationManager.AppSettings["logFile"];
+                string logPath = Settings.BaseKey.GetValue("LogPath") as string;
 
-                if (logFile != null)
+                if (logPath != null)
                 {
-                    return logFile;
+                    return Path.Combine(logPath, "autosync.log");
                 }
 
                 string codeBase = Assembly.GetExecutingAssembly().CodeBase;
