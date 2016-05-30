@@ -13,9 +13,9 @@
     <MajorUpgrade Schedule="afterInstallInitialize" AllowSameVersionUpgrades="yes"
                 DowngradeErrorMessage="A later version of [ProductName] is already installed" />
 
-    <PropertyRef Id="WIX_IS_NETFRAMEWORK_45_OR_LATER_INSTALLED"/>
-    <Condition Message="This application requires .NET Framework 4.5. Please install the .NET Framework then run this installer again.">
-      <![CDATA[Installed OR WIX_IS_NETFRAMEWORK_45_OR_LATER_INSTALLED]]>
+    <PropertyRef Id="WIX_IS_NETFRAMEWORK_451_OR_LATER_INSTALLED"/>
+    <Condition Message="This application requires .NET Framework 4.5.1 Please install the .NET Framework then run this installer again.">
+      <![CDATA[Installed OR WIX_IS_NETFRAMEWORK_451_OR_LATER_INSTALLED]]>
     </Condition>
 
     <Property Id="SERVICE_PASSWORD" Hidden="yes" Secure="yes"/>

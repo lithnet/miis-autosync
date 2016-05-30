@@ -9,8 +9,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Lithnet.Miiserver.AutoSync</RootNamespace>
     <AssemblyName>Lithnet.Miiserver.AutoSync</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <AllowedReferenceRelatedFileExtensions>.pdb</AllowedReferenceRelatedFileExtensions>
     <TargetFrameworkProfile />
     <NuGetPackageImportStamp>
@@ -59,8 +60,7 @@
     </Reference>
     <Reference Include="Microsoft.ResourceManagement, Version=4.1.3653.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\lithnetrmc\lib\Microsoft.ResourceManagement.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\..\..\lib\Microsoft.ResourceManagement.dll</HintPath>
     </Reference>
     <Reference Include="PreMailer.Net, Version=1.5.3.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\PreMailer.Net.1.5.3\lib\net45\PreMailer.Net.dll</HintPath>
