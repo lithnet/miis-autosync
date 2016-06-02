@@ -53,6 +53,10 @@
       <Component Id="cmpb79b2c604b1748aa9606e987e86aad3a" Guid="*" Win64="yes">
         <File Id="App.config" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Lithnet.Miiserver.AutoSync.exe.config" />
       </Component>
+
+      <Component Id="cmp6a821b6b997b4f3086f29128770a5ca8" Guid="*" Win64="yes">
+        <File Id="fil49a4372c2d1a48ff8229e6e7194a95b2" KeyPath="yes" Source="readme.txt" />
+      </Component>
     </DirectoryRef>
 
     <DirectoryRef Id="EXAMPLESDIR">
@@ -92,6 +96,7 @@
       <ComponentRef Id="EventSource"/>
       <ComponentRef Id="cmpb05fc8933594449d9aad05ca620a4331"/>
       <ComponentRef Id="cmpb79b2c604b1748aa9606e987e86aad3a"/>
+      <ComponentRef Id="cmp6a821b6b997b4f3086f29128770a5ca8"/>
     </ComponentGroup>
   </Fragment>
 </Wix>

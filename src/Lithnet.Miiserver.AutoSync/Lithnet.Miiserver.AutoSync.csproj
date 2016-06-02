@@ -41,6 +41,9 @@
   <PropertyGroup>
     <StartupObject>Lithnet.Miiserver.AutoSync.Program</StartupObject>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>autosync.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="AngleSharp, Version=0.9.5.41771, Culture=neutral, PublicKeyToken=e83494dcdc6d31ea, processorArchitecture=MSIL">
       <HintPath>..\packages\AngleSharp.0.9.5\lib\net45\AngleSharp.dll</HintPath>
@@ -144,6 +147,8 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="autosync.ico" />
+    <Resource Include="autosync.png" />
     <Content Include="FodyWeavers.xml" />
     <EmbeddedResource Include="Resources\ErrorTableFragment.html" />
     <EmbeddedResource Include="Resources\StepTableFragment.html" />
