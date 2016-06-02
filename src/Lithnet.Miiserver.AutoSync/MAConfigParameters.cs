@@ -3,16 +3,18 @@ using System.Collections;
 
 namespace Lithnet.Miiserver.AutoSync
 {
+    using System.Text;
+
     public class MAConfigParameters
     {
         public string ConfirmingImportRunProfileName { get; set; }
-        
+
         public string DeltaSyncRunProfileName { get; set; }
-        
+
         public string FullSyncRunProfileName { get; set; }
-        
+
         public string FullImportRunProfileName { get; set; }
-        
+
         public string ScheduledImportRunProfileName { get; set; }
 
         public string DeltaImportRunProfileName { get; set; }
@@ -24,7 +26,7 @@ namespace Lithnet.Miiserver.AutoSync
         public AutoImportScheduling AutoImportScheduling { get; set; }
 
         public bool DisableDefaultTriggers { get; set; }
-        
+
         public int AutoImportIntervalMinutes { get; set; }
 
         public MAConfigParameters()
@@ -80,6 +82,34 @@ namespace Lithnet.Miiserver.AutoSync
                 case MARunProfileType.None:
                     throw new ArgumentException("Unknown run profile type");
             }
+        }
+
+        public override string ToString()
+        {
+            StringBuilder builder = new StringBuilder();
+
+            if (this.Disabled)
+            {
+                builder.AppendLine($"Disabled: {this.Disabled}");
+                return builder.ToString();
+            }
+
+            builder.AppendLine($"{nameof(this.ConfirmingImportRunProfileName)}: {this.ConfirmingImportRunProfileName}");
+            builder.AppendLine($"{nameof(this.DeltaImportRunProfileName)}: {this.DeltaImportRunProfileName}");
+            builder.AppendLine($"{nameof(this.FullImportRunProfileName)}: {this.FullImportRunProfileName}");
+            builder.AppendLine($"{nameof(this.DeltaSyncRunProfileName)}: {this.DeltaSyncRunProfileName}");
+            builder.AppendLine($"{nameof(this.FullSyncRunProfileName)}: {this.FullSyncRunProfileName}");
+            builder.AppendLine($"{nameof(this.ExportRunProfileName)}: {this.ExportRunProfileName}");
+            builder.AppendLine($"{nameof(this.ScheduledImportRunProfileName)}: {this.ScheduledImportRunProfileName}");
+            builder.AppendLine($"{nameof(this.AutoImportScheduling)}: {this.AutoImportScheduling}");
+            builder.AppendLine($"{nameof(this.DisableDefaultTriggers)}: {this.DisableDefaultTriggers}");
+            builder.AppendLine($"{nameof(this.AutoImportIntervalMinutes)}: {this.AutoImportIntervalMinutes}");
+            builder.AppendLine("--- Capabilities ---");
+            builder.AppendLine($"{nameof(this.CanExport)}: {this.CanExport}");
+            builder.AppendLine($"{nameof(this.CanImport)}: {this.CanImport}");
+            builder.AppendLine($"{nameof(this.CanAutoRun)}: {this.CanAutoRun}");
+
+            return builder.ToString();
         }
     }
 }

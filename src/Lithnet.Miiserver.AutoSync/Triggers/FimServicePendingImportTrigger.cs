@@ -91,5 +91,10 @@ namespace Lithnet.Miiserver.AutoSync
         public string Name => "FIM Service pending changes";
 
         public event ExecutionTriggerEventHandler TriggerExecution;
+
+        public override string ToString()
+        {
+            return $"{this.Name}: {this.fimSvcHostName}";
+        }
     }
 }

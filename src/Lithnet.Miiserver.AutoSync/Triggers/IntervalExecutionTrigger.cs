@@ -53,6 +53,11 @@ namespace Lithnet.Miiserver.AutoSync
 
         public string Name => $"{this.TriggerInterval} second interval";
 
+        public override string ToString()
+        {
+            return $"{this.Name}";
+        }
+
         public event ExecutionTriggerEventHandler TriggerExecution;
     }
 }

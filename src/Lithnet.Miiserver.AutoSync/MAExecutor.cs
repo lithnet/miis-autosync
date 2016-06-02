@@ -10,6 +10,8 @@ using System.Net.Mail;
 
 namespace Lithnet.Miiserver.AutoSync
 {
+    using System.Text;
+
     public class MAExecutor
     {
         protected static object GlobalStaggeredExecutionLock;
@@ -387,7 +389,13 @@ namespace Lithnet.Miiserver.AutoSync
                 throw new Exception("Cannot start executor as it is disabled");
             }
 
+            Logger.WriteSeparatorLine('-');
+
             Logger.WriteLine("{0}: Starting executor", this.ma.Name);
+
+            Logger.WriteRaw($"{this}\n");
+
+            Logger.WriteSeparatorLine('-');
 
             Task t = new Task(() =>
             {
@@ -456,7 +464,7 @@ namespace Lithnet.Miiserver.AutoSync
                     try
                     {
                         this.ExecutingRunProfile = action.RunProfileName;
-                       
+
                         if (this.ma.RunProfiles[action.RunProfileName].RunSteps.Any(t => t.IsSyncStep))
                         {
                             lock (MAExecutor.GlobalSynchronizationStepLock)
@@ -598,7 +606,7 @@ namespace Lithnet.Miiserver.AutoSync
                 }
 
                 if (s.StepDefinition.IsImportStep)
-                { 
+                {
                     // If we get here, an import step has been found that it more recent than any sync step
                     // that may be in the run profile
                     return s.StagingCounters?.HasChanges ?? false;
@@ -746,6 +754,40 @@ namespace Lithnet.Miiserver.AutoSync
                     client.Send(m);
                 }
             }
+        }
+
+        public override string ToString()
+        {
+            StringBuilder builder = new StringBuilder();
+
+            builder.AppendLine("--- Configuration ---");
+            builder.AppendLine(this.Configuration.ToString());
+
+            if (this.importCheckTimer?.Interval > 0 || this.Configuration.AutoImportScheduling != AutoImportScheduling.Disabled)
+            {
+                builder.AppendLine("--- Schedules ---");
+
+                if (this.importCheckTimer?.Interval > 0)
+                {
+                    builder.AppendLine($"Maximum import interval: {new TimeSpan(0, 0, 0, 0, (int)this.importCheckTimer.Interval)}");
+                }
+
+                if (this.Configuration.AutoImportScheduling != AutoImportScheduling.Disabled && this.Configuration.AutoImportIntervalMinutes > 0)
+                {
+                    builder.AppendLine($"Scheduled import interval: {new TimeSpan(0, this.Configuration.AutoImportIntervalMinutes, 0)}");
+                }
+            }
+
+            builder.AppendLine();
+
+            builder.AppendLine("--- Triggers ---");
+
+            foreach (IMAExecutionTrigger trigger in this.ExecutionTriggers)
+            {
+                Logger.WriteLine(trigger.ToString());
+            }
+
+            return builder.ToString();
         }
     }
 }

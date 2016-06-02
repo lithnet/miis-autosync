@@ -12,7 +12,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public string ScriptPath { get; set; }
 
-        public string Name => System.IO.Path.GetFileName(this.ScriptPath);
+        public string Name => $"PowerShell: {System.IO.Path.GetFileName(this.ScriptPath)}";
 
         public event ExecutionTriggerEventHandler TriggerExecution;
 
@@ -89,6 +89,11 @@ namespace Lithnet.Miiserver.AutoSync
             ExecutionTriggerEventHandler registeredHandlers = this.TriggerExecution;
 
             registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(p));
+        }
+
+        public override string ToString()
+        {
+            return $"{this.Name}";
         }
     }
 }

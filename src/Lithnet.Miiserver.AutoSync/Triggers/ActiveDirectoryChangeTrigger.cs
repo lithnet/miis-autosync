@@ -232,5 +232,10 @@ namespace Lithnet.Miiserver.AutoSync
         }
 
         public string Name => "AD change detection";
+
+        public override string ToString()
+        {
+            return $"{this.Name}: {this.config?.HostName}";
+        }
     }
 }

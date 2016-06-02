@@ -69,51 +69,59 @@ namespace Lithnet.Miiserver.AutoSync
 
             return triggers;
         }
-
+        
         internal static int GetTriggerInterval(ManagementAgent ma)
         {
-            IEnumerable<RunDetails> rh = ma.GetRunHistory(200);
-
             int deltaCount = 0;
             int deltaTotalTime = 0;
 
             int fullCount = 0;
             int fullTotalTime = 0;
 
-            foreach (RunDetails rd in rh)
+            try
             {
-                if (rd.EndTime == null || rd.StartTime == null || rd.StepDetails == null)
-                {
-                    continue;
-                }
+                IList<RunDetails> rh = ma.GetRunHistory(200).ToList();
 
-                foreach (StepDetails sd in rd.StepDetails)
+                foreach (RunDetails rd in rh)
                 {
-                    if (sd.StepDefinition == null || sd.EndDate == null || sd.StartDate == null)
+                    if (rd.EndTime == null || rd.StartTime == null || rd.StepDetails == null)
                     {
                         continue;
                     }
 
-                    if (sd.StepDefinition.Type == RunStepType.DeltaImport)
+                    foreach (StepDetails sd in rd.StepDetails)
                     {
-                        TimeSpan ts = sd.EndDate.Value - sd.StartDate.Value;
+                        if (sd.StepDefinition == null || sd.EndDate == null || sd.StartDate == null)
+                        {
+                            continue;
+                        }
 
-                        deltaCount++;
-                        deltaTotalTime = deltaTotalTime + (int)ts.TotalSeconds;
+                        if (sd.StepDefinition.Type == RunStepType.DeltaImport)
+                        {
+                            TimeSpan ts = sd.EndDate.Value - sd.StartDate.Value;
+
+                            deltaCount++;
+                            deltaTotalTime = deltaTotalTime + (int)ts.TotalSeconds;
+                        }
+                        else if (sd.StepDefinition.Type == RunStepType.FullImport)
+                        {
+                            TimeSpan ts = sd.EndDate.Value - sd.StartDate.Value;
+
+                            fullCount++;
+                            fullTotalTime = fullTotalTime + (int)ts.TotalSeconds;
+                        }
                     }
-                    else if (sd.StepDefinition.Type == RunStepType.FullImport)
-                    {
-                        TimeSpan ts = sd.EndDate.Value - sd.StartDate.Value;
 
-                        fullCount++;
-                        fullTotalTime = fullTotalTime + (int)ts.TotalSeconds;
+                    if (deltaCount > 50)
+                    {
+                        break;
                     }
                 }
-
-                if (deltaCount > 50)
-                {
-                    break;
-                }
+            }
+            catch (XmlException ex)
+            {
+                Logger.WriteLine("There was an error searching the run history. The run history may be corrupted. Using default intervals");
+                Logger.WriteException(ex);
             }
 
             if (deltaCount == 0 && fullCount > 0)
