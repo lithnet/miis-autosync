@@ -85,6 +85,7 @@
   <ItemGroup>
     <Compile Include="ADListenerConfiguration.cs" />
     <Compile Include="Enums\AutoImportScheduling.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="MessageBuilder.cs" />
     <Compile Include="PersistentSearch\CallBackEventBridge.cs" />
     <Compile Include="MAController.cs" />

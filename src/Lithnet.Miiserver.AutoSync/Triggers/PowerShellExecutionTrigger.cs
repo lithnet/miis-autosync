@@ -34,10 +34,13 @@ namespace Lithnet.Miiserver.AutoSync
 
                     while (this.run)
                     {
+                        powershell.Commands.Clear();
                         powershell.AddCommand("Get-RunProfileToExecute");
 
                         foreach (PSObject result in powershell.Invoke())
                         {
+                            powershell.ThrowOnPipelineError();
+
                             string runProfileName = result.BaseObject as string;
 
                             if (runProfileName != null)

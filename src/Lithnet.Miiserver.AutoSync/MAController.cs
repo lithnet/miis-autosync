@@ -68,6 +68,8 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 foreach (PSObject result in this.powershell.Invoke())
                 {
+                    this.powershell.ThrowOnPipelineError();
+
                     bool? res = result.BaseObject as bool?;
 
                     if (res != null)
@@ -119,6 +121,7 @@ namespace Lithnet.Miiserver.AutoSync
             try
             {
                 this.powershell.Invoke();
+                this.powershell.ThrowOnPipelineError();
             }
             catch (RuntimeException ex)
             {

@@ -14,13 +14,9 @@ namespace Lithnet.Miiserver.AutoSync
 
         public string RunProfileName { get; set; }
 
-        private double RemainingMiliseconds { get; set; }
+        private double RemainingMilliseconds { get; set; }
 
-        public ScheduledExecutionTrigger()
-        {
-        }
-
-        private void SetRemainingMiliseconds()
+        private void SetRemainingMilliseconds()
         {
             if (this.Interval.TotalSeconds < 1)
             {
@@ -41,7 +37,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
 
             Logger.WriteLine("Scheduling event for " + triggerTime, LogLevel.Debug);
-            this.RemainingMiliseconds = (triggerTime - now).TotalMilliseconds;
+            this.RemainingMilliseconds = (triggerTime - now).TotalMilliseconds;
         }
 
         private void checkTimer_Elapsed(object sender, ElapsedEventArgs e)
@@ -55,10 +51,10 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void Start()
         {
-            this.SetRemainingMiliseconds();
+            this.SetRemainingMilliseconds();
             this.checkTimer = new Timer
             {
-                Interval = this.RemainingMiliseconds,
+                Interval = this.RemainingMilliseconds,
                 AutoReset = false
             };
 
