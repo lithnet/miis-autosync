@@ -1,5 +1,5 @@
-![](https://github.com/lithnet/miis-autosync/wiki/images/change-sync.png)
-# miis-autosync 
+![Icon](https://github.com/lithnet/miis-autosync/wiki/images/change-sync.png)
+### miis-autosync 
 Lithnet FIM/MIM AutoSync Service
 
 
