@@ -31,6 +31,11 @@ namespace Lithnet.Miiserver.AutoSync
             return cleanName;
         }
 
+        public static int RandomizeOffset(double number)
+        {
+            return RandomizeOffset((int)number, 10);
+        }
+
         public static int RandomizeOffset(int number)
         {
             return RandomizeOffset(number, 10);

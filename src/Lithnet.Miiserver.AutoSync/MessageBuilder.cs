@@ -208,14 +208,14 @@ namespace Lithnet.Miiserver.AutoSync
             IEnumerable<MAObjectError> errors;
             int remainingErrors = 0;
 
-            if (Settings.MailMaxErrorItems <= 0 || d.MADiscoveryErrors.Count <= Settings.MailMaxErrorItems)
+            if (Settings.MailMaxErrors <= 0 || d.MADiscoveryErrors.Count <= Settings.MailMaxErrors)
             {
                 errors = d.MADiscoveryErrors;
             }
             else
             {
-                errors = d.MADiscoveryErrors.Take(Settings.MailMaxErrorItems);
-                remainingErrors = d.MADiscoveryErrors.Count - Settings.MailMaxErrorItems;
+                errors = d.MADiscoveryErrors.Take(Settings.MailMaxErrors);
+                remainingErrors = d.MADiscoveryErrors.Count - Settings.MailMaxErrors;
             }
 
             StringBuilder errorsBuilder = new StringBuilder();
@@ -278,14 +278,14 @@ namespace Lithnet.Miiserver.AutoSync
             IEnumerable<ImportError> errors;
             int remainingErrors = 0;
 
-            if (Settings.MailMaxErrorItems <= 0 || d.SynchronizationErrors.ImportErrors.Count <= Settings.MailMaxErrorItems)
+            if (Settings.MailMaxErrors <= 0 || d.SynchronizationErrors.ImportErrors.Count <= Settings.MailMaxErrors)
             {
                 errors = d.SynchronizationErrors.ImportErrors;
             }
             else
             {
-                errors = d.SynchronizationErrors.ImportErrors.Take(Settings.MailMaxErrorItems);
-                remainingErrors = d.SynchronizationErrors.ImportErrors.Count - Settings.MailMaxErrorItems;
+                errors = d.SynchronizationErrors.ImportErrors.Take(Settings.MailMaxErrors);
+                remainingErrors = d.SynchronizationErrors.ImportErrors.Count - Settings.MailMaxErrors;
             }
 
             StringBuilder errorsBuilder = new StringBuilder();
@@ -331,14 +331,14 @@ namespace Lithnet.Miiserver.AutoSync
             IEnumerable<ExportError> errors;
             int remainingErrors = 0;
 
-            if (Settings.MailMaxErrorItems <= 0 || d.SynchronizationErrors.ExportErrors.Count <= Settings.MailMaxErrorItems)
+            if (Settings.MailMaxErrors <= 0 || d.SynchronizationErrors.ExportErrors.Count <= Settings.MailMaxErrors)
             {
                 errors = d.SynchronizationErrors.ExportErrors;
             }
             else
             {
-                errors = d.SynchronizationErrors.ExportErrors.Take(Settings.MailMaxErrorItems);
-                remainingErrors = d.SynchronizationErrors.ExportErrors.Count - Settings.MailMaxErrorItems;
+                errors = d.SynchronizationErrors.ExportErrors.Take(Settings.MailMaxErrors);
+                remainingErrors = d.SynchronizationErrors.ExportErrors.Count - Settings.MailMaxErrors;
             }
 
             StringBuilder errorsBuilder = new StringBuilder();

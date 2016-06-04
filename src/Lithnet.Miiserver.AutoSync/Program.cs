@@ -24,7 +24,7 @@ namespace Lithnet.Miiserver.AutoSync
         public static void Main(string[] args)
         {
             bool runService = args != null && args.Contains("/service");
-            Logger.LogPath = Settings.LogFile;
+            Logger.LogPath = Settings.LogPath;
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
             if (!runService)
@@ -69,7 +69,12 @@ namespace Lithnet.Miiserver.AutoSync
                     throw new UnauthorizedAccessException("The user must be a member of the FIMSyncAdmins group");
                 }
 
-                if (Settings.RunHistoryNumberOfDaysToKeep > 0)
+                Logger.WriteSeparatorLine('-');
+                Logger.WriteLine("--- Global settings ---");
+                Logger.WriteLine(Settings.GetSettingsString());
+                Logger.WriteSeparatorLine('-');
+                
+                if (Settings.RunHistoryAge > 0)
                 {
                     Logger.WriteLine("Run history auto-cleanup enabled");
                     Program.runHistoryCleanupTimer = new Timer
@@ -103,17 +108,17 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static void ClearRunHistory()
         {
-            if (Settings.RunHistoryNumberOfDaysToKeep <= 0)
+            if (Settings.RunHistoryAge <= 0)
             {
                 return;
             }
 
-            Logger.WriteLine("Clearing run history older than {0} days", Settings.RunHistoryNumberOfDaysToKeep);
-            DateTime clearBeforeDate = DateTime.UtcNow.AddDays(-Settings.RunHistoryNumberOfDaysToKeep);
+            Logger.WriteLine("Clearing run history older than {0} days", Settings.RunHistoryAge);
+            DateTime clearBeforeDate = DateTime.UtcNow.AddDays(-Settings.RunHistoryAge);
 
-            if (Settings.SaveRunHistory && Settings.RunHistorySavePath != null)
+            if (Settings.RunHistorySave && Settings.RunHistoryPath != null)
             {
-                string file = Path.Combine(Settings.RunHistorySavePath, $"history-{DateTime.Now.ToString("yyyy-MM-ddThh.mm.ss")}.xml");
+                string file = Path.Combine(Settings.RunHistoryPath, $"history-{DateTime.Now.ToString("yyyy-MM-ddThh.mm.ss")}.xml");
                 SyncServer.ClearRunHistory(clearBeforeDate, file);
             }
             else

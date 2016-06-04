@@ -6,6 +6,8 @@ using Microsoft.Win32;
 
 namespace Lithnet.Miiserver.AutoSync
 {
+    using System.Text;
+
     internal static class Settings
     {
         private static RegistryKey key;
@@ -23,7 +25,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public static string LogFile
+        public static string LogPath
         {
             get
             {
@@ -52,7 +54,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public static int MailMaxErrorItems
+        public static int MailMaxErrors
         {
             get
             {
@@ -64,7 +66,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public static int RunHistoryNumberOfDaysToKeep
+        public static int RunHistoryAge
         {
             get
             {
@@ -76,45 +78,45 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public static int ExecutionStaggerInterval
+        public static TimeSpan ExecutionStaggerInterval
         {
             get
             {
                 string s = Settings.BaseKey.GetValue("ExecutionStaggerInterval") as string;
 
-                int value;
+                int seconds;
 
-                if (int.TryParse(s, out value))
+                if (int.TryParse(s, out seconds))
                 {
-                    return value >= 1 ? value : 1;
+                    return new TimeSpan(0, 0, seconds >= 1 ? seconds : 1);
                 }
                 else
                 {
-                    return 5;
+                    return new TimeSpan(0, 0, 5);
                 }
             }
         }
 
-        public static int UnmanagedChangesCheckInterval
+        public static TimeSpan UnmanagedChangesCheckInterval
         {
             get
             {
-                string s = Settings.BaseKey.GetValue("UnmanagedChangesCheckIntervalMinutes") as string;
+                string s = Settings.BaseKey.GetValue("UnmanagedChangesCheckInterval") as string;
 
-                int value;
+                int seconds;
 
-                if (int.TryParse(s, out value))
+                if (int.TryParse(s, out seconds))
                 {
-                    return value * 60 * 1000;
+                    return new TimeSpan(0, 0, seconds > 0 ? seconds : 3600);
                 }
                 else
                 {
-                    return 60 * 60 * 1000;
+                    return new TimeSpan(0, 60, 0);
                 }
             }
         }
 
-        public static string RunHistorySavePath => Settings.BaseKey.GetValue("RunHistoryPath") as string;
+        public static string RunHistoryPath => Settings.BaseKey.GetValue("RunHistoryPath") as string;
 
         public static string MailServer => Settings.BaseKey.GetValue("MailServer") as string;
 
@@ -139,7 +141,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public static bool MailSendOncePerStateChange => Settings.BaseKey.GetValue("MailSendOncePerStateChange") as string != "0";
 
-        public static bool SaveRunHistory => Settings.BaseKey.GetValue("RunHistorySave") as string == "1";
+        public static bool RunHistorySave => Settings.BaseKey.GetValue("RunHistorySave") as string == "1";
 
         public static bool MailEnabled => Settings.BaseKey.GetValue("MailEnabled") as string == "1";
 
@@ -153,10 +155,34 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string value = Settings.BaseKey.GetValue("IgnoreReturnCodes") as string;
+                string value = Settings.BaseKey.GetValue("MailIgnoreReturnCodes") as string;
 
                 return value?.Split(';') ?? new[] { "completed-no-objects", "success" };
             }
+        }
+
+        public static string GetSettingsString()
+        {
+            StringBuilder builder = new StringBuilder();
+
+            builder.AppendLine($"{nameof(Settings.ConfigPath)}: {Settings.ConfigPath}");
+            builder.AppendLine($"{nameof(Settings.LogPath)}: {Settings.LogPath}");
+            builder.AppendLine($"{nameof(Settings.MailEnabled)}: {Settings.MailEnabled}");
+            builder.AppendLine($"{nameof(Settings.UseAppConfigMailSettings)}: {Settings.UseAppConfigMailSettings}");
+            builder.AppendLine($"{nameof(Settings.MailFrom)}: {Settings.MailFrom}");
+            builder.AppendLine($"{nameof(Settings.MailIgnoreReturnCodes)}: {string.Join(",", Settings.MailIgnoreReturnCodes)}");
+            builder.AppendLine($"{nameof(Settings.MailMaxErrors)}: {Settings.MailMaxErrors}");
+            builder.AppendLine($"{nameof(Settings.MailSendOncePerStateChange)}: {Settings.MailSendOncePerStateChange}");
+            builder.AppendLine($"{nameof(Settings.MailServer)}: {Settings.MailServer}");
+            builder.AppendLine($"{nameof(Settings.MailServerPort)}: {Settings.MailServerPort}");
+            builder.AppendLine($"{nameof(Settings.MailTo)}: {string.Join(",", Settings.MailTo)}");
+            builder.AppendLine($"{nameof(Settings.RunHistoryAge)}: {Settings.RunHistoryAge}");
+            builder.AppendLine($"{nameof(Settings.RunHistoryPath)}: {Settings.RunHistoryPath}");
+            builder.AppendLine($"{nameof(Settings.RunHistorySave)}: {Settings.RunHistorySave}");
+            builder.AppendLine($"{nameof(Settings.UnmanagedChangesCheckInterval)}: {Settings.UnmanagedChangesCheckInterval}");
+            builder.AppendLine($"{nameof(Settings.ExecutionStaggerInterval)}: {Settings.ExecutionStaggerInterval}");
+
+            return builder.ToString();
         }
     }
 }

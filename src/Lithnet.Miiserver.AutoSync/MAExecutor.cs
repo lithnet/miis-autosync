@@ -68,7 +68,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.unmanagedChangesCheckTimer = new System.Timers.Timer();
             this.unmanagedChangesCheckTimer.Elapsed += this.UnmanagedChangesCheckTimer_Elapsed;
             this.unmanagedChangesCheckTimer.AutoReset = true;
-            this.unmanagedChangesCheckTimer.Interval = Global.RandomizeOffset(Settings.UnmanagedChangesCheckInterval);
+            this.unmanagedChangesCheckTimer.Interval = Global.RandomizeOffset(Settings.UnmanagedChangesCheckInterval.TotalMilliseconds);
             this.unmanagedChangesCheckTimer.Start();
         }
 
@@ -247,7 +247,7 @@ namespace Lithnet.Miiserver.AutoSync
                 // to avoid deadlock conditions
                 lock (MAExecutor.GlobalStaggeredExecutionLock)
                 {
-                    Thread.Sleep(Settings.ExecutionStaggerInterval * 1000);
+                    Thread.Sleep(Settings.ExecutionStaggerInterval);
                 }
 
                 if (this.ma.RunProfiles[e.RunProfileName].RunSteps.Any(t => t.IsImportStep))
@@ -661,11 +661,6 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void SendMail(RunDetails r)
         {
-            if (!MAExecutor.ShouldSendMail(r))
-            {
-                return;
-            }
-
             if (this.perProfileLastRunStatus.ContainsKey(r.RunProfileName))
             {
                 if (this.perProfileLastRunStatus[r.RunProfileName] == r.LastStepStatus)
@@ -684,6 +679,11 @@ namespace Lithnet.Miiserver.AutoSync
             else
             {
                 this.perProfileLastRunStatus.Add(r.RunProfileName, r.LastStepStatus);
+            }
+
+            if (!MAExecutor.ShouldSendMail(r))
+            {
+                return;
             }
 
             BuildAndSendMessage(r);
@@ -769,7 +769,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 if (this.importCheckTimer?.Interval > 0)
                 {
-                    builder.AppendLine($"Maximum import interval: {new TimeSpan(0, 0, 0, 0, (int)this.importCheckTimer.Interval)}");
+                    builder.AppendLine($"Maximum allowed interval between imports: {new TimeSpan(0, 0, 0, 0, (int)this.importCheckTimer.Interval)}");
                 }
 
                 if (this.Configuration.AutoImportScheduling != AutoImportScheduling.Disabled && this.Configuration.AutoImportIntervalMinutes > 0)
