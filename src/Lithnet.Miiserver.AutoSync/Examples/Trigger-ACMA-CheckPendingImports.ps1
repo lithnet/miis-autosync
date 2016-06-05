@@ -10,7 +10,7 @@
         {
             $lastRowVersion = $thisRowVersion;
 			$p = New-Object Lithnet.Miiserver.Autosync.ExecutionParameters;
-			$p.RunProfileName = "DI";
+			$p.RunProfileType = "DeltaImport";
 			$p.Exclusive = $false;
     		write-output $p
         }

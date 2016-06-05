@@ -150,6 +150,9 @@
     <Resource Include="autosync.ico" />
     <Resource Include="autosync.png" />
     <Content Include="FodyWeavers.xml" />
+    <EmbeddedResource Include="AutoSyncService.resx">
+      <DependentUpon>AutoSyncService.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Resources\ErrorTableFragment.html" />
     <EmbeddedResource Include="Resources\StepTableFragment.html" />
     <EmbeddedResource Include="Resources\RunSummaryFragment.html" />

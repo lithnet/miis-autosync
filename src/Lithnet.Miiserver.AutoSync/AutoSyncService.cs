@@ -2,6 +2,8 @@
 
 namespace Lithnet.Miiserver.AutoSync
 {
+    using System;
+
     public partial class AutoSyncService : ServiceBase
     {
         internal static AutoSyncService ServiceInstance { get; private set; }
@@ -19,6 +21,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         protected override void OnStop()
         {
+            Program.Stop();
         }
 
         public static void StopInstance()

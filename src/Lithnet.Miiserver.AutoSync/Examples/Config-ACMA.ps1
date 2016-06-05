@@ -24,7 +24,7 @@
 		# The management agent's full sync profile
 		FullSyncRunProfileName = "FS";
 
-		# Indicates that the management agent should be executed 
+		# Indicates that the management agent is disabled and not managed by AutoSync
 		Disabled = $false;
 
 		# Specifies the type of import scheduling to use. 
@@ -36,7 +36,7 @@
 
 		# The amount of time that can pass before an import is performed. Note that a scheduled import is only performed if another operation has not triggered
 		# an import within the specified interval period. If this value is 0, then the scheduler will examine the run history to determine how often imports have
-		# been run in the past, and derrive an appropriate value accordingly.
+		# been run in the past, and derive an appropriate value accordingly.
 		AutoImportIntervalMinutes = 15;
 
 		# Setting this to true will prevent automatic change detection in Active Directory and FIM Service
