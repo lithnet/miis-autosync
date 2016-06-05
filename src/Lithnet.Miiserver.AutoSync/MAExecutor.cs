@@ -26,6 +26,7 @@ namespace Lithnet.Miiserver.AutoSync
         private ManualResetEvent localOperationLock;
         private System.Timers.Timer importCheckTimer;
         private System.Timers.Timer unmanagedChangesCheckTimer;
+        private TimeSpan importInterval;
 
         private Dictionary<string, string> perProfileLastRunStatus;
 
@@ -87,9 +88,10 @@ namespace Lithnet.Miiserver.AutoSync
                     this.importCheckTimer = new System.Timers.Timer();
                     this.importCheckTimer.Elapsed += this.ImportCheckTimer_Elapsed;
                     int importSeconds = this.Configuration.AutoImportIntervalMinutes > 0 ? this.Configuration.AutoImportIntervalMinutes * 60 : MAExecutionTriggerDiscovery.GetTriggerInterval(this.ma);
-                    this.importCheckTimer.Interval = Global.RandomizeOffset(importSeconds * 1000);
+                    this.importInterval = new TimeSpan(0, 0, Global.RandomizeOffset(importSeconds));
+                    this.importCheckTimer.Interval = this.importInterval.TotalMilliseconds;
                     this.importCheckTimer.AutoReset = true;
-                    Logger.WriteLine("{0}: Starting import interval timer. Imports will be queued if they have not been run for {1} seconds", this.ma.Name, importSeconds);
+                    Logger.WriteLine("{0}: Starting import interval timer. Imports will be queued if they have not been run for {1}", this.ma.Name, this.importInterval);
                     this.importCheckTimer.Start();
                 }
                 else
@@ -112,7 +114,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             if (this.importCheckTimer != null)
             {
-                Logger.WriteLine("{0}: Resetting import timer for {1} seconds", this.ma.Name, (int)(this.importCheckTimer.Interval / 1000));
+                Logger.WriteLine("{0}: Resetting import timer for {1}", this.ma.Name, this.importInterval);
                 this.importCheckTimer.Stop();
                 this.importCheckTimer.Start();
             }
