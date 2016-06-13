@@ -265,8 +265,9 @@ namespace Lithnet.Miiserver.AutoSync
                 try
                 {
                     Logger.WriteLine("{0}: Executing {1}", this.ma.Name, e.RunProfileName);
-                    string result = this.ma.ExecuteRunProfile(e.RunProfileName, false, this.token.Token);
+                    string result = this.ma.ExecuteRunProfile(e.RunProfileName, this.token.Token);
                     Logger.WriteLine("{0}: {1} returned {2}", this.ma.Name, e.RunProfileName, result);
+                    Thread.Sleep(new TimeSpan(0, 0, 3));
                 }
                 catch (MAExecutionException ex)
                 {
@@ -492,19 +493,35 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void CheckAndQueueUnmanagedChanges()
         {
-            if (this.ShouldExport())
-            {
-                this.AddPendingActionIfNotQueued(new ExecutionParameters(this.Configuration.ExportRunProfileName), "Pending export check");
-            }
+            this.localOperationLock.WaitOne();
 
-            if (this.ShouldConfirmExport())
+            try
             {
-                this.AddPendingActionIfNotQueued(new ExecutionParameters(this.Configuration.ConfirmingImportRunProfileName), "Unconfirmed export check");
-            }
+                // If another operation in this executor is already running, then wait for it to finish
+                this.localOperationLock.WaitOne();
 
-            if (this.ma.HasPendingImports())
+                // Signal the local lock that an event is running
+                this.localOperationLock.Reset();
+
+                if (this.ShouldExport())
+                {
+                    this.AddPendingActionIfNotQueued(new ExecutionParameters(this.Configuration.ExportRunProfileName), "Pending export check");
+                }
+
+                if (this.ShouldConfirmExport())
+                {
+                    this.AddPendingActionIfNotQueued(new ExecutionParameters(this.Configuration.ConfirmingImportRunProfileName), "Unconfirmed export check");
+                }
+
+                if (this.ma.HasPendingImports())
+                {
+                    this.AddPendingActionIfNotQueued(new ExecutionParameters(this.Configuration.DeltaSyncRunProfileName), "Staged import check");
+                }
+            }
+            finally
             {
-                this.AddPendingActionIfNotQueued(new ExecutionParameters(this.Configuration.DeltaSyncRunProfileName), "Staged import check");
+                // Reset the local lock so the next operation can run
+                this.localOperationLock.Set();
             }
         }
 
@@ -688,7 +705,7 @@ namespace Lithnet.Miiserver.AutoSync
                 return;
             }
 
-            BuildAndSendMessage(r);
+            MessageSender.SendMessage($"{r.MAName} {r.RunProfileName}: {r.LastStepStatus}", MessageBuilder.GetMessageBody(r));
         }
 
         private static bool ShouldSendMail(RunDetails r)
@@ -724,38 +741,6 @@ namespace Lithnet.Miiserver.AutoSync
             }
 
             return true;
-        }
-
-        private static void BuildAndSendMessage(RunDetails r)
-        {
-            using (MailMessage m = new MailMessage())
-            {
-                foreach (string address in Settings.MailTo)
-                {
-                    m.To.Add(address);
-                }
-
-                if (!Settings.UseAppConfigMailSettings)
-                {
-                    m.From = new MailAddress(Settings.MailFrom);
-                }
-
-                m.Subject = $"{r.MAName} {r.RunProfileName}: {r.LastStepStatus}";
-                m.IsBodyHtml = true;
-                m.Body = MessageBuilder.GetMessageBody(r);
-
-                using (SmtpClient client = new SmtpClient())
-                {
-
-                    if (!Settings.UseAppConfigMailSettings)
-                    {
-                        client.Host = Settings.MailServer;
-                        client.Port = Settings.MailServerPort;
-                    }
-
-                    client.Send(m);
-                }
-            }
         }
 
         public override string ToString()

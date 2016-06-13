@@ -39,7 +39,7 @@
     AutoImportIntervalMinutes = 15;
 
     # Setting this to true will prevent automatic change detection in Active Directory and FIM Service
-    DisableDefaultTriggers = $false;
+    DisableDefaultTriggers = $true;
     }
     
     # Create a new ADListenerConfig item to override the automatic discovery;

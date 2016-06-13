@@ -9,6 +9,7 @@ using System.IO;
 using System.Management.Automation;
 using System.Collections.ObjectModel;
 using System.Timers;
+using System.Net.Mail;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -17,6 +18,8 @@ namespace Lithnet.Miiserver.AutoSync
         private static List<MAExecutor> maExecutors = new List<MAExecutor>();
 
         private static Timer runHistoryCleanupTimer;
+
+        private static Timer pingTimer;
 
         /// <summary>
         /// The main entry point for the application.
@@ -73,7 +76,7 @@ namespace Lithnet.Miiserver.AutoSync
                 Logger.WriteLine("--- Global settings ---");
                 Logger.WriteLine(Settings.GetSettingsString());
                 Logger.WriteSeparatorLine('-');
-                
+
                 if (Settings.RunHistoryAge > 0)
                 {
                     Logger.WriteLine("Run history auto-cleanup enabled");
@@ -85,7 +88,14 @@ namespace Lithnet.Miiserver.AutoSync
                     Program.runHistoryCleanupTimer.Elapsed += RunHistoryCleanupTimer_Elapsed;
                     Program.runHistoryCleanupTimer.Interval = TimeSpan.FromHours(8).TotalMilliseconds;
                     Program.runHistoryCleanupTimer.Start();
+                    
                 }
+
+                Program.pingTimer = new Timer();
+                Program.pingTimer.AutoReset = true;
+                Program.pingTimer.Elapsed += PingTimer_Elapsed;
+                Program.pingTimer.Interval = TimeSpan.FromMinutes(5).TotalMilliseconds;
+                Program.pingTimer.Start();
 
                 EnumerateMAs();
             }
@@ -93,6 +103,20 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 Logger.WriteException(ex);
                 throw;
+            }
+        }
+
+        private static void PingTimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            if (!SyncServer.Ping())
+            {
+                Logger.WriteLine("Sync server ping failed!");
+                MessageSender.SendMessage("Sync server may not be responding", "The sync server has not responded to ping requests");
+                pingTimer.Stop();
+            }
+            else
+            {
+                Logger.WriteLine("Sync server ping ok");
             }
         }
 

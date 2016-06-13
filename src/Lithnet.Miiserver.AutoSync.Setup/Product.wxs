@@ -4,7 +4,7 @@
   <Product Id="*"
            Name="Lithnet FIM/MIM AutoSync Service"
            Language="1033"
-           Version="1.0.6000"
+           Version="1.0.6006"
            Manufacturer="Lithnet"
            UpgradeCode="028A57DF-28CE-47B0-9B3E-18B523A643D4">
     <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" Platform="x64" />
@@ -67,7 +67,6 @@
                       Type="raw"
                       Win64="yes" />
     </Property>
-
 
     <Property Id="RUNHISTORYDIR" Secure="yes">
       <RegistrySearch Id="d14b322eac5649f3ade406e1b9ff5cf3"
@@ -190,13 +189,5 @@
       <ComponentGroupRef Id="Binaries" />
       <ComponentGroupRef Id="Examples" />
     </Feature>
-
-
   </Product>
-
-  <!--<Fragment>
-    <ComponentGroup Id="ProductComponents" Directory="APPROOTDIR" >
-      <ComponentGroupRef Id="Lithnet.Miiserver.AutoSync.Binaries"/>
-    </ComponentGroup>
-  </Fragment>-->
 </Wix>

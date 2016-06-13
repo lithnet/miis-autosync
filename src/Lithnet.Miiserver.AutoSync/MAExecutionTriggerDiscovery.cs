@@ -152,6 +152,7 @@ namespace Lithnet.Miiserver.AutoSync
                     triggers.Add(t1);
                     break;
 
+                case "ADAM":
                 case "AD":
                     ADListenerConfiguration listenerConfig = configItems.OfType<ADListenerConfiguration>().FirstOrDefault();
 
@@ -204,10 +205,10 @@ namespace Lithnet.Miiserver.AutoSync
             XmlNode partitionNode = d.SelectSingleNode("/export-ma/ma-data/ma-partition-data/partition[selected=1 and custom-data/adma-partition-data[is-domain=1]]");
 
             config.HostName = d.SelectSingleNode("/export-ma/ma-data/private-configuration/adma-configuration/forest-name")?.InnerText;
-            config.BaseDN = partitionNode?.SelectSingleNode("name")?.InnerText;
+            config.BaseDN = partitionNode?.SelectSingleNode("custom-data/adma-partition-data/dn")?.InnerText;
             config.ObjectClasses = partitionNode?.SelectNodes("filter/object-classes/object-class")?.OfType<XmlElement>().Where(t => t.InnerText != "container" && t.InnerText != "domainDNS" && t.InnerText != "organizationalUnit").Select(u => u.InnerText).ToArray();
             config.LastLogonTimestampOffsetSeconds = 300;
-
+            
             return config;
         }
     }
