@@ -581,6 +581,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             Logger.WriteLine("{0}: Queuing {1} (triggered by: {2})", this.ma.Name, p.RunProfileName, source);
             this.pendingActions.Add(p);
+            Logger.WriteLine("{0}: Queue: {1}", this.ma.Name, string.Join(",", this.pendingActions));
         }
 
         private static bool HasUnconfirmedExports(RunDetails d)

@@ -21,6 +21,8 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static Timer pingTimer;
 
+        private static bool pingFailed;
+
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
@@ -111,12 +113,16 @@ namespace Lithnet.Miiserver.AutoSync
             if (!SyncServer.Ping())
             {
                 Logger.WriteLine("Sync server ping failed!");
-                MessageSender.SendMessage("Sync server may not be responding", "The sync server has not responded to ping requests");
-                pingTimer.Stop();
+                if (!Program.pingFailed)
+                {
+                    MessageSender.SendMessage("Sync server may not be responding", "The sync server has not responded to ping requests");
+                    Program.pingFailed = true;
+                }
             }
             else
             {
                 Logger.WriteLine("Sync server ping ok");
+                Program.pingFailed = false;
             }
         }
 
