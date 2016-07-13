@@ -9,7 +9,7 @@ using System.IO;
 using System.Management.Automation;
 using System.Collections.ObjectModel;
 using System.Timers;
-using System.Net.Mail;
+using System.Threading.Tasks;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -90,7 +90,7 @@ namespace Lithnet.Miiserver.AutoSync
                     Program.runHistoryCleanupTimer.Elapsed += RunHistoryCleanupTimer_Elapsed;
                     Program.runHistoryCleanupTimer.Interval = TimeSpan.FromHours(8).TotalMilliseconds;
                     Program.runHistoryCleanupTimer.Start();
-                    
+
                 }
 
                 Program.pingTimer = new Timer();
@@ -166,9 +166,37 @@ namespace Lithnet.Miiserver.AutoSync
 
         public static void Stop()
         {
+            if (Program.runHistoryCleanupTimer != null)
+            {
+                if (Program.runHistoryCleanupTimer.Enabled)
+                {
+                    Program.runHistoryCleanupTimer.Stop();
+                }
+            }
+
+            if (Program.pingTimer != null)
+            {
+                if (Program.pingTimer.Enabled)
+                {
+                    Program.pingTimer.Stop();
+                }
+            }
+
+            List<Task> stopTasks = new List<Task>();
+             
             foreach (MAExecutor x in maExecutors)
             {
-                x.Stop();
+                stopTasks.Add(Task.Factory.StartNew(() => x.Stop()));
+            }
+
+            if (!Task.WaitAll(stopTasks.ToArray(), 90000))
+            {
+                Logger.WriteLine("Timeout waiting for executors to stop");
+                Environment.Exit(2);
+            }
+            else
+            {
+                Logger.WriteLine("Shutdown complete");
             }
         }
 

@@ -40,6 +40,8 @@ namespace Lithnet.Miiserver.AutoSync
 
         private CancellationTokenSource token;
 
+        private Task internalTask;
+
         static MAExecutor()
         {
             MAExecutor.GlobalSynchronizationStepLock = new object();
@@ -215,8 +217,18 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
+                if (this.token.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 // Wait here if any exclusive operations are pending or in progress
                 MAExecutor.GlobalExclusiveOperationLock.WaitOne();
+
+                if (this.token.IsCancellationRequested)
+                {
+                    return;
+                }
 
                 if (!this.controller.ShouldExecute(e.RunProfileName))
                 {
@@ -226,6 +238,11 @@ namespace Lithnet.Miiserver.AutoSync
 
                 this.WaitOnUnmanagedRun();
 
+                if (this.token.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 if (e.Exclusive)
                 {
                     Logger.WriteLine("{0}: Entering exclusive mode for {1}", this.ma.Name, e.RunProfileName);
@@ -233,23 +250,52 @@ namespace Lithnet.Miiserver.AutoSync
                     // Signal all executors to wait before running their next job
                     MAExecutor.GlobalExclusiveOperationLock.Reset();
 
+                    if (this.token.IsCancellationRequested)
+                    {
+                        return;
+                    }
+
                     // Wait for all  MAs to finish their current job
                     Logger.WriteLine("{0}: Waiting for running tasks to complete", this.ma.Name);
                     WaitHandle.WaitAll(MAExecutor.AllMaLocalOperationLocks.ToArray());
+
+                    if (this.token.IsCancellationRequested)
+                    {
+                        return;
+                    }
                 }
 
                 // If another operation in this executor is already running, then wait for it to finish
                 this.localOperationLock.WaitOne();
 
+                if (this.token.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 // Signal the local lock that an event is running
                 this.localOperationLock.Reset();
 
+                if (this.token.IsCancellationRequested)
+                {
+                    return;
+                }
                 // Grab the staggered execution lock, and hold for x seconds
                 // This ensures that no MA can start within x seconds of another MA
                 // to avoid deadlock conditions
                 lock (MAExecutor.GlobalStaggeredExecutionLock)
                 {
+                    if (this.token.IsCancellationRequested)
+                    {
+                        return;
+                    }
+
                     Thread.Sleep(Settings.ExecutionStaggerInterval);
+                }
+
+                if (this.token.IsCancellationRequested)
+                {
+                    return;
                 }
 
                 if (this.ma.RunProfiles[e.RunProfileName].RunSteps.Any(t => t.IsImportStep))
@@ -266,12 +312,23 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     Logger.WriteLine("{0}: Executing {1}", this.ma.Name, e.RunProfileName);
                     string result = this.ma.ExecuteRunProfile(e.RunProfileName, this.token.Token);
+
+                    if (this.token.IsCancellationRequested)
+                    {
+                        return;
+                    }
+
                     Logger.WriteLine("{0}: {1} returned {2}", this.ma.Name, e.RunProfileName, result);
                     Thread.Sleep(new TimeSpan(0, 0, 3));
                 }
                 catch (MAExecutionException ex)
                 {
                     Logger.WriteLine("{0}: {1} returned {2}", this.ma.Name, e.RunProfileName, ex.Result);
+                }
+
+                if (this.token.IsCancellationRequested)
+                {
+                    return;
                 }
 
                 using (RunDetails r = this.ma.GetLastRun())
@@ -284,6 +341,11 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (System.Management.Automation.RuntimeException ex)
             {
+                if (this.token.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 UnexpectedChangeException changeException = ex.InnerException as UnexpectedChangeException;
 
                 if (changeException != null)
@@ -298,6 +360,11 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (UnexpectedChangeException ex)
             {
+                if (this.token.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 this.ProcessUnexpectedChangeException(ex);
             }
             catch (Exception ex)
@@ -334,6 +401,11 @@ namespace Lithnet.Miiserver.AutoSync
 
                         lock (MAExecutor.GlobalSynchronizationStepLock)
                         {
+                            if (this.token.IsCancellationRequested)
+                            {
+                                return;
+                            }
+
                             this.ma.Wait(this.token.Token);
                         }
                     }
@@ -342,12 +414,14 @@ namespace Lithnet.Miiserver.AutoSync
                         this.ma.Wait(this.token.Token);
                     }
 
-                    if (!this.token.IsCancellationRequested)
+                    if (this.token.IsCancellationRequested)
                     {
-                        using (RunDetails ur = this.ma.GetLastRun())
-                        {
-                            this.PerformPostRunActions(ur);
-                        }
+                        return;
+                    }
+
+                    using (RunDetails ur = this.ma.GetLastRun())
+                    {
+                        this.PerformPostRunActions(ur);
                     }
                 }
                 finally
@@ -400,7 +474,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             Logger.WriteSeparatorLine('-');
 
-            Task t = new Task(() =>
+            this.internalTask = new Task(() =>
             {
                 try
                 {
@@ -417,13 +491,14 @@ namespace Lithnet.Miiserver.AutoSync
                 }
             }, this.token.Token);
 
-            t.Start();
+            this.internalTask.Start();
 
-            return t;
+            return this.internalTask;
         }
 
         public void Stop()
         {
+            Logger.WriteLine("{0}: Stopping MAExecutor", this.ma.Name);
             this.token?.Cancel();
 
             this.importCheckTimer?.Stop();
@@ -432,6 +507,17 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 x.Stop();
             }
+
+            Logger.WriteLine("{0}: Stopped execution triggers", this.ma.Name);
+
+            if (this.internalTask != null && !this.internalTask.IsCompleted)
+            {
+                Logger.WriteLine("{0}: Waiting for cancellation to complete", this.ma.Name);
+                this.internalTask.Wait();
+                Logger.WriteLine("{0}: Cancellation completed", this.ma.Name);
+            }
+
+            this.internalTask = null;
         }
 
         private void Init()
@@ -579,9 +665,9 @@ namespace Lithnet.Miiserver.AutoSync
                 return;
             }
 
-            Logger.WriteLine("{0}: Queuing {1} (triggered by: {2})", this.ma.Name, p.RunProfileName, source);
             this.pendingActions.Add(p);
-            Logger.WriteLine("{0}: Queue: {1}", this.ma.Name, string.Join(",", this.pendingActions));
+            Logger.WriteLine("{0}: Queuing {1} (triggered by: {2})", this.ma.Name, p.RunProfileName, source);
+            Logger.WriteLine("{0}: Current queue {1}", this.ma.Name, string.Join(",", this.pendingActions.Select(t => t.RunProfileName)));
         }
 
         private static bool HasUnconfirmedExports(RunDetails d)

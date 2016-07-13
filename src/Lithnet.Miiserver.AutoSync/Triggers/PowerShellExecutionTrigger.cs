@@ -3,6 +3,7 @@ using System.Management.Automation;
 using System.Threading.Tasks;
 using System.Threading;
 using Lithnet.Logging;
+using System.ComponentModel;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -10,6 +11,12 @@ namespace Lithnet.Miiserver.AutoSync
     {
         private bool run = true;
 
+        private Task internalTask;
+
+        private CancellationTokenSource cancellationToken;
+
+        private PowerShell powershell;
+        
         public string ScriptPath { get; set; }
 
         public string Name => $"PowerShell: {System.IO.Path.GetFileName(this.ScriptPath)}";
@@ -18,15 +25,17 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void Start()
         {
-            Task t = new Task(() =>
+            this.cancellationToken = new CancellationTokenSource();
+                       
+            this.internalTask = new Task(() =>
             {
                 try
                 {
-                    PowerShell powershell = PowerShell.Create();
-                    powershell.AddScript(System.IO.File.ReadAllText(this.ScriptPath));
-                    powershell.Invoke();
+                    this.powershell = PowerShell.Create();
+                    this.powershell.AddScript(System.IO.File.ReadAllText(this.ScriptPath));
+                    this.powershell.Invoke();
 
-                    if (powershell.Runspace.SessionStateProxy.InvokeCommand.GetCommand("Get-RunProfileToExecute", CommandTypes.All) == null)
+                    if (this.powershell.Runspace.SessionStateProxy.InvokeCommand.GetCommand("Get-RunProfileToExecute", CommandTypes.All) == null)
                     {
                         Logger.WriteLine("The file '{0}' did not contain a function called Get-RunProfileToExecute and will be ignored", this.ScriptPath);
                         return;
@@ -34,12 +43,17 @@ namespace Lithnet.Miiserver.AutoSync
 
                     while (this.run)
                     {
-                        powershell.Commands.Clear();
-                        powershell.AddCommand("Get-RunProfileToExecute");
-
-                        foreach (PSObject result in powershell.Invoke())
+                        if (this.cancellationToken.IsCancellationRequested)
                         {
-                            powershell.ThrowOnPipelineError();
+                            break;
+                        }
+
+                        this.powershell.Commands.Clear();
+                        this.powershell.AddCommand("Get-RunProfileToExecute");
+                        
+                        foreach (PSObject result in this.powershell.Invoke())
+                        {
+                            this.powershell.ThrowOnPipelineError();
 
                             string runProfileName = result.BaseObject as string;
 
@@ -59,6 +73,11 @@ namespace Lithnet.Miiserver.AutoSync
                             this.Fire(p);
                         }
 
+                        if (this.cancellationToken.IsCancellationRequested)
+                        {
+                            break;
+                        }
+
                         Thread.Sleep(5000);
                     }
                 }
@@ -67,14 +86,25 @@ namespace Lithnet.Miiserver.AutoSync
                     Logger.WriteLine("The PowerShell execution trigger encountered an error and has been terminated");
                     Logger.WriteException(ex);
                 }
-            });
+            }, this.cancellationToken.Token);
 
-            t.Start();
+            
+            internalTask.Start();
         }
 
         public void Stop()
         {
             this.run = false;
+
+            this.cancellationToken?.Cancel();
+
+            this.powershell?.Stop();
+
+            if (!this.internalTask.IsCompleted)
+            {
+                this.internalTask.Wait();
+            }
+            
         }
 
         public void Fire(string runProfileName)

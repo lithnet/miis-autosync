@@ -28,6 +28,8 @@ namespace Lithnet.Miiserver.AutoSync
 
         private bool stopped;
 
+        private IAsyncResult request;
+
         public ActiveDirectoryChangeTrigger(ADListenerConfiguration config)
         {
             this.lastLogonTimestampOffset = config.LastLogonTimestampOffsetSeconds;
@@ -75,7 +77,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             request.Controls.Add(new DirectoryNotificationControl());
 
-            this.connection.BeginSendRequest(
+            this.request = this.connection.BeginSendRequest(
                 request,
                 TimeSpan.FromDays(100),
                 PartialResultProcessing.ReturnPartialResultsAndNotifyCallback, this.Notify,
@@ -226,6 +228,11 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     this.checkTimer.Stop();
                 }
+            }
+
+            if (this.connection != null && this.request != null)
+            {
+                this.connection.Abort(this.request);
             }
 
             this.stopped = true;
