@@ -554,7 +554,7 @@ namespace Lithnet.Miiserver.AutoSync
                     {
                         this.ExecutingRunProfile = action.RunProfileName;
 
-                        if (this.ma.RunProfiles[action.RunProfileName].RunSteps.Any(t => t.IsSyncStep))
+                        if (this.IsSyncStepOrFIMMADeltaImport(action.RunProfileName))
                         {
                             lock (MAExecutor.GlobalSynchronizationStepLock)
                             {
@@ -575,6 +575,24 @@ namespace Lithnet.Miiserver.AutoSync
             catch (OperationCanceledException)
             {
             }
+        }
+
+        private bool IsSyncStepOrFIMMADeltaImport(string runProfileName)
+        {
+            if (this.ma.RunProfiles[runProfileName].RunSteps.Any(t => t.IsSyncStep))
+            {
+                return true;
+            }
+
+            if (this.ma.Category == "FIM")
+            {
+                if (this.ma.RunProfiles[runProfileName].RunSteps.Any(t => t.Type == RunStepType.DeltaImport))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void CheckAndQueueUnmanagedChanges()

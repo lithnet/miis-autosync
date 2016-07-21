@@ -4,7 +4,7 @@ namespace Lithnet.Miiserver.AutoSync
 {
     public class ExecutionParameters
     {
-        public bool Exclusive { get; set;  }
+        public bool Exclusive { get; set; }
 
         public string RunProfileName { get; set; }
 
@@ -25,13 +25,13 @@ namespace Lithnet.Miiserver.AutoSync
         }
 
         public ExecutionParameters(string runProfileName, bool exclusive)
-            :this(runProfileName)
+            : this(runProfileName)
         {
             this.Exclusive = exclusive;
         }
 
         public ExecutionParameters(MARunProfileType runProfileType, bool exclusive)
-            :this(runProfileType)
+            : this(runProfileType)
         {
             this.Exclusive = exclusive;
         }
@@ -45,9 +45,20 @@ namespace Lithnet.Miiserver.AutoSync
                 return object.ReferenceEquals(this, obj);
             }
 
-            return (string.Equals(this.RunProfileName, p2.RunProfileName, StringComparison.OrdinalIgnoreCase) &&
-                this.RunProfileType == p2.RunProfileType &&
-                this.Exclusive == p2.Exclusive);
+            if (!string.IsNullOrWhiteSpace(this.RunProfileName))
+            {
+                if (string.Equals(this.RunProfileName, p2.RunProfileName, StringComparison.OrdinalIgnoreCase) && this.Exclusive == p2.Exclusive)
+                {
+                    return true;
+                }
+            }
+
+            if (this.RunProfileType == p2.RunProfileType && this.Exclusive == p2.Exclusive)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         public override int GetHashCode()
