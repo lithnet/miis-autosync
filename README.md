@@ -1,5 +1,4 @@
-![Icon](https://github.com/lithnet/miis-autosync/wiki/images/change-sync.png)
-### miis-autosync 
+### ![Icon](https://github.com/lithnet/miis-autosync/wiki/images/change-sync.png) miis-autosync 
 
 The Lithnet FIM/MIM AutoSync Service is a windows service that runs along side of the FIM/MIM Synchronization service, and automatically executes management agent run profiles.
 
@@ -32,11 +31,3 @@ While AutoSync configures itself out-of-the-box, and the discovered configuratio
 
 #### Synchronization profiles
 The FIM/MIM Synchronziation engine allows only a single synchronization run profile to be executed at any one time. AutoSync ensures that only one synchronization can run at a time by queing requests and executing them in sequence.
-
-
-
-
-
-
-
-<sub>Icons made by <a href="http://www.freepik.com" title="Freepik">Freepik</a> from <a href="http://www.flaticon.com" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></sub>
