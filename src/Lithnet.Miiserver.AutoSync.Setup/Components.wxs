@@ -37,7 +37,7 @@
         <CreateFolder Directory="RUNHISTORYDIR">
           <util:PermissionEx User="[SERVICE_USERNAME]" GenericAll="yes" />
         </CreateFolder>
-        
+
         <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="ConfigPath" Type="string" Value="[CONFIGDIR]" />
         <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="LogPath" Type="string" Value="[APPLOGDIR]" />
         <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="RunHistoryPath" Type="string" Value="[RUNHISTORYDIR]" />
@@ -50,13 +50,10 @@
         <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="MailServerPort" Type="string" Value="[MAIL_SERVER_PORT]" />
       </Component>
 
-      <Component Id="cmpb79b2c604b1748aa9606e987e86aad3a" Guid="*" Win64="yes">
+      <Component Id="cmpb79b2c604b1748aa9606e987e86aad3a" Guid="*" NeverOverwrite="yes" Win64="yes">
         <File Id="App.config" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Lithnet.Miiserver.AutoSync.exe.config" />
       </Component>
 
-      <Component Id="cmp6a821b6b997b4f3086f29128770a5ca8" Guid="*" Win64="yes">
-        <File Id="fil49a4372c2d1a48ff8229e6e7194a95b2" KeyPath="yes" Source="readme.txt" />
-      </Component>
     </DirectoryRef>
 
     <DirectoryRef Id="EXAMPLESDIR">

@@ -19,9 +19,9 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static Timer runHistoryCleanupTimer;
 
-        private static Timer pingTimer;
+        //private static Timer pingTimer;
 
-        private static bool pingFailed;
+        //private static bool pingFailed;
 
         /// <summary>
         /// The main entry point for the application.
@@ -93,11 +93,11 @@ namespace Lithnet.Miiserver.AutoSync
 
                 }
 
-                Program.pingTimer = new Timer();
-                Program.pingTimer.AutoReset = true;
-                Program.pingTimer.Elapsed += PingTimer_Elapsed;
-                Program.pingTimer.Interval = TimeSpan.FromMinutes(5).TotalMilliseconds;
-                Program.pingTimer.Start();
+                //Program.pingTimer = new Timer();
+                //Program.pingTimer.AutoReset = true;
+                //Program.pingTimer.Elapsed += PingTimer_Elapsed;
+                //Program.pingTimer.Interval = TimeSpan.FromMinutes(5).TotalMilliseconds;
+                //Program.pingTimer.Start();
 
                 EnumerateMAs();
             }
@@ -108,23 +108,23 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        private static void PingTimer_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            if (!SyncServer.Ping())
-            {
-                Logger.WriteLine("Sync server ping failed!");
-                if (!Program.pingFailed)
-                {
-                    MessageSender.SendMessage("Sync server may not be responding", "The sync server has not responded to ping requests");
-                    Program.pingFailed = true;
-                }
-            }
-            else
-            {
-                Logger.WriteLine("Sync server ping ok");
-                Program.pingFailed = false;
-            }
-        }
+        //private static void PingTimer_Elapsed(object sender, ElapsedEventArgs e)
+        //{
+        //    if (!SyncServer.Ping())
+        //    {
+        //        Logger.WriteLine("Sync server ping failed!");
+        //        if (!Program.pingFailed)
+        //        {
+        //            MessageSender.SendMessage("Sync server may not be responding", "The sync server has not responded to ping requests");
+        //            Program.pingFailed = true;
+        //        }
+        //    }
+        //    else
+        //    {
+        //        Logger.WriteLine("Sync server ping ok");
+        //        Program.pingFailed = false;
+        //    }
+        //}
 
         private static bool IsInFimAdminsGroup()
         {
@@ -174,13 +174,13 @@ namespace Lithnet.Miiserver.AutoSync
                 }
             }
 
-            if (Program.pingTimer != null)
-            {
-                if (Program.pingTimer.Enabled)
-                {
-                    Program.pingTimer.Stop();
-                }
-            }
+            //if (Program.pingTimer != null)
+            //{
+            //    if (Program.pingTimer.Enabled)
+            //    {
+            //        Program.pingTimer.Stop();
+            //    }
+            //}
 
             List<Task> stopTasks = new List<Task>();
              

@@ -88,6 +88,7 @@
   <ItemGroup>
     <Compile Include="ADListenerConfiguration.cs" />
     <Compile Include="Enums\AutoImportScheduling.cs" />
+    <Compile Include="ExecutionParameterCollection.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="MessageBuilder.cs" />
     <Compile Include="MessageSender.cs" />

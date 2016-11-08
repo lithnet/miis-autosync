@@ -1,1 +1,0 @@
-﻿autosync icon made by Freepik from www.flaticon.com is licensed by CC 3.0 BY
