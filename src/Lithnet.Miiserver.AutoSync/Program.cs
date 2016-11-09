@@ -183,7 +183,7 @@ namespace Lithnet.Miiserver.AutoSync
             //}
 
             List<Task> stopTasks = new List<Task>();
-             
+
             foreach (MAExecutor x in maExecutors)
             {
                 stopTasks.Add(Task.Factory.StartNew(() => x.Stop()));
@@ -260,7 +260,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 if (ht != null)
                 {
-                    yield return new MAConfigParameters(ht);
+                    yield return new MAConfigParameters(ma, ht);
                 }
                 else
                 {
