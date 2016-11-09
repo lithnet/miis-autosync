@@ -12,19 +12,17 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using MahApps.Metro.Controls;
 
-namespace Lithnet.Miiserver.Autosync.UI
+namespace Lithnet.Miiserver.Autosync.UI.Views
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for MAConfigParametersView.xaml
     /// </summary>
-    public partial class MainWindow : MetroWindow
+    public partial class MAConfigParametersView : UserControl
     {
-        public MainWindow()
+        public MAConfigParametersView()
         {
             InitializeComponent();
-            this.DataContext = new MAConfigParametersViewModel(new AutoSync.MAConfigParameters(null));
         }
     }
 }

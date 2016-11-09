@@ -1,0 +1,96 @@
+﻿<UserControl x:Class="Lithnet.Miiserver.Autosync.UI.Views.MAConfigParametersView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Lithnet.Miiserver.Autosync.UI.Views"
+             xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
+             mc:Ignorable="d" 
+             Margin="10"
+             d:DesignHeight="300" d:DesignWidth="300">
+    <TabControl >
+        <TabItem Header="Run Profiles">
+            <StackPanel>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition  />
+                        <RowDefinition  />
+                        <RowDefinition  />
+                        <RowDefinition  />
+                        <RowDefinition  />
+                        <RowDefinition  />
+                        <RowDefinition  />
+                        <RowDefinition  />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+
+                    <Label Grid.Row="0" Grid.Column="0" Content="Management Agent"/>
+                    <Label  Grid.Row="0" Grid.Column="1" Content="{Binding MAName}"  />
+
+                    <Label Grid.Row="1" Grid.Column="0" Content="Disabled"/>
+                    <CheckBox Grid.Row="1" Grid.Column="1" IsChecked="{Binding Disabled}"/>
+
+                    <Label Grid.Row="2" Grid.Column="0" Content="Enable scheduled imports"/>
+                    <CheckBox Grid.Row="2" Grid.Column="1" IsChecked="{Binding ScheduleImports}"/>
+
+                    <Label Grid.Row="3" Grid.Column="0" Content="Minimum interval between import operations (minutes)"/>
+                    <controls:NumericUpDown Grid.Row="3" Grid.Column="1"  
+                                Value="{Binding AutoImportIntervalMinutes}" 
+                                Minimum="0"
+                                HasDecimals="False"
+                                IsEnabled="{Binding ScheduleImports}"/>
+
+                    <Label Grid.Row="4" Grid.Column="0" Content="Run Profiles" Grid.ColumnSpan="2"/>
+
+                    <Label Grid.Row="5" Grid.Column="0" Content="Confirming import run profile name"/>
+                    <ComboBox Grid.Row="5" Grid.Column="1" 
+                  ItemsSource="{Binding RunProfileNames}"
+                  SelectedItem="{Binding ConfirmingImportRunProfileName}"/>
+
+                    <Label Grid.Row="6" Grid.Column="0" Content="Delta import run profile name"/>
+                    <ComboBox Grid.Row="6" Grid.Column="1" 
+                  ItemsSource="{Binding RunProfileNames}"
+                  SelectedItem="{Binding DeltaImportRunProfileName}"/>
+
+                    <Label Grid.Row="7" Grid.Column="0" Content="Delta sync run profile name"/>
+                    <ComboBox Grid.Row="7" Grid.Column="1" 
+                  ItemsSource="{Binding RunProfileNames}"
+                  SelectedItem="{Binding DeltaSyncRunProfileName}"/>
+
+                    <Label Grid.Row="8" Grid.Column="0" Content="Export run profile name"/>
+                    <ComboBox Grid.Row="8" Grid.Column="1" 
+                  ItemsSource="{Binding RunProfileNames}"
+                  SelectedItem="{Binding ExportRunProfileName}"/>
+
+                    <Label Grid.Row="9" Grid.Column="0" Content="Full import run profile name"/>
+                    <ComboBox Grid.Row="9" Grid.Column="1" 
+                  ItemsSource="{Binding RunProfileNames}"
+                  SelectedItem="{Binding FullImportRunProfileName}"/>
+
+                    <Label Grid.Row="10" Grid.Column="0" Content="Full sync run profile name"/>
+                    <ComboBox Grid.Row="10" Grid.Column="1" 
+                  ItemsSource="{Binding RunProfileNames}"
+                  SelectedItem="{Binding FullSyncRunProfileName}"/>
+
+                    <Label Grid.Row="11" Grid.Column="0" Content="Scheduled import run profile name"/>
+                    <ComboBox Grid.Row="11" Grid.Column="1" 
+                  ItemsSource="{Binding RunProfileNames}"
+                  SelectedItem="{Binding ScheduledImportRunProfileName}"/>
+                </Grid>
+            </StackPanel>
+        </TabItem>
+
+        <TabItem Header="Triggers">
+            <local:TriggersView />
+
+        </TabItem>
+    </TabControl>
+
+</UserControl>
