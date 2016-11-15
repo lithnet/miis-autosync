@@ -22,11 +22,11 @@ namespace Lithnet.Miiserver.AutoSync
             return MAConfigDiscovery.DoAutoRunProfileDiscovery(ma);
         }
 
-        private static MAConfigParameters DoAutoRunProfileDiscovery(ManagementAgent ma)
+        public static MAConfigParameters DoAutoRunProfileDiscovery(ManagementAgent ma)
         {
             Logger.WriteLine("{0}: Performing run profile auto-discovery", ma.Name);
 
-            MAConfigParameters config = new MAConfigParameters();
+            MAConfigParameters config = new MAConfigParameters(ma);
             bool match = false;
 
             foreach (RunConfiguration profile in ma.RunProfiles.Values)
@@ -111,7 +111,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             else
             {
-                return new MAConfigParameters() { Disabled = true };
+                return new MAConfigParameters(ma) { Disabled = true };
             }
         }
     }

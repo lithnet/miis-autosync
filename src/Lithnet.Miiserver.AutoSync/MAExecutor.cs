@@ -6,7 +6,6 @@ using System.Threading;
 using System.Collections.Concurrent;
 using Lithnet.Miiserver.Client;
 using Lithnet.Logging;
-using System.Net.Mail;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -23,6 +22,8 @@ namespace Lithnet.Miiserver.AutoSync
         public delegate void SyncCompleteEventHandler(object sender, SyncCompleteEventArgs e);
         private ManagementAgent ma;
         private BlockingCollection<ExecutionParameters> pendingActions;
+        private ExecutionParameterCollection pendingActionList;
+
         private ManualResetEvent localOperationLock;
         private System.Timers.Timer importCheckTimer;
         private System.Timers.Timer unmanagedChangesCheckTimer;
@@ -53,7 +54,8 @@ namespace Lithnet.Miiserver.AutoSync
         public MAExecutor(ManagementAgent ma, MAConfigParameters profiles)
         {
             this.ma = ma;
-            this.pendingActions = new BlockingCollection<ExecutionParameters>();
+            this.pendingActionList = new ExecutionParameterCollection();
+            this.pendingActions = new BlockingCollection<ExecutionParameters>(this.pendingActionList);
             this.perProfileLastRunStatus = new Dictionary<string, string>();
             this.ExecutionTriggers = new List<IMAExecutionTrigger>();
             this.Configuration = profiles;
@@ -166,7 +168,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 if (MAExecutor.HasUnconfirmedExports(d))
                 {
-                    this.AddPendingActionIfNotQueued(new ExecutionParameters(this.Configuration.ConfirmingImportRunProfileName), d.RunProfileName);
+                    this.AddPendingActionIfNotQueued(new ExecutionParameters(this.Configuration.ConfirmingImportRunProfileName), d.RunProfileName, true);
                 }
             }
         }
@@ -554,7 +556,7 @@ namespace Lithnet.Miiserver.AutoSync
                     {
                         this.ExecutingRunProfile = action.RunProfileName;
 
-                        if (this.IsSyncStepOrFIMMADeltaImport(action.RunProfileName))
+                        if (this.IsSyncStepOrFimMADeltaImport(action.RunProfileName))
                         {
                             lock (MAExecutor.GlobalSynchronizationStepLock)
                             {
@@ -577,7 +579,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        private bool IsSyncStepOrFIMMADeltaImport(string runProfileName)
+        private bool IsSyncStepOrFimMADeltaImport(string runProfileName)
         {
             if (this.ma.RunProfiles[runProfileName].RunSteps.Any(t => t.IsSyncStep))
             {
@@ -661,7 +663,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.AddPendingActionIfNotQueued(e.Parameters, trigger.Name);
         }
 
-        private void AddPendingActionIfNotQueued(ExecutionParameters p, string source)
+        private void AddPendingActionIfNotQueued(ExecutionParameters p, string source, bool runNext = false)
         {
             if (string.IsNullOrWhiteSpace(p.RunProfileName))
             {
@@ -675,6 +677,12 @@ namespace Lithnet.Miiserver.AutoSync
 
             if (this.pendingActions.Contains(p))
             {
+                if (runNext && this.pendingActions.Count > 1)
+                {
+                    Logger.WriteLine("{0}: Moving {1} to the front of the execution queue", this.ma.Name, p.RunProfileName);
+                    this.pendingActionList.MoveToFront(p);
+                }
+
                 return;
             }
 
@@ -683,9 +691,33 @@ namespace Lithnet.Miiserver.AutoSync
                 return;
             }
 
-            this.pendingActions.Add(p);
-            Logger.WriteLine("{0}: Queuing {1} (triggered by: {2})", this.ma.Name, p.RunProfileName, source);
-            Logger.WriteLine("{0}: Current queue {1}", this.ma.Name, string.Join(",", this.pendingActions.Select(t => t.RunProfileName)));
+            if (runNext)
+            {
+                this.pendingActions.Add(p);
+                this.pendingActionList.MoveToFront(p);
+                Logger.WriteLine("{0}: Added {1} to the front of the execution queue (triggered by: {2})", this.ma.Name, p.RunProfileName, source);
+            }
+            else
+            {
+                this.pendingActions.Add(p);
+                Logger.WriteLine("{0}: Added {1} to the execution queue (triggered by: {2})", this.ma.Name, p.RunProfileName, source);
+            }
+
+            Logger.WriteLine("{0}: Current queue {1}", this.ma.Name, this.GetQueueItemNames());
+        }
+
+        private string GetQueueItemNames()
+        {
+            string queuedNames = string.Join(",", this.pendingActions.Select(t => t.RunProfileName));
+
+            if (this.ExecutingRunProfile != null)
+            {
+                return string.Join(",", this.ExecutingRunProfile + "*", queuedNames);
+            }
+            else
+            {
+                return queuedNames;
+            }
         }
 
         private static bool HasUnconfirmedExports(RunDetails d)

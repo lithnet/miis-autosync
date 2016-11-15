@@ -7,7 +7,7 @@ namespace Lithnet.Miiserver.AutoSync
     {
         private Timer checkTimer;
 
-        private int TriggerInterval { get; }
+        public int TriggerInterval { get; set; }
 
         public MARunProfileType RunProfileTargetType { get; set; }
 

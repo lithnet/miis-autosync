@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
+using Lithnet.Miiserver.Client;
+using System.Text;
 
 namespace Lithnet.Miiserver.AutoSync
 {
-    using System.Text;
-
     public class MAConfigParameters
     {
+        public ManagementAgent ManagementAgent { get; set; }
+
         public string ConfirmingImportRunProfileName { get; set; }
 
         public string DeltaSyncRunProfileName { get; set; }
@@ -29,11 +32,14 @@ namespace Lithnet.Miiserver.AutoSync
 
         public int AutoImportIntervalMinutes { get; set; }
 
-        public MAConfigParameters()
+        public MAConfigParameters(ManagementAgent ma)
         {
+            this.ManagementAgent = ma;
+            this.Triggers = new List<IMAExecutionTrigger>();
         }
 
-        public MAConfigParameters(Hashtable config)
+        public MAConfigParameters(ManagementAgent ma, Hashtable config)
+            :this(ma)
         {
             this.ConfirmingImportRunProfileName = config["ConfirmingImportRunProfileName"] as string;
             this.DeltaSyncRunProfileName = config["DeltaSyncRunProfileName"] as string;
@@ -47,6 +53,8 @@ namespace Lithnet.Miiserver.AutoSync
             this.DisableDefaultTriggers = config["DisableDefaultTriggers"] != null && Convert.ToBoolean(config["DisableDefaultTriggers"]);
             this.AutoImportIntervalMinutes = config["AutoImportIntervalMinutes"] == null ? 0 : Convert.ToInt32(config["AutoImportIntervalMinutes"]);
         }
+
+        public IList<IMAExecutionTrigger> Triggers { get; private set; }
 
         internal bool CanExport => this.ExportRunProfileName != null;
 
