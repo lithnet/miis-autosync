@@ -24,7 +24,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             this.ma = ma;
 
-            this.ScriptPath = Path.Combine(Settings.ConfigPath, Global.CleanMAName(ma.Name) + ".ps1");
+            this.ScriptPath = Path.Combine(Settings.ConfigPath, $"Config-{Global.CleanMAName(ma.Name)}.ps1");
 
             if (!File.Exists(this.ScriptPath))
             {
