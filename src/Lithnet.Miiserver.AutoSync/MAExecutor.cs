@@ -555,6 +555,8 @@ namespace Lithnet.Miiserver.AutoSync
                     try
                     {
                         this.ExecutingRunProfile = action.RunProfileName;
+                        
+                        this.SetExclusiveMode(action);
 
                         if (this.IsSyncStepOrFimMADeltaImport(action.RunProfileName))
                         {
@@ -579,9 +581,25 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
+        private void SetExclusiveMode(ExecutionParameters action)
+        {
+            // If the debug flags for running serial sync operations are set, then mark the operation as exclusive
+            if (Settings.RunAllExclusive)
+            {
+                action.Exclusive = true;
+            }
+            else if (Settings.RunSyncExclusive)
+            {
+                if (this.IsSyncStep(action.RunProfileName))
+                {
+                    action.Exclusive = true;
+                }
+            }
+        }
+
         private bool IsSyncStepOrFimMADeltaImport(string runProfileName)
         {
-            if (this.ma.RunProfiles[runProfileName].RunSteps.Any(t => t.IsSyncStep))
+            if (this.IsSyncStep(runProfileName))
             {
                 return true;
             }
@@ -595,6 +613,11 @@ namespace Lithnet.Miiserver.AutoSync
             }
 
             return false;
+        }
+
+        private bool IsSyncStep(string runProfileName)
+        {
+            return this.ma.RunProfiles[runProfileName].RunSteps.Any(t => t.IsSyncStep);
         }
 
         private void CheckAndQueueUnmanagedChanges()

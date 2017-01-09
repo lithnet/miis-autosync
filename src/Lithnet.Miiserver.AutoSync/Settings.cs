@@ -139,6 +139,12 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
+
+        public static bool RunSyncExclusive => Settings.BaseKey.GetValue("ExclusiveSync") as string == "1";
+
+        public static bool RunAllExclusive => Settings.BaseKey.GetValue("ExclusiveAll") as string == "1";
+        
+
         public static bool MailSendOncePerStateChange => Settings.BaseKey.GetValue("MailSendOncePerStateChange") as string != "0";
 
         public static bool RunHistorySave => Settings.BaseKey.GetValue("RunHistorySave") as string == "1";
