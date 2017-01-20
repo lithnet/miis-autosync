@@ -92,7 +92,29 @@ namespace Lithnet.Miiserver.AutoSync
                 }
                 else
                 {
-                    return new TimeSpan(0, 0, 5);
+                    return new TimeSpan(0, 0, 2);
+                }
+            }
+        }
+
+        /// <summary>
+        /// The amount of time after the run profile completes before analysis of the run profile results starts
+        /// </summary>
+        public static TimeSpan PostRunInterval
+        {
+            get
+            {
+                string s = Settings.BaseKey.GetValue("PostRunInterval") as string;
+
+                int seconds;
+
+                if (int.TryParse(s, out seconds))
+                {
+                    return new TimeSpan(0, 0, seconds >= 1 ? seconds : 1);
+                }
+                else
+                {
+                    return new TimeSpan(0, 0, 2);
                 }
             }
         }
@@ -187,6 +209,9 @@ namespace Lithnet.Miiserver.AutoSync
             builder.AppendLine($"{nameof(Settings.RunHistorySave)}: {Settings.RunHistorySave}");
             builder.AppendLine($"{nameof(Settings.UnmanagedChangesCheckInterval)}: {Settings.UnmanagedChangesCheckInterval}");
             builder.AppendLine($"{nameof(Settings.ExecutionStaggerInterval)}: {Settings.ExecutionStaggerInterval}");
+            builder.AppendLine($"{nameof(Settings.RunSyncExclusive)}: {Settings.RunSyncExclusive}");
+            builder.AppendLine($"{nameof(Settings.RunAllExclusive)}: {Settings.RunAllExclusive}");
+            builder.AppendLine($"{nameof(Settings.PostRunInterval)}: {Settings.PostRunInterval}");
 
             return builder.ToString();
         }
