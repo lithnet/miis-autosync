@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Lithnet.Miiserver.AutoSync
 {
-    public static class MessageSender
+    internal static class MessageSender
     {
         public static void SendMessage(string subject, string body)
         {
@@ -38,6 +38,31 @@ namespace Lithnet.Miiserver.AutoSync
                     client.Send(m);
                 }
             }
+        }
+
+        internal static bool CanSendMail()
+        {
+            if (!Settings.MailEnabled)
+            {
+                return false;
+            }
+
+            if (!Settings.UseAppConfigMailSettings)
+            {
+                if (Settings.MailFrom == null || Settings.MailTo == null || Settings.MailServer == null)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                if (Settings.MailTo == null)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }

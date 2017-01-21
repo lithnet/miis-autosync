@@ -782,7 +782,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private string GetQueueItemNames()
         {
-            string queuedNames = string.Join(",", this.pendingActions.Select(t => t.RunProfileName));
+            string queuedNames = string.Join(",", this.pendingActions.ToList().Select(t => t.RunProfileName));
 
             if (this.ExecutingRunProfile != null)
             {
@@ -921,7 +921,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static bool ShouldSendMail(RunDetails r)
         {
-            if (!MAExecutor.CanSendMail())
+            if (!MessageSender.CanSendMail())
             {
                 return false;
             }
@@ -929,30 +929,6 @@ namespace Lithnet.Miiserver.AutoSync
             return Settings.MailIgnoreReturnCodes == null || !Settings.MailIgnoreReturnCodes.Contains(r.LastStepStatus, StringComparer.OrdinalIgnoreCase);
         }
 
-        private static bool CanSendMail()
-        {
-            if (!Settings.MailEnabled)
-            {
-                return false;
-            }
-
-            if (!Settings.UseAppConfigMailSettings)
-            {
-                if (Settings.MailFrom == null || Settings.MailTo == null || Settings.MailServer == null)
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                if (Settings.MailTo == null)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
 
         public override string ToString()
         {

@@ -16,7 +16,7 @@ namespace Lithnet.Miiserver.AutoSync
         private CancellationTokenSource cancellationToken;
 
         private PowerShell powershell;
-        
+
         public string ScriptPath { get; set; }
 
         public string Name => $"PowerShell: {System.IO.Path.GetFileName(this.ScriptPath)}";
@@ -26,7 +26,7 @@ namespace Lithnet.Miiserver.AutoSync
         public void Start()
         {
             this.cancellationToken = new CancellationTokenSource();
-                       
+
             this.internalTask = new Task(() =>
             {
                 try
@@ -50,7 +50,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                         this.powershell.Commands.Clear();
                         this.powershell.AddCommand("Get-RunProfileToExecute");
-                        
+
                         foreach (PSObject result in this.powershell.Invoke())
                         {
                             this.powershell.ThrowOnPipelineError();
@@ -59,6 +59,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                             if (runProfileName != null)
                             {
+
                                 this.Fire(runProfileName);
                                 continue;
                             }
@@ -85,10 +86,15 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     Logger.WriteLine("The PowerShell execution trigger encountered an error and has been terminated");
                     Logger.WriteException(ex);
+
+                    if (MessageSender.CanSendMail())
+                    {
+                        MessageSender.SendMessage($"The PowerShell execution trigger '{this.Name}' encountered an error and has been terminated", ex.ToString());
+                    }
                 }
             }, this.cancellationToken.Token);
 
-            
+
             internalTask.Start();
         }
 
@@ -104,7 +110,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 this.internalTask.Wait();
             }
-            
+
         }
 
         public void Fire(string runProfileName)
