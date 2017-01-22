@@ -39,7 +39,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             StringBuilder builder = new StringBuilder();
 
-            builder.AppendFormat(MessageBuilder.GetTemplate("RunSummaryFragment"), r.RunProfileName, r.MAName, r.StartTime, r.EndTime, r.SecurityID, r.LastStepStatus);
+            builder.AppendFormat(MessageBuilder.GetTemplate("RunSummaryFragment"), r.RunProfileName, r.MAName, r.StartTime, r.EndTime, r.SecurityID, r.LastStepStatus, r.RunNumber);
 
             builder.AppendFormat(MessageBuilder.GetTemplate("StepTableFragment"), MessageBuilder.BuildStepDetails(r.StepDetails));
 

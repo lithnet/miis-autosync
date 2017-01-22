@@ -335,6 +335,7 @@ namespace Lithnet.Miiserver.AutoSync
                         }
                         else
                         {
+                            this.Trace($"Result code {result} was not listed as retryable");
                             break; 
                         }
                     }
