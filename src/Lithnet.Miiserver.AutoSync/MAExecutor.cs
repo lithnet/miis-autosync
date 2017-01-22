@@ -234,35 +234,23 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                if (this.token.IsCancellationRequested)
-                {
-                    this.Trace($"Aborting execution of {e.RunProfileName} as cancellation was requested");
-                    return;
-                }
+                this.token.Token.ThrowIfCancellationRequested();
 
                 this.Trace($"LOCK: WAIT: GlobalExclusiveOp");
                 MAExecutor.GlobalExclusiveOperationLock.WaitOne();
                 this.Trace($"LOCK: CLEARED: GlobalExclusiveOp");
 
-                if (this.token.IsCancellationRequested)
-                {
-                    this.Trace($"Aborting execution of {e.RunProfileName} as cancellation was requested");
-                    return;
-                }
+                this.token.Token.ThrowIfCancellationRequested();
 
                 if (!this.controller.ShouldExecute(e.RunProfileName))
                 {
                     this.Log($"Controller indicated that run profile {e.RunProfileName} should not be executed");
                     return;
                 }
-                
+
                 this.WaitOnUnmanagedRun();
-   
-                if (this.token.IsCancellationRequested)
-                {
-                    this.Trace($"Aborting execution of {e.RunProfileName} as cancellation was requested");
-                    return;
-                }
+
+                this.token.Token.ThrowIfCancellationRequested();
 
                 if (e.Exclusive)
                 {
@@ -271,11 +259,7 @@ namespace Lithnet.Miiserver.AutoSync
                     // Signal all executors to wait before running their next job
                     MAExecutor.GlobalExclusiveOperationLock.Reset();
 
-                    if (this.token.IsCancellationRequested)
-                    {
-                        this.Trace($"Aborting execution of {e.RunProfileName} as cancellation was requested");
-                        return;
-                    }
+                    this.token.Token.ThrowIfCancellationRequested();
 
                     this.Log("Waiting for all MAs to complete");
                     // Wait for all  MAs to finish their current job
@@ -283,11 +267,7 @@ namespace Lithnet.Miiserver.AutoSync
                     WaitHandle.WaitAll(MAExecutor.AllMaLocalOperationLocks.ToArray());
                     this.Trace($"LOCK: CLEARED: AllLocalOps");
 
-                    if (this.token.IsCancellationRequested)
-                    {
-                        this.Trace($"Aborting execution of {e.RunProfileName} as cancellation was requested");
-                        return;
-                    }
+                    this.token.Token.ThrowIfCancellationRequested();
                 }
 
                 // If another operation in this executor is already running, then wait for it to finish
@@ -295,21 +275,13 @@ namespace Lithnet.Miiserver.AutoSync
                 this.localOperationLock.WaitOne();
                 this.Trace($"LOCK: CLEARED: LocalOp");
 
-                if (this.token.IsCancellationRequested)
-                {
-                    this.Trace($"Aborting execution of {e.RunProfileName} as cancellation was requested");
-                    return;
-                }
+                this.token.Token.ThrowIfCancellationRequested();
 
                 // Signal the local lock that an event is running
                 this.Trace($"LOCK: SET: LocalOp");
                 this.localOperationLock.Reset();
 
-                if (this.token.IsCancellationRequested)
-                {
-                    this.Trace($"Aborting execution of {e.RunProfileName} as cancellation was requested");
-                    return;
-                }
+                this.token.Token.ThrowIfCancellationRequested();
 
                 this.Trace($"LOCK: WAIT: StaggeredExecution");
                 // Grab the staggered execution lock, and hold for x seconds
@@ -320,22 +292,14 @@ namespace Lithnet.Miiserver.AutoSync
                     this.Trace($"LOCK: CLEARED: StaggeredExecution");
                     this.Trace($"LOCK: SET: StaggeredExecution");
 
-                    if (this.token.IsCancellationRequested)
-                    {
-                        this.Trace($"Aborting execution of {e.RunProfileName} as cancellation was requested");
-                        return;
-                    }
+                    this.token.Token.ThrowIfCancellationRequested();
 
                     Thread.Sleep(Settings.ExecutionStaggerInterval);
                 }
 
                 this.Trace($"LOCK: UNSET: StaggeredExecution");
 
-                if (this.token.IsCancellationRequested)
-                {
-                    this.Trace($"Aborting execution of {e.RunProfileName} as cancellation was requested");
-                    return;
-                }
+                this.token.Token.ThrowIfCancellationRequested();
 
                 if (this.ma.RunProfiles[e.RunProfileName].RunSteps.Any(t => t.IsImportStep))
                 {
@@ -343,23 +307,39 @@ namespace Lithnet.Miiserver.AutoSync
                     this.ResetImportTimerOnImport();
                 }
 
-                if (this.token.IsCancellationRequested)
-                {
-                    this.Trace($"Aborting execution of {e.RunProfileName} as cancellation was requested");
-                    return;
-                }
-
                 try
                 {
-                    this.Log($"Executing {e.RunProfileName}");
-                    string result = this.ma.ExecuteRunProfile(e.RunProfileName, this.token.Token);
-                    this.Log($"{e.RunProfileName} returned {result}");
+                    int count = 0;
 
-                    if (this.token.IsCancellationRequested)
+                    while (count <= Settings.RetryCount || Settings.RetryCount < 0)
                     {
-                        this.Trace($"Aborting execution of {e.RunProfileName} as cancellation was requested");
-                        return;
+                        this.token.Token.ThrowIfCancellationRequested();
+
+                        count++;
+                        this.Log($"Executing {e.RunProfileName}");
+                        string result = this.ma.ExecuteRunProfile(e.RunProfileName, this.token.Token);
+                        this.Log($"{e.RunProfileName} returned {result}");
+
+                        if (Settings.RetryCodes.Contains(result))
+                        {
+                            if (count > Settings.RetryCount && Settings.RetryCount >= 0)
+                            {
+                                this.Log($"Aborting run profile after {count} attempts");
+                                break;
+                            }
+
+                            int interval = Global.RandomizeOffset(Settings.RetrySleepInterval.TotalMilliseconds * count);
+                            this.Trace($"Sleeping thread for {interval}ms before retry");
+                            Thread.Sleep(interval);
+                            this.Log("Retrying operation");
+                        }
+                        else
+                        {
+                            break; 
+                        }
                     }
+
+                    this.token.Token.ThrowIfCancellationRequested();
 
                     Thread.Sleep(Settings.PostRunInterval);
                 }
@@ -368,11 +348,7 @@ namespace Lithnet.Miiserver.AutoSync
                     this.Log($"{e.RunProfileName} returned {ex.Result}");
                 }
 
-                if (this.token.IsCancellationRequested)
-                {
-                    this.Trace($"Aborting execution of {e.RunProfileName} as cancellation was requested");
-                    return;
-                }
+                this.token.Token.ThrowIfCancellationRequested();
 
                 this.Trace($"Getting run results");
                 using (RunDetails r = this.ma.GetLastRun())
@@ -383,6 +359,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (OperationCanceledException)
             {
+                this.Trace($"Aborting execution of {e.RunProfileName} as cancellation was requested");
             }
             catch (System.Management.Automation.RuntimeException ex)
             {
@@ -611,7 +588,7 @@ namespace Lithnet.Miiserver.AutoSync
                 foreach (ExecutionParameters action in this.pendingActions.GetConsumingEnumerable(this.token.Token))
                 {
                     this.token.Token.ThrowIfCancellationRequested();
-                    
+
                     try
                     {
                         this.ExecutingRunProfile = action.RunProfileName;

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Configuration;
@@ -11,6 +12,8 @@ namespace Lithnet.Miiserver.AutoSync
     internal static class Settings
     {
         private static RegistryKey key;
+
+        private static HashSet<string> retryCodes;
 
         public static RegistryKey BaseKey
         {
@@ -78,6 +81,18 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
+        public static int RetryCount
+        {
+            get
+            {
+                string s = Settings.BaseKey.GetValue("RetryCount") as string;
+
+                int value;
+
+                return int.TryParse(s, out value) ? value : 5;
+            }
+        }
+
         public static TimeSpan ExecutionStaggerInterval
         {
             get
@@ -116,6 +131,56 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     return new TimeSpan(0, 0, 2);
                 }
+            }
+        }
+
+
+        /// <summary>
+        /// The amount of time to sleep after a deadlock event before retrying
+        /// </summary>
+        public static TimeSpan RetrySleepInterval
+        {
+            get
+            {
+                string s = Settings.BaseKey.GetValue("RetrySleepInterval") as string;
+
+                int seconds;
+
+                if (int.TryParse(s, out seconds))
+                {
+                    return new TimeSpan(0, 0, seconds >= 1 ? seconds : 1);
+                }
+                else
+                {
+                    return new TimeSpan(0, 0, 5);
+                }
+            }
+        }
+
+        public static HashSet<string> RetryCodes
+        {
+            get
+            {
+                if (retryCodes == null)
+                {
+                    retryCodes = new HashSet<string>();
+
+                    string[] values = Settings.BaseKey.GetValue("RetryCodes") as string[];
+
+                    if (values != null && values.Length > 0)
+                    {
+                        foreach (string s in values)
+                        {
+                            retryCodes.Add(s);
+                        }
+                    }
+                    else
+                    {
+                        retryCodes.Add("stopped-deadlocked");
+                    }
+                }
+
+                return retryCodes;
             }
         }
 
@@ -165,7 +230,7 @@ namespace Lithnet.Miiserver.AutoSync
         public static bool RunSyncExclusive => Settings.BaseKey.GetValue("ExclusiveSync") as string == "1";
 
         public static bool RunAllExclusive => Settings.BaseKey.GetValue("ExclusiveAll") as string == "1";
-        
+
 
         public static bool MailSendOncePerStateChange => Settings.BaseKey.GetValue("MailSendOncePerStateChange") as string != "0";
 
@@ -212,6 +277,9 @@ namespace Lithnet.Miiserver.AutoSync
             builder.AppendLine($"{nameof(Settings.RunSyncExclusive)}: {Settings.RunSyncExclusive}");
             builder.AppendLine($"{nameof(Settings.RunAllExclusive)}: {Settings.RunAllExclusive}");
             builder.AppendLine($"{nameof(Settings.PostRunInterval)}: {Settings.PostRunInterval}");
+            builder.AppendLine($"{nameof(Settings.RetryCount)}: {Settings.RetryCount}");
+            builder.AppendLine($"{nameof(Settings.RetrySleepInterval)}: {Settings.RetrySleepInterval}");
+            builder.AppendLine($"{nameof(Settings.RetryCodes)}: {string.Join(",", Settings.RetryCodes)}");
 
             return builder.ToString();
         }
