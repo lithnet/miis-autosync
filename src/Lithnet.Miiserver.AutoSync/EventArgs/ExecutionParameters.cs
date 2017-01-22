@@ -47,18 +47,10 @@ namespace Lithnet.Miiserver.AutoSync
 
             if (!string.IsNullOrWhiteSpace(this.RunProfileName))
             {
-                if (string.Equals(this.RunProfileName, p2.RunProfileName, StringComparison.OrdinalIgnoreCase) && this.Exclusive == p2.Exclusive)
-                {
-                    return true;
-                }
+                return string.Equals(this.RunProfileName, p2.RunProfileName, StringComparison.OrdinalIgnoreCase) && this.Exclusive == p2.Exclusive;
             }
 
-            if (this.RunProfileType == p2.RunProfileType && this.Exclusive == p2.Exclusive)
-            {
-                return true;
-            }
-
-            return false;
+            return this.RunProfileType == p2.RunProfileType && this.Exclusive == p2.Exclusive;
         }
 
         public override int GetHashCode()

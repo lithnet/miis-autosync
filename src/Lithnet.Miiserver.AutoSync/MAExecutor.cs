@@ -255,11 +255,9 @@ namespace Lithnet.Miiserver.AutoSync
                     this.Log($"Controller indicated that run profile {e.RunProfileName} should not be executed");
                     return;
                 }
-
-                this.Trace($"Check and wait for unmanaged run");
+                
                 this.WaitOnUnmanagedRun();
-                this.Trace($"Unmanaged run wait complete");
-
+   
                 if (this.token.IsCancellationRequested)
                 {
                     this.Trace($"Aborting execution of {e.RunProfileName} as cancellation was requested");
@@ -443,6 +441,7 @@ namespace Lithnet.Miiserver.AutoSync
                 return;
             }
 
+            this.Trace($"Unmanaged run in progress");
             this.Trace($"LOCK: SET: LocalOp");
             this.localOperationLock.Reset();
 
@@ -488,6 +487,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 this.Trace($"LOCK: UNSET: LocalOp");
                 this.localOperationLock.Set();
+                this.Trace("Unmanaged run complete");
             }
         }
 

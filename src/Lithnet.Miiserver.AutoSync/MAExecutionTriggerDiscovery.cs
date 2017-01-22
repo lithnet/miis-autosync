@@ -180,7 +180,7 @@ namespace Lithnet.Miiserver.AutoSync
             d.LoadXml(madata);
 
             int eafCount = d.SelectNodes("/export-ma/ma-data/export-attribute-flow/export-flow-set/export-flow")?.Count ?? 0;
-            int iafCount = d.SelectNodes($"/export-ma/mv-data/import-attribute-flow/import-flow-set/import-flows/import-flow[@src-ma='{ma.ID.ToMmsGuid()}']")?.Count ?? 0;
+            int iafCount = d.SelectNodes($"/export-ma/mv-data/import-attribute-flow/import-flow-set/import-flows/import-flow[@src-ma='{ma.ID.ToString("B").ToUpper()}']")?.Count ?? 0;
 
             return iafCount > eafCount;
         }

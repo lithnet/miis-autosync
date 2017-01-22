@@ -237,7 +237,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                     if (error.CDError.Value != null)
                     {
-                        errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Value", error.CDError.Value.ToCommaSeparatedString());
+                        errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Value", string.Join(", ", error.CDError.Value));
                     }
                 }
 
