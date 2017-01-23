@@ -294,7 +294,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                     this.token.Token.ThrowIfCancellationRequested();
 
-                    Thread.Sleep(Settings.ExecutionStaggerInterval);
+                    this.token.Token.WaitHandle.WaitOne(Settings.ExecutionStaggerInterval);
                 }
 
                 this.Trace($"LOCK: UNSET: StaggeredExecution");
@@ -322,6 +322,8 @@ namespace Lithnet.Miiserver.AutoSync
 
                         if (Settings.RetryCodes.Contains(result))
                         {
+                            this.Trace($"Operation is retryable. {count} attempts made");
+
                             if (count > Settings.RetryCount && Settings.RetryCount >= 0)
                             {
                                 this.Log($"Aborting run profile after {count} attempts");
@@ -330,7 +332,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                             int interval = Global.RandomizeOffset(Settings.RetrySleepInterval.TotalMilliseconds * count);
                             this.Trace($"Sleeping thread for {interval}ms before retry");
-                            Thread.Sleep(interval);
+                            this.token.Token.WaitHandle.WaitOne(interval);
                             this.Log("Retrying operation");
                         }
                         else
@@ -341,8 +343,7 @@ namespace Lithnet.Miiserver.AutoSync
                     }
 
                     this.token.Token.ThrowIfCancellationRequested();
-
-                    Thread.Sleep(Settings.PostRunInterval);
+                    this.token.Token.WaitHandle.WaitOne(Settings.PostRunInterval);
                 }
                 catch (MAExecutionException ex)
                 {

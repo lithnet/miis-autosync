@@ -79,7 +79,7 @@ namespace Lithnet.Miiserver.AutoSync
                             break;
                         }
 
-                        Thread.Sleep(5000);
+                        this.cancellationToken.Token.WaitHandle.WaitOne(Settings.PSExecutionQueryInterval);
                     }
                 }
                 catch (Exception ex)
@@ -95,7 +95,7 @@ namespace Lithnet.Miiserver.AutoSync
             }, this.cancellationToken.Token);
 
 
-            internalTask.Start();
+            this.internalTask.Start();
         }
 
         public void Stop()
@@ -103,14 +103,12 @@ namespace Lithnet.Miiserver.AutoSync
             this.run = false;
 
             this.cancellationToken?.Cancel();
-
             this.powershell?.Stop();
 
-            if (!this.internalTask.IsCompleted)
+            if (this.internalTask != null && !this.internalTask.IsCompleted)
             {
                 this.internalTask.Wait();
             }
-
         }
 
         public void Fire(string runProfileName)

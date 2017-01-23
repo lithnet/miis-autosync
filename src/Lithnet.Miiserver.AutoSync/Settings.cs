@@ -157,6 +157,28 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
+        /// <summary>
+        /// The amount of time to sleep in between querying for Get-RunProfileToExecute
+        /// </summary>
+        public static TimeSpan PSExecutionQueryInterval
+        {
+            get
+            {
+                string s = Settings.BaseKey.GetValue("PSExecutionQueryInterval") as string;
+
+                int seconds;
+
+                if (int.TryParse(s, out seconds))
+                {
+                    return new TimeSpan(0, 0, seconds >= 1 ? seconds : 1);
+                }
+                else
+                {
+                    return new TimeSpan(0, 0, 5);
+                }
+            }
+        }
+
         public static HashSet<string> RetryCodes
         {
             get

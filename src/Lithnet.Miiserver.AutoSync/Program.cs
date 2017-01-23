@@ -166,37 +166,49 @@ namespace Lithnet.Miiserver.AutoSync
 
         public static void Stop()
         {
-            if (Program.runHistoryCleanupTimer != null)
+            try
             {
-                if (Program.runHistoryCleanupTimer.Enabled)
+                if (Program.runHistoryCleanupTimer != null)
                 {
-                    Program.runHistoryCleanupTimer.Stop();
+                    if (Program.runHistoryCleanupTimer.Enabled)
+                    {
+                        Program.runHistoryCleanupTimer.Stop();
+                    }
+                }
+
+                List<Task> stopTasks = new List<Task>();
+
+                foreach (MAExecutor x in maExecutors)
+                {
+                    stopTasks.Add(Task.Factory.StartNew(() =>
+                    {
+                        try
+                        {
+                            x.Stop();
+                        }
+                        catch (OperationCanceledException)
+                        {
+                        }
+                    }));
+                }
+
+                Logger.WriteLine("Waiting for executors to stop");
+
+                if (!Task.WaitAll(stopTasks.ToArray(), 90000))
+                {
+                    Logger.WriteLine("Timeout waiting for executors to stop");
+                    Environment.Exit(2);
+                }
+                else
+                {
+                    Logger.WriteLine("Shutdown complete");
                 }
             }
-
-            //if (Program.pingTimer != null)
-            //{
-            //    if (Program.pingTimer.Enabled)
-            //    {
-            //        Program.pingTimer.Stop();
-            //    }
-            //}
-
-            List<Task> stopTasks = new List<Task>();
-
-            foreach (MAExecutor x in maExecutors)
+            catch (Exception ex)
             {
-                stopTasks.Add(Task.Factory.StartNew(() => x.Stop()));
-            }
-
-            if (!Task.WaitAll(stopTasks.ToArray(), 90000))
-            {
-                Logger.WriteLine("Timeout waiting for executors to stop");
-                Environment.Exit(2);
-            }
-            else
-            {
-                Logger.WriteLine("Shutdown complete");
+                Logger.WriteLine("An error occurred during termination");
+                Logger.WriteException(ex);
+                Environment.Exit(3);
             }
         }
 
