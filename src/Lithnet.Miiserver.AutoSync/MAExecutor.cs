@@ -293,12 +293,10 @@ namespace Lithnet.Miiserver.AutoSync
                     this.Trace($"LOCK: SET: StaggeredExecution");
 
                     this.token.Token.ThrowIfCancellationRequested();
-
                     this.token.Token.WaitHandle.WaitOne(Settings.ExecutionStaggerInterval);
                 }
 
                 this.Trace($"LOCK: UNSET: StaggeredExecution");
-
                 this.token.Token.ThrowIfCancellationRequested();
 
                 if (this.ma.RunProfiles[e.RunProfileName].RunSteps.Any(t => t.IsImportStep))
@@ -307,49 +305,50 @@ namespace Lithnet.Miiserver.AutoSync
                     this.ResetImportTimerOnImport();
                 }
 
-                try
+                int count = 0;
+
+                while (count <= Settings.RetryCount || Settings.RetryCount < 0)
                 {
-                    int count = 0;
+                    this.token.Token.ThrowIfCancellationRequested();
+                    string result;
 
-                    while (count <= Settings.RetryCount || Settings.RetryCount < 0)
+                    try
                     {
-                        this.token.Token.ThrowIfCancellationRequested();
-
                         count++;
                         this.Log($"Executing {e.RunProfileName}");
-                        string result = this.ma.ExecuteRunProfile(e.RunProfileName, this.token.Token);
+                        result = this.ma.ExecuteRunProfile(e.RunProfileName, this.token.Token);
                         this.Log($"{e.RunProfileName} returned {result}");
-
-                        if (Settings.RetryCodes.Contains(result))
-                        {
-                            this.Trace($"Operation is retryable. {count} attempts made");
-
-                            if (count > Settings.RetryCount && Settings.RetryCount >= 0)
-                            {
-                                this.Log($"Aborting run profile after {count} attempts");
-                                break;
-                            }
-
-                            int interval = Global.RandomizeOffset(Settings.RetrySleepInterval.TotalMilliseconds * count);
-                            this.Trace($"Sleeping thread for {interval}ms before retry");
-                            this.token.Token.WaitHandle.WaitOne(interval);
-                            this.Log("Retrying operation");
-                        }
-                        else
-                        {
-                            this.Trace($"Result code {result} was not listed as retryable");
-                            break; 
-                        }
+                    }
+                    catch (MAExecutionException ex)
+                    {
+                        this.Log($"{e.RunProfileName} returned {ex.Result}");
+                        result = ex.Result;
                     }
 
-                    this.token.Token.ThrowIfCancellationRequested();
-                    this.token.Token.WaitHandle.WaitOne(Settings.PostRunInterval);
-                }
-                catch (MAExecutionException ex)
-                {
-                    this.Log($"{e.RunProfileName} returned {ex.Result}");
+                    if (Settings.RetryCodes.Contains(result))
+                    {
+                        this.Trace($"Operation is retryable. {count} attempts made");
+
+                        if (count > Settings.RetryCount && Settings.RetryCount >= 0)
+                        {
+                            this.Log($"Aborting run profile after {count} attempts");
+                            break;
+                        }
+
+                        int interval = Global.RandomizeOffset(Settings.RetrySleepInterval.TotalMilliseconds * count);
+                        this.Trace($"Sleeping thread for {interval}ms before retry");
+                        this.token.Token.WaitHandle.WaitOne(interval);
+                        this.Log("Retrying operation");
+                    }
+                    else
+                    {
+                        this.Trace($"Result code {result} was not listed as retryable");
+                        break;
+                    }
                 }
 
+                this.token.Token.ThrowIfCancellationRequested();
+                this.token.Token.WaitHandle.WaitOne(Settings.PostRunInterval);
                 this.token.Token.ThrowIfCancellationRequested();
 
                 this.Trace($"Getting run results");
