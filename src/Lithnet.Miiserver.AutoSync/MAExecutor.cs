@@ -358,18 +358,8 @@ namespace Lithnet.Miiserver.AutoSync
                     this.PerformPostRunActions(r);
                 }
             }
-            catch (OperationCanceledException)
-            {
-                this.Trace($"Aborting execution of {e.RunProfileName} as cancellation was requested");
-            }
             catch (System.Management.Automation.RuntimeException ex)
             {
-                if (this.token.IsCancellationRequested)
-                {
-                    this.Trace($"Aborting execution of {e.RunProfileName} as cancellation was requested");
-                    return;
-                }
-
                 UnexpectedChangeException changeException = ex.InnerException as UnexpectedChangeException;
 
                 if (changeException != null)
@@ -384,12 +374,6 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (UnexpectedChangeException ex)
             {
-                if (this.token.IsCancellationRequested)
-                {
-                    this.Trace($"Aborting execution of {e.RunProfileName} as cancellation was requested");
-                    return;
-                }
-
                 this.ProcessUnexpectedChangeException(ex);
             }
             catch (Exception ex)
