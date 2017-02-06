@@ -570,6 +570,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             try
             {
+                // ReSharper disable once InconsistentlySynchronizedField
                 foreach (ExecutionParameters action in this.pendingActions.GetConsumingEnumerable(this.token.Token))
                 {
                     this.token.Token.ThrowIfCancellationRequested();
@@ -701,77 +702,100 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void notifier_TriggerExecution(object sender, ExecutionTriggerEventArgs e)
         {
-            IMAExecutionTrigger trigger = (IMAExecutionTrigger)sender;
+            IMAExecutionTrigger trigger = null;
 
-            if (string.IsNullOrWhiteSpace(e.Parameters.RunProfileName))
+            try
             {
-                if (e.Parameters.RunProfileType == MARunProfileType.None)
-                {
-                    this.Log($"Received empty run profile from trigger {trigger.Name}");
-                    return;
-                }
-            }
+                trigger = (IMAExecutionTrigger)sender;
 
-            this.AddPendingActionIfNotQueued(e.Parameters, trigger.Name);
+                if (string.IsNullOrWhiteSpace(e.Parameters.RunProfileName))
+                {
+                    if (e.Parameters.RunProfileType == MARunProfileType.None)
+                    {
+                        this.Log($"Received empty run profile from trigger {trigger.Name}");
+                        return;
+                    }
+                }
+
+                this.AddPendingActionIfNotQueued(e.Parameters, trigger.Name);
+            }
+            catch (Exception ex)
+            {
+                this.Log($"The was an unexpected error processing an incoming trigger from {trigger?.Name}");
+                Logger.WriteException(ex);
+            }
         }
 
         private void AddPendingActionIfNotQueued(ExecutionParameters p, string source, bool runNext = false)
         {
-            if (string.IsNullOrWhiteSpace(p.RunProfileName))
+            try
             {
-                if (p.RunProfileType == MARunProfileType.None)
+                if (string.IsNullOrWhiteSpace(p.RunProfileName))
                 {
-                    this.Trace($"Dropping pending action request as no run profile name or run profile type was specified");
+                    if (p.RunProfileType == MARunProfileType.None)
+                    {
+                        this.Trace($"Dropping pending action request as no run profile name or run profile type was specified");
+                        return;
+                    }
+
+                    p.RunProfileName = this.Configuration.GetRunProfileName(p.RunProfileType);
+                }
+
+                if (this.pendingActions.ToArray().Contains(p))
+                {
+                    if (runNext && this.pendingActions.Count > 1)
+                    {
+                        this.Log($"Moving {p.RunProfileName} to the front of the execution queue");
+                        this.pendingActionList.MoveToFront(p);
+                    }
+                    else
+                    {
+                        this.Trace($"Ignoring queue request for {p.RunProfileName} as it already exists in the queue");
+                    }
+
                     return;
                 }
 
-                p.RunProfileName = this.Configuration.GetRunProfileName(p.RunProfileType);
-            }
+                // Removing this as it may caused changes to go unseen. Eg an import is in progress, 
+                // a snapshot is taken, but new items become available during the import of the snapshot
 
-            if (this.pendingActions.Contains(p))
-            {
-                if (runNext && this.pendingActions.Count > 1)
+                //if (p.RunProfileName.Equals(this.ExecutingRunProfile, StringComparison.OrdinalIgnoreCase))
+                //{
+                //    this.Trace($"Ignoring queue request for {p.RunProfileName} as it is currently executing");
+                //    return;
+                //}
+
+                this.Trace($"Got queue request for {p.RunProfileName}");
+
+                if (runNext)
                 {
-                    this.Log($"Moving {p.RunProfileName} to the front of the execution queue");
+                    this.pendingActions.Add(p);
+
                     this.pendingActionList.MoveToFront(p);
+                    this.Log($"Added {p.RunProfileName} to the front of the execution queue (triggered by: {source})");
                 }
                 else
                 {
-                    this.Trace($"Ignoring queue request for {p.RunProfileName} as it already exists in the queue");
+                    this.pendingActions.Add(p);
+
+                    this.Log($"Added {p.RunProfileName} to the execution queue (triggered by: {source})");
                 }
 
-                return;
+                this.Log($"Current queue {this.GetQueueItemNames()}");
             }
-
-            // Removing this as it may caused changes to go unseen. Eg an import is in progress, 
-            // a snapshot is taken, but new items become available during the import of the snapshot
-
-            //if (p.RunProfileName.Equals(this.ExecutingRunProfile, StringComparison.OrdinalIgnoreCase))
-            //{
-            //    this.Trace($"Ignoring queue request for {p.RunProfileName} as it is currently executing");
-            //    return;
-            //}
-
-            this.Trace($"Got queue request for {p.RunProfileName}");
-
-            if (runNext)
+            catch (Exception ex)
             {
-                this.pendingActions.Add(p);
-                this.pendingActionList.MoveToFront(p);
-                this.Log($"Added {p.RunProfileName} to the front of the execution queue (triggered by: {source})");
+                this.Log($"An unexpected error occurred while adding the pending action {p?.RunProfileName}. The event has been discarded");
+                Logger.WriteException(ex);
             }
-            else
-            {
-                this.pendingActions.Add(p);
-                this.Log($"Added {p.RunProfileName} to the execution queue (triggered by: {source})");
-            }
-
-            this.Log($"Current queue {this.GetQueueItemNames()}");
         }
 
         private string GetQueueItemNames()
         {
-            string queuedNames = string.Join(",", this.pendingActions.ToList().Select(t => t.RunProfileName));
+            // ToArray is implemented by BlockingCollection and allows an approximate copy of the data to be made in 
+            // the event an add or remove is in progress. Other functions such as ToList are generic and can cause
+            // collection modified exceptions when enumerating the values
+            string queuedNames = string.Join(",", this.pendingActions.ToArray().Select(t => t.RunProfileName));
 
             if (this.ExecutingRunProfile != null)
             {

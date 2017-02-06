@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Management.Automation;
 using System.Threading.Tasks;
 using System.Threading;
@@ -51,15 +52,32 @@ namespace Lithnet.Miiserver.AutoSync
                         this.powershell.Commands.Clear();
                         this.powershell.AddCommand("Get-RunProfileToExecute");
 
-                        foreach (PSObject result in this.powershell.Invoke())
-                        {
-                            this.powershell.ThrowOnPipelineError();
+                        Collection<PSObject> results;
 
+                        try
+                        {
+                            results = this.powershell.Invoke();
+                            this.powershell.ThrowOnPipelineError();
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.WriteLine("The PowerShell execution trigger encountered an error and has been terminated");
+                            Logger.WriteException(ex);
+
+                            if (MessageSender.CanSendMail())
+                            {
+                                MessageSender.SendMessage($"The PowerShell execution trigger '{this.Name}' encountered an error and has been terminated", ex.ToString());
+                            }
+
+                            break;
+                        }
+
+                        foreach (PSObject result in results)
+                        {
                             string runProfileName = result.BaseObject as string;
 
                             if (runProfileName != null)
                             {
-
                                 this.Fire(runProfileName);
                                 continue;
                             }
