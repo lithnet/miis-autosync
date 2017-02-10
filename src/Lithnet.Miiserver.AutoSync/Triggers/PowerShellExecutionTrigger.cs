@@ -28,92 +28,90 @@ namespace Lithnet.Miiserver.AutoSync
         {
             this.cancellationToken = new CancellationTokenSource();
 
-            this.internalTask = new Task(() =>
-            {
-                try
-                {
-                    this.powershell = PowerShell.Create();
-                    this.powershell.AddScript(System.IO.File.ReadAllText(this.ScriptPath));
-                    this.powershell.Invoke();
-
-                    if (this.powershell.Runspace.SessionStateProxy.InvokeCommand.GetCommand("Get-RunProfileToExecute", CommandTypes.All) == null)
-                    {
-                        Logger.WriteLine("The file '{0}' did not contain a function called Get-RunProfileToExecute and will be ignored", this.ScriptPath);
-                        return;
-                    }
-
-                    while (this.run)
-                    {
-                        if (this.cancellationToken.IsCancellationRequested)
-                        {
-                            break;
-                        }
-
-                        this.powershell.Commands.Clear();
-                        this.powershell.AddCommand("Get-RunProfileToExecute");
-
-                        Collection<PSObject> results;
-
-                        try
-                        {
-                            results = this.powershell.Invoke();
-                            this.powershell.ThrowOnPipelineError();
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger.WriteLine("The PowerShell execution trigger encountered an error and has been terminated");
-                            Logger.WriteException(ex);
-
-                            if (MessageSender.CanSendMail())
-                            {
-                                MessageSender.SendMessage($"The PowerShell execution trigger '{this.Name}' encountered an error and has been terminated", ex.ToString());
-                            }
-
-                            break;
-                        }
-
-                        foreach (PSObject result in results)
-                        {
-                            string runProfileName = result.BaseObject as string;
-
-                            if (runProfileName != null)
-                            {
-                                this.Fire(runProfileName);
-                                continue;
-                            }
-
-                            ExecutionParameters p = result.BaseObject as ExecutionParameters;
-
-                            if (p == null)
-                            {
-                                continue;
-                            }
-
-                            this.Fire(p);
-                        }
-
-                        if (this.cancellationToken.IsCancellationRequested)
-                        {
-                            break;
-                        }
-
-                        this.cancellationToken.Token.WaitHandle.WaitOne(Settings.PSExecutionQueryInterval);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Logger.WriteLine("The PowerShell execution trigger encountered an error and has been terminated");
-                    Logger.WriteException(ex);
-
-                    if (MessageSender.CanSendMail())
-                    {
-                        MessageSender.SendMessage($"The PowerShell execution trigger '{this.Name}' encountered an error and has been terminated", ex.ToString());
-                    }
-                }
-            }, this.cancellationToken.Token);
-
+            this.internalTask = new Task(this.Run, this.cancellationToken.Token);
 
             this.internalTask.Start();
+        }
+
+        private void Run()
+        {
+            try
+            {
+                this.powershell = PowerShell.Create();
+                this.powershell.AddScript(System.IO.File.ReadAllText(this.ScriptPath));
+                this.powershell.Invoke();
+
+                if (this.powershell.Runspace.SessionStateProxy.InvokeCommand.GetCommand("Get-RunProfileToExecute", CommandTypes.All) == null)
+                {
+                    Logger.WriteLine("The file '{0}' did not contain a function called Get-RunProfileToExecute and will be ignored", this.ScriptPath);
+                    return;
+                }
+
+                while (this.run)
+                {
+                    this.cancellationToken.Token.ThrowIfCancellationRequested();
+
+                    this.powershell.Commands.Clear();
+                    this.powershell.AddCommand("Get-RunProfileToExecute");
+
+                    Collection<PSObject> results;
+
+                    try
+                    {
+                        results = this.powershell.Invoke();
+                        this.cancellationToken.Token.ThrowIfCancellationRequested();
+                        this.powershell.ThrowOnPipelineError();
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.WriteLine("The PowerShell execution trigger encountered an error and has been terminated");
+                        Logger.WriteException(ex);
+
+                        if (MessageSender.CanSendMail())
+                        {
+                            MessageSender.SendMessage($"The PowerShell execution trigger '{this.Name}' encountered an error and has been terminated", ex.ToString());
+                        }
+
+                        break;
+                    }
+
+                    foreach (PSObject result in results)
+                    {
+                        string runProfileName = result.BaseObject as string;
+
+                        if (runProfileName != null)
+                        {
+                            this.Fire(runProfileName);
+                            continue;
+                        }
+
+                        ExecutionParameters p = result.BaseObject as ExecutionParameters;
+
+                        if (p == null)
+                        {
+                            continue;
+                        }
+
+                        this.Fire(p);
+                    }
+
+                    this.cancellationToken.Token.ThrowIfCancellationRequested();
+                    this.cancellationToken.Token.WaitHandle.WaitOne(Settings.PSExecutionQueryInterval);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine("The PowerShell execution trigger encountered an error and has been terminated");
+                Logger.WriteException(ex);
+
+                if (MessageSender.CanSendMail())
+                {
+                    MessageSender.SendMessage($"The PowerShell execution trigger '{this.Name}' encountered an error and has been terminated", ex.ToString());
+                }
+            }
         }
 
         public void Stop()

@@ -335,7 +335,7 @@ namespace Lithnet.Miiserver.AutoSync
                             break;
                         }
 
-                        int interval = Global.RandomizeOffset(Settings.RetrySleepInterval.TotalMilliseconds * count);
+                        int interval = Global.RandomizeOffset(Settings.RetrySleepInterval.TotalMilliseconds*count);
                         this.Trace($"Sleeping thread for {interval}ms before retry");
                         this.token.Token.WaitHandle.WaitOne(interval);
                         this.Log("Retrying operation");
@@ -357,6 +357,9 @@ namespace Lithnet.Miiserver.AutoSync
                     this.Trace($"Got run results");
                     this.PerformPostRunActions(r);
                 }
+            }
+            catch (OperationCanceledException)
+            {
             }
             catch (System.Management.Automation.RuntimeException ex)
             {
