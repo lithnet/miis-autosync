@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Management.Automation;
 using Lithnet.Logging;
 
@@ -19,23 +16,28 @@ namespace Lithnet.Miiserver.AutoSync
 
             Logger.WriteLine("The PowerShell script encountered an error");
 
+            StringBuilder b = new StringBuilder();
+
             foreach (ErrorRecord error in powershell.Streams.Error)
             {
                 if (error.ErrorDetails != null)
                 {
-                    Logger.WriteLine(error.ErrorDetails.Message);
-                    Logger.WriteLine(error.ErrorDetails.RecommendedAction);
+                    b.AppendLine(error.ErrorDetails.Message);
+                    b.AppendLine(error.ErrorDetails.RecommendedAction);
                 }
 
-                Logger.WriteLine(error.ScriptStackTrace);
+                b.AppendLine(error.ScriptStackTrace);
 
                 if (error.Exception != null)
                 {
                     Logger.WriteException(error.Exception);
+                    b.AppendLine(error.Exception.ToString());
                 }
             }
 
-            throw new ApplicationException("The PowerShell script encountered an error");
+            Logger.WriteLine(b.ToString());
+
+            throw new ApplicationException("The PowerShell script encountered an error\n" + b.ToString());
         }
     }
 }
