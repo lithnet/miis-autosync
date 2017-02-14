@@ -62,6 +62,10 @@ namespace Lithnet.Miiserver.AutoSync
                         this.cancellationToken.Token.ThrowIfCancellationRequested();
                         this.powershell.ThrowOnPipelineError();
                     }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
                     catch (Exception ex)
                     {
                         Logger.WriteLine("The PowerShell execution trigger encountered an error and has been terminated");
