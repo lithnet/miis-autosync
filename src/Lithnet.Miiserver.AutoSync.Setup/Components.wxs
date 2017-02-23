@@ -19,7 +19,7 @@
                         ErrorControl="normal"
                         Start="auto"
                         Arguments="/service"
-                        Type="ownProcess"
+                        Type="ownProcess" 
                         Description="Automatically operates the FIM/MIM synchronization service"
                         Vital="yes"
                         Interactive="no">
