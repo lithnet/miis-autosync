@@ -1,7 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Timers;
 using Lithnet.Logging;
 using System.DirectoryServices.Protocols;
 
@@ -18,11 +19,11 @@ namespace Lithnet.Miiserver.AutoSync
 
         public event ExecutionTriggerEventHandler TriggerExecution;
 
-        private Timer checkTimer;
+        private DateTime nextTriggerAfter;
+
+        private int minimumTriggerInterval;
 
         private ADListenerConfiguration config;
-
-        private bool hasChanges;
 
         private LdapConnection connection;
 
@@ -37,20 +38,15 @@ namespace Lithnet.Miiserver.AutoSync
             this.config = config;
         }
 
-        private void checkTimer_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            if (this.hasChanges)
-            {
-                this.Fire();
-                this.hasChanges = false;
-            }
-        }
-
         private void Fire()
         {
             ExecutionTriggerEventHandler registeredHandlers = this.TriggerExecution;
 
             registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(MARunProfileType.DeltaImport));
+
+            this.nextTriggerAfter = DateTime.Now.AddSeconds(this.minimumTriggerInterval);
+
+            Logger.WriteLine($"AD/LDS change detection trigger fired. Supressing further updates until {this.nextTriggerAfter}", LogLevel.Debug);
         }
 
         private void SetupListener()
@@ -66,28 +62,27 @@ namespace Lithnet.Miiserver.AutoSync
                 this.connection = new LdapConnection(directory, this.config.Credentials);
             }
 
-            SearchRequest request = new SearchRequest(
+            SearchRequest r = new SearchRequest(
                 this.config.BaseDN,
                 "(objectClass=*)",
                  SearchScope.Subtree,
-                 ActiveDirectoryChangeTrigger.ObjectClassAttribute, 
-                 ActiveDirectoryChangeTrigger.LastLogonAttributeName, 
-                 ActiveDirectoryChangeTrigger.LastLogonTimeStampAttributeName, 
+                 ActiveDirectoryChangeTrigger.ObjectClassAttribute,
+                 ActiveDirectoryChangeTrigger.LastLogonAttributeName,
+                 ActiveDirectoryChangeTrigger.LastLogonTimeStampAttributeName,
                  ActiveDirectoryChangeTrigger.BadPasswordAttribute);
 
-            request.Controls.Add(new DirectoryNotificationControl());
+            r.Controls.Add(new DirectoryNotificationControl());
 
             this.request = this.connection.BeginSendRequest(
-                request,
+                r,
                 TimeSpan.FromDays(100),
-                PartialResultProcessing.ReturnPartialResultsAndNotifyCallback, this.Notify,
-                request);
+                PartialResultProcessing.ReturnPartialResultsAndNotifyCallback,
+                this.Notify,
+                r);
         }
 
         private void Notify(IAsyncResult result)
         {
-            PartialResultsCollection col;
-
             try
             {
                 if (this.stopped)
@@ -95,17 +90,18 @@ namespace Lithnet.Miiserver.AutoSync
                     this.connection.EndSendRequest(result);
                     return;
                 }
-                
-                col = this.connection.GetPartialResults(result);
-                
-                if (this.hasChanges)
+
+                PartialResultsCollection resultsCollection = this.connection.GetPartialResults(result);
+
+                if (DateTime.Now < this.nextTriggerAfter)
                 {
+                    Trace.WriteLine("Discarding AD/LDS change because next trigger time has not been reached");
                     return;
                 }
 
                 DateTime lastLogonOldestDate = DateTime.UtcNow.AddSeconds(-this.lastLogonTimestampOffset);
 
-                foreach (SearchResultEntry r in col.OfType<SearchResultEntry>())
+                foreach (SearchResultEntry r in resultsCollection.OfType<SearchResultEntry>())
                 {
                     IList<string> objectClasses = r.Attributes[ActiveDirectoryChangeTrigger.ObjectClassAttribute].GetValues(typeof(string)).OfType<string>().ToList();
 
@@ -145,7 +141,6 @@ namespace Lithnet.Miiserver.AutoSync
                         }
                     }
 
-
                     DateTime date3 = DateTime.MinValue;
 
                     if (r.Attributes.Contains(ActiveDirectoryChangeTrigger.BadPasswordAttribute))
@@ -159,13 +154,12 @@ namespace Lithnet.Miiserver.AutoSync
                         }
                     }
 
-                    Logger.WriteLine("AD change: {0}", r.DistinguishedName);
+                    Logger.WriteLine("AD/LDS change: {0}", r.DistinguishedName);
                     Logger.WriteLine("LL: {0}", LogLevel.Debug, date1.ToLocalTime());
                     Logger.WriteLine("TS: {0}", LogLevel.Debug, date2.ToLocalTime());
                     Logger.WriteLine("BP: {0}", LogLevel.Debug, date3.ToLocalTime());
 
-                    this.hasChanges = true;
-                    return;
+                    this.Fire();
                 }
             }
             catch (LdapException ex)
@@ -179,26 +173,22 @@ namespace Lithnet.Miiserver.AutoSync
                     throw;
                 }
             }
-            finally
-            {
-                col = null;
-            }
         }
 
         public void Start()
         {
             if (this.config.Disabled)
             {
-                Logger.WriteLine("AD change listener disabled");
+                Logger.WriteLine("AD/LDS change listener disabled");
                 return;
             }
 
-            int minimumTriggerInterval = (this.config.MinimumTriggerIntervalSeconds == 0 ? 60 : this.config.MinimumTriggerIntervalSeconds);
+            this.minimumTriggerInterval = (this.config.MinimumTriggerIntervalSeconds == 0 ? 60 : this.config.MinimumTriggerIntervalSeconds);
 
             try
             {
                 Logger.StartThreadLog();
-                Logger.WriteLine("Starting AD change listener");
+                Logger.WriteLine("Starting AD/LDS change listener");
                 Logger.WriteLine("Base DN {0}", this.config.BaseDN);
                 Logger.WriteLine("Host name: {0}", this.config.HostName);
                 Logger.WriteLine("Credentials: {0}", this.config.Credentials == null ? "(current user)" : this.config.Credentials.UserName);
@@ -209,27 +199,12 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 Logger.EndThreadLog();
             }
-            this.SetupListener();
-            this.checkTimer = new Timer
-            {
-                AutoReset = true,
-                Interval  = minimumTriggerInterval * 1000
-            };
 
-            this.checkTimer.Elapsed += this.checkTimer_Elapsed;
-            this.checkTimer.Start();
+            this.SetupListener();
         }
 
         public void Stop()
         {
-            if (this.checkTimer != null)
-            {
-                if (this.checkTimer.Enabled)
-                {
-                    this.checkTimer.Stop();
-                }
-            }
-
             if (this.connection != null && this.request != null)
             {
                 this.connection.Abort(this.request);
@@ -238,7 +213,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.stopped = true;
         }
 
-        public string Name => "AD change detection";
+        public string Name => "AD/LDS change detection";
 
         public override string ToString()
         {
