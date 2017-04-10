@@ -10,23 +10,27 @@ namespace Lithnet.Miiserver.AutoSync
     {
         private Timer checkTimer;
 
-        private int TimerIntervalSeconds { get; }
+        public TimeSpan Interval { get; set; }
 
         private DateTime? lastCheckDateTime;
 
-        private string fimSvcHostName;
+        public string HostName { get; set; }
+
+        public FimServicePendingImportTrigger()
+        {
+        }
 
         public FimServicePendingImportTrigger(string hostname)
         {
-            this.TimerIntervalSeconds = 60;
-            this.fimSvcHostName = hostname;
+            this.Interval = TimeSpan.FromSeconds(60);
+            this.HostName = hostname;
         }
 
         private void checkTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             try
             {
-                ResourceManagementClient c = new ResourceManagementClient(this.fimSvcHostName);
+                ResourceManagementClient c = new ResourceManagementClient(this.HostName);
 
                 string xpath;
 
@@ -68,7 +72,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.checkTimer = new Timer
             {
                 AutoReset = true,
-                Interval = this.TimerIntervalSeconds*1000
+                Interval = this.Interval.TotalMilliseconds
             };
 
             this.checkTimer.Elapsed += this.checkTimer_Elapsed;
@@ -88,13 +92,13 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public string Name => "FIM Service pending changes";
+        public string Name => "MIM Service pending changes";
 
         public event ExecutionTriggerEventHandler TriggerExecution;
 
         public override string ToString()
         {
-            return $"{this.Name}: {this.fimSvcHostName}";
+            return $"{this.Name}: {this.HostName}";
         }
     }
 }

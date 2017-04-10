@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using Lithnet.Logging;
 using System.DirectoryServices.Protocols;
+using System.Net;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -15,15 +16,11 @@ namespace Lithnet.Miiserver.AutoSync
         private const string BadPasswordAttribute = "badPasswordTime";
         private const string ObjectClassAttribute = "objectClass";
 
-        private int lastLogonTimestampOffset;
-
         public event ExecutionTriggerEventHandler TriggerExecution;
 
         private DateTime nextTriggerAfter;
 
-        private int minimumTriggerInterval;
-
-        private ADListenerConfiguration config;
+        public TimeSpan MaximumTriggerInterval;
 
         private LdapConnection connection;
 
@@ -31,11 +28,23 @@ namespace Lithnet.Miiserver.AutoSync
 
         private IAsyncResult request;
 
-        public ActiveDirectoryChangeTrigger(ADListenerConfiguration config)
+        public string BaseDN { get; set; }
+
+        public string[] ObjectClasses { get; set; }
+
+        public NetworkCredential Credentials { get; set; }
+
+        public string HostName { get; set; }
+
+        public TimeSpan LastLogonTimestampOffset { get; set; }
+
+        public bool Disabled { get; set; }
+
+        public ActiveDirectoryChangeTrigger()
         {
-            this.lastLogonTimestampOffset = config.LastLogonTimestampOffsetSeconds;
-            config.Validate();
-            this.config = config;
+            this.LastLogonTimestampOffset = TimeSpan.FromSeconds(60);
+            this.MaximumTriggerInterval = TimeSpan.FromSeconds(60);
+            this.Validate();
         }
 
         private void Fire()
@@ -44,7 +53,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(MARunProfileType.DeltaImport));
 
-            this.nextTriggerAfter = DateTime.Now.AddSeconds(this.minimumTriggerInterval);
+            this.nextTriggerAfter = DateTime.Now.Add(this.MaximumTriggerInterval);
 
             Logger.WriteLine($"AD/LDS change detection trigger fired. Supressing further updates until {this.nextTriggerAfter}", LogLevel.Debug);
         }
@@ -52,18 +61,19 @@ namespace Lithnet.Miiserver.AutoSync
         private void SetupListener()
         {
             this.stopped = false;
-            LdapDirectoryIdentifier directory = new LdapDirectoryIdentifier(this.config.HostName);
-            if (this.config.Credentials == null)
+            LdapDirectoryIdentifier directory = new LdapDirectoryIdentifier(this.HostName);
+
+            if (this.Credentials == null)
             {
                 this.connection = new LdapConnection(directory);
             }
             else
             {
-                this.connection = new LdapConnection(directory, this.config.Credentials);
+                this.connection = new LdapConnection(directory, this.Credentials);
             }
 
             SearchRequest r = new SearchRequest(
-                this.config.BaseDN,
+                this.BaseDN,
                 "(objectClass=*)",
                  SearchScope.Subtree,
                  ActiveDirectoryChangeTrigger.ObjectClassAttribute,
@@ -99,18 +109,18 @@ namespace Lithnet.Miiserver.AutoSync
                     return;
                 }
 
-                DateTime lastLogonOldestDate = DateTime.UtcNow.AddSeconds(-this.lastLogonTimestampOffset);
+                DateTime lastLogonOldestDate = DateTime.UtcNow.Subtract(this.LastLogonTimestampOffset);
 
                 foreach (SearchResultEntry r in resultsCollection.OfType<SearchResultEntry>())
                 {
                     IList<string> objectClasses = r.Attributes[ActiveDirectoryChangeTrigger.ObjectClassAttribute].GetValues(typeof(string)).OfType<string>().ToList();
 
-                    if (!this.config.ObjectClasses.Intersect(objectClasses, StringComparer.OrdinalIgnoreCase).Any())
+                    if (!this.ObjectClasses.Intersect(objectClasses, StringComparer.OrdinalIgnoreCase).Any())
                     {
                         continue;
                     }
 
-                    if (objectClasses.Contains("computer", StringComparer.OrdinalIgnoreCase) && !this.config.ObjectClasses.Contains("computer", StringComparer.OrdinalIgnoreCase))
+                    if (objectClasses.Contains("computer", StringComparer.OrdinalIgnoreCase) && !this.ObjectClasses.Contains("computer", StringComparer.OrdinalIgnoreCase))
                     {
                         continue;
                     }
@@ -177,23 +187,26 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void Start()
         {
-            if (this.config.Disabled)
+            if (this.Disabled)
             {
                 Logger.WriteLine("AD/LDS change listener disabled");
                 return;
             }
 
-            this.minimumTriggerInterval = (this.config.MinimumTriggerIntervalSeconds == 0 ? 60 : this.config.MinimumTriggerIntervalSeconds);
-
+            if (this.MaximumTriggerInterval == new TimeSpan(0))
+            {
+                this.MaximumTriggerInterval = TimeSpan.FromSeconds(60);
+            }
+            
             try
             {
                 Logger.StartThreadLog();
                 Logger.WriteLine("Starting AD/LDS change listener");
-                Logger.WriteLine("Base DN {0}", this.config.BaseDN);
-                Logger.WriteLine("Host name: {0}", this.config.HostName);
-                Logger.WriteLine("Credentials: {0}", this.config.Credentials == null ? "(current user)" : this.config.Credentials.UserName);
-                Logger.WriteLine("Object classes: {0}", string.Join(",", this.config.ObjectClasses));
-                Logger.WriteLine("Minimum interval between triggers: {0} seconds", this.config.MinimumTriggerIntervalSeconds);
+                Logger.WriteLine("Base DN {0}", this.BaseDN);
+                Logger.WriteLine("Host name: {0}", this.HostName);
+                Logger.WriteLine("Credentials: {0}", this.Credentials == null ? "(current user)" : this.Credentials.UserName);
+                Logger.WriteLine("Object classes: {0}", string.Join(",", this.ObjectClasses));
+                Logger.WriteLine("Minimum interval between triggers: {0}", this.MaximumTriggerInterval);
             }
             finally
             {
@@ -217,7 +230,35 @@ namespace Lithnet.Miiserver.AutoSync
 
         public override string ToString()
         {
-            return $"{this.Name}: {this.config?.HostName}";
+            return $"{this.Name}: {this.HostName}";
+        }
+
+        internal void Validate()
+        {
+            if (this.Disabled)
+            {
+                return;
+            }
+
+            if (this.MaximumTriggerInterval.TotalSeconds <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(this.MaximumTriggerInterval), "The MaximumTriggerInterval parameter must be greater than 0");
+            }
+
+            if (string.IsNullOrWhiteSpace(this.BaseDN))
+            {
+                throw new ArgumentNullException(nameof(this.BaseDN), "A BaseDN must be specified");
+            }
+
+            if (string.IsNullOrWhiteSpace(this.HostName))
+            {
+                throw new ArgumentNullException(nameof(this.HostName), "A host name must be specified");
+            }
+
+            if (this.ObjectClasses == null || this.ObjectClasses.Length == 0)
+            {
+                throw new ArgumentNullException(nameof(this.ObjectClasses), "One or more object classes must be specified");
+            }
         }
     }
 }

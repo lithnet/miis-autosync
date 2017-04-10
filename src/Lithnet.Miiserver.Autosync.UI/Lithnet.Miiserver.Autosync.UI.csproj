@@ -80,7 +80,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ViewModels\ActiveDirectoryChangeTriggerViewModel.cs" />
+    <Compile Include="ViewModels\FimServicePendingImportTriggerViewModel.cs" />
+    <Compile Include="ViewModels\ScheduledExecutionTriggerViewModel.cs" />
     <Compile Include="ViewModels\ManagementAgentsViewModel.cs" />
+    <Compile Include="ViewModels\IntervalExecutionTriggerViewModel.cs" />
     <Compile Include="ViewModels\PowerShellExecutionTriggerViewModel.cs" />
     <Compile Include="Views\MAConfigParametersView.xaml.cs">
       <DependentUpon>MAConfigParametersView.xaml</DependentUpon>

@@ -1,4 +1,5 @@
-﻿using System.Timers;
+﻿using System;
+using System.Timers;
 using Lithnet.Logging;
 
 namespace Lithnet.Miiserver.AutoSync
@@ -7,30 +8,45 @@ namespace Lithnet.Miiserver.AutoSync
     {
         private Timer checkTimer;
 
-        public int TriggerInterval { get; set; }
+        public TimeSpan Interval { get; set; }
 
         public MARunProfileType RunProfileTargetType { get; set; }
 
-        public IntervalExecutionTrigger(MARunProfileType type, int intervalSeconds)
+        public string RunProfileName { get; set; }
+
+        public IntervalExecutionTrigger(MARunProfileType type, TimeSpan interval)
         {
-            this.TriggerInterval = intervalSeconds;
+            this.Interval = interval;
             this.RunProfileTargetType = type;
+        }
+
+        public IntervalExecutionTrigger(string runProfileName, TimeSpan interval)
+        {
+            this.Interval = interval;
+            this.RunProfileName = runProfileName;
         }
 
         private void checkTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             ExecutionTriggerEventHandler registeredHandlers = this.TriggerExecution;
 
-            registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(this.RunProfileTargetType));
+            if (this.RunProfileName == null)
+            {
+                registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(this.RunProfileTargetType));
+            }
+            else
+            {
+                registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(this.RunProfileName));
+            }
         }
 
         public void Start()
         {
-            Logger.WriteLine("Starting interval timer for {0} at {1} seconds", LogLevel.Debug, this.RunProfileTargetType, this.TriggerInterval);
+            Logger.WriteLine("Starting interval timer for {0} at {1} seconds", LogLevel.Debug, this.RunProfileName ?? this.RunProfileTargetType.ToString(), this.Interval);
 
             this.checkTimer = new Timer
             {
-                Interval = this.TriggerInterval * 1000,
+                Interval = this.Interval.TotalMilliseconds,
                 AutoReset = true
             };
 
@@ -51,7 +67,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public string Name => $"{this.TriggerInterval} second interval";
+        public string Name => $"{this.RunProfileName ?? this.RunProfileTargetType.ToString()} at {this.Interval} second intervals";
 
         public override string ToString()
         {

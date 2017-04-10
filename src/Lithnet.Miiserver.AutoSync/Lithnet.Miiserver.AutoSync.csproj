@@ -86,7 +86,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ADListenerConfiguration.cs" />
     <Compile Include="Enums\AutoImportScheduling.cs" />
     <Compile Include="ExecutionParameterCollection.cs" />
     <Compile Include="Extensions.cs" />
