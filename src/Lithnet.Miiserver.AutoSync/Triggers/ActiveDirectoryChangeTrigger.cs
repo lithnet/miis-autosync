@@ -20,7 +20,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private DateTime nextTriggerAfter;
 
-        public TimeSpan MaximumTriggerInterval;
+        public TimeSpan MaximumTriggerInterval { get; set; }
 
         private LdapConnection connection;
 

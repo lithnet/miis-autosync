@@ -44,11 +44,11 @@
     
     # Create a new ADListenerConfig item to override the automatic discovery;
     
-    $ADListenerConfig = New-Object Lithnet.Miiserver.AutoSync.ADListenerConfiguration;
+    $ADListenerConfig = New-Object Lithnet.Miiserver.AutoSync.ActiveDirectoryChangeTrigger;
     $ADListenerConfig.BaseDN = "OU=IdM Managed Objects,dc=zaf,dc=lithnet,dc=local";
     $ADListenerConfig.HostName = "zaf.lithnet.local";
-    $ADListenerConfig.LastLogonTimestampOffsetSeconds = 120;
-    $ADListenerConfig.MinimumTriggerIntervalSeconds = 600;
+    $ADListenerConfig.LastLogonTimestampOffset = New-Object System.TimeSpan -ArgumentList @(0,0,120);
+    $ADListenerConfig.MaximumTriggerInterval= New-Object System.TimeSpan -ArgumentList @(0,0,600);
     $ADlistenerConfig.ObjectClasses = @("user","group");
     $ADListenerConfig.Credentials = New-Object System.Net.NetworkCredential "svc-FIMADAccess", "<password>";
 

@@ -20,156 +20,78 @@ namespace Lithnet.Miiserver.Autosync.UI
             this.model = model;
         }
 
-        public string MAName
-        {
-            get
-            {
-                return this.model?.ManagementAgent?.Name ?? "Unknown MA";
-            }
-        }
+        public string MAName => this.model?.ManagementAgent?.Name ?? "Unknown MA";
 
         public string ScheduledImportRunProfileName
         {
-            get
-            {
-                return this.model.ScheduledImportRunProfileName;
-            }
-            set
-            {
-                this.model.ScheduledImportRunProfileName = value;
-            }
+            get => this.model.ScheduledImportRunProfileName;
+            set => this.model.ScheduledImportRunProfileName = value;
         }
 
         public string FullSyncRunProfileName
         {
-            get
-            {
-                return this.model.FullSyncRunProfileName;
-            }
-            set
-            {
-                this.model.FullSyncRunProfileName = value;
-            }
+            get => this.model.FullSyncRunProfileName;
+            set => this.model.FullSyncRunProfileName = value;
         }
 
         public string FullImportRunProfileName
         {
-            get
-            {
-                return this.model.FullImportRunProfileName;
-            }
-            set
-            {
-                this.model.FullImportRunProfileName = value;
-            }
+            get => this.model.FullImportRunProfileName;
+            set => this.model.FullImportRunProfileName = value;
         }
 
         public string ExportRunProfileName
         {
-            get
-            {
-                return this.model.ExportRunProfileName;
-            }
-            set
-            {
-                this.model.ExportRunProfileName = value;
-            }
+            get => this.model.ExportRunProfileName;
+            set => this.model.ExportRunProfileName = value;
         }
 
         public bool DisableDefaultTriggers
         {
-            get
-            {
-                return this.model.DisableDefaultTriggers;
-            }
-            set
-            {
-                this.model.DisableDefaultTriggers = value;
-            }
+            get => this.model.DisableDefaultTriggers;
+            set => this.model.DisableDefaultTriggers = value;
         }
 
         public string DeltaSyncRunProfileName
         {
-            get
-            {
-                return this.model.DeltaSyncRunProfileName;
-            }
-            set
-            {
-                this.model.DeltaSyncRunProfileName = value;
-            }
+            get => this.model.DeltaSyncRunProfileName;
+            set => this.model.DeltaSyncRunProfileName = value;
         }
 
         public string DeltaImportRunProfileName
         {
-            get
-            {
-                return this.model.DeltaImportRunProfileName;
-            }
-            set
-            {
-                this.model.DeltaImportRunProfileName = value;
-            }
+            get => this.model.DeltaImportRunProfileName;
+            set => this.model.DeltaImportRunProfileName = value;
         }
 
         public string ConfirmingImportRunProfileName
         {
-            get
-            {
-                return this.model.ConfirmingImportRunProfileName;
-            }
-            set
-            {
-                this.model.ConfirmingImportRunProfileName = value;
-            }
+            get => this.model.ConfirmingImportRunProfileName;
+            set => this.model.ConfirmingImportRunProfileName = value;
         }
 
         public bool Disabled
         {
-            get
-            {
-                return this.model.Disabled;
-            }
-            set
-            {
-                this.model.Disabled = value;
-            }
+            get => this.model.Disabled;
+            set => this.model.Disabled = value;
         }
 
         public int AutoImportIntervalMinutes
         {
-            get
-            {
-                return this.model.AutoImportIntervalMinutes;
-            }
-            set
-            {
-                this.model.AutoImportIntervalMinutes = value;
-            }
+            get => this.model.AutoImportIntervalMinutes;
+            set => this.model.AutoImportIntervalMinutes = value;
         }
 
         public bool ScheduleImports
         {
-            get
-            {
-                return this.model.AutoImportScheduling != AutoImportScheduling.Disabled;
-            }
-            set
-            {
-                this.model.AutoImportScheduling = value ? AutoImportScheduling.Enabled : AutoImportScheduling.Disabled;
-            }
+            get => this.model.AutoImportScheduling != AutoImportScheduling.Disabled;
+            set => this.model.AutoImportScheduling = value ? AutoImportScheduling.Enabled : AutoImportScheduling.Disabled;
         }
 
         public AutoImportScheduling AutoImportScheduling
         {
-            get
-            {
-                return this.model.AutoImportScheduling;
-            }
-            set
-            {
-                this.model.AutoImportScheduling = value;
-            }
+            get => this.model.AutoImportScheduling;
+            set => this.model.AutoImportScheduling = value;
         }
 
         public IEnumerable<string> RunProfileNames

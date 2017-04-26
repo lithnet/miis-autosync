@@ -6,11 +6,10 @@ using System.Threading;
 using System.Collections.Concurrent;
 using Lithnet.Miiserver.Client;
 using Lithnet.Logging;
+using System.Text;
 
 namespace Lithnet.Miiserver.AutoSync
 {
-    using System.Text;
-
     public class MAExecutor
     {
         protected static object GlobalStaggeredExecutionLock;

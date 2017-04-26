@@ -22,14 +22,8 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
 
         public string ScriptPath
         {
-            get
-            {
-                return this.model.ScriptPath;
-            }
-            set
-            {
-                this.model.ScriptPath = value;
-            }
+            get => this.model.ScriptPath;
+            set => this.model.ScriptPath = value;
         }
 
         public CommandMap Commands { get; private set; }

@@ -21,26 +21,14 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
 
         public string RunProfileName
         {
-            get
-            {
-                return this.model.HostName;
-            }
-            set
-            {
-                this.model.HostName = value;
-            }
+            get => this.model.HostName;
+            set => this.model.HostName = value;
         }
 
         public TimeSpan Interval
         {
-            get
-            {
-                return this.model.Interval;
-            }
-            set
-            {
-                this.model.Interval = value;
-            }
+            get => this.model.Interval;
+            set => this.model.Interval = value;
         }
 
         public CommandMap Commands { get; private set; }

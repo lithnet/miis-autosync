@@ -154,15 +154,14 @@ namespace Lithnet.Miiserver.AutoSync
 
                 case "ADAM":
                 case "AD":
-                    ADListenerConfiguration listenerConfig = configItems.OfType<ADListenerConfiguration>().FirstOrDefault();
+                    ActiveDirectoryChangeTrigger listenerConfig = configItems.OfType<ActiveDirectoryChangeTrigger>().FirstOrDefault();
 
                     if (listenerConfig == null)
                     {
                         listenerConfig = MAExecutionTriggerDiscovery.GetADConfiguration(ma);
                     }
 
-                    ActiveDirectoryChangeTrigger t2 = new ActiveDirectoryChangeTrigger(listenerConfig);
-                    triggers.Add(t2);
+                    triggers.Add(listenerConfig);
                     break;
 
                 default:
@@ -192,9 +191,9 @@ namespace Lithnet.Miiserver.AutoSync
             return privateData.SelectSingleNode("fimma-configuration/connection-info/serviceHost")?.InnerText;
         }
 
-        private static ADListenerConfiguration GetADConfiguration(ManagementAgent ma)
+        private static ActiveDirectoryChangeTrigger GetADConfiguration(ManagementAgent ma)
         {
-            ADListenerConfiguration config = new ADListenerConfiguration();
+            ActiveDirectoryChangeTrigger config = new ActiveDirectoryChangeTrigger();
 
             string privateData = ma.ExportManagementAgent();
 
@@ -207,8 +206,8 @@ namespace Lithnet.Miiserver.AutoSync
             config.HostName = d.SelectSingleNode("/export-ma/ma-data/private-configuration/adma-configuration/forest-name")?.InnerText;
             config.BaseDN = partitionNode?.SelectSingleNode("custom-data/adma-partition-data/dn")?.InnerText;
             config.ObjectClasses = partitionNode?.SelectNodes("filter/object-classes/object-class")?.OfType<XmlElement>().Where(t => t.InnerText != "container" && t.InnerText != "domainDNS" && t.InnerText != "organizationalUnit").Select(u => u.InnerText).ToArray();
-            config.LastLogonTimestampOffsetSeconds = 300;
-            
+            config.LastLogonTimestampOffset = new TimeSpan(0, 0, 300);
+
             return config;
         }
     }

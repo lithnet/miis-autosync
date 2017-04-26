@@ -21,38 +21,20 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
 
         public string RunProfileName
         {
-            get
-            {
-                return this.model.RunProfileName;
-            }
-            set
-            {
-                this.model.RunProfileName = value;
-            }
+            get => this.model.RunProfileName;
+            set => this.model.RunProfileName = value;
         }
 
         public MARunProfileType RunProfileTargetType
         {
-            get
-            {
-                return this.model.RunProfileTargetType;
-            }
-            set
-            {
-                this.model.RunProfileTargetType = value;
-            }
+            get => this.model.RunProfileTargetType;
+            set => this.model.RunProfileTargetType = value;
         }
 
         public TimeSpan Interval
         {
-            get
-            {
-                return this.model.Interval;
-            }
-            set
-            {
-                this.model.Interval = value;
-            }
+            get => this.model.Interval;
+            set => this.model.Interval = value;
         }
 
         public CommandMap Commands { get; private set; }
