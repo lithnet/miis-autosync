@@ -6,9 +6,13 @@ using System.Linq;
 using Lithnet.Logging;
 using System.DirectoryServices.Protocols;
 using System.Net;
+using System.Runtime.Serialization;
+using System.Xml;
+using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync
 {
+    [DataContract(Name = "active-directory-change-trigger")]
     public class ActiveDirectoryChangeTrigger : IMAExecutionTrigger
     {
         private const string LastLogonAttributeName = "lastLogon";
@@ -20,7 +24,11 @@ namespace Lithnet.Miiserver.AutoSync
 
         private DateTime nextTriggerAfter;
 
-        public TimeSpan MaximumTriggerInterval { get; set; }
+        /// <summary>
+        /// Gets or sets the interval of time that must pass between trigger events being fired. This prevents a trigger storm.
+        /// </summary>
+        [DataMember(Name = "min-interval")]
+        public TimeSpan MinimumIntervalBetweenEvents { get; set; }
 
         private LdapConnection connection;
 
@@ -28,23 +36,46 @@ namespace Lithnet.Miiserver.AutoSync
 
         private IAsyncResult request;
 
+        [DataMember(Name = "base-dn")]
         public string BaseDN { get; set; }
 
+        [DataMember(Name = "object-classes")]
         public string[] ObjectClasses { get; set; }
 
-        public NetworkCredential Credentials { get; set; }
+        public bool HasCredentials => string.IsNullOrEmpty(this.Username);
 
+        public NetworkCredential GetCredentialPackage()
+        {
+            if (!this.HasCredentials)
+            {
+                return null;
+            }
+
+            return new NetworkCredential(this.Username, this.Password?.Value);
+        }
+
+        [DataMember(Name = "username")]
+        public string Username { get; set; }
+
+        [DataMember(Name = "password")]
+        public ProtectedString Password { get; set; }
+
+        [DataMember(Name = "host-name")]
         public string HostName { get; set; }
 
+        [DataMember(Name = "last-logon-offset")]
         public TimeSpan LastLogonTimestampOffset { get; set; }
 
+        [DataMember(Name = "disabled")]
         public bool Disabled { get; set; }
 
         public ActiveDirectoryChangeTrigger()
         {
-            this.LastLogonTimestampOffset = TimeSpan.FromSeconds(60);
-            this.MaximumTriggerInterval = TimeSpan.FromSeconds(60);
-            this.Validate();
+            //this.LastLogonTimestampOffset = TimeSpan.FromSeconds(60);
+            // this.MinimumIntervalBetweenEvents = TimeSpan.FromSeconds(60);
+            //this.Validate();
+            //this.Password = new ProtectedString();
+            //this.Password.Value = "test".ToSecureString();
         }
 
         private void Fire()
@@ -53,7 +84,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(MARunProfileType.DeltaImport));
 
-            this.nextTriggerAfter = DateTime.Now.Add(this.MaximumTriggerInterval);
+            this.nextTriggerAfter = DateTime.Now.Add(this.MinimumIntervalBetweenEvents);
 
             Logger.WriteLine($"AD/LDS change detection trigger fired. Supressing further updates until {this.nextTriggerAfter}", LogLevel.Debug);
         }
@@ -63,20 +94,20 @@ namespace Lithnet.Miiserver.AutoSync
             this.stopped = false;
             LdapDirectoryIdentifier directory = new LdapDirectoryIdentifier(this.HostName);
 
-            if (this.Credentials == null)
+            if (this.HasCredentials)
             {
-                this.connection = new LdapConnection(directory);
+                this.connection = new LdapConnection(directory, this.GetCredentialPackage());
             }
             else
             {
-                this.connection = new LdapConnection(directory, this.Credentials);
+                this.connection = new LdapConnection(directory);
             }
 
             SearchRequest r = new SearchRequest(
                 this.BaseDN,
                 "(objectClass=*)",
                  SearchScope.Subtree,
-                 ActiveDirectoryChangeTrigger.ObjectClassAttribute,
+                 ActiveDirectoryChangeTrigger.ObjectClassAttribute, 
                  ActiveDirectoryChangeTrigger.LastLogonAttributeName,
                  ActiveDirectoryChangeTrigger.LastLogonTimeStampAttributeName,
                  ActiveDirectoryChangeTrigger.BadPasswordAttribute);
@@ -193,20 +224,20 @@ namespace Lithnet.Miiserver.AutoSync
                 return;
             }
 
-            if (this.MaximumTriggerInterval == new TimeSpan(0))
+            if (this.MinimumIntervalBetweenEvents.Ticks == 0)
             {
-                this.MaximumTriggerInterval = TimeSpan.FromSeconds(60);
+                this.MinimumIntervalBetweenEvents = TimeSpan.FromSeconds(60);
             }
-            
+
             try
             {
                 Logger.StartThreadLog();
                 Logger.WriteLine("Starting AD/LDS change listener");
                 Logger.WriteLine("Base DN {0}", this.BaseDN);
                 Logger.WriteLine("Host name: {0}", this.HostName);
-                Logger.WriteLine("Credentials: {0}", this.Credentials == null ? "(current user)" : this.Credentials.UserName);
+                Logger.WriteLine("Credentials: {0}", this.HasCredentials ? this.Username : "(current user)");
                 Logger.WriteLine("Object classes: {0}", string.Join(",", this.ObjectClasses));
-                Logger.WriteLine("Minimum interval between triggers: {0}", this.MaximumTriggerInterval);
+                Logger.WriteLine("Minimum interval between trigger events: {0}", this.MinimumIntervalBetweenEvents);
             }
             finally
             {
@@ -240,14 +271,14 @@ namespace Lithnet.Miiserver.AutoSync
                 return;
             }
 
-            if (this.MaximumTriggerInterval.TotalSeconds <= 0)
+            if (this.MinimumIntervalBetweenEvents.TotalSeconds <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(this.MaximumTriggerInterval), "The MaximumTriggerInterval parameter must be greater than 0");
+                throw new ArgumentOutOfRangeException(nameof(this.MinimumIntervalBetweenEvents), $"The {nameof(this.MinimumIntervalBetweenEvents)} parameter must be greater than 0");
             }
 
             if (string.IsNullOrWhiteSpace(this.BaseDN))
             {
-                throw new ArgumentNullException(nameof(this.BaseDN), "A BaseDN must be specified");
+                throw new ArgumentNullException(nameof(this.BaseDN), "A base DN must be specified");
             }
 
             if (string.IsNullOrWhiteSpace(this.HostName))
@@ -259,6 +290,31 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 throw new ArgumentNullException(nameof(this.ObjectClasses), "One or more object classes must be specified");
             }
+        }
+
+        public static ActiveDirectoryChangeTrigger CreateTrigger(ManagementAgent ma)
+        {
+            if (!ma.Category.Equals("AD", StringComparison.OrdinalIgnoreCase) && !ma.Category.Equals("ADAM", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("The specified management agent is not an AD or LDS management agent");
+            }
+
+            ActiveDirectoryChangeTrigger config = new ActiveDirectoryChangeTrigger();
+
+            string privateData = ma.ExportManagementAgent();
+
+            XmlDocument d = new XmlDocument();
+            d.LoadXml(privateData);
+            
+            XmlNode partitionNode = d.SelectSingleNode("/export-ma/ma-data/ma-partition-data/partition[selected=1 and custom-data/adma-partition-data[is-domain=1]]");
+
+            config.HostName = d.SelectSingleNode("/export-ma/ma-data/private-configuration/adma-configuration/forest-name")?.InnerText;
+            config.BaseDN = partitionNode?.SelectSingleNode("custom-data/adma-partition-data/dn")?.InnerText;
+            config.ObjectClasses = partitionNode?.SelectNodes("filter/object-classes/object-class")?.OfType<XmlElement>().Where(t => t.InnerText != "container" && t.InnerText != "domainDNS" && t.InnerText != "organizationalUnit").Select(u => u.InnerText).ToArray();
+            config.LastLogonTimestampOffset = new TimeSpan(0, 0, 300);
+            config.MinimumIntervalBetweenEvents = new TimeSpan(0, 0, 60);
+
+            return config;
         }
     }
 }

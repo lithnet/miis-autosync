@@ -214,70 +214,32 @@ namespace Lithnet.Miiserver.AutoSync
 
         internal static void EnumerateMAs()
         {
-            foreach (ManagementAgent ma in ManagementAgent.GetManagementAgents())
-            {
-                IList<object> configItems = GetMAConfigParameters(ma).ToList();
+            ConfigFile loaded = Serializer.Read<ConfigFile>("D:\\temp\\config.xml");
 
-                MAConfigParameters config = MAConfigDiscovery.GetConfig(ma, configItems);
-
-                if (config == null)
+            foreach(MAConfigParameters config in loaded.ManagementAgents)
+            { 
+                config.ResolveManagementAgent();
+                if (config.IsMissing)
                 {
-                    continue;
+                    Logger.WriteLine("Skipping missing management agent");
                 }
-
+               
                 if (!config.Disabled)
                 {
-                    IList<IMAExecutionTrigger> triggers = MAExecutionTriggerDiscovery.GetExecutionTriggers(ma, config, configItems);
-                    MAExecutor x = new MAExecutor(ma, config);
-                    x.AttachTrigger(triggers.ToArray());
+                    MAExecutor x = new MAExecutor(config);
                     Program.maExecutors.Add(x);
                 }
                 else
                 {
-                    Logger.WriteLine("{0}: Skipping management agent because it has been disabled in config", ma.Name);
+                    Logger.WriteLine("{0}: Skipping management agent because it has been disabled in config", config.ManagementAgentName);
                 }
             }
+
+            //Serializer.Save("D:\\temp\\config.xml", file);
 
             foreach (MAExecutor x in Program.maExecutors)
             {
                 x.Start();
-            }
-        }
-
-        private static IEnumerable<object> GetMAConfigParameters(ManagementAgent ma)
-        {
-            string expectedFileName = Path.Combine(Settings.ConfigPath, $"Config-{Global.CleanMAName(ma.Name)}.ps1");
-            if (!File.Exists(expectedFileName))
-            {
-                yield break;
-            }
-
-            Logger.WriteLine("{0}: Getting configuration from {1}", ma.Name, expectedFileName);
-
-            PowerShell powershell = PowerShell.Create();
-            powershell.AddScript(File.ReadAllText(expectedFileName));
-            powershell.Invoke();
-
-            if (powershell.Runspace.SessionStateProxy.InvokeCommand.GetCommand("Get-MAConfiguration", CommandTypes.All) == null)
-            {
-                throw new ArgumentException($"The file '{expectedFileName}' must contain a function called Get-MAConfiguration");
-            }
-
-            powershell.AddCommand("Get-MAConfiguration");
-            Collection<PSObject> results = powershell.Invoke();
-
-            foreach (PSObject o in results)
-            {
-                Hashtable ht = o.BaseObject as Hashtable;
-
-                if (ht != null)
-                {
-                    yield return new MAConfigParameters(ma, ht);
-                }
-                else
-                {
-                    yield return o.BaseObject;
-                }
             }
         }
     }

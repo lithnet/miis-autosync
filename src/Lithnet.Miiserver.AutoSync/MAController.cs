@@ -20,16 +20,16 @@ namespace Lithnet.Miiserver.AutoSync
 
         private bool supportsExecutionComplete;
 
-        public MAController(ManagementAgent ma)
+        public MAController(MAConfigParameters config)
         {
-            this.ma = ma;
-
-            this.ScriptPath = Path.Combine(Settings.ConfigPath, $"Config-{Global.CleanMAName(ma.Name)}.ps1");
+            this.ScriptPath = config.MAControllerPath;
 
             if (!File.Exists(this.ScriptPath))
             {
                 return;
             }
+
+            this.ma = config.ManagementAgent;
 
             this.powershell = PowerShell.Create();
             this.powershell.AddScript(File.ReadAllText(this.ScriptPath));

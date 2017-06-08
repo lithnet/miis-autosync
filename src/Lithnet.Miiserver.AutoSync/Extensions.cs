@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 using System.Management.Automation;
+using System.Runtime.InteropServices;
+using System.Security;
 using Lithnet.Logging;
 
 namespace Lithnet.Miiserver.AutoSync
@@ -38,6 +41,35 @@ namespace Lithnet.Miiserver.AutoSync
             Logger.WriteLine(b.ToString());
 
             throw new ApplicationException("The PowerShell script encountered an error\n" + b.ToString());
+        }
+
+        public static SecureString ToSecureString(this string s)
+        {
+            if (s == null)
+            {
+                return null;
+            }
+
+            SecureString sec = new SecureString();
+
+            Array.ForEach(s.ToArray(), sec.AppendChar);
+
+            return sec;
+        }
+
+        public static string ToUnsecureString(this SecureString s)
+        {
+            IntPtr valuePtr = IntPtr.Zero;
+
+            try
+            {
+                valuePtr = Marshal.SecureStringToGlobalAllocUnicode(s);
+                return Marshal.PtrToStringUni(valuePtr);
+            }
+            finally
+            {
+                Marshal.ZeroFreeGlobalAllocUnicode(valuePtr);
+            }
         }
     }
 }

@@ -5,9 +5,11 @@ using System.Threading.Tasks;
 using System.Threading;
 using Lithnet.Logging;
 using System.ComponentModel;
+using System.Runtime.Serialization;
 
 namespace Lithnet.Miiserver.AutoSync
 {
+    [DataContract(Name = "powershell-trigger")]
     public class PowerShellExecutionTrigger : IMAExecutionTrigger
     {
         private bool run = true;
@@ -18,6 +20,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private PowerShell powershell;
 
+        [DataMember(Name = "path")]
         public string ScriptPath { get; set; }
 
         public string Name => $"PowerShell: {System.IO.Path.GetFileName(this.ScriptPath)}";

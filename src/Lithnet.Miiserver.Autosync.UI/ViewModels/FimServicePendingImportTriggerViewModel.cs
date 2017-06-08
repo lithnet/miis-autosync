@@ -9,28 +9,23 @@ using Microsoft.Win32;
 
 namespace Lithnet.Miiserver.Autosync.UI.ViewModels
 {
-    public class FimServicePendingImportTriggerViewModel
+    public class FimServicePendingImportTriggerViewModel : ViewModelBase<FimServicePendingImportTrigger>
     {
-        private FimServicePendingImportTrigger model;
-
         public FimServicePendingImportTriggerViewModel(FimServicePendingImportTrigger model)
+            : base(model)
         {
-            this.model = model;
-            this.Commands = new CommandMap();
         }
 
         public string RunProfileName
         {
-            get => this.model.HostName;
-            set => this.model.HostName = value;
+            get => this.Model.HostName;
+            set => this.Model.HostName = value;
         }
 
         public TimeSpan Interval
         {
-            get => this.model.Interval;
-            set => this.model.Interval = value;
+            get => this.Model.Interval;
+            set => this.Model.Interval = value;
         }
-
-        public CommandMap Commands { get; private set; }
     }
 }

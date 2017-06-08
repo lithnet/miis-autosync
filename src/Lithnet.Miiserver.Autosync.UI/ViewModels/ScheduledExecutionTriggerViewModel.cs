@@ -9,34 +9,29 @@ using Microsoft.Win32;
 
 namespace Lithnet.Miiserver.Autosync.UI.ViewModels
 {
-    public class ScheduledExecutionTriggerViewModel
+    public class ScheduledExecutionTriggerViewModel : ViewModelBase<ScheduledExecutionTrigger>
     {
-        private ScheduledExecutionTrigger model;
-
         public ScheduledExecutionTriggerViewModel(ScheduledExecutionTrigger model)
+            : base(model)
         {
-            this.model = model;
-            this.Commands = new CommandMap();
         }
 
         public string RunProfileName
         {
-            get => this.model.RunProfileName;
-            set => this.model.RunProfileName = value;
+            get => this.Model.RunProfileName;
+            set => this.Model.RunProfileName = value;
         }
 
         public DateTime StartDateTime
         {
-            get => this.model.StartDateTime;
-            set => this.model.StartDateTime = value;
+            get => this.Model.StartDateTime;
+            set => this.Model.StartDateTime = value;
         }
 
         public TimeSpan Interval
         {
-            get => this.model.Interval;
-            set => this.model.Interval = value;
+            get => this.Model.Interval;
+            set => this.Model.Interval = value;
         }
-
-        public CommandMap Commands { get; private set; }
     }
 }

@@ -7,21 +7,6 @@ namespace Lithnet.Miiserver.AutoSync
 {
     public static class MAConfigDiscovery
     {
-        public static MAConfigParameters GetConfig(ManagementAgent ma, IEnumerable<object> configItems)
-        {
-            foreach(object o in configItems)
-            {
-                MAConfigParameters p = o as MAConfigParameters;
-
-                if (p != null)
-                {
-                    return p;
-                }
-            }
-
-            return MAConfigDiscovery.DoAutoRunProfileDiscovery(ma);
-        }
-
         public static MAConfigParameters DoAutoRunProfileDiscovery(ManagementAgent ma)
         {
             Logger.WriteLine("{0}: Performing run profile auto-discovery", ma.Name);

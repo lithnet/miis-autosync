@@ -1,19 +1,25 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Timers;
+using System.Xml;
 using Lithnet.ResourceManagement.Client;
 using Lithnet.Logging;
+using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync
 {
+    [DataContract(Name = "mim-service-pending-import-trigger")]
     public class FimServicePendingImportTrigger : IMAExecutionTrigger
     {
         private Timer checkTimer;
 
+        [DataMember(Name = "interval")]
         public TimeSpan Interval { get; set; }
 
         private DateTime? lastCheckDateTime;
 
+        [DataMember(Name = "host-name")]
         public string HostName { get; set; }
 
         public FimServicePendingImportTrigger()
@@ -95,6 +101,24 @@ namespace Lithnet.Miiserver.AutoSync
         public string Name => "MIM Service pending changes";
 
         public event ExecutionTriggerEventHandler TriggerExecution;
+        
+        public static string GetFimServiceHostName(ManagementAgent ma)
+        {
+            if (!ma.Category.Equals("FIM", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("The specified management agent is not a MIM Service MA");
+            }
+
+            XmlNode privateData = ma.GetPrivateData();
+            return privateData.SelectSingleNode("fimma-configuration/connection-info/serviceHost")?.InnerText;
+        }
+
+        public static FimServicePendingImportTrigger CreateTrigger(ManagementAgent ma)
+        {
+            string hostname = FimServicePendingImportTrigger.GetFimServiceHostName(ma);
+
+            return new FimServicePendingImportTrigger(hostname);
+        }
 
         public override string ToString()
         {

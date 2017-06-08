@@ -1,17 +1,22 @@
 ﻿using System;
+using System.Runtime.Serialization;
 using System.Timers;
 using Lithnet.Logging;
 
 namespace Lithnet.Miiserver.AutoSync
 {
+    [DataContract(Name = "scheduled-trigger")]
     public class ScheduledExecutionTrigger : IMAExecutionTrigger
     {
         private Timer checkTimer;
 
+        [DataMember(Name = "start-date")]
         public DateTime StartDateTime { get; set; }
 
+        [DataMember(Name = "interval")]
         public TimeSpan Interval { get; set; }
 
+        [DataMember(Name = "run-profile")]
         public string RunProfileName { get; set; }
 
         private double RemainingMilliseconds { get; set; }
@@ -31,7 +36,7 @@ namespace Lithnet.Miiserver.AutoSync
             DateTime triggerTime = this.StartDateTime;
             DateTime now = DateTime.Now;
 
-            while(triggerTime < now)
+            while (triggerTime < now)
             {
                 triggerTime = triggerTime.Add(this.Interval);
             }

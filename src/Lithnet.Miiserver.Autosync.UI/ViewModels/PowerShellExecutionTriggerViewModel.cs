@@ -9,24 +9,19 @@ using Microsoft.Win32;
 
 namespace Lithnet.Miiserver.Autosync.UI.ViewModels
 {
-    public class PowerShellExecutionTriggerViewModel
+    public class PowerShellExecutionTriggerViewModel : ViewModelBase<PowerShellExecutionTrigger>
     {
-        private PowerShellExecutionTrigger model;
-
         public PowerShellExecutionTriggerViewModel(PowerShellExecutionTrigger model)
+            :base(model)
         {
-            this.model = model;
-            this.Commands = new CommandMap();
             this.Commands.Add("Browse", new DelegateCommand(t => this.Browse()));
         }
 
         public string ScriptPath
         {
-            get => this.model.ScriptPath;
-            set => this.model.ScriptPath = value;
+            get => this.Model.ScriptPath;
+            set => this.Model.ScriptPath = value;
         }
-
-        public CommandMap Commands { get; private set; }
 
         private void Browse()
         {

@@ -53,9 +53,8 @@
       <HintPath>..\packages\Lithnet.Logging.1.0.5774.20685\lib\net40\Lithnet.Logging.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Lithnet.Miiserver.Client, Version=1.0.6264.19583, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Lithnet.Miiserver.Client.1.0.6264.19583\lib\net45\Lithnet.Miiserver.Client.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Lithnet.Miiserver.Client, Version=1.0.6367.21549, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Lithnet.Miiserver.Client.1.0.6367.21549\lib\net45\Lithnet.Miiserver.Client.dll</HintPath>
     </Reference>
     <Reference Include="Lithnet.ResourceManagement.Client, Version=1.0.5922.36551, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Lithnet.ResourceManagement.Client.1.0.5922.36551\lib\net40\Lithnet.ResourceManagement.Client.dll</HintPath>
@@ -78,6 +77,8 @@
       <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\WindowsPowerShell\3.0\System.Management.Automation.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -86,6 +87,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConfigFile.cs" />
     <Compile Include="Enums\AutoImportScheduling.cs" />
     <Compile Include="ExecutionParameterCollection.cs" />
     <Compile Include="Extensions.cs" />
@@ -98,6 +100,8 @@
     <Compile Include="PersistentSearch\PersistentSearchOptions.cs" />
     <Compile Include="EventArgs\ExecutionParameters.cs" />
     <Compile Include="EventArgs\ExecutionTriggerEventArgs.cs" />
+    <Compile Include="ProtectedString.cs" />
+    <Compile Include="Serializer.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="Triggers\ActiveDirectoryChangeTrigger.cs" />
     <Compile Include="Global.cs" />

@@ -1,17 +1,22 @@
 ﻿using System;
+using System.Runtime.Serialization;
 using System.Timers;
 using Lithnet.Logging;
 
 namespace Lithnet.Miiserver.AutoSync
 {
+    [DataContract(Name = "interval-trigger")]
     public class IntervalExecutionTrigger : IMAExecutionTrigger
     {
         private Timer checkTimer;
 
+        [DataMember(Name = "interval")]
         public TimeSpan Interval { get; set; }
 
+        [DataMember(Name = "run-profile-type")]
         public MARunProfileType RunProfileTargetType { get; set; }
 
+        [DataMember(Name = "run-profile-name")]
         public string RunProfileName { get; set; }
 
         public IntervalExecutionTrigger(MARunProfileType type, TimeSpan interval)

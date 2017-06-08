@@ -50,21 +50,22 @@ namespace Lithnet.Miiserver.AutoSync
             MAExecutor.AllMaLocalOperationLocks = new List<WaitHandle>();
         }
 
-        public MAExecutor(ManagementAgent ma, MAConfigParameters profiles)
+        public MAExecutor(MAConfigParameters config)
         {
-            this.ma = ma;
+            this.ma = config.ManagementAgent;
             this.pendingActionList = new ExecutionParameterCollection();
             this.pendingActions = new BlockingCollection<ExecutionParameters>(this.pendingActionList);
             this.perProfileLastRunStatus = new Dictionary<string, string>();
             this.ExecutionTriggers = new List<IMAExecutionTrigger>();
-            this.Configuration = profiles;
+            this.Configuration = config;
             this.token = new CancellationTokenSource();
-            this.controller = new MAController(ma);
+            this.controller = new MAController(config);
             this.localOperationLock = new ManualResetEvent(true);
             MAExecutor.AllMaLocalOperationLocks.Add(this.localOperationLock);
             MAExecutor.SyncComplete += this.MAExecutor_SyncComplete;
             this.SetupImportSchedule();
             this.SetupUnmanagedChangesCheckTimer();
+            this.AttachTrigger(config.Triggers?.ToArray());
         }
 
         private void SetupUnmanagedChangesCheckTimer()
@@ -90,7 +91,7 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     this.importCheckTimer = new System.Timers.Timer();
                     this.importCheckTimer.Elapsed += this.ImportCheckTimer_Elapsed;
-                    int importSeconds = this.Configuration.AutoImportIntervalMinutes > 0 ? this.Configuration.AutoImportIntervalMinutes * 60 : MAExecutionTriggerDiscovery.GetTriggerInterval(this.ma);
+                    int importSeconds = this.Configuration.AutoImportIntervalMinutes > 0 ? this.Configuration.AutoImportIntervalMinutes * 60 : MAExecutionTriggerDiscovery.GetAverageImportInterval(this.ma);
                     this.importInterval = new TimeSpan(0, 0, Global.RandomizeOffset(importSeconds));
                     this.importCheckTimer.Interval = this.importInterval.TotalMilliseconds;
                     this.importCheckTimer.AutoReset = true;

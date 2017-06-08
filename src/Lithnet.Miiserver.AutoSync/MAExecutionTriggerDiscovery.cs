@@ -12,65 +12,8 @@ namespace Lithnet.Miiserver.AutoSync
     {
         private const int DefaultIntervalMinutes = 15;
 
-        public static IList<IMAExecutionTrigger> GetExecutionTriggers(ManagementAgent ma, MAConfigParameters config, IEnumerable<object> configItems)
-        {
-            List<IMAExecutionTrigger> triggers = new List<IMAExecutionTrigger>();
-
-            triggers.AddRange(MAExecutionTriggerDiscovery.GetDefaultTriggers(ma, config, configItems));
-
-            IList<IMAExecutionTrigger> customTriggers = MAExecutionTriggerDiscovery.GetCustomTriggers(ma) ?? MAExecutionTriggerDiscovery.DoAutoTriggerDiscovery(ma, config);
-
-            if (customTriggers != null)
-            {
-                triggers.AddRange(customTriggers);
-            }
-
-            return triggers;
-        }
-
-        private static IList<IMAExecutionTrigger> GetCustomTriggers(ManagementAgent ma)
-        {
-            List<IMAExecutionTrigger> triggers = new List<IMAExecutionTrigger>();
-
-            foreach (string filename in Directory.EnumerateFiles(Settings.ConfigPath, $"Trigger-{Global.CleanMAName(ma.Name)}-*.ps1", SearchOption.TopDirectoryOnly))
-            {
-                PowerShellExecutionTrigger t = new PowerShellExecutionTrigger
-                {
-                    ScriptPath = Path.Combine(Settings.ConfigPath, filename)
-                };
-
-                triggers.Add(t);
-            }
-
-            return triggers.Count > 0 ? triggers : null;
-        }
-
-        private static IList<IMAExecutionTrigger> DoAutoTriggerDiscovery(ManagementAgent ma, MAConfigParameters config)
-        {
-            List<IMAExecutionTrigger> triggers = new List<IMAExecutionTrigger>();
-
-            if (config.AutoImportScheduling == AutoImportScheduling.Disabled)
-            {
-                return triggers;
-            }
-
-            if ((ma.Category == "FIM" || ma.Category == "AD") && config.AutoImportScheduling != AutoImportScheduling.Enabled)
-            {
-                return triggers;
-            }
-
-            Logger.WriteLine("Performing trigger auto-discovery for MA {0}", ma.Name);
-
-            //if (IsSourceMA(ma) || config.AutoImportScheduling == AutoImportScheduling.Enabled)
-            //{
-            //    IntervalExecutionTrigger t2 = new IntervalExecutionTrigger(MARunProfileType.DeltaImport, MAExecutionTriggerDiscovery.GetTriggerInterval(ma));
-            //    triggers.Add(t2);
-            //}
-
-            return triggers;
-        }
         
-        internal static int GetTriggerInterval(ManagementAgent ma)
+        internal static int GetAverageImportInterval(ManagementAgent ma)
         {
             int deltaCount = 0;
             int deltaTotalTime = 0;
@@ -136,40 +79,6 @@ namespace Lithnet.Miiserver.AutoSync
             return ((deltaTotalTime / deltaCount)) + (MAExecutionTriggerDiscovery.DefaultIntervalMinutes * 60);
         }
 
-        private static IEnumerable<IMAExecutionTrigger> GetDefaultTriggers(ManagementAgent ma, MAConfigParameters config, IEnumerable<object> configItems)
-        {
-            List<IMAExecutionTrigger> triggers = new List<IMAExecutionTrigger>();
-
-            if (config.DisableDefaultTriggers)
-            {
-                return triggers;
-            }
-
-            switch (ma.Category)
-            {
-                case "FIM":
-                    FimServicePendingImportTrigger t1 = new FimServicePendingImportTrigger(MAExecutionTriggerDiscovery.GetFimServiceHostName(ma));
-                    triggers.Add(t1);
-                    break;
-
-                case "ADAM":
-                case "AD":
-                    ActiveDirectoryChangeTrigger listenerConfig = configItems.OfType<ActiveDirectoryChangeTrigger>().FirstOrDefault();
-
-                    if (listenerConfig == null)
-                    {
-                        listenerConfig = MAExecutionTriggerDiscovery.GetADConfiguration(ma);
-                    }
-
-                    triggers.Add(listenerConfig);
-                    break;
-
-                default:
-                    break;
-            }
-
-            return triggers;
-        }
 
         private static bool IsSourceMA(ManagementAgent ma)
         {
@@ -184,31 +93,7 @@ namespace Lithnet.Miiserver.AutoSync
             return iafCount > eafCount;
         }
 
-        private static string GetFimServiceHostName(ManagementAgent ma)
-        {
-            XmlNode privateData = ma.GetPrivateData();
 
-            return privateData.SelectSingleNode("fimma-configuration/connection-info/serviceHost")?.InnerText;
-        }
-
-        private static ActiveDirectoryChangeTrigger GetADConfiguration(ManagementAgent ma)
-        {
-            ActiveDirectoryChangeTrigger config = new ActiveDirectoryChangeTrigger();
-
-            string privateData = ma.ExportManagementAgent();
-
-            XmlDocument d = new XmlDocument();
-            d.LoadXml(privateData);
-
-
-            XmlNode partitionNode = d.SelectSingleNode("/export-ma/ma-data/ma-partition-data/partition[selected=1 and custom-data/adma-partition-data[is-domain=1]]");
-
-            config.HostName = d.SelectSingleNode("/export-ma/ma-data/private-configuration/adma-configuration/forest-name")?.InnerText;
-            config.BaseDN = partitionNode?.SelectSingleNode("custom-data/adma-partition-data/dn")?.InnerText;
-            config.ObjectClasses = partitionNode?.SelectNodes("filter/object-classes/object-class")?.OfType<XmlElement>().Where(t => t.InnerText != "container" && t.InnerText != "domainDNS" && t.InnerText != "organizationalUnit").Select(u => u.InnerText).ToArray();
-            config.LastLogonTimestampOffset = new TimeSpan(0, 0, 300);
-
-            return config;
-        }
+     
     }
 }

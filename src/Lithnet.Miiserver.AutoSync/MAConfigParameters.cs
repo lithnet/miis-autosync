@@ -1,35 +1,112 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using Lithnet.Miiserver.Client;
 using System.Text;
+using Lithnet.Logging;
 
 namespace Lithnet.Miiserver.AutoSync
 {
+    [DataContract(Name = "management-agent")]
+    [KnownType(typeof(ActiveDirectoryChangeTrigger))]
+    [KnownType(typeof(FimServicePendingImportTrigger))]
+    [KnownType(typeof(IntervalExecutionTrigger))]
+    [KnownType(typeof(PowerShellExecutionTrigger))]
+    [KnownType(typeof(ScheduledExecutionTrigger))]
     public class MAConfigParameters
     {
-        public ManagementAgent ManagementAgent { get; set; }
+        private ManagementAgent ma;
+        
+        [DataMember(Name = "id")]
+        public Guid ManagementAgentID { get; set; }
 
+        [DataMember(Name = "name")]
+        public string ManagementAgentName { get; set; }
+
+        public bool IsMissing { get; set; }
+
+        public void ResolveManagementAgent()
+        {
+            try
+            {
+                if (this.ManagementAgentID != Guid.Empty)
+                {
+                    this.ManagementAgent = ManagementAgent.GetManagementAgent(this.ManagementAgentID);
+                    this.IsMissing = false;
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine($"Exception loading management agent by ID {this.ManagementAgentID}");
+                Logger.WriteException(ex);
+            }
+
+            try
+            {
+                if (!string.IsNullOrEmpty(this.ManagementAgentName))
+                {
+                    Logger.WriteLine($"Attempting to load by name: {this.ManagementAgentName}");
+                    this.ManagementAgent = ManagementAgent.GetManagementAgent(this.ManagementAgentName);
+                    this.IsMissing = false;
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine($"Exception loading management agent by name {this.ManagementAgentName}");
+                Logger.WriteException(ex);
+            }
+
+
+            Logger.WriteLine($"Management agent could not be found. Name: '{this.ManagementAgentName}'. ID: '{this.ManagementAgentID}'");
+
+            this.IsMissing = true;
+        }
+
+        public ManagementAgent ManagementAgent
+        {
+            get => this.ma;
+            private set
+            {
+                this.ma = value;
+                this.ManagementAgentID = this.ma?.ID ?? Guid.Empty;
+                this.ManagementAgentName = this.ma?.Name;
+            }
+        }
+
+        [DataMember(Name = "run-profile-confirming-import")]
         public string ConfirmingImportRunProfileName { get; set; }
 
+        [DataMember(Name = "run-profile-delta-sync")]
         public string DeltaSyncRunProfileName { get; set; }
 
+        [DataMember(Name = "run-profile-full-sync")]
         public string FullSyncRunProfileName { get; set; }
 
+        [DataMember(Name = "run-profile-full-import")]
         public string FullImportRunProfileName { get; set; }
 
+        [DataMember(Name = "run-profile-scheduled-import")]
         public string ScheduledImportRunProfileName { get; set; }
 
+        [DataMember(Name = "run-profile-delta-import")]
         public string DeltaImportRunProfileName { get; set; }
 
+        [DataMember(Name = "run-profile-export")]
         public string ExportRunProfileName { get; set; }
-
+        
+        [DataMember(Name = "controller-script-path")]
+        public string MAControllerPath { get; set; }
+        
+        [DataMember(Name = "disabled")]
         public bool Disabled { get; set; }
 
+        [DataMember(Name = "auto-import-scheduling")]
         public AutoImportScheduling AutoImportScheduling { get; set; }
-
-        public bool DisableDefaultTriggers { get; set; }
-
+        
+        [DataMember(Name = "auto-import-interval")]
         public int AutoImportIntervalMinutes { get; set; }
 
         public MAConfigParameters(ManagementAgent ma)
@@ -38,23 +115,8 @@ namespace Lithnet.Miiserver.AutoSync
             this.Triggers = new List<IMAExecutionTrigger>();
         }
 
-        public MAConfigParameters(ManagementAgent ma, Hashtable config)
-            :this(ma)
-        {
-            this.ConfirmingImportRunProfileName = config["ConfirmingImportRunProfileName"] as string;
-            this.DeltaSyncRunProfileName = config["DeltaSyncRunProfileName"] as string;
-            this.FullSyncRunProfileName = config["FullSyncRunProfileName"] as string;
-            this.FullImportRunProfileName = config["FullImportRunProfileName"] as string;
-            this.ScheduledImportRunProfileName = config["ScheduledImportRunProfileName"] as string;
-            this.DeltaImportRunProfileName = config["DeltaImportRunProfileName"] as string;
-            this.ExportRunProfileName = config["ExportRunProfileName"] as string;
-            this.Disabled = config["Disabled"] != null && Convert.ToBoolean(config["Disabled"]);
-            this.AutoImportScheduling = config["AutoImportScheduling"] == null ? AutoImportScheduling.Default : (AutoImportScheduling)Enum.Parse(typeof(AutoImportScheduling), config["AutoImportScheduling"].ToString(), true);
-            this.DisableDefaultTriggers = config["DisableDefaultTriggers"] != null && Convert.ToBoolean(config["DisableDefaultTriggers"]);
-            this.AutoImportIntervalMinutes = config["AutoImportIntervalMinutes"] == null ? 0 : Convert.ToInt32(config["AutoImportIntervalMinutes"]);
-        }
-
-        public IList<IMAExecutionTrigger> Triggers { get; private set; }
+        [DataMember(Name = "triggers")]
+        public List<IMAExecutionTrigger> Triggers { get; private set; }
 
         internal bool CanExport => this.ExportRunProfileName != null;
 
@@ -110,7 +172,6 @@ namespace Lithnet.Miiserver.AutoSync
             builder.AppendLine($"{nameof(this.ExportRunProfileName)}: {this.ExportRunProfileName}");
             builder.AppendLine($"{nameof(this.ScheduledImportRunProfileName)}: {this.ScheduledImportRunProfileName}");
             builder.AppendLine($"{nameof(this.AutoImportScheduling)}: {this.AutoImportScheduling}");
-            builder.AppendLine($"{nameof(this.DisableDefaultTriggers)}: {this.DisableDefaultTriggers}");
             builder.AppendLine($"{nameof(this.AutoImportIntervalMinutes)}: {this.AutoImportIntervalMinutes}");
             builder.AppendLine("--- Capabilities ---");
             builder.AppendLine($"{nameof(this.CanExport)}: {this.CanExport}");

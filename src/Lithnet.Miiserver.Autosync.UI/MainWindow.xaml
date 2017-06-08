@@ -11,15 +11,21 @@
     <Grid>
 
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="200" />
             <ColumnDefinition Width="5" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" />
 
-        <TreeView Grid.Column="1"/>
-        <views:MAConfigParametersView  Grid.Column="2"/>
+        <TreeView Grid.Column="1" Name="TreeViewMain"/>
+        <ContentControl Grid.Column="2" Content="{Binding Path=SelectedItem, ElementName=TreeViewMain}"
+                        DockPanel.Dock="Top">
+            <ContentControl.Resources>
+                <ResourceDictionary Source="ResourceDictionaries/ItemViewDictionary.xaml"/>
+            </ContentControl.Resources>
+        </ContentControl>
+        <!--<views:MAConfigParametersView  Grid.Column="2"/>-->
 
     </Grid>
 </Controls:MetroWindow>
