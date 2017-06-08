@@ -13,7 +13,7 @@ namespace Lithnet.Miiserver.Autosync.UI
         {
         }
 
-        public string MAName => this.Model?.ManagementAgentName ?? "Unknown MA";
+        public string ManagementAgentName => this.Model?.ManagementAgentName ?? "Unknown MA";
 
         public string ScheduledImportRunProfileName
         {

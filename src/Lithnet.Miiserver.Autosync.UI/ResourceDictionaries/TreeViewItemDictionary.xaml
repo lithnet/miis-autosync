@@ -1,0 +1,58 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:p="clr-namespace:Lithnet.Miiserver.Autosync.UI">
+
+    <HierarchicalDataTemplate DataType="{x:Type p:ManagementAgentsViewModel}"
+                              ItemsSource="{Binding}">
+        <StackPanel>
+            <TextBlock Text="Management Agents">
+                <TextBlock.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Add new class constructor..."
+                          Command="{Binding Commands.AddConstructor}" />
+                        <Separator />
+                        <MenuItem Header="Paste"
+                          Command="{Binding Commands.Paste}" />
+                    </ContextMenu>
+                </TextBlock.ContextMenu>
+            </TextBlock>
+        </StackPanel>
+    </HierarchicalDataTemplate>
+
+    <HierarchicalDataTemplate DataType="{x:Type p:MAConfigParametersViewModel}"
+                              ItemsSource="{Binding}">
+        <StackPanel>
+            <TextBlock Text="{Binding Path=ManagementAgentName}">
+                <TextBlock.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Add new class constructor..."
+                          Command="{Binding Commands.AddConstructor}" />
+                        <Separator />
+                        <MenuItem Header="Paste"
+                          Command="{Binding Commands.Paste}" />
+                    </ContextMenu>
+                </TextBlock.ContextMenu>
+
+            </TextBlock>
+        </StackPanel>
+    </HierarchicalDataTemplate>
+
+    <!--<HierarchicalDataTemplate DataType="{x:Type p:ClassConstructorViewModel}"
+                              ItemsSource="{Binding Path=ChildNodes}">
+        <p:TreeViewItemControl>
+            <p:TreeViewItemControl.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Delete..."
+                              Command="{Binding Commands.DeleteConstructor}" />
+                    <Separator />
+                    <MenuItem Header="Cut"
+                              Command="{Binding Commands.Cut}" />
+                    <MenuItem Header="Copy"
+                              Command="{Binding Commands.Copy}" />
+                </ContextMenu>
+            </p:TreeViewItemControl.ContextMenu>
+        </p:TreeViewItemControl>
+    </HierarchicalDataTemplate>-->
+
+
+</ResourceDictionary>

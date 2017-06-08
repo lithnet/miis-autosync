@@ -24,7 +24,12 @@ namespace Lithnet.Miiserver.Autosync.UI
         public MainWindow()
         {
             InitializeComponent();
-            this.DataContext = new MAConfigParametersViewModel(new AutoSync.MAConfigParameters(null));
+
+            MainWindowViewModel m = new MainWindowViewModel();
+
+            m.ConfigFile = new  ConfigFileViewModel(AutoSync.ConfigFile.Load("D:\\temp\\config.xml"));
+
+            this.DataContext = m;
         }
     }
 }

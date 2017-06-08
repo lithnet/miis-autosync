@@ -83,7 +83,9 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="ViewModels\ActiveDirectoryChangeTriggerViewModel.cs" />
+    <Compile Include="ViewModels\MainWindowViewModel.cs" />
     <Compile Include="ViewModels\FimServicePendingImportTriggerViewModel.cs" />
+    <Compile Include="ViewModels\ConfigFileViewModel.cs" />
     <Compile Include="ViewModels\ScheduledExecutionTriggerViewModel.cs" />
     <Compile Include="ViewModels\ManagementAgentsViewModel.cs" />
     <Compile Include="ViewModels\IntervalExecutionTriggerViewModel.cs" />
@@ -108,6 +110,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="ResourceDictionaries\ItemViewDictionary.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ResourceDictionaries\TreeViewItemDictionary.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

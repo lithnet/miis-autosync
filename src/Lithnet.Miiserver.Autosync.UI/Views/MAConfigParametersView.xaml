@@ -9,11 +9,46 @@
 
     <DataTemplate DataType="{x:Type ui:MAConfigParametersViewModel}">
         <UserControl 
-             Margin="10" Height="380.908" Width="603.407">
-            <TabControl >
-                <TabItem Header="Run Profiles">
-                    <StackPanel>
-                        <Grid>
+             Margin="20" >
+            <StackPanel>
+                <Label  Content="{Binding ManagementAgentName}" FontSize="40" Foreground="{DynamicResource AccentColorBrush}" />
+
+                <Separator/>
+
+                <TabControl Margin="0 10 0 0" >
+                    <TabItem Header="General" >
+                        <StackPanel Margin="25 10 0 0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition  />
+                                    <RowDefinition  />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+
+                                <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
+                                    <CheckBox IsChecked="{Binding Disabled}"/>
+                                    <Label Content="Disable automation of this management agent"/>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
+                                    <CheckBox IsChecked="{Binding ScheduleImports}"/>
+                                    <Label Content="Schedule an import if it has been longer than"/>
+                                    <controls:NumericUpDown   Value="{Binding AutoImportIntervalMinutes}" 
+                                                              Minimum="0"
+                                                              HasDecimals="False"
+                                                              IsEnabled="{Binding ScheduleImports}"/>
+                                    <Label Content="minutes since the last import operation"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </TabItem>
+
+                    <TabItem Header="Run Profiles">
+                        <Grid Margin="25 10 0 0">
                             <Grid.RowDefinitions>
                                 <RowDefinition  />
                                 <RowDefinition  />
@@ -22,78 +57,56 @@
                                 <RowDefinition  />
                                 <RowDefinition  />
                                 <RowDefinition  />
-                                <RowDefinition  />
-                                <RowDefinition />
-                                <RowDefinition />
-                                <RowDefinition />
-                                <RowDefinition />
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition />
-                                <ColumnDefinition />
+                                <ColumnDefinition Width="200"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <Label Grid.Row="0" Grid.Column="0" Content="Management Agent"/>
-                            <Label  Grid.Row="0" Grid.Column="1" Content="{Binding MAName}"  />
-
-                            <Label Grid.Row="1" Grid.Column="0" Content="Disabled"/>
-                            <CheckBox Grid.Row="1" Grid.Column="1" IsChecked="{Binding Disabled}"/>
-
-                            <Label Grid.Row="2" Grid.Column="0" Content="Enable scheduled imports"/>
-                            <CheckBox Grid.Row="2" Grid.Column="1" IsChecked="{Binding ScheduleImports}"/>
-
-                            <Label Grid.Row="3" Grid.Column="0" Content="Minimum interval between import operations (minutes)"/>
-                            <controls:NumericUpDown Grid.Row="3" Grid.Column="1"  
-                                Value="{Binding AutoImportIntervalMinutes}" 
-                                Minimum="0"
-                                HasDecimals="False"
-                                IsEnabled="{Binding ScheduleImports}"/>
-
-                            <Label Grid.Row="4" Grid.Column="0" Content="Run Profiles" Grid.ColumnSpan="2"/>
-
-                            <Label Grid.Row="5" Grid.Column="0" Content="Confirming import run profile name"/>
-                            <ComboBox Grid.Row="5" Grid.Column="1" 
+                            <Label Grid.Row="0" Grid.Column="0" Content="Confirming import"/>
+                            <ComboBox Grid.Row="0" Grid.Column="1" 
                   ItemsSource="{Binding RunProfileNames}"
                   SelectedItem="{Binding ConfirmingImportRunProfileName}"/>
 
-                            <Label Grid.Row="6" Grid.Column="0" Content="Delta import run profile name"/>
-                            <ComboBox Grid.Row="6" Grid.Column="1" 
+                            <Label Grid.Row="1" Grid.Column="0" Content="Delta import"/>
+                            <ComboBox Grid.Row="1" Grid.Column="1" 
                   ItemsSource="{Binding RunProfileNames}"
                   SelectedItem="{Binding DeltaImportRunProfileName}"/>
 
-                            <Label Grid.Row="7" Grid.Column="0" Content="Delta sync run profile name"/>
-                            <ComboBox Grid.Row="7" Grid.Column="1" 
+                            <Label Grid.Row="2" Grid.Column="0" Content="Delta sync"/>
+                            <ComboBox Grid.Row="2" Grid.Column="1" 
                   ItemsSource="{Binding RunProfileNames}"
                   SelectedItem="{Binding DeltaSyncRunProfileName}"/>
 
-                            <Label Grid.Row="8" Grid.Column="0" Content="Export run profile name"/>
-                            <ComboBox Grid.Row="8" Grid.Column="1" 
+                            <Label Grid.Row="3" Grid.Column="0" Content="Export"/>
+                            <ComboBox Grid.Row="3" Grid.Column="1" 
                   ItemsSource="{Binding RunProfileNames}"
                   SelectedItem="{Binding ExportRunProfileName}"/>
 
-                            <Label Grid.Row="9" Grid.Column="0" Content="Full import run profile name"/>
-                            <ComboBox Grid.Row="9" Grid.Column="1" 
+                            <Label Grid.Row="4" Grid.Column="0" Content="Full import"/>
+                            <ComboBox Grid.Row="4" Grid.Column="1" 
                   ItemsSource="{Binding RunProfileNames}"
                   SelectedItem="{Binding FullImportRunProfileName}"/>
 
-                            <Label Grid.Row="10" Grid.Column="0" Content="Full sync run profile name"/>
-                            <ComboBox Grid.Row="10" Grid.Column="1" 
+                            <Label Grid.Row="5" Grid.Column="0" Content="Full sync"/>
+                            <ComboBox Grid.Row="5" Grid.Column="1" 
                   ItemsSource="{Binding RunProfileNames}"
                   SelectedItem="{Binding FullSyncRunProfileName}"/>
 
-                            <Label Grid.Row="11" Grid.Column="0" Content="Scheduled import run profile name"/>
-                            <ComboBox Grid.Row="11" Grid.Column="1" 
+                            <Label Grid.Row="6" Grid.Column="0" Content="Scheduled import"/>
+                            <ComboBox Grid.Row="6" Grid.Column="1" 
                   ItemsSource="{Binding RunProfileNames}"
                   SelectedItem="{Binding ScheduledImportRunProfileName}"/>
                         </Grid>
-                    </StackPanel>
-                </TabItem>
+                    </TabItem>
 
-                <TabItem Header="Triggers">
-                    <local:TriggersView />
-
-                </TabItem>
-            </TabControl>
+                    <TabItem Header="Triggers">
+                        <StackPanel Margin="25 10 0 0">
+                            <local:TriggersView />
+                        </StackPanel>
+                    </TabItem>
+                </TabControl>
+            </StackPanel>
 
         </UserControl>
     </DataTemplate>

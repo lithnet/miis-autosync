@@ -18,7 +18,24 @@
 
         <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" />
 
-        <TreeView Grid.Column="1" Name="TreeViewMain"/>
+        <TreeView Grid.Column="0" Name="TreeViewMain" DataContext="{Binding Path=ConfigFile}" BorderThickness="5"
+            ItemsSource="{Binding Path=ChildNodes}">
+            <TreeView.Resources>
+                <ResourceDictionary>
+                    <ResourceDictionary.MergedDictionaries>
+                        <ResourceDictionary Source="ResourceDictionaries/TreeViewItemDictionary.xaml" />
+                        <!--<ResourceDictionary>
+                            <Style TargetType="{x:Type TreeViewItem}">
+                                <Setter Property="IsSelected"
+                                        Value="{Binding Path=IsSelected, Mode=TwoWay}" />
+                                <Setter Property="IsExpanded"
+                                        Value="{Binding Path=IsExpanded, Mode=TwoWay}" />
+                            </Style>
+                        </ResourceDictionary>-->
+                    </ResourceDictionary.MergedDictionaries>
+                </ResourceDictionary>
+            </TreeView.Resources>
+        </TreeView>
         <ContentControl Grid.Column="2" Content="{Binding Path=SelectedItem, ElementName=TreeViewMain}"
                         DockPanel.Dock="Top">
             <ContentControl.Resources>
