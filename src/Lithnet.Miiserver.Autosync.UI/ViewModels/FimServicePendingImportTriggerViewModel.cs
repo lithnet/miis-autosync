@@ -6,26 +6,35 @@ using System.Threading.Tasks;
 using Lithnet.Common.Presentation;
 using Lithnet.Miiserver.AutoSync;
 using Microsoft.Win32;
+using PropertyChanged;
 
 namespace Lithnet.Miiserver.Autosync.UI.ViewModels
 {
-    public class FimServicePendingImportTriggerViewModel : ViewModelBase<FimServicePendingImportTrigger>
+    public class FimServicePendingImportTriggerViewModel : MAExecutionTriggerViewModel
     {
+        private FimServicePendingImportTrigger typedModel;
+        
         public FimServicePendingImportTriggerViewModel(FimServicePendingImportTrigger model)
             : base(model)
         {
+            this.typedModel = model;
         }
+      
+        public string Type => this.Model.Type;
 
-        public string RunProfileName
+        public string Description => this.Model.Description;
+     
+        [AlsoNotifyFor("Description")]
+        public string HostName
         {
-            get => this.Model.HostName;
-            set => this.Model.HostName = value;
+            get => this.typedModel.HostName;
+            set => this.typedModel.HostName = value;
         }
 
         public TimeSpan Interval
         {
-            get => this.Model.Interval;
-            set => this.Model.Interval = value;
+            get => this.typedModel.Interval;
+            set => this.typedModel.Interval = value;
         }
     }
 }

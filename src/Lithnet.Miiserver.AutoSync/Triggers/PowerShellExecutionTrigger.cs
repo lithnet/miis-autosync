@@ -22,14 +22,28 @@ namespace Lithnet.Miiserver.AutoSync
 
         [DataMember(Name = "path")]
         public string ScriptPath { get; set; }
+        
+        [DataMember(Name = "exception-behaviour")]
+        public ExecutionErrorBehviour ExceptionBehaviour { get; set; }
+        
+        public string DisplayName => $"{this.Type}: {this.Description}";
 
-        public string Name => $"PowerShell: {System.IO.Path.GetFileName(this.ScriptPath)}";
+        public string Type => "PowerShell script";
+
+        public string Description => $"{System.IO.Path.GetFileName(this.ScriptPath)}";
+
+        [DataMember(Name = "interval")]
+        public TimeSpan Interval { get; set; }
 
         public event ExecutionTriggerEventHandler TriggerExecution;
 
         public void Start()
         {
             this.cancellationToken = new CancellationTokenSource();
+            if (this.Interval.TotalSeconds <= 0)
+            {
+                this.Interval = Settings.PSExecutionQueryInterval;
+            }
 
             this.internalTask = new Task(this.Run, this.cancellationToken.Token);
 
@@ -71,15 +85,33 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                     catch (Exception ex)
                     {
-                        Logger.WriteLine("The PowerShell execution trigger encountered an error and has been terminated");
+                        string message;
+
+                        if (this.ExceptionBehaviour == ExecutionErrorBehviour.Terminate)
+                        {
+                            message = $"The PowerShell execution trigger '{this.DisplayName}' encountered an error and has been terminated";
+                        }
+                        else
+                        {
+                            message = $"The PowerShell execution trigger '{this.DisplayName}' encountered an error";
+                        }
+
+                        Logger.WriteLine(message);
                         Logger.WriteException(ex);
 
                         if (MessageSender.CanSendMail())
                         {
-                            MessageSender.SendMessage($"The PowerShell execution trigger '{this.Name}' encountered an error and has been terminated", ex.ToString());
+                            MessageSender.SendMessage(message, ex.ToString());
                         }
 
-                        break;
+                        if (this.ExceptionBehaviour == ExecutionErrorBehviour.Terminate)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            continue;
+                        }
                     }
 
                     foreach (PSObject result in results)
@@ -103,7 +135,7 @@ namespace Lithnet.Miiserver.AutoSync
                     }
 
                     this.cancellationToken.Token.ThrowIfCancellationRequested();
-                    this.cancellationToken.Token.WaitHandle.WaitOne(Settings.PSExecutionQueryInterval);
+                    this.cancellationToken.Token.WaitHandle.WaitOne(this.Interval);
                 }
             }
             catch (OperationCanceledException)
@@ -116,7 +148,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 if (MessageSender.CanSendMail())
                 {
-                    MessageSender.SendMessage($"The PowerShell execution trigger '{this.Name}' encountered an error and has been terminated", ex.ToString());
+                    MessageSender.SendMessage($"The PowerShell execution trigger '{this.DisplayName}' encountered an error and has been terminated", ex.ToString());
                 }
             }
         }
@@ -150,7 +182,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public override string ToString()
         {
-            return $"{this.Name}";
+            return $"{this.DisplayName}";
         }
     }
 }

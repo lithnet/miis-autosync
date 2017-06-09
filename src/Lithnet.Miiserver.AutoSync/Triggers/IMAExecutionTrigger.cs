@@ -4,7 +4,11 @@
 
     public interface IMAExecutionTrigger
     {
-        string Name { get; }
+        string DisplayName { get; }
+
+        string Type { get; }
+
+        string Description { get; }
 
         event ExecutionTriggerEventHandler TriggerExecution;
 

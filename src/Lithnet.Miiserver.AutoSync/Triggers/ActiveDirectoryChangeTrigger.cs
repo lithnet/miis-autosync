@@ -69,6 +69,9 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "disabled")]
         public bool Disabled { get; set; }
 
+        [DataMember(Name = "use-service-account-credentials")]
+        public bool UseServiceAccountCredentials { get; set; } = true;
+
         public ActiveDirectoryChangeTrigger()
         {
             //this.LastLogonTimestampOffset = TimeSpan.FromSeconds(60);
@@ -257,11 +260,15 @@ namespace Lithnet.Miiserver.AutoSync
             this.stopped = true;
         }
 
-        public string Name => "AD/LDS change detection";
+        public string DisplayName => $"{this.Type} ({this.HostName})";
+
+        public string Type => "AD/LDS change detection";
+
+        public string Description => $"{this.HostName}";
 
         public override string ToString()
         {
-            return $"{this.Name}: {this.HostName}";
+            return $"{this.DisplayName}: {this.HostName}";
         }
 
         internal void Validate()
@@ -313,6 +320,7 @@ namespace Lithnet.Miiserver.AutoSync
             config.ObjectClasses = partitionNode?.SelectNodes("filter/object-classes/object-class")?.OfType<XmlElement>().Where(t => t.InnerText != "container" && t.InnerText != "domainDNS" && t.InnerText != "organizationalUnit").Select(u => u.InnerText).ToArray();
             config.LastLogonTimestampOffset = new TimeSpan(0, 0, 300);
             config.MinimumIntervalBetweenEvents = new TimeSpan(0, 0, 60);
+            config.UseServiceAccountCredentials = true;
 
             return config;
         }

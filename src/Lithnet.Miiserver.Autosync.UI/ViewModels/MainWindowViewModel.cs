@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Lithnet.Miiserver.AutoSync;
 using Lithnet.Common.Presentation;
 
-namespace Lithnet.Miiserver.Autosync.UI
+namespace Lithnet.Miiserver.Autosync.UI.ViewModels
 {
     internal class MainWindowViewModel : ViewModelBase
     {

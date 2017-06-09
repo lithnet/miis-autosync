@@ -143,13 +143,13 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 try
                 {
-                    this.Log($"Registering execution trigger '{t.Name}'");
+                    this.Log($"Registering execution trigger '{t.DisplayName}'");
                     t.TriggerExecution += this.notifier_TriggerExecution;
                     t.Start();
                 }
                 catch (Exception ex)
                 {
-                    this.Log($"Could not start execution trigger {t.Name}");
+                    this.Log($"Could not start execution trigger {t.DisplayName}");
                     Logger.WriteException(ex);
                 }
             }
@@ -715,16 +715,16 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     if (e.Parameters.RunProfileType == MARunProfileType.None)
                     {
-                        this.Log($"Received empty run profile from trigger {trigger.Name}");
+                        this.Log($"Received empty run profile from trigger {trigger.DisplayName}");
                         return;
                     }
                 }
 
-                this.AddPendingActionIfNotQueued(e.Parameters, trigger.Name);
+                this.AddPendingActionIfNotQueued(e.Parameters, trigger.DisplayName);
             }
             catch (Exception ex)
             {
-                this.Log($"The was an unexpected error processing an incoming trigger from {trigger?.Name}");
+                this.Log($"The was an unexpected error processing an incoming trigger from {trigger?.DisplayName}");
                 Logger.WriteException(ex);
             }
         }

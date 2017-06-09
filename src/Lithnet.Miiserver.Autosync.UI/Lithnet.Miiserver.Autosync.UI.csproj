@@ -82,20 +82,20 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="PasswordBoxBindingHelper.cs" />
+    <Compile Include="TimeSpanControl.xaml.cs">
+      <DependentUpon>TimeSpanControl.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ViewModels\ActiveDirectoryChangeTriggerViewModel.cs" />
+    <Compile Include="ViewModels\MAExecutionTriggerViewModel.cs" />
     <Compile Include="ViewModels\MainWindowViewModel.cs" />
     <Compile Include="ViewModels\FimServicePendingImportTriggerViewModel.cs" />
     <Compile Include="ViewModels\ConfigFileViewModel.cs" />
+    <Compile Include="ViewModels\MAExecutionTriggersViewModel.cs" />
     <Compile Include="ViewModels\ScheduledExecutionTriggerViewModel.cs" />
     <Compile Include="ViewModels\ManagementAgentsViewModel.cs" />
     <Compile Include="ViewModels\IntervalExecutionTriggerViewModel.cs" />
     <Compile Include="ViewModels\PowerShellExecutionTriggerViewModel.cs" />
-    <Compile Include="Views\PowerShellExecutionTriggerView.xaml.cs">
-      <DependentUpon>PowerShellExecutionTriggerView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Views\TriggersView.xaml.cs">
-      <DependentUpon>TriggersView.xaml</DependentUpon>
-    </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -109,6 +109,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="ResourceDictionaries\TriggerViewDictionary.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="ResourceDictionaries\ItemViewDictionary.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -117,15 +121,19 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="TimeSpanControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\MAConfigParametersView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\PowerShellExecutionTriggerView.xaml">
-      <SubType>Designer</SubType>
+    <Page Include="Views\ActiveDirectoryChangeTriggerView.xaml">
       <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
-    <Page Include="Views\TriggersView.xaml">
+    <Page Include="Views\PowerShellExecutionTriggerView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

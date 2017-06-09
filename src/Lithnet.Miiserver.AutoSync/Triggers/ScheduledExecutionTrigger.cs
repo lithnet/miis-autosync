@@ -80,13 +80,17 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public string Name => "Scheduled trigger";
+        public string DisplayName => $"{this.Type}: {this.Description}";
+
+        public string Type => "Scheduled trigger";
+
+        public string Description => $"Every {this.Interval} start from {this.StartDateTime}";
 
         public event ExecutionTriggerEventHandler TriggerExecution;
 
         public override string ToString()
         {
-            return $"{this.Name}";
+            return $"{this.DisplayName}";
         }
     }
 }

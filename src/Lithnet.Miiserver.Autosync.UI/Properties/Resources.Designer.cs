@@ -59,5 +59,24 @@ namespace Lithnet.Miiserver.Autosync.UI.Properties {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to function Get-RunProfileToExecute 
+        ///{
+        ///    # Logic to determine what run profile to execute goes here
+        ///    #
+        ///    # Return the name of the run profile to execute using Write-Output as shown below
+        ///    # 
+        ///    # Write-Output &quot;FI&quot;; 
+        ///    #
+        ///    # If no run profile should be executed, then do not return anything
+        ///    #
+        ///}.
+        /// </summary>
+        internal static string PowerShellTriggerScript {
+            get {
+                return ResourceManager.GetString("PowerShellTriggerScript", resourceCulture);
+            }
+        }
     }
 }

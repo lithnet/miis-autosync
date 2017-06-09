@@ -8,7 +8,7 @@ using Lithnet.Logging;
 
 namespace Lithnet.Miiserver.AutoSync
 {
-    internal static class Extensions
+    public static class Extensions
     {
         public static void ThrowOnPipelineError(this PowerShell powershell)
         {

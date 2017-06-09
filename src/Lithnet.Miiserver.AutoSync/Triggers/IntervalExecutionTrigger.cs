@@ -72,11 +72,15 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public string Name => $"{this.RunProfileName ?? this.RunProfileTargetType.ToString()} at {this.Interval} second intervals";
+        public string DisplayName => $"{this.Type} - {this.Description}";
+        
+        public string Type => "Timed execution";
 
+        public string Description => $"{this.RunProfileName ?? this.RunProfileTargetType.ToString()} every {this.Interval}";
+        
         public override string ToString()
         {
-            return $"{this.Name}";
+            return $"{this.DisplayName}";
         }
 
         public event ExecutionTriggerEventHandler TriggerExecution;

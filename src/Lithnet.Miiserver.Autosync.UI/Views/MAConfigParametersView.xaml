@@ -5,9 +5,10 @@
                      xmlns:local="clr-namespace:Lithnet.Miiserver.Autosync.UI.Views"
                      xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
                      xmlns:ui="clr-namespace:Lithnet.Miiserver.Autosync.UI"
+                     xmlns:viewModels="clr-namespace:Lithnet.Miiserver.Autosync.UI.ViewModels"
                      mc:Ignorable="d" >
 
-    <DataTemplate DataType="{x:Type ui:MAConfigParametersViewModel}">
+    <DataTemplate DataType="{x:Type viewModels:MAConfigParametersViewModel}">
         <UserControl 
              Margin="20" >
             <StackPanel>
@@ -101,9 +102,47 @@
                     </TabItem>
 
                     <TabItem Header="Triggers">
-                        <StackPanel Margin="25 10 0 0">
-                            <local:TriggersView />
-                        </StackPanel>
+                        <Grid  Margin="25 10 0 0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition  />
+                                <RowDefinition  />
+                                <RowDefinition  />
+                                <RowDefinition  />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+
+                            <ListView Grid.Row="0"
+                                      Margin="0 10 0 10"
+                                      Name="ListViewTriggers"
+                                      MinHeight="200"
+                                      ItemsSource="{Binding Path=Triggers}"
+                                      BorderThickness="1">
+                                <ListView.Resources>
+                                    <Style TargetType="{x:Type ListViewItem}">
+                                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
+                                    </Style>
+                                </ListView.Resources>
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn Header="Type" DisplayMemberBinding="{Binding Type}"/>
+                                        <GridViewColumn Header="Description" DisplayMemberBinding="{Binding Description}"/>
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+                            <StackPanel Grid.Row="1"  Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="Add trigger" Command="{Binding Commands.AddTrigger}"></Button>
+                                <Button Content="Remove trigger"  Command="{Binding Commands.RemoveTrigger}"></Button>
+                            </StackPanel>
+                           
+                            <ContentPresenter Grid.Row="2" Content="{Binding Path=SelectedItem, ElementName=ListViewTriggers}" Margin="0 10 0 10">
+                                <ContentPresenter.Resources>
+                                    <ResourceDictionary Source="/ResourceDictionaries/TriggerViewDictionary.xaml"/>
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
+                        </Grid>
+
                     </TabItem>
                 </TabControl>
             </StackPanel>

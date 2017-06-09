@@ -6,32 +6,43 @@ using System.Threading.Tasks;
 using Lithnet.Common.Presentation;
 using Lithnet.Miiserver.AutoSync;
 using Microsoft.Win32;
+using PropertyChanged;
 
 namespace Lithnet.Miiserver.Autosync.UI.ViewModels
 {
-    public class IntervalExecutionTriggerViewModel : ViewModelBase<IntervalExecutionTrigger>
+    public class IntervalExecutionTriggerViewModel : MAExecutionTriggerViewModel
     {
+        private IntervalExecutionTrigger typedModel;
+
         public IntervalExecutionTriggerViewModel(IntervalExecutionTrigger model)
             :base(model)
         {
+            this.typedModel = model;
         }
+        
+        public string Type => this.Model.Type;
 
+        public string Description => this.Model.Description;
+
+        [AlsoNotifyFor("Description")]
         public string RunProfileName
         {
-            get => this.Model.RunProfileName;
-            set => this.Model.RunProfileName = value;
+            get => this.typedModel.RunProfileName;
+            set => this.typedModel.RunProfileName = value;
         }
 
+        [AlsoNotifyFor("Description")]
         public MARunProfileType RunProfileTargetType
         {
-            get => this.Model.RunProfileTargetType;
-            set => this.Model.RunProfileTargetType = value;
+            get => this.typedModel.RunProfileTargetType;
+            set => this.typedModel.RunProfileTargetType = value;
         }
 
+        [AlsoNotifyFor("Description")]
         public TimeSpan Interval
         {
-            get => this.Model.Interval;
-            set => this.Model.Interval = value;
+            get => this.typedModel.Interval;
+            set => this.typedModel.Interval = value;
         }
     }
 }

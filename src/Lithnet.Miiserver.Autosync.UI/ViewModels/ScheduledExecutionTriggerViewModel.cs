@@ -6,32 +6,43 @@ using System.Threading.Tasks;
 using Lithnet.Common.Presentation;
 using Lithnet.Miiserver.AutoSync;
 using Microsoft.Win32;
+using PropertyChanged;
 
 namespace Lithnet.Miiserver.Autosync.UI.ViewModels
 {
-    public class ScheduledExecutionTriggerViewModel : ViewModelBase<ScheduledExecutionTrigger>
+    public class ScheduledExecutionTriggerViewModel : MAExecutionTriggerViewModel
     {
+        private ScheduledExecutionTrigger typedModel;
+
         public ScheduledExecutionTriggerViewModel(ScheduledExecutionTrigger model)
             : base(model)
         {
+            this.typedModel = model;
         }
 
+        public string Type => this.Model.Type;
+
+        public string Description => this.Model.Description;
+
+        [AlsoNotifyFor("Description")]
         public string RunProfileName
         {
-            get => this.Model.RunProfileName;
-            set => this.Model.RunProfileName = value;
+            get => this.typedModel.RunProfileName;
+            set => this.typedModel.RunProfileName = value;
         }
 
+        [AlsoNotifyFor("Description")]
         public DateTime StartDateTime
         {
-            get => this.Model.StartDateTime;
-            set => this.Model.StartDateTime = value;
+            get => this.typedModel.StartDateTime;
+            set => this.typedModel.StartDateTime = value;
         }
 
+        [AlsoNotifyFor("Description")]
         public TimeSpan Interval
         {
-            get => this.Model.Interval;
-            set => this.Model.Interval = value;
+            get => this.typedModel.Interval;
+            set => this.typedModel.Interval = value;
         }
     }
 }

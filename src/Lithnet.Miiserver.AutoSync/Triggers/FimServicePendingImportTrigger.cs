@@ -98,7 +98,11 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public string Name => "MIM Service pending changes";
+        public string DisplayName => $"{this.Type} ({this.Description})";
+
+        public string Type => "MIM service change detection";
+
+        public string Description => $"{this.HostName}";
 
         public event ExecutionTriggerEventHandler TriggerExecution;
         
@@ -122,7 +126,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public override string ToString()
         {
-            return $"{this.Name}: {this.HostName}";
+            return $"{this.DisplayName}: {this.HostName}";
         }
     }
 }

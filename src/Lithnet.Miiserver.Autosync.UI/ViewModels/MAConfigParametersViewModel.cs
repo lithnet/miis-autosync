@@ -1,16 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
+using System.Windows;
 using Lithnet.Common.Presentation;
 using Lithnet.Miiserver.AutoSync;
 
-namespace Lithnet.Miiserver.Autosync.UI
+namespace Lithnet.Miiserver.Autosync.UI.ViewModels
 {
     public class MAConfigParametersViewModel : ViewModelBase<MAConfigParameters>
     {
         public MAConfigParametersViewModel(MAConfigParameters model)
             : base(model)
         {
+            this.Triggers = new MAExecutionTriggersViewModel(model.Triggers);
+            this.Commands.Add("AddTrigger", new DelegateCommand(t => this.AddTrigger()));
+            this.Commands.Add("RemoveTrigger", new DelegateCommand(t => this.RemoveTrigger(), u=> this.CanRemoveTrigger()));
         }
 
         public string ManagementAgentName => this.Model?.ManagementAgentName ?? "Unknown MA";
@@ -89,6 +94,30 @@ namespace Lithnet.Miiserver.Autosync.UI
             }
         }
         
+        public MAExecutionTriggersViewModel Triggers { get; private set; }
+
+        private void AddTrigger()
+        {
+        }
+
+        private void RemoveTrigger()
+        {
+            MAExecutionTriggerViewModel selected = this.Triggers.FirstOrDefault(t => t.IsSelected);
+
+            if (selected != null)
+            {
+                if (MessageBox.Show("Are you sure you want to remove the selected trigger?", "Confirm", MessageBoxButton.OKCancel, MessageBoxImage.Question, MessageBoxResult.OK) == MessageBoxResult.OK)
+                {
+                    this.Triggers.Remove(selected);
+                }
+            }
+        }
+
+        private bool CanRemoveTrigger()
+        {
+            return this.Triggers.Any(t => t.IsSelected);
+        }
+
         public void DoAutoDiscovery()
         {
             //this.model = MAConfigDiscovery.DoAutoRunProfileDiscovery(this.model.ManagementAgent);

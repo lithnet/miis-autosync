@@ -2,7 +2,6 @@
                       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                       xmlns:Controls="http://metro.mahapps.com/winfx/xaml/controls"
-                      xmlns:views="clr-namespace:Lithnet.Miiserver.Autosync.UI.Views"
                       Title="Lithnet AutoSync for Microsoft Identity Manager"
                       Icon="autosync.ico"
                       Height="Auto"
@@ -23,7 +22,7 @@
             <TreeView.Resources>
                 <ResourceDictionary>
                     <ResourceDictionary.MergedDictionaries>
-                        <ResourceDictionary Source="ResourceDictionaries/TreeViewItemDictionary.xaml" />
+                        <ResourceDictionary Source="/ResourceDictionaries/TreeViewItemDictionary.xaml" />
                         <!--<ResourceDictionary>
                             <Style TargetType="{x:Type TreeViewItem}">
                                 <Setter Property="IsSelected"
@@ -39,7 +38,7 @@
         <ContentControl Grid.Column="2" Content="{Binding Path=SelectedItem, ElementName=TreeViewMain}"
                         DockPanel.Dock="Top">
             <ContentControl.Resources>
-                <ResourceDictionary Source="ResourceDictionaries/ItemViewDictionary.xaml"/>
+                <ResourceDictionary Source="/ResourceDictionaries/ItemViewDictionary.xaml"/>
             </ContentControl.Resources>
         </ContentControl>
         <!--<views:MAConfigParametersView  Grid.Column="2"/>-->

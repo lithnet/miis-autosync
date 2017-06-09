@@ -15,6 +15,11 @@ namespace Lithnet.Miiserver.AutoSync
 {
     public class ProtectedString : IXmlSerializable
     {
+        public ProtectedString(string value)
+        {
+            this.Value = value.ToSecureString();
+        }
+
         private byte[] Salt { get; set; }
 
         public SecureString Value { get; set; }
@@ -87,6 +92,8 @@ namespace Lithnet.Miiserver.AutoSync
 
             return Convert.ToBase64String(p);
         }
+
+        public bool HasValue => this.Value != null && this.Value.Length > 0;
 
         private string UnprotectData(byte[] data, byte[] salt)
         {

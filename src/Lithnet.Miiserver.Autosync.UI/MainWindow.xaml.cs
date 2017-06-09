@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Lithnet.Miiserver.Autosync.UI.ViewModels;
 using MahApps.Metro.Controls;
 
 namespace Lithnet.Miiserver.Autosync.UI

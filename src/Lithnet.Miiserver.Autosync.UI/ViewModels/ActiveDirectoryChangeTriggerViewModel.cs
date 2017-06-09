@@ -1,95 +1,107 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net;
 using Lithnet.Common.Presentation;
 using Lithnet.Miiserver.AutoSync;
+using PropertyChanged;
 
 namespace Lithnet.Miiserver.Autosync.UI.ViewModels
 {
-    public class ActiveDirectoryChangeTriggerViewModel : ViewModelBase<ActiveDirectoryChangeTrigger>
+    public class ActiveDirectoryChangeTriggerViewModel : MAExecutionTriggerViewModel
     {
+        private ActiveDirectoryChangeTrigger typedModel;
+
+        private const string PlaceholderPassword = "{5A4A203E-EBB9-4D47-A3D4-CD6055C6B4FF}";
+
         public ActiveDirectoryChangeTriggerViewModel(ActiveDirectoryChangeTrigger model)
             :base (model)
         {
+            this.typedModel = model;
+            this.ObjectClasses = new ObservableCollection<string>(this.typedModel.ObjectClasses);
         }
 
-        public string RunProfileName
+        public TimeSpan MinimumIntervalBetweenEvents
         {
-            get => this.Model.HostName;
-            set => this.Model.HostName = value;
-        }
-
-        public TimeSpan MaximumTriggerInterval
-        {
-            get => this.Model.MinimumIntervalBetweenEvents;
-            set => this.Model.MinimumIntervalBetweenEvents = value;
+            get => this.typedModel.MinimumIntervalBetweenEvents;
+            set => this.typedModel.MinimumIntervalBetweenEvents = value;
         }
 
         public TimeSpan LastLogonTimestampOffset
         {
-            get => this.Model.LastLogonTimestampOffset;
-            set => this.Model.LastLogonTimestampOffset = value;
+            get => this.typedModel.LastLogonTimestampOffset;
+            set => this.typedModel.LastLogonTimestampOffset = value;
         }
 
         public string BaseDN
         {
-            get => this.Model.BaseDN;
-            set => this.Model.BaseDN = value;
+            get => this.typedModel.BaseDN;
+            set => this.typedModel.BaseDN = value;
         }
 
-        //public NetworkCredential Credentials
-        //{
-        //    get => this.model.Credentials;
-        //    set => this.model.Credentials = value;
-        //}
+        public bool UseServiceAccountCredentials
+        {
+            get => this.typedModel.UseServiceAccountCredentials;
+            set => this.typedModel.UseServiceAccountCredentials = value;
+        }
 
-        //public string Username
-        //{
-        //    get => this.model.Credentials?.UserName;
-        //    set
-        //    {
-        //        if (this.model.Credentials == null)
-        //        {
-        //            this.model.Credentials = new NetworkCredential();
-        //        }
+        public string Username
+        {
+            get => this.typedModel.Username;
+            set => this.typedModel.Username = value;
+        }
 
-        //        this.model.Credentials.UserName = value;
-        //    }
-        //}
+        public bool CredentialsFieldEnabled => !this.UseServiceAccountCredentials;
 
-        //public string Password
-        //{
-        //    get => this.model.Credentials?.Password;
-        //    set
-        //    {
-        //        if (this.model.Credentials == null)
-        //        {
-        //            this.model.Credentials = new NetworkCredential();
-        //        }
+        public string Password
+        {
+            get
+            {
+                if (this.typedModel.Password == null || !this.typedModel.Password.HasValue)
+                {
+                    return null;
+                }
+                else
+                {
+                    return PlaceholderPassword;
+                }
+            }
+            set
+            {
+                if (value == null)
+                {
+                    this.typedModel.Password = null;
+                }
 
-        //        this.model.Credentials.Password = value;
-        //    }
-        //}
+                if (value == PlaceholderPassword)
+                {
+                    return;
+                }
+
+                this.typedModel.Password = new ProtectedString(value);
+            }
+        }
+
+        public string Type => this.Model.Type;
+
+        public string Description => this.Model.Description;
 
         public bool Disabled
         {
-            get => this.Model.Disabled;
-            set => this.Model.Disabled = value;
+            get => this.typedModel.Disabled;
+            set => this.typedModel.Disabled = value;
         }
 
+        [AlsoNotifyFor("Description")]
         public string HostName
         {
-            get => this.Model.HostName;
-            set => this.Model.HostName = value;
+            get => this.typedModel.HostName;
+            set => this.typedModel.HostName = value;
         }
 
-        public string Name => this.Model.Name;
+        public string Name => this.Model.DisplayName;
 
-        public List<string> ObjectClasses
-        {
-            get => this.Model.ObjectClasses?.ToList();
-            set => this.Model.ObjectClasses = value?.ToArray();
-        }
+        public ObservableCollection<string> ObjectClasses { get; set; }
     }
 }
