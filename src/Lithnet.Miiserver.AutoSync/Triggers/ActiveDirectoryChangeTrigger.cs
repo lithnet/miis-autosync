@@ -69,8 +69,8 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "disabled")]
         public bool Disabled { get; set; }
 
-        [DataMember(Name = "use-service-account-credentials")]
-        public bool UseServiceAccountCredentials { get; set; } = true;
+        [DataMember(Name = "use-explicit-credentials")]
+        public bool UseExplicitCredentials { get; set; } = true;
 
         public ActiveDirectoryChangeTrigger()
         {
@@ -320,7 +320,7 @@ namespace Lithnet.Miiserver.AutoSync
             config.ObjectClasses = partitionNode?.SelectNodes("filter/object-classes/object-class")?.OfType<XmlElement>().Where(t => t.InnerText != "container" && t.InnerText != "domainDNS" && t.InnerText != "organizationalUnit").Select(u => u.InnerText).ToArray();
             config.LastLogonTimestampOffset = new TimeSpan(0, 0, 300);
             config.MinimumIntervalBetweenEvents = new TimeSpan(0, 0, 60);
-            config.UseServiceAccountCredentials = true;
+            config.UseExplicitCredentials = false;
 
             return config;
         }

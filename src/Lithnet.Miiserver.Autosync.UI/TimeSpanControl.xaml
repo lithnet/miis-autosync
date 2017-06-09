@@ -8,13 +8,13 @@
     x:Name="TsControl">
 
     <StackPanel Orientation="Horizontal">
-        <controls:NumericUpDown Value="{Binding Path=Days, ElementName=TsControl}" Minimum="0" Margin="0 0 5 0"/>
+        <controls:NumericUpDown x:Name="UdDays" Value="{Binding Path=Days, ElementName=TsControl, UpdateSourceTrigger=PropertyChanged}" Minimum="0" Margin="0 0 5 0"/>
         <TextBlock Text="days" VerticalAlignment="Center"/>
-        <controls:NumericUpDown Value="{Binding Path=Hours, ElementName=TsControl}" Minimum="0" Margin="5 0 5 0"/>
+        <controls:NumericUpDown x:Name="UdHours" Value="{Binding Path=Hours, ElementName=TsControl, UpdateSourceTrigger=PropertyChanged}" Minimum="0" Margin="5 0 5 0" Maximum="23"/>
         <TextBlock Text="hours" VerticalAlignment="Center"/>
-        <controls:NumericUpDown Value="{Binding Path=Minutes, ElementName=TsControl}" Minimum="0" Margin="5 0 5 0"/>
+        <controls:NumericUpDown x:Name="UdMinutes" Value="{Binding Path=Minutes, ElementName=TsControl, UpdateSourceTrigger=PropertyChanged}" Minimum="0" Margin="5 0 5 0" Maximum="59"/>
         <TextBlock Text="minutes" VerticalAlignment="Center"/>
-        <controls:NumericUpDown Value="{Binding Path=Seconds, ElementName=TsControl}" Minimum="0" Margin="5 0 5 0" />
+        <controls:NumericUpDown x:Name="UdSeconds" Value="{Binding Path=Seconds, ElementName=TsControl, UpdateSourceTrigger=PropertyChanged}" Minimum="0" Margin="5 0 5 0" Maximum="59" />
         <TextBlock Text="seconds" VerticalAlignment="Center"/>
     </StackPanel>
 </UserControl>

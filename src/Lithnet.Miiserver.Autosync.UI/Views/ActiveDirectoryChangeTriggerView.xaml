@@ -14,48 +14,50 @@
         <UserControl>
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition/>
-                    <ColumnDefinition/>
-                    <ColumnDefinition/>
-                    <!--<ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>-->
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="4*"/>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition/>
+                    <RowDefinition />
+                    <RowDefinition Height="5"/>
                     <RowDefinition/>
                     <RowDefinition/>
                     <RowDefinition/>
-                    <RowDefinition/>
+                    <RowDefinition Height="5"/>
                     <RowDefinition/>
                     <RowDefinition/>
                 </Grid.RowDefinitions>
 
-                <Label Grid.Row="0" Grid.Column="0" Content="Host name"/>
-                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding HostName}"/>
-                
-                <Label Grid.Row="1" Grid.Column="0" Content="Base DN"/>
-                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding BaseDN}"/>
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Host name"/>
+                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding HostName}" Margin="0 0 0 5"/>
 
-                <Label Grid.Row="2" Grid.Column="0" Content="Credentials"/>
-                <StackPanel Grid.Row="2" Grid.Column="1">
-                    <RadioButton Content="Use service account credentials" IsChecked="{Binding UseServiceAccountCredentials}"/>
-                    <RadioButton Content="Use explicit credentials"/>
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Base DN"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding BaseDN}" Margin="0 0 0 5"/>
+
+                
+                
+                
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Credentials"/>
+                <StackPanel Grid.Row="3" Grid.Column="1">
+                    <RadioButton Content="Use service account credentials" IsChecked="{Binding UseServiceAccountCredentials}" Margin="0 0 0 5"/>
+                    <RadioButton Content="Use explicit credentials" Margin="0 0 0 5"/>
                 </StackPanel>
 
-                <Label Grid.Row="3" Grid.Column="0" Content="User name"/>
-                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Username}" IsEnabled="{Binding CredentialsFieldEnabled}"/>
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="User name"/>
+                <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Username}" IsEnabled="{Binding UseExplicitCredentials}" Margin="0 0 0 5"/>
 
-                <Label Grid.Row="4" Grid.Column="0" Content="Password"/>
-                <PasswordBox Grid.Row="4" Grid.Column="1" PasswordChar="*" ui:PasswordBoxBindingHelper.Password="{Binding Password}" IsEnabled="{Binding CredentialsFieldEnabled}" />
-               
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="Password"/>
+                <PasswordBox Grid.Row="5" Grid.Column="1" PasswordChar="*" ui:PasswordBoxBindingHelper.Password="{Binding Password}" Margin="0 0 0 5" IsEnabled="{Binding UseExplicitCredentials}" />
 
-                <Label Grid.Row="5" Grid.Column="0" Content="Minimum amount of time to wait in between executions"></Label>
-                <ui:TimeSpanControl Grid.Row="5" Grid.Column="1" Value="{Binding MinimumIntervalBetweenEvents}" MinimumTimeSpan="00:00:00">
+                
+                
+                <TextBlock Grid.Row="7" Grid.Column="0" Text="Minimum amount of time to wait in between executions" TextWrapping="WrapWithOverflow"></TextBlock>
+                <ui:TimeSpanControl Grid.Row="7" Grid.Column="1" Value="{Binding MinimumIntervalBetweenEvents}" MinimumTimeSpan="00:00:00" Margin="0 0 0 5">
                 </ui:TimeSpanControl>
 
-                <Label Grid.Row="6" Grid.Column="0" Content="Ignore changes where the last logon timestamp attributes have been modified within the following time period"></Label>
-                <ui:TimeSpanControl Grid.Row="6" Grid.Column="1" Value="{Binding LastLogonTimestampOffset}" MinimumTimeSpan="00:00:00">
+                <TextBlock Grid.Row="8" Grid.Column="0" Text="Ignore changes where the last logon timestamp attributes have been modified within the following time period" TextWrapping="WrapWithOverflow"></TextBlock>
+                <ui:TimeSpanControl VerticalAlignment="Top" Grid.Row="8" Grid.Column="1" Value="{Binding LastLogonTimestampOffset}" MinimumTimeSpan="00:00:00" Margin="0 0 0 5">
                 </ui:TimeSpanControl>
                
 

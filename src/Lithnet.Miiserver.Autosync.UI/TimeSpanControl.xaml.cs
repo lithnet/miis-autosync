@@ -32,7 +32,7 @@ namespace Lithnet.Miiserver.Autosync.UI
             }
 
             TimeSpan ts = (TimeSpan)e.NewValue;
-
+            
             control.ValidateNewValue(ts);
         }
 
@@ -48,6 +48,8 @@ namespace Lithnet.Miiserver.Autosync.UI
             control.ValidateNewValue(control.Value);
         }
 
+        private bool updating;
+
         private void ValidateNewValue(TimeSpan ts)
         {
             if (ts > this.MaximumTimeSpan)
@@ -62,11 +64,19 @@ namespace Lithnet.Miiserver.Autosync.UI
                 ts = this.MinimumTimeSpan;
             }
 
-            this.Days = ts.Days;
-            this.Hours = ts.Hours;
-            this.Minutes = ts.Minutes;
-            this.Seconds = ts.Seconds;
-            this.Milliseconds = ts.Milliseconds;
+            try
+            {
+                this.updating = true;
+                this.Days = ts.Days;
+                this.Hours = ts.Hours;
+                this.Minutes = ts.Minutes;
+                this.Seconds = ts.Seconds;
+                this.Milliseconds = ts.Milliseconds;
+            }
+            finally
+            {
+                this.updating = false;
+            }
         }
 
         public TimeSpan MinimumTimeSpan
@@ -144,6 +154,11 @@ namespace Lithnet.Miiserver.Autosync.UI
             TimeSpanControl control = obj as TimeSpanControl;
 
             if (control == null)
+            {
+                return;
+            }
+
+            if (control.updating)
             {
                 return;
             }

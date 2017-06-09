@@ -4,6 +4,7 @@
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/Views/PowerShellExecutionTriggerView.xaml" />
         <ResourceDictionary Source="/Views/ActiveDirectoryChangeTriggerView.xaml" />
+        <ResourceDictionary Source="/Views/FimServicePendingImportTriggerView.xaml" />
     </ResourceDictionary.MergedDictionaries>
 </ResourceDictionary>
             

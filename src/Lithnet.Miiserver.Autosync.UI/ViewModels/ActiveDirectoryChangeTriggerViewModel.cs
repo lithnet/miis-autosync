@@ -42,8 +42,14 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
 
         public bool UseServiceAccountCredentials
         {
-            get => this.typedModel.UseServiceAccountCredentials;
-            set => this.typedModel.UseServiceAccountCredentials = value;
+            get => !this.UseExplicitCredentials;
+            set => this.UseExplicitCredentials = !value;
+        }
+
+        public bool UseExplicitCredentials
+        {
+            get => this.typedModel.UseExplicitCredentials;
+            set => this.typedModel.UseExplicitCredentials = value;
         }
 
         public string Username
@@ -51,8 +57,6 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
             get => this.typedModel.Username;
             set => this.typedModel.Username = value;
         }
-
-        public bool CredentialsFieldEnabled => !this.UseServiceAccountCredentials;
 
         public string Password
         {

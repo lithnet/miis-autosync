@@ -44,7 +44,6 @@
                               SelectedValuePath="Value"
                               Grid.Row="4"
                               Grid.Column="1" />
-
             </Grid>
         </UserControl>
     </DataTemplate>
