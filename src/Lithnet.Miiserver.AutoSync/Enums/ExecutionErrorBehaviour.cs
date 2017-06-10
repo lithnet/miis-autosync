@@ -2,7 +2,7 @@
 
 namespace Lithnet.Miiserver.AutoSync
 {
-    public enum ExecutionErrorBehviour
+    public enum ExecutionErrorBehaviour
     {
         [Description("Terminate the script")]
         Terminate = 0,

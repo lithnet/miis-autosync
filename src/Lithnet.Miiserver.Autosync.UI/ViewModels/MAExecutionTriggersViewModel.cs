@@ -7,17 +7,21 @@ using System.Text;
 using System.Threading.Tasks;
 using Lithnet.Miiserver.AutoSync;
 using Lithnet.Common.Presentation;
+using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.Autosync.UI.ViewModels
 {
-    public class MAExecutionTriggersViewModel : ListViewModel<MAExecutionTriggerViewModel, IMAExecutionTrigger> 
+    public class MAExecutionTriggersViewModel : ListViewModel<MAExecutionTriggerViewModel, IMAExecutionTrigger>
     {
-        public MAExecutionTriggersViewModel(IList<IMAExecutionTrigger> items)
-            : base(items, MAExecutionTriggersViewModel.ViewModelResolver)
+        private MAConfigParametersViewModel config;
+
+        public MAExecutionTriggersViewModel(IList<IMAExecutionTrigger> items, MAConfigParametersViewModel config)
         {
+            this.config = config;
+            this.SetCollectionViewModel(items, this.ViewModelResolver);
         }
 
-        private static MAExecutionTriggerViewModel ViewModelResolver(IMAExecutionTrigger model)
+        private MAExecutionTriggerViewModel ViewModelResolver(IMAExecutionTrigger model)
         {
             if (model is ActiveDirectoryChangeTrigger)
             {
@@ -26,12 +30,12 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
 
             if (model is FimServicePendingImportTrigger)
             {
-                return new FimServicePendingImportTriggerViewModel((FimServicePendingImportTrigger) model);
+                return new FimServicePendingImportTriggerViewModel((FimServicePendingImportTrigger)model);
             }
 
             if (model is IntervalExecutionTrigger)
             {
-                return new IntervalExecutionTriggerViewModel((IntervalExecutionTrigger)model);
+                return new IntervalExecutionTriggerViewModel((IntervalExecutionTrigger)model, this.config);
             }
 
             if (model is PowerShellExecutionTrigger)
@@ -41,7 +45,7 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
 
             if (model is ScheduledExecutionTrigger)
             {
-                return new ScheduledExecutionTriggerViewModel((ScheduledExecutionTrigger) model);
+                return new ScheduledExecutionTriggerViewModel((ScheduledExecutionTrigger)model, this.config);
             }
 
             throw new InvalidOperationException("Unknown model");

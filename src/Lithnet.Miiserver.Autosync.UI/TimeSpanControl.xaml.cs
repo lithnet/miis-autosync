@@ -20,7 +20,7 @@ namespace Lithnet.Miiserver.Autosync.UI
 
         public static readonly DependencyProperty ValueProperty =
             DependencyProperty.Register("Value", typeof(TimeSpan), typeof(TimeSpanControl),
-                new UIPropertyMetadata(TimeSpan.MinValue, new PropertyChangedCallback(OnValueChanged)));
+                new FrameworkPropertyMetadata(new TimeSpan(0), FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, new PropertyChangedCallback(OnValueChanged)));
 
         private static void OnValueChanged(DependencyObject obj, DependencyPropertyChangedEventArgs e)
         {
@@ -32,7 +32,7 @@ namespace Lithnet.Miiserver.Autosync.UI
             }
 
             TimeSpan ts = (TimeSpan)e.NewValue;
-            
+
             control.ValidateNewValue(ts);
         }
 
@@ -98,7 +98,7 @@ namespace Lithnet.Miiserver.Autosync.UI
         public static readonly DependencyProperty MaximumTimeSpanProperty =
             DependencyProperty.Register("MaximumTimeSpan", typeof(TimeSpan), typeof(TimeSpanControl),
                 new UIPropertyMetadata(TimeSpan.MaxValue, new PropertyChangedCallback(OnMinMaxValueChanged)));
-        
+
         public int Days
         {
             get => (int)this.GetValue(DaysProperty);
@@ -108,7 +108,7 @@ namespace Lithnet.Miiserver.Autosync.UI
         public static readonly DependencyProperty DaysProperty =
             DependencyProperty.Register("Days", typeof(int), typeof(TimeSpanControl),
                 new UIPropertyMetadata(0, new PropertyChangedCallback(OnTimeChanged)));
-        
+
         public int Hours
         {
             get => (int)this.GetValue(HoursProperty);
@@ -164,7 +164,7 @@ namespace Lithnet.Miiserver.Autosync.UI
             }
 
             TimeSpan ts = new TimeSpan(control.Days, control.Hours, control.Minutes, control.Seconds, control.Milliseconds);
-            
+
             if (control.Value != ts)
             {
                 control.Value = ts;

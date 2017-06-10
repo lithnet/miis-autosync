@@ -24,7 +24,7 @@ namespace Lithnet.Miiserver.AutoSync
         public string ScriptPath { get; set; }
         
         [DataMember(Name = "exception-behaviour")]
-        public ExecutionErrorBehviour ExceptionBehaviour { get; set; }
+        public ExecutionErrorBehaviour ExceptionBehaviour { get; set; }
         
         public string DisplayName => $"{this.Type}: {this.Description}";
 
@@ -87,7 +87,7 @@ namespace Lithnet.Miiserver.AutoSync
                     {
                         string message;
 
-                        if (this.ExceptionBehaviour == ExecutionErrorBehviour.Terminate)
+                        if (this.ExceptionBehaviour == ExecutionErrorBehaviour.Terminate)
                         {
                             message = $"The PowerShell execution trigger '{this.DisplayName}' encountered an error and has been terminated";
                         }
@@ -104,7 +104,7 @@ namespace Lithnet.Miiserver.AutoSync
                             MessageSender.SendMessage(message, ex.ToString());
                         }
 
-                        if (this.ExceptionBehaviour == ExecutionErrorBehviour.Terminate)
+                        if (this.ExceptionBehaviour == ExecutionErrorBehaviour.Terminate)
                         {
                             break;
                         }

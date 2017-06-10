@@ -5,6 +5,8 @@
         <ResourceDictionary Source="/Views/PowerShellExecutionTriggerView.xaml" />
         <ResourceDictionary Source="/Views/ActiveDirectoryChangeTriggerView.xaml" />
         <ResourceDictionary Source="/Views/FimServicePendingImportTriggerView.xaml" />
+        <ResourceDictionary Source="/Views/IntervalExecutionTriggerView.xaml" />
+        <ResourceDictionary Source="/Views/ScheduledExecutionTriggerView.xaml" />
     </ResourceDictionary.MergedDictionaries>
 </ResourceDictionary>
             

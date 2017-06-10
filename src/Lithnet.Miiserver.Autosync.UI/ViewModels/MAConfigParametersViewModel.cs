@@ -13,7 +13,7 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
         public MAConfigParametersViewModel(MAConfigParameters model)
             : base(model)
         {
-            this.Triggers = new MAExecutionTriggersViewModel(model.Triggers);
+            this.Triggers = new MAExecutionTriggersViewModel(model.Triggers, this);
             this.Commands.Add("AddTrigger", new DelegateCommand(t => this.AddTrigger()));
             this.Commands.Add("RemoveTrigger", new DelegateCommand(t => this.RemoveTrigger(), u=> this.CanRemoveTrigger()));
         }

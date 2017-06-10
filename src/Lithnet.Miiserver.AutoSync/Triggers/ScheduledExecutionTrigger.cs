@@ -16,7 +16,7 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "interval")]
         public TimeSpan Interval { get; set; }
 
-        [DataMember(Name = "run-profile")]
+        [DataMember(Name = "run-profile-name")]
         public string RunProfileName { get; set; }
 
         private double RemainingMilliseconds { get; set; }
@@ -84,7 +84,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public string Type => "Scheduled trigger";
 
-        public string Description => $"Every {this.Interval} start from {this.StartDateTime}";
+        public string Description => $"{this.RunProfileName} every {this.Interval} start from {this.StartDateTime}";
 
         public event ExecutionTriggerEventHandler TriggerExecution;
 

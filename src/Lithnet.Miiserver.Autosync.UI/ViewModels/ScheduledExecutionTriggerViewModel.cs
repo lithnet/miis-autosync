@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,9 +15,12 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
     {
         private ScheduledExecutionTrigger typedModel;
 
-        public ScheduledExecutionTriggerViewModel(ScheduledExecutionTrigger model)
+        private MAConfigParametersViewModel config;
+
+        public ScheduledExecutionTriggerViewModel(ScheduledExecutionTrigger model, MAConfigParametersViewModel config)
             : base(model)
         {
+            this.config = config;
             this.typedModel = model;
         }
 
@@ -44,5 +48,12 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
             get => this.typedModel.Interval;
             set => this.typedModel.Interval = value;
         }
+
+        public CultureInfo Culture
+        {
+            get => CultureInfo.CurrentCulture;
+        }
+
+        public IEnumerable<string> RunProfileNames => this.config.RunProfileNames;
     }
 }

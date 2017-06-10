@@ -41,7 +41,7 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
         }
 
 
-        public ExecutionErrorBehviour ExceptionBehaviour
+        public ExecutionErrorBehaviour ExceptionBehaviour
         {
             get => this.typedModel.ExceptionBehaviour;
             set => this.typedModel.ExceptionBehaviour = value;

@@ -14,10 +14,13 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
     {
         private IntervalExecutionTrigger typedModel;
 
-        public IntervalExecutionTriggerViewModel(IntervalExecutionTrigger model)
+        private MAConfigParametersViewModel config;
+
+        public IntervalExecutionTriggerViewModel(IntervalExecutionTrigger model, MAConfigParametersViewModel config)
             :base(model)
         {
             this.typedModel = model;
+            this.config = config;
         }
         
         public string Type => this.Model.Type;
@@ -32,17 +35,12 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
         }
 
         [AlsoNotifyFor("Description")]
-        public MARunProfileType RunProfileTargetType
-        {
-            get => this.typedModel.RunProfileTargetType;
-            set => this.typedModel.RunProfileTargetType = value;
-        }
-
-        [AlsoNotifyFor("Description")]
         public TimeSpan Interval
         {
             get => this.typedModel.Interval;
             set => this.typedModel.Interval = value;
         }
+
+        public IEnumerable<string> RunProfileNames => this.config.RunProfileNames;
     }
 }

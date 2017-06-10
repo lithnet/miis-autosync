@@ -10,7 +10,7 @@
                      xmlns:autoSync="clr-namespace:Lithnet.Miiserver.AutoSync;assembly=Lithnet.Miiserver.AutoSync"
                      mc:Ignorable="d" >
 
-    <DataTemplate DataType="{x:Type viewModels:FimServicePendingImportTriggerViewModel}">
+    <DataTemplate DataType="{x:Type viewModels:ScheduledExecutionTriggerViewModel}">
         <UserControl>
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -20,25 +20,36 @@
                 <Grid.RowDefinitions>
                     <RowDefinition/>
                     <RowDefinition/>
+                    <RowDefinition/>
                 </Grid.RowDefinitions>
 
                 <Label Grid.Row="0" 
-                       Grid.Column="0"
-                       Content="Host"/>
-                <TextBox Grid.Row="0"
-                         Grid.Column="1" 
-                         Margin="10 0 0 5" 
-                         Text="{Binding HostName}"
-                         IsReadOnly="True"/>
+                       Grid.Column="0" 
+                       Content="Run profile"/>
+                <ComboBox Grid.Row="0"
+                          Grid.Column="1"
+                          Margin="10 0 0 5"
+                          ItemsSource="{Binding RunProfileNames}"
+                          SelectedItem="{Binding RunProfileName}"/>
 
                 <Label Grid.Row="1" 
                        Grid.Column="0" 
-                       Content="Check for changes every"/>
-                <ui:TimeSpanControl Grid.Row="1"
-                                    Grid.Column="1" 
-                                    Margin="10 0 0 5"
-                                   Value="{Binding Interval}" 
-                                    MinimumTimeSpan="00:00:05" />
+                       Content="Trigger the run profile every"/>
+                <ui:TimeSpanControl 
+                    Grid.Row="1" 
+                    Grid.Column="1" 
+                    Value="{Binding Interval}" 
+                    MinimumTimeSpan="00:00:05" Margin="10 0 0 5"/>
+
+                <Label Grid.Row="2"
+                       Grid.Column="0" 
+                       Content="Starting from"/>
+                <controls:DateTimePicker 
+                    Grid.Row="2" 
+                    Grid.Column="1"
+                    SelectedDate="{Binding StartDateTime, Mode=TwoWay}" 
+                    Culture="{Binding Culture}"
+                    Margin="10 0 0 5" />
             </Grid>
         </UserControl>
     </DataTemplate>

@@ -2,8 +2,6 @@
                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
                      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-                     xmlns:local="clr-namespace:Lithnet.Miiserver.Autosync.UI.Views"
-                     xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
                      xmlns:ui="clr-namespace:Lithnet.Miiserver.Autosync.UI"
                      xmlns:viewModels="clr-namespace:Lithnet.Miiserver.Autosync.UI.ViewModels"
                      xmlns:presentation="clr-namespace:Lithnet.Common.Presentation;assembly=Lithnet.Common.Presentation"
@@ -14,36 +12,64 @@
         <UserControl>
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition/>
-                    <ColumnDefinition/>
-                    <ColumnDefinition/>
-                    <!--<ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>-->
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="4*"/>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition/>
                     <RowDefinition/>
                     <RowDefinition/>
                     <RowDefinition/>
-                    <RowDefinition/>
                 </Grid.RowDefinitions>
 
-                <Label Grid.Row="0" Grid.Column="0" Content="PowerShell script path"/>
-                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding ScriptPath}"/>
-                <Button Grid.Row="0" Grid.Column="2" Content="..." Command="{Binding Commands.Browse}"/>
-                <Button Grid.Row="1" Grid.Column="0" Content="Edit script" Command="{Binding Commands.Edit}"/>
-                <Button Grid.Row="2" Grid.Column="0" Content="New script from template" Command="{Binding Commands.New}"/>
-                <Label Grid.Row="3" Grid.Column="0" Content="Wait for the following duration after the script completes before invoking it again"></Label>
-                <ui:TimeSpanControl Grid.Row="3" Grid.Column="1" Value="{Binding Interval}" MinimumTimeSpan="00:00:05">
-                </ui:TimeSpanControl>
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="PowerShell script"/>
+                
+                <Grid Grid.Row="0"
+                      Grid.Column="1"
+                      Margin="10 0 0 5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox 
+                        Grid.Column="0"
+                        Margin="0 0 5 0" 
+                    Text="{Binding ScriptPath}"/>
+                    <Button Grid.Column="1"
+                            Content=" ... "
+                            Command="{Binding Commands.Browse}"/>
+                </Grid>
 
-                <Label Grid.Row="4" Grid.Column="0" Content="Error handling"></Label>
-                <ComboBox ItemsSource="{Binding Source={presentation:EnumExtension {x:Type autoSync:ExecutionErrorBehviour}}, Mode=OneWay}"
-                              SelectedValue="{Binding ExceptionBehaviour, ValidatesOnDataErrors=True, ValidatesOnExceptions=true}"
-                              SelectedValuePath="Value"
-                              Grid.Row="4"
-                              Grid.Column="1" />
+                <StackPanel Grid.Row="1"
+                            Grid.Column="1"
+                            Margin="10 0 0 5"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right">
+                    <Button Margin="10 0 0 5" Content="Edit script" Command="{Binding Commands.Edit}"/>
+                    <Button Margin="5 0 0 5" Content="New script from template" Command="{Binding Commands.New}"/>
+                </StackPanel>
+                
+                <TextBlock Grid.Row="2" 
+                       Grid.Column="0" 
+                       TextWrapping="Wrap"
+                       Text="Wait for the following duration after the script completes before invoking it again"/>
+                <ui:TimeSpanControl 
+                    Grid.Row="2" 
+                    Grid.Column="1" 
+                    Margin="10 0 0 15"
+                    VerticalAlignment="Top"
+                    Value="{Binding Interval}" 
+                    MinimumTimeSpan="00:00:05"/>
+
+                <TextBlock Grid.Row="3" 
+                       Grid.Column="0" 
+                           Text="Error handling"/>
+                <ComboBox Grid.Row="3"
+                          Grid.Column="1"
+                          Margin="10 0 0 5"
+                          ItemsSource="{Binding Source={presentation:EnumExtension {x:Type autoSync:ExecutionErrorBehaviour}}, Mode=OneWay}"
+                          SelectedValue="{Binding ExceptionBehaviour, ValidatesOnDataErrors=True, ValidatesOnExceptions=true}"
+                          SelectedValuePath="Value"/>
             </Grid>
         </UserControl>
     </DataTemplate>
