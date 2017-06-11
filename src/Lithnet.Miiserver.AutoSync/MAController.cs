@@ -8,7 +8,7 @@ namespace Lithnet.Miiserver.AutoSync
 {
     public class MAController
     {
-        private ManagementAgent ma;
+        private MAConfigParameters config;
 
         private PowerShell powershell;
 
@@ -24,27 +24,43 @@ namespace Lithnet.Miiserver.AutoSync
         {
             this.ScriptPath = config.MAControllerPath;
 
-            if (!File.Exists(this.ScriptPath))
+            if (string.IsNullOrEmpty(this.ScriptPath))
             {
                 return;
             }
 
-            this.ma = config.ManagementAgent;
+            if (!File.Exists(this.ScriptPath))
+            {
+                Logger.WriteLine("{0}: Warning: Controller script not found: {1}", this.config.ManagementAgentName, this.ScriptPath);
+                return;
+            }
 
+            this.config = config;
+
+            this.InitializePowerShellSession();
+        }
+
+        private void InitializePowerShellSession()
+        {
             this.powershell = PowerShell.Create();
             this.powershell.AddScript(File.ReadAllText(this.ScriptPath));
             this.powershell.Invoke();
 
             if (this.powershell.Runspace.SessionStateProxy.InvokeCommand.GetCommand("ShouldExecute", CommandTypes.All) != null)
             {
-                Logger.WriteLine("{0}: Registering ShouldExecute handler", this.ma.Name);
+                Logger.WriteLine("{0}: Registering ShouldExecute handler", this.config.ManagementAgentName);
                 this.supportsShouldExecute = true;
             }
 
             if (this.powershell.Runspace.SessionStateProxy.InvokeCommand.GetCommand("ExecutionComplete", CommandTypes.All) != null)
             {
-                Logger.WriteLine("{0}: Registering ExecutionComplete handler", this.ma.Name);
+                Logger.WriteLine("{0}: Registering ExecutionComplete handler", this.config.ManagementAgentName);
                 this.supportsExecutionComplete = true;
+            }
+
+            if (!(this.supportsExecutionComplete || this.supportsShouldExecute))
+            {
+                Logger.WriteLine("{0}: Controller script does not implement ShouldExecute or ExecutionComplete: {1}", this.config.ManagementAgentName, this.ScriptPath);
             }
         }
 
@@ -87,7 +103,7 @@ namespace Lithnet.Miiserver.AutoSync
                 }
                 else
                 {
-                    Logger.WriteLine("{0}: ShouldExecute handler threw an exception", this.ma.Name);
+                    Logger.WriteLine("{0}: ShouldExecute handler threw an exception", this.config.ManagementAgentName);
                     Logger.WriteException(ex);
                     return false;
                 }
@@ -99,7 +115,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteLine("{0}: ShouldExecute handler threw an exception", this.ma.Name);
+                Logger.WriteLine("{0}: ShouldExecute handler threw an exception", this.config.ManagementAgent);
                 Logger.WriteException(ex);
                 return false;
             }
@@ -132,7 +148,7 @@ namespace Lithnet.Miiserver.AutoSync
                 }
                 else
                 {
-                    Logger.WriteLine("{0}: ShouldExecute handler threw an exception", this.ma.Name);
+                    Logger.WriteLine("{0}: ShouldExecute handler threw an exception", this.config.ManagementAgentName);
                     Logger.WriteException(ex);
                 }
             }
@@ -143,7 +159,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteLine("{0}: ExecutionComplete handler threw an exception", this.ma.Name);
+                Logger.WriteLine("{0}: ExecutionComplete handler threw an exception", this.config.ManagementAgentName);
                 Logger.WriteException(ex);
             }
         }

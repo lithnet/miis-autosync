@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using Lithnet.Common.Presentation;
 using Lithnet.Miiserver.AutoSync;
@@ -53,11 +48,13 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
 
         private void New()
         {
-            SaveFileDialog dialog = new SaveFileDialog();
-            dialog.AddExtension = true;
-            dialog.DefaultExt = "ps1";
-            dialog.OverwritePrompt = true;
-            dialog.Filter = "PowerShell script|*.ps1";
+            SaveFileDialog dialog = new SaveFileDialog
+            {
+                AddExtension = true,
+                DefaultExt = "ps1",
+                OverwritePrompt = true,
+                Filter = "PowerShell script|*.ps1"
+            };
 
             if (dialog.ShowDialog() != true)
             {
@@ -109,8 +106,9 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
                     openFileDialog.InitialDirectory = Path.GetDirectoryName(this.ScriptPath);
                     openFileDialog.FileName = Path.GetFileName(this.ScriptPath);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Trace.WriteLine("Error parsing file path\n" + ex);
                 }
             }
             else

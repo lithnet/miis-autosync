@@ -2,8 +2,6 @@
 
 namespace Lithnet.Miiserver.AutoSync
 {
-    using System;
-
     public partial class AutoSyncService : ServiceBase
     {
         internal static AutoSyncService ServiceInstance { get; private set; }

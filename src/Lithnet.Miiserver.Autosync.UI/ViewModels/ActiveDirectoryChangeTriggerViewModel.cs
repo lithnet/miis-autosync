@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Net;
-using Lithnet.Common.Presentation;
 using Lithnet.Miiserver.AutoSync;
 using PropertyChanged;
 

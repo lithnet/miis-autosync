@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using Lithnet.Common.Presentation;
 using Lithnet.Miiserver.Autosync.UI.Windows;
 using Lithnet.Miiserver.AutoSync;
 using Lithnet.Miiserver.Client;
+using Microsoft.Win32;
 
 namespace Lithnet.Miiserver.Autosync.UI.ViewModels
 {
@@ -21,9 +22,19 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
             this.Triggers = new MAExecutionTriggersViewModel(model.Triggers, this);
             this.Commands.Add("AddTrigger", new DelegateCommand(t => this.AddTrigger(), u => this.CanAddTrigger()));
             this.Commands.Add("RemoveTrigger", new DelegateCommand(t => this.RemoveTrigger(), u => this.CanRemoveTrigger()));
+            this.Commands.Add("Browse", new DelegateCommand(t => this.Browse()));
+            this.Commands.Add("New", new DelegateCommand(t => this.New()));
+            this.Commands.Add("Edit", new DelegateCommand(t => this.Edit(), u => this.CanEdit()));
         }
 
         public string ManagementAgentName => this.Model?.ManagementAgentName ?? "Unknown MA";
+
+        public string MAControllerPath
+        {
+            get => this.Model.MAControllerPath;
+            set => this.Model.MAControllerPath = value;
+
+        }
 
         public string ScheduledImportRunProfileName
         {
@@ -204,6 +215,84 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
         public void DoAutoDiscovery()
         {
             //this.model = MAConfigDiscovery.DoAutoRunProfileDiscovery(this.model.ManagementAgent);
+        }
+        
+        private void New()
+        {
+            SaveFileDialog dialog = new SaveFileDialog();
+            dialog.AddExtension = true;
+            dialog.DefaultExt = "ps1";
+            dialog.OverwritePrompt = true;
+            dialog.Filter = "PowerShell script|*.ps1";
+
+            if (dialog.ShowDialog() != true)
+            {
+                return;
+            }
+
+            try
+            {
+                File.WriteAllText(dialog.FileName, Properties.Resources.PowerShellControllerScript);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Could not save the file\n{ex.Message}", "Unable to save");
+                return;
+            }
+
+            this.MAControllerPath = dialog.FileName;
+
+            this.Edit();
+        }
+
+        private bool CanEdit()
+        {
+            return File.Exists(this.MAControllerPath);
+        }
+
+        private void Edit()
+        {
+            try
+            {
+                ProcessStartInfo startInfo = new ProcessStartInfo(this.MAControllerPath) { Verb = "Edit" };
+                Process newProcess = new Process { StartInfo = startInfo };
+                newProcess.Start();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Could not open the file\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void Browse()
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+
+            if (File.Exists(this.MAControllerPath))
+            {
+                try
+                {
+                    openFileDialog.InitialDirectory = Path.GetDirectoryName(this.MAControllerPath);
+                    openFileDialog.FileName = Path.GetFileName(this.MAControllerPath);
+                }
+                catch
+                {
+                }
+            }
+            else
+            {
+                openFileDialog.FileName = "*.ps1";
+            }
+
+            openFileDialog.AddExtension = true;
+            openFileDialog.CheckFileExists = true;
+            openFileDialog.DefaultExt = "ps1";
+            openFileDialog.Filter = "PowerShell script|*.ps1";
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                this.MAControllerPath = openFileDialog.FileName;
+            }
         }
     }
 }

@@ -4,8 +4,6 @@ using System.Management.Automation;
 using System.Threading.Tasks;
 using System.Threading;
 using Lithnet.Logging;
-using System.ComponentModel;
-using System.Linq;
 using System.Runtime.Serialization;
 using Lithnet.Miiserver.Client;
 

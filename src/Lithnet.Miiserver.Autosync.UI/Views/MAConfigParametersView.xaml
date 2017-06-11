@@ -16,34 +16,60 @@
 
                 <TabControl Margin="0 10 0 0" >
                     <TabItem Header="General" >
-                        <StackPanel Margin="25 10 0 0">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition  />
-                                    <RowDefinition  />
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition />
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
+                        <Grid Margin="25 10 0 0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition  />
+                                <RowDefinition  />
+                                <RowDefinition  />
+                                <RowDefinition  />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition  Width="Auto"/>
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
 
+                            <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
+                                <CheckBox IsChecked="{Binding Disabled}"/>
+                                <Label Content="Disable automation of this management agent"/>
+                            </StackPanel>
 
-                                <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
-                                    <CheckBox IsChecked="{Binding Disabled}"/>
-                                    <Label Content="Disable automation of this management agent"/>
-                                </StackPanel>
-
-                                <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
-                                    <CheckBox IsChecked="{Binding ScheduleImports}"/>
-                                    <Label Content="Schedule an import if it has been longer than"/>
-                                    <controls:NumericUpDown   Value="{Binding AutoImportIntervalMinutes}" 
+                            <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
+                                <CheckBox IsChecked="{Binding ScheduleImports}"/>
+                                <Label Content="Schedule an import if it has been longer than"/>
+                                <controls:NumericUpDown   Value="{Binding AutoImportIntervalMinutes}" 
                                                               Minimum="0"
                                                               HasDecimals="False"
                                                               IsEnabled="{Binding ScheduleImports}"/>
-                                    <Label Content="minutes since the last import operation"/>
-                                </StackPanel>
+                                <Label Content="minutes since the last import operation"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Execution controller script" VerticalAlignment="Center"/>
+
+                            <Grid Grid.Row="2"
+                                      Grid.Column="1"
+                                      Margin="10 10 0 5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox 
+                                        Grid.Column="0"
+                                        Margin="0 0 5 0" 
+                                        Text="{Binding MAControllerPath}"/>
+                                <Button Grid.Column="1"
+                                            Content=" ... "
+                                            Command="{Binding Commands.Browse}"/>
                             </Grid>
-                        </StackPanel>
+
+                            <StackPanel Grid.Row="3"
+                                            Grid.Column="1"
+                                            Margin="10 0 0 5"
+                                            Orientation="Horizontal"
+                                            HorizontalAlignment="Right">
+                                <Button Margin="10 0 0 5" Content="Edit script" Command="{Binding Commands.Edit}"/>
+                                <Button Margin="5 0 0 5" Content="New script from template" Command="{Binding Commands.New}"/>
+                            </StackPanel>
+                        </Grid>
                     </TabItem>
 
                     <TabItem Header="Run Profiles">

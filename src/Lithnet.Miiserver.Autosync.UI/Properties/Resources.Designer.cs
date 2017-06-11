@@ -61,6 +61,27 @@ namespace Lithnet.Miiserver.Autosync.UI.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to # This function is called by the MA executor before a run profile is executed. Return $false to prevent the run profile from being executed
+        ///# Returning $true or nothing will allow the run profile to execute
+        ///function ShouldExecute
+        ///{
+        ///	param([string]$runProfileName)
+        ///
+        ///	Write-Object $true;
+        ///}
+        ///
+        ///# This function is called by the MA executor after a run profile is executed. The results of the run can be examined and acted upon if required.
+        ///function ExecutionComplete
+        ///{
+        ///	param([Lithnet.Miiserver.Client.RunD [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string PowerShellControllerScript {
+            get {
+                return ResourceManager.GetString("PowerShellControllerScript", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to function Get-RunProfileToExecute 
         ///{
         ///    # Logic to determine what run profile to execute goes here

@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceProcess;
 using Lithnet.Miiserver.Client;
 using Lithnet.Logging;
 using System.IO;
-using System.Management.Automation;
-using System.Collections.ObjectModel;
 using System.Timers;
 using System.Threading.Tasks;
 

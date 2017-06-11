@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using System.Configuration;
 using Microsoft.Win32;
 
 namespace Lithnet.Miiserver.AutoSync

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Lithnet.Miiserver.Client;
 using Lithnet.Logging;
-using System.IO;
 using System.Xml;
 
 namespace Lithnet.Miiserver.AutoSync

@@ -1,12 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Lithnet.Common.Presentation;
 using Lithnet.Miiserver.AutoSync;
-using Microsoft.Win32;
 using PropertyChanged;
 
 namespace Lithnet.Miiserver.Autosync.UI.ViewModels
@@ -49,10 +44,7 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
             set => this.typedModel.Interval = value;
         }
 
-        public CultureInfo Culture
-        {
-            get => CultureInfo.CurrentCulture;
-        }
+        public CultureInfo Culture => CultureInfo.CurrentCulture;
 
         public IEnumerable<string> RunProfileNames => this.config.RunProfileNames;
     }

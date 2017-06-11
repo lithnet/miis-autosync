@@ -117,6 +117,37 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="PowerShellControllerScript" xml:space="preserve">
+    <value># This function is called by the MA executor before a run profile is executed. Return $false to prevent the run profile from being executed
+# Returning $true or nothing will allow the run profile to execute
+function ShouldExecute
+{
+	param([string]$runProfileName)
+
+	Write-Object $true;
+}
+
+# This function is called by the MA executor after a run profile is executed. The results of the run can be examined and acted upon if required.
+function ExecutionComplete
+{
+	param([Lithnet.Miiserver.Client.RunDetails]$lastRunDetails)
+	
+	&lt;#
+	    Execution of the MA or the entire service can be halted by throwing an UnexpectedChangeException
+				
+		throw [Lithnet.Miiserver.AutoSync.UnexpectedChangeException] $true;
+		
+		Throwing the exception with a $true parameter will force the service to stop
+		Throwing the exception with a $false parameter will stop further runs on this MA only until the service is restarted.
+
+    #&gt;
+}
+
+&lt;#
+  See https://github.com/lithnet/miis-autosync/tree/master/src/Lithnet.Miiserver.AutoSync/Examples for detailed examples on how to use
+  these functions
+#&gt;</value>
+  </data>
   <data name="PowerShellTriggerScript" xml:space="preserve">
     <value>function Get-RunProfileToExecute 
 {
