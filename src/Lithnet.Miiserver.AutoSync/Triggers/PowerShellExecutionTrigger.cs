@@ -5,7 +5,9 @@ using System.Threading.Tasks;
 using System.Threading;
 using Lithnet.Logging;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.Serialization;
+using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -22,10 +24,10 @@ namespace Lithnet.Miiserver.AutoSync
 
         [DataMember(Name = "path")]
         public string ScriptPath { get; set; }
-        
+
         [DataMember(Name = "exception-behaviour")]
         public ExecutionErrorBehaviour ExceptionBehaviour { get; set; }
-        
+
         public string DisplayName => $"{this.Type}: {this.Description}";
 
         public string Type => "PowerShell script";
@@ -178,6 +180,17 @@ namespace Lithnet.Miiserver.AutoSync
             ExecutionTriggerEventHandler registeredHandlers = this.TriggerExecution;
 
             registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(p));
+        }
+
+        public static bool CanCreateForMA(ManagementAgent ma)
+        {
+            return true;
+        }
+
+        public  PowerShellExecutionTrigger (ManagementAgent ma)
+        {
+            this.ExceptionBehaviour = ExecutionErrorBehaviour.Terminate;
+            this.Interval = new TimeSpan(0, 0, 5);
         }
 
         public override string ToString()

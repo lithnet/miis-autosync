@@ -22,11 +22,7 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "host-name")]
         public string HostName { get; set; }
 
-        public FimServicePendingImportTrigger()
-        {
-        }
-
-        public FimServicePendingImportTrigger(string hostname)
+        private FimServicePendingImportTrigger(string hostname)
         {
             this.Interval = TimeSpan.FromSeconds(60);
             this.HostName = hostname;
@@ -105,23 +101,30 @@ namespace Lithnet.Miiserver.AutoSync
         public string Description => $"{this.HostName}";
 
         public event ExecutionTriggerEventHandler TriggerExecution;
-        
-        public static string GetFimServiceHostName(ManagementAgent ma)
+
+        private static string GetFimServiceHostName(ManagementAgent ma)
         {
-            if (!ma.Category.Equals("FIM", StringComparison.OrdinalIgnoreCase))
-            {
-                throw new InvalidOperationException("The specified management agent is not a MIM Service MA");
-            }
+
 
             XmlNode privateData = ma.GetPrivateData();
             return privateData.SelectSingleNode("fimma-configuration/connection-info/serviceHost")?.InnerText;
         }
 
-        public static FimServicePendingImportTrigger CreateTrigger(ManagementAgent ma)
+        public FimServicePendingImportTrigger(ManagementAgent ma)
         {
+            if (!FimServicePendingImportTrigger.CanCreateForMA(ma))
+            {
+                throw new InvalidOperationException("The specified management agent is not a MIM Service MA");
+            }
+
             string hostname = FimServicePendingImportTrigger.GetFimServiceHostName(ma);
 
-            return new FimServicePendingImportTrigger(hostname);
+            this.Interval = new TimeSpan(0, 0, 60);
+        }
+
+        public static bool CanCreateForMA(ManagementAgent ma)
+        {
+            return ma.Category.Equals("FIM", StringComparison.OrdinalIgnoreCase);
         }
 
         public override string ToString()

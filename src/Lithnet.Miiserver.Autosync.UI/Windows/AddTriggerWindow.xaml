@@ -1,0 +1,32 @@
+﻿<controls:MetroWindow x:Class="Lithnet.Miiserver.Autosync.UI.Windows.AddTriggerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Lithnet.Miiserver.Autosync.UI.Windows"
+        xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls" WindowStartupLocation="CenterOwner"
+        mc:Ignorable="d" ShowCloseButton="False" ShowMinButton="False" ShowMaxRestoreButton="False" ShowInTaskbar="False"
+                      ShowIconOnTitleBar="False" ShowSystemMenuOnRightClick="False" BorderThickness="1" BorderBrush="{DynamicResource AccentColorBrush}"
+        Title="Add Trigger" Height="201.847" Width="394.195">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="0" Margin="20" Text="Select trigger type"></TextBlock>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="3*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Trigger type" HorizontalAlignment="Right" Margin="5" VerticalAlignment="Center"/>
+            <ComboBox Grid.Column="1" ItemsSource="{Binding AllowedTriggers}" SelectedItem="{Binding SelectedTrigger}" DisplayMemberPath="Name" Margin="5 5 20 5" VerticalAlignment="Center"/>
+        </Grid>
+        <StackPanel  Grid.Row="2" HorizontalAlignment="Center" Orientation="Horizontal" VerticalAlignment="Bottom">
+            <Button Content="OK" Margin="10" Width="50" IsDefault="True" Click="Button_Click_OK" />
+            <Button Content="Cancel" Margin="10" Width="50" Click="Button_Click_Cancel"/>
+        </StackPanel>
+
+    </Grid>
+</controls:MetroWindow>

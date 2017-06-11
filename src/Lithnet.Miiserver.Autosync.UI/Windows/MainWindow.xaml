@@ -1,9 +1,9 @@
-﻿<Controls:MetroWindow x:Class="Lithnet.Miiserver.Autosync.UI.MainWindow"
+﻿<controls:MetroWindow x:Class="Lithnet.Miiserver.Autosync.UI.MainWindow"
                       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                      xmlns:Controls="http://metro.mahapps.com/winfx/xaml/controls"
+                      xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
                       Title="Lithnet AutoSync for Microsoft Identity Manager"
-                      Icon="autosync.ico"
+                      Icon="/autosync.ico"
                       Height="Auto"
                       Width="Auto">
 
@@ -44,4 +44,5 @@
         <!--<views:MAConfigParametersView  Grid.Column="2"/>-->
 
     </Grid>
-</Controls:MetroWindow>
+</controls:MetroWindow>
+

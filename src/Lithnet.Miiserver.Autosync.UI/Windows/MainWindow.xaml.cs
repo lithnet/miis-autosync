@@ -24,7 +24,7 @@ namespace Lithnet.Miiserver.Autosync.UI
     {
         public MainWindow()
         {
-            InitializeComponent();
+            this.InitializeComponent();
 
             MainWindowViewModel m = new MainWindowViewModel();
 

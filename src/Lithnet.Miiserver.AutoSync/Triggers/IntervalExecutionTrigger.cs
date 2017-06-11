@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Timers;
 using Lithnet.Logging;
+using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -15,12 +17,6 @@ namespace Lithnet.Miiserver.AutoSync
 
         [DataMember(Name = "run-profile-name")]
         public string RunProfileName { get; set; }
-
-        public IntervalExecutionTrigger(string runProfileName, TimeSpan interval)
-        {
-            this.Interval = interval;
-            this.RunProfileName = runProfileName;
-        }
 
         private void CheckTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
@@ -67,5 +63,16 @@ namespace Lithnet.Miiserver.AutoSync
         }
 
         public event ExecutionTriggerEventHandler TriggerExecution;
+
+        public static bool CanCreateForMA(ManagementAgent ma)
+        {
+            return true;
+        }
+
+        public IntervalExecutionTrigger(ManagementAgent ma)
+        {
+            this.RunProfileName = ma.RunProfiles?.Select(t => t.Key).FirstOrDefault();
+            this.Interval = new TimeSpan(0, 15, 0);
+        }
     }
 }

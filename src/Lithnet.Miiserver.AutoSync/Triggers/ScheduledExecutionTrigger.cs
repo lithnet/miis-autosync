@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Timers;
 using Lithnet.Logging;
+using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -91,6 +93,19 @@ namespace Lithnet.Miiserver.AutoSync
         public override string ToString()
         {
             return $"{this.DisplayName}";
+        }
+
+
+        public static bool CanCreateForMA(ManagementAgent ma)
+        {
+            return true;
+        }
+
+        public  ScheduledExecutionTrigger (ManagementAgent ma)
+        {
+            this.RunProfileName = ma.RunProfiles?.Select(u => u.Key).FirstOrDefault();
+            this.Interval = new TimeSpan(24, 0, 0);
+            this.StartDateTime = DateTime.Now;
         }
     }
 }

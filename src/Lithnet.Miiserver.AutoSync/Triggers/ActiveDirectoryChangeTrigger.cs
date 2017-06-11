@@ -72,13 +72,8 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "use-explicit-credentials")]
         public bool UseExplicitCredentials { get; set; } = true;
 
-        public ActiveDirectoryChangeTrigger()
+        private ActiveDirectoryChangeTrigger()
         {
-            //this.LastLogonTimestampOffset = TimeSpan.FromSeconds(60);
-            // this.MinimumIntervalBetweenEvents = TimeSpan.FromSeconds(60);
-            //this.Validate();
-            //this.Password = new ProtectedString();
-            //this.Password.Value = "test".ToSecureString();
         }
 
         private void Fire()
@@ -110,7 +105,7 @@ namespace Lithnet.Miiserver.AutoSync
                 this.BaseDN,
                 "(objectClass=*)",
                  SearchScope.Subtree,
-                 ActiveDirectoryChangeTrigger.ObjectClassAttribute, 
+                 ActiveDirectoryChangeTrigger.ObjectClassAttribute,
                  ActiveDirectoryChangeTrigger.LastLogonAttributeName,
                  ActiveDirectoryChangeTrigger.LastLogonTimeStampAttributeName,
                  ActiveDirectoryChangeTrigger.BadPasswordAttribute);
@@ -299,30 +294,32 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public static ActiveDirectoryChangeTrigger CreateTrigger(ManagementAgent ma)
+        public static bool CanCreateForMA(ManagementAgent ma)
         {
-            if (!ma.Category.Equals("AD", StringComparison.OrdinalIgnoreCase) && !ma.Category.Equals("ADAM", StringComparison.OrdinalIgnoreCase))
+            return ma.Category.Equals("AD", StringComparison.OrdinalIgnoreCase) ||
+                   ma.Category.Equals("ADAM", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public ActiveDirectoryChangeTrigger(ManagementAgent ma)
+        {
+            if (!ActiveDirectoryChangeTrigger.CanCreateForMA(ma))
             {
                 throw new InvalidOperationException("The specified management agent is not an AD or LDS management agent");
             }
-
-            ActiveDirectoryChangeTrigger config = new ActiveDirectoryChangeTrigger();
 
             string privateData = ma.ExportManagementAgent();
 
             XmlDocument d = new XmlDocument();
             d.LoadXml(privateData);
-            
+
             XmlNode partitionNode = d.SelectSingleNode("/export-ma/ma-data/ma-partition-data/partition[selected=1 and custom-data/adma-partition-data[is-domain=1]]");
 
-            config.HostName = d.SelectSingleNode("/export-ma/ma-data/private-configuration/adma-configuration/forest-name")?.InnerText;
-            config.BaseDN = partitionNode?.SelectSingleNode("custom-data/adma-partition-data/dn")?.InnerText;
-            config.ObjectClasses = partitionNode?.SelectNodes("filter/object-classes/object-class")?.OfType<XmlElement>().Where(t => t.InnerText != "container" && t.InnerText != "domainDNS" && t.InnerText != "organizationalUnit").Select(u => u.InnerText).ToArray();
-            config.LastLogonTimestampOffset = new TimeSpan(0, 0, 300);
-            config.MinimumIntervalBetweenEvents = new TimeSpan(0, 0, 60);
-            config.UseExplicitCredentials = false;
-
-            return config;
+            this.HostName = d.SelectSingleNode("/export-ma/ma-data/private-configuration/adma-configuration/forest-name")?.InnerText;
+            this.BaseDN = partitionNode?.SelectSingleNode("custom-data/adma-partition-data/dn")?.InnerText;
+            this.ObjectClasses = partitionNode?.SelectNodes("filter/object-classes/object-class")?.OfType<XmlElement>().Where(t => t.InnerText != "container" && t.InnerText != "domainDNS" && t.InnerText != "organizationalUnit").Select(u => u.InnerText).ToArray();
+            this.LastLogonTimestampOffset = new TimeSpan(0, 5, 0);
+            this.MinimumIntervalBetweenEvents = new TimeSpan(0, 1, 0);
+            this.UseExplicitCredentials = false;
         }
     }
 }
