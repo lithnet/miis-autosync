@@ -7,6 +7,7 @@ using Lithnet.Logging;
 using System.IO;
 using System.Timers;
 using System.Threading.Tasks;
+using System.Configuration;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -15,18 +16,14 @@ namespace Lithnet.Miiserver.AutoSync
         private static List<MAExecutor> maExecutors = new List<MAExecutor>();
 
         private static Timer runHistoryCleanupTimer;
-
-        //private static Timer pingTimer;
-
-        //private static bool pingFailed;
-
+        
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
         public static void Main(string[] args)
         {
             bool runService = args != null && args.Contains("/service");
-            Logger.LogPath = Settings.LogPath;
+            Logger.LogPath = RegistrySettings.LogPath;
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
             if (!runService)
@@ -73,10 +70,10 @@ namespace Lithnet.Miiserver.AutoSync
 
                 Logger.WriteSeparatorLine('-');
                 Logger.WriteLine("--- Global settings ---");
-                Logger.WriteLine(Settings.GetSettingsString());
+                Logger.WriteLine(RegistrySettings.GetSettingsString());
                 Logger.WriteSeparatorLine('-');
 
-                if (Settings.RunHistoryAge > 0)
+                if (RegistrySettings.RunHistoryAge > 0)
                 {
                     Logger.WriteLine("Run history auto-cleanup enabled");
                     Program.runHistoryCleanupTimer = new Timer
@@ -105,24 +102,6 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        //private static void PingTimer_Elapsed(object sender, ElapsedEventArgs e)
-        //{
-        //    if (!SyncServer.Ping())
-        //    {
-        //        Logger.WriteLine("Sync server ping failed!");
-        //        if (!Program.pingFailed)
-        //        {
-        //            MessageSender.SendMessage("Sync server may not be responding", "The sync server has not responded to ping requests");
-        //            Program.pingFailed = true;
-        //        }
-        //    }
-        //    else
-        //    {
-        //        Logger.WriteLine("Sync server ping ok");
-        //        Program.pingFailed = false;
-        //    }
-        //}
-
         private static bool IsInFimAdminsGroup()
         {
             return SyncServer.IsAdmin();
@@ -135,17 +114,17 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static void ClearRunHistory()
         {
-            if (Settings.RunHistoryAge <= 0)
+            if (RegistrySettings.RunHistoryAge <= 0)
             {
                 return;
             }
 
-            Logger.WriteLine("Clearing run history older than {0} days", Settings.RunHistoryAge);
-            DateTime clearBeforeDate = DateTime.UtcNow.AddDays(-Settings.RunHistoryAge);
+            Logger.WriteLine("Clearing run history older than {0} days", RegistrySettings.RunHistoryAge);
+            DateTime clearBeforeDate = DateTime.UtcNow.AddDays(-RegistrySettings.RunHistoryAge);
 
-            if (Settings.RunHistorySave && Settings.RunHistoryPath != null)
+            if (RegistrySettings.RunHistorySave && RegistrySettings.RunHistoryPath != null)
             {
-                string file = Path.Combine(Settings.RunHistoryPath, $"history-{DateTime.Now.ToString("yyyy-MM-ddThh.mm.ss")}.xml");
+                string file = Path.Combine(RegistrySettings.RunHistoryPath, $"history-{DateTime.Now.ToString("yyyy-MM-ddThh.mm.ss")}.xml");
                 SyncServer.ClearRunHistory(clearBeforeDate, file);
             }
             else
@@ -232,7 +211,10 @@ namespace Lithnet.Miiserver.AutoSync
                 }
             }
 
-            //Serializer.Save("D:\\temp\\config.xml", file);
+            loaded.Settings.RunHistoryAge = new TimeSpan(1, 0, 0, 0);
+            loaded.Settings.MailTo = new HashSet<string>() {"test@test.com"};
+            loaded.Settings.MailIgnoreReturnCodes = new HashSet<string>() {"success", "completed-no-objects"};
+            Serializer.Save("D:\\temp\\config2.xml", loaded);
 
             foreach (MAExecutor x in Program.maExecutors)
             {

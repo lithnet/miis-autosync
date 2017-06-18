@@ -3,6 +3,7 @@
                     xmlns:views="clr-namespace:Lithnet.Miiserver.Autosync.UI.Views">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/Views/MAConfigParametersView.xaml" />
+        <ResourceDictionary Source="/Views/SettingsView.xaml" />
     </ResourceDictionary.MergedDictionaries>
 </ResourceDictionary>
             

@@ -10,11 +10,12 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
             :base (model)
         {
             this.ManagementAgents = new ManagementAgentsViewModel(model.ManagementAgents);
+            this.Settings = new SettingsViewModel(model.Settings);
         }
 
         public ManagementAgentsViewModel ManagementAgents { get; private set; }
 
-        public ViewModelBase Settings { get; private set; }
+        public SettingsViewModel Settings { get; private set; }
 
         public override IEnumerable<ViewModelBase> ChildNodes
         {

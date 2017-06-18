@@ -42,7 +42,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.cancellationToken = new CancellationTokenSource();
             if (this.Interval.TotalSeconds <= 0)
             {
-                this.Interval = Settings.PSExecutionQueryInterval;
+                this.Interval = RegistrySettings.PSExecutionQueryInterval;
             }
 
             this.internalTask = new Task(this.Run, this.cancellationToken.Token);

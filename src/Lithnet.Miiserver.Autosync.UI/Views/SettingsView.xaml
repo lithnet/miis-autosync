@@ -1,0 +1,252 @@
+﻿<ResourceDictionary  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+                     xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+                     xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
+                     xmlns:viewModels="clr-namespace:Lithnet.Miiserver.Autosync.UI.ViewModels"
+                     xmlns:ui="clr-namespace:Lithnet.Miiserver.Autosync.UI"
+                     mc:Ignorable="d" >
+
+    <DataTemplate DataType="{x:Type viewModels:SettingsViewModel}">
+        <UserControl Margin="20" >
+
+            <StackPanel>
+
+                <TabControl Margin="0 10 0 0" >
+                    <TabItem Header="Run History" >
+                        <Grid Margin="25 10 0 0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition  />
+                                <RowDefinition  />
+                                <RowDefinition  />
+                                <RowDefinition  />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition  Width="Auto"/>
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+
+
+                            <StackPanel Orientation="Horizontal" 
+                                        Grid.Row="0"
+                                        Grid.Column="1"
+                                        VerticalAlignment="Center">
+                                <CheckBox
+                                    Margin="10 0 0 5"
+                                    IsChecked="{Binding RunHistoryClear}"
+                                    Content="Clear run profile history older than"/>
+                                <ui:TimeSpanControl 
+                                    Margin="10 0 0 5"
+                                    Value="{Binding RunHistoryAge}" 
+                                    MinimumTimeSpan="00:01:00" 
+                                    IsEnabled="{Binding RunHistoryClear}">
+                                </ui:TimeSpanControl>
+                            </StackPanel>
+
+                            <CheckBox Grid.Row="1" 
+                                      Margin="10 0 0 5"
+                                      Grid.Column="1" 
+                                      Content="Save run history before clearing"
+                                      IsChecked="{Binding RunHistorySave}" 
+                                      IsEnabled="{Binding RunHistoryClear}"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Save path" VerticalAlignment="Center"/>
+
+                            <Grid Grid.Row="2"
+                                      Grid.Column="1"
+                                      Margin="10 10 0 5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox 
+                                        Grid.Column="0"
+                                        Margin="0 0 5 0" 
+                                        Text="{Binding RunHistoryPath}"
+                                        IsEnabled="{Binding RunHistorySave}"/>
+                                <Button Grid.Column="1"
+                                            Content=" ... "
+                                            Command="{Binding Commands.SelectPath}"/>
+                            </Grid>
+
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem Header="Mail">
+                        <Grid Margin="25 10 0 0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition  />
+                                <RowDefinition  />
+                                <RowDefinition  />
+                                <RowDefinition  />
+                                <RowDefinition  />
+                                <RowDefinition  />
+                                <RowDefinition  />
+                                <RowDefinition  />
+                                <RowDefinition  />
+                                <RowDefinition  />
+                                <RowDefinition  />
+                                <RowDefinition  />
+                                <RowDefinition  />
+                                <RowDefinition  />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+
+                            <Label
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                Content="Enable email"/>
+                            <CheckBox Grid.Row="0" 
+                                      Margin="10 0 0 5"
+                                      Grid.Column="1" 
+                                      IsChecked="{Binding MailEnabled}" />
+
+                            <Label
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Content="Mail host"/>
+                            <TextBox Grid.Row="1"
+                                     Grid.Column="1"
+                                     Margin="10 0 0 5" 
+                                     Text="{Binding MailHost}"/>
+
+
+                            <Label
+                                Grid.Row="2"
+                                Grid.Column="0"
+                                Content="Mail host port"/>
+                            <controls:NumericUpDown  Grid.Row="2"
+                                                     Grid.Column="1"
+                                                     Value="{Binding MailPort}" 
+                                                     Minimum="0" 
+                                                     Margin="10 0 0 5" 
+                                                     HorizontalAlignment="Left"
+                                                     Width="Auto"
+                                                     HasDecimals="False"/>
+
+                            <Label
+                                Grid.Row="3"
+                                Grid.Column="0"
+                                Content="Use SSL"/>
+                            <CheckBox Grid.Row="3"
+                                      Grid.Column="1"
+                                      Margin="10 0 0 5" 
+                                      IsChecked="{Binding MailUseSsl}"/>
+
+                            <Label
+                                Grid.Row="4"
+                                Grid.Column="0"
+                                Content="From address"/>
+                            <TextBox Grid.Row="4"
+                                     Grid.Column="1"
+                                     Margin="10 0 0 5" 
+                                     Text="{Binding MailFrom}"/>
+
+                            <Label
+                                Grid.Row="5"
+                                Grid.Column="0"
+                                Content="To address"/>
+                            <TextBox Grid.Row="5"
+                                     Grid.Column="1"
+                                     Margin="10 0 0 5" 
+                                     Text="{Binding MailTo}"/>
+
+                            <Separator Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2"/>
+
+                            <Label
+                                Grid.Row="7"
+                                Grid.Column="0"
+                                Content="Use service account credentials"/>
+                            <CheckBox Grid.Row="7"
+                                      Grid.Column="1"
+                                      Margin="10 0 0 5" 
+                                      IsChecked="{Binding MailUseDefaultCredentials}"/>
+                            <Label
+                                Grid.Row="8"
+                                Grid.Column="0"
+                                Content="Username"/>
+                            <TextBox Grid.Row="8"
+                                     Grid.Column="1"
+                                     Margin="10 0 0 5" 
+                                     IsEnabled="{Binding MailCredentialFieldsEnabled}"
+                                     Text="{Binding MailUsername}"/>
+
+                            <Label
+                                Grid.Row="9"
+                                Grid.Column="0"
+                                Content="Password"/>
+                            <PasswordBox Grid.Row="9" 
+                                         Grid.Column="1" 
+                                         Margin="10 0 0 5" 
+                                         PasswordChar="*" 
+                                         IsEnabled="{Binding MailCredentialFieldsEnabled}"
+                                         ui:PasswordBoxBindingHelper.Password="{Binding MailPassword}" 
+                                          />
+
+                            <Separator Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="2"/>
+
+                            <Label
+                                Grid.Row="11"
+                                Grid.Column="0"
+                                Content="Error reports"/>
+                            <StackPanel Grid.Row="11"
+                                        Grid.Column="1"
+                                        Margin="10 0 0 5"
+                                        Orientation="Horizontal">
+                                <RadioButton Content="Only send the first time a specific error occurs" 
+                                             IsChecked="{Binding MailSendOnlyNewErrors}"/>
+                                <RadioButton Margin="10 0 0 0"
+                                             Content="Send always"
+                                             IsChecked="{Binding MailSendAllErrorInstances}"/>
+                            </StackPanel>
+
+                            <Label
+                                Grid.Row="12"
+                                Grid.Column="0"
+                                Content="Ignore the following return codes"/>
+                            <TextBox Grid.Row="12"
+                                     Grid.Column="1"
+                                     Margin="10 0 0 5" 
+                                     Text="{Binding MailIgnoreReturnCodes}"/>
+
+                            <Label
+                                Grid.Row="13"
+                                Grid.Column="0"
+                                Content="Maximum number of error records to include in report"/>
+                            <controls:NumericUpDown  Grid.Row="13"
+                                                     Grid.Column="1"
+                                                     Value="{Binding MailMaxErrors}" 
+                                                     Minimum="0" 
+                                                     Margin="10 0 0 5" 
+                                                     HorizontalAlignment="Left"
+                                                     Width="Auto"
+                                                     HasDecimals="False"/>
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem Header="Advanced">
+                        <Grid  Margin="25 10 0 0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition  />
+                                <RowDefinition  />
+                                <RowDefinition  />
+                                <RowDefinition  />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+
+
+
+                        </Grid>
+
+                    </TabItem>
+                </TabControl>
+            </StackPanel>
+
+        </UserControl>
+    </DataTemplate>
+</ResourceDictionary>

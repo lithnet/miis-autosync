@@ -9,6 +9,9 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "management-agents")]
         public List<MAConfigParameters> ManagementAgents { get; set; }
 
+        [DataMember(Name = "settings")]
+        public Settings Settings { get; set; }
+
         public static ConfigFile Load(string file)
         {
             ConfigFile f = Serializer.Read<ConfigFile>(file);

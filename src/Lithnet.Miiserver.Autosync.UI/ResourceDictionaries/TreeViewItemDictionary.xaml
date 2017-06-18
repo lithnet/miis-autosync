@@ -7,7 +7,7 @@
                               ItemsSource="{Binding}">
         <StackPanel>
             <TextBlock Text="Management Agents">
-                <TextBlock.ContextMenu>
+                <!--<TextBlock.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="Add new class constructor..."
                           Command="{Binding Commands.AddConstructor}" />
@@ -15,7 +15,7 @@
                         <MenuItem Header="Paste"
                           Command="{Binding Commands.Paste}" />
                     </ContextMenu>
-                </TextBlock.ContextMenu>
+                </TextBlock.ContextMenu>-->
             </TextBlock>
         </StackPanel>
     </HierarchicalDataTemplate>
@@ -24,7 +24,7 @@
                               ItemsSource="{Binding}">
         <StackPanel>
             <TextBlock Text="{Binding Path=ManagementAgentName}">
-                <TextBlock.ContextMenu>
+                <!--<TextBlock.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="Add new class constructor..."
                           Command="{Binding Commands.AddConstructor}" />
@@ -32,28 +32,29 @@
                         <MenuItem Header="Paste"
                           Command="{Binding Commands.Paste}" />
                     </ContextMenu>
-                </TextBlock.ContextMenu>
+                </TextBlock.ContextMenu>-->
 
             </TextBlock>
         </StackPanel>
     </HierarchicalDataTemplate>
 
-    <!--<HierarchicalDataTemplate DataType="{x:Type p:ClassConstructorViewModel}"
-                              ItemsSource="{Binding Path=ChildNodes}">
-        <p:TreeViewItemControl>
-            <p:TreeViewItemControl.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Delete..."
-                              Command="{Binding Commands.DeleteConstructor}" />
-                    <Separator />
-                    <MenuItem Header="Cut"
-                              Command="{Binding Commands.Cut}" />
-                    <MenuItem Header="Copy"
-                              Command="{Binding Commands.Copy}" />
-                </ContextMenu>
-            </p:TreeViewItemControl.ContextMenu>
-        </p:TreeViewItemControl>
-    </HierarchicalDataTemplate>-->
 
+    <HierarchicalDataTemplate DataType="{x:Type viewModels:SettingsViewModel}"
+                              ItemsSource="{Binding}">
+        <StackPanel>
+            <TextBlock Text="Settings">
+                <!--<TextBlock.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Add new class constructor..."
+                                  Command="{Binding Commands.AddConstructor}" />
+                        <Separator />
+                        <MenuItem Header="Paste"
+                                  Command="{Binding Commands.Paste}" />
+                    </ContextMenu>
+                </TextBlock.ContextMenu>-->
+
+            </TextBlock>
+        </StackPanel>
+    </HierarchicalDataTemplate>
 
 </ResourceDictionary>

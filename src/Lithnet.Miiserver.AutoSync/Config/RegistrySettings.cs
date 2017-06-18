@@ -8,7 +8,7 @@ namespace Lithnet.Miiserver.AutoSync
 {
     using System.Text;
 
-    internal static class Settings
+    internal static class RegistrySettings
     {
         private static RegistryKey key;
 
@@ -18,12 +18,12 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                if (Settings.key == null)
+                if (RegistrySettings.key == null)
                 {
-                    Settings.key = Registry.LocalMachine.OpenSubKey("Software\\Lithnet\\MiisAutoSync");
+                    RegistrySettings.key = Registry.LocalMachine.OpenSubKey("Software\\Lithnet\\MiisAutoSync");
                 }
 
-                return Settings.key;
+                return RegistrySettings.key;
             }
         }
 
@@ -31,7 +31,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string logPath = Settings.BaseKey.GetValue("LogPath") as string;
+                string logPath = RegistrySettings.BaseKey.GetValue("LogPath") as string;
 
                 if (logPath != null)
                 {
@@ -51,7 +51,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string value = Settings.BaseKey.GetValue("ConfigPath") as string;
+                string value = RegistrySettings.BaseKey.GetValue("ConfigPath") as string;
                 return value ?? Global.AssemblyDirectory;
             }
         }
@@ -60,7 +60,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = Settings.BaseKey.GetValue("MailMaxErrors") as string;
+                string s = RegistrySettings.BaseKey.GetValue("MailMaxErrors") as string;
 
                 int value;
 
@@ -72,7 +72,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = Settings.BaseKey.GetValue("RunHistoryAge") as string;
+                string s = RegistrySettings.BaseKey.GetValue("RunHistoryAge") as string;
 
                 int value;
 
@@ -84,7 +84,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = Settings.BaseKey.GetValue("RetryCount") as string;
+                string s = RegistrySettings.BaseKey.GetValue("RetryCount") as string;
 
                 int value;
 
@@ -96,7 +96,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = Settings.BaseKey.GetValue("ExecutionStaggerInterval") as string;
+                string s = RegistrySettings.BaseKey.GetValue("ExecutionStaggerInterval") as string;
 
                 int seconds;
 
@@ -118,7 +118,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = Settings.BaseKey.GetValue("PostRunInterval") as string;
+                string s = RegistrySettings.BaseKey.GetValue("PostRunInterval") as string;
 
                 int seconds;
 
@@ -141,7 +141,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = Settings.BaseKey.GetValue("RetrySleepInterval") as string;
+                string s = RegistrySettings.BaseKey.GetValue("RetrySleepInterval") as string;
 
                 int seconds;
 
@@ -163,7 +163,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = Settings.BaseKey.GetValue("PSExecutionQueryInterval") as string;
+                string s = RegistrySettings.BaseKey.GetValue("PSExecutionQueryInterval") as string;
 
                 int seconds;
 
@@ -186,7 +186,7 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     retryCodes = new HashSet<string>();
 
-                    string[] values = Settings.BaseKey.GetValue("RetryCodes") as string[];
+                    string[] values = RegistrySettings.BaseKey.GetValue("RetryCodes") as string[];
 
                     if (values != null && values.Length > 0)
                     {
@@ -209,7 +209,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = Settings.BaseKey.GetValue("UnmanagedChangesCheckInterval") as string;
+                string s = RegistrySettings.BaseKey.GetValue("UnmanagedChangesCheckInterval") as string;
 
                 int seconds;
 
@@ -224,15 +224,15 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public static string RunHistoryPath => Settings.BaseKey.GetValue("RunHistoryPath") as string;
+        public static string RunHistoryPath => RegistrySettings.BaseKey.GetValue("RunHistoryPath") as string;
 
-        public static string MailServer => Settings.BaseKey.GetValue("MailServer") as string;
+        public static string MailServer => RegistrySettings.BaseKey.GetValue("MailServer") as string;
 
         public static int MailServerPort
         {
             get
             {
-                string s = Settings.BaseKey.GetValue("MailServerPort") as string;
+                string s = RegistrySettings.BaseKey.GetValue("MailServerPort") as string;
 
                 int value;
 
@@ -248,28 +248,28 @@ namespace Lithnet.Miiserver.AutoSync
         }
 
 
-        public static bool RunSyncExclusive => Settings.BaseKey.GetValue("ExclusiveSync") as string == "1";
+        public static bool RunSyncExclusive => RegistrySettings.BaseKey.GetValue("ExclusiveSync") as string == "1";
 
-        public static bool RunAllExclusive => Settings.BaseKey.GetValue("ExclusiveAll") as string == "1";
+        public static bool RunAllExclusive => RegistrySettings.BaseKey.GetValue("ExclusiveAll") as string == "1";
 
 
-        public static bool MailSendOncePerStateChange => Settings.BaseKey.GetValue("MailSendOncePerStateChange") as string != "0";
+        public static bool MailSendOncePerStateChange => RegistrySettings.BaseKey.GetValue("MailSendOncePerStateChange") as string != "0";
 
-        public static bool RunHistorySave => Settings.BaseKey.GetValue("RunHistorySave") as string == "1";
+        public static bool RunHistorySave => RegistrySettings.BaseKey.GetValue("RunHistorySave") as string == "1";
 
-        public static bool MailEnabled => Settings.BaseKey.GetValue("MailEnabled") as string == "1";
+        public static bool MailEnabled => RegistrySettings.BaseKey.GetValue("MailEnabled") as string == "1";
 
-        public static bool UseAppConfigMailSettings => Settings.BaseKey.GetValue("UseAppConfigMailSettings") as string == "1";
+        public static bool UseAppConfigMailSettings => RegistrySettings.BaseKey.GetValue("UseAppConfigMailSettings") as string == "1";
 
-        public static string MailFrom => Settings.BaseKey.GetValue("MailFrom") as string;
+        public static string MailFrom => RegistrySettings.BaseKey.GetValue("MailFrom") as string;
 
-        public static string[] MailTo => (Settings.BaseKey.GetValue("MailTo") as string)?.Split(';');
+        public static string[] MailTo => (RegistrySettings.BaseKey.GetValue("MailTo") as string)?.Split(';');
 
         public static string[] MailIgnoreReturnCodes
         {
             get
             {
-                string value = Settings.BaseKey.GetValue("MailIgnoreReturnCodes") as string;
+                string value = RegistrySettings.BaseKey.GetValue("MailIgnoreReturnCodes") as string;
 
                 return value?.Split(';') ?? new[] { "completed-no-objects", "success" };
             }
@@ -279,28 +279,28 @@ namespace Lithnet.Miiserver.AutoSync
         {
             StringBuilder builder = new StringBuilder();
 
-            builder.AppendLine($"{nameof(Settings.ConfigPath)}: {Settings.ConfigPath}");
-            builder.AppendLine($"{nameof(Settings.LogPath)}: {Settings.LogPath}");
-            builder.AppendLine($"{nameof(Settings.MailEnabled)}: {Settings.MailEnabled}");
-            builder.AppendLine($"{nameof(Settings.UseAppConfigMailSettings)}: {Settings.UseAppConfigMailSettings}");
-            builder.AppendLine($"{nameof(Settings.MailFrom)}: {Settings.MailFrom}");
-            builder.AppendLine($"{nameof(Settings.MailIgnoreReturnCodes)}: {string.Join(",", Settings.MailIgnoreReturnCodes)}");
-            builder.AppendLine($"{nameof(Settings.MailMaxErrors)}: {Settings.MailMaxErrors}");
-            builder.AppendLine($"{nameof(Settings.MailSendOncePerStateChange)}: {Settings.MailSendOncePerStateChange}");
-            builder.AppendLine($"{nameof(Settings.MailServer)}: {Settings.MailServer}");
-            builder.AppendLine($"{nameof(Settings.MailServerPort)}: {Settings.MailServerPort}");
-            builder.AppendLine($"{nameof(Settings.MailTo)}: {string.Join(",", Settings.MailTo)}");
-            builder.AppendLine($"{nameof(Settings.RunHistoryAge)}: {Settings.RunHistoryAge}");
-            builder.AppendLine($"{nameof(Settings.RunHistoryPath)}: {Settings.RunHistoryPath}");
-            builder.AppendLine($"{nameof(Settings.RunHistorySave)}: {Settings.RunHistorySave}");
-            builder.AppendLine($"{nameof(Settings.UnmanagedChangesCheckInterval)}: {Settings.UnmanagedChangesCheckInterval}");
-            builder.AppendLine($"{nameof(Settings.ExecutionStaggerInterval)}: {Settings.ExecutionStaggerInterval}");
-            builder.AppendLine($"{nameof(Settings.RunSyncExclusive)}: {Settings.RunSyncExclusive}");
-            builder.AppendLine($"{nameof(Settings.RunAllExclusive)}: {Settings.RunAllExclusive}");
-            builder.AppendLine($"{nameof(Settings.PostRunInterval)}: {Settings.PostRunInterval}");
-            builder.AppendLine($"{nameof(Settings.RetryCount)}: {Settings.RetryCount}");
-            builder.AppendLine($"{nameof(Settings.RetrySleepInterval)}: {Settings.RetrySleepInterval}");
-            builder.AppendLine($"{nameof(Settings.RetryCodes)}: {string.Join(",", Settings.RetryCodes)}");
+            builder.AppendLine($"{nameof(RegistrySettings.ConfigPath)}: {RegistrySettings.ConfigPath}");
+            builder.AppendLine($"{nameof(RegistrySettings.LogPath)}: {RegistrySettings.LogPath}");
+            builder.AppendLine($"{nameof(RegistrySettings.MailEnabled)}: {RegistrySettings.MailEnabled}");
+            builder.AppendLine($"{nameof(RegistrySettings.UseAppConfigMailSettings)}: {RegistrySettings.UseAppConfigMailSettings}");
+            builder.AppendLine($"{nameof(RegistrySettings.MailFrom)}: {RegistrySettings.MailFrom}");
+            builder.AppendLine($"{nameof(RegistrySettings.MailIgnoreReturnCodes)}: {string.Join(",", RegistrySettings.MailIgnoreReturnCodes)}");
+            builder.AppendLine($"{nameof(RegistrySettings.MailMaxErrors)}: {RegistrySettings.MailMaxErrors}");
+            builder.AppendLine($"{nameof(RegistrySettings.MailSendOncePerStateChange)}: {RegistrySettings.MailSendOncePerStateChange}");
+            builder.AppendLine($"{nameof(RegistrySettings.MailServer)}: {RegistrySettings.MailServer}");
+            builder.AppendLine($"{nameof(RegistrySettings.MailServerPort)}: {RegistrySettings.MailServerPort}");
+            builder.AppendLine($"{nameof(RegistrySettings.MailTo)}: {string.Join(",", RegistrySettings.MailTo)}");
+            builder.AppendLine($"{nameof(RegistrySettings.RunHistoryAge)}: {RegistrySettings.RunHistoryAge}");
+            builder.AppendLine($"{nameof(RegistrySettings.RunHistoryPath)}: {RegistrySettings.RunHistoryPath}");
+            builder.AppendLine($"{nameof(RegistrySettings.RunHistorySave)}: {RegistrySettings.RunHistorySave}");
+            builder.AppendLine($"{nameof(RegistrySettings.UnmanagedChangesCheckInterval)}: {RegistrySettings.UnmanagedChangesCheckInterval}");
+            builder.AppendLine($"{nameof(RegistrySettings.ExecutionStaggerInterval)}: {RegistrySettings.ExecutionStaggerInterval}");
+            builder.AppendLine($"{nameof(RegistrySettings.RunSyncExclusive)}: {RegistrySettings.RunSyncExclusive}");
+            builder.AppendLine($"{nameof(RegistrySettings.RunAllExclusive)}: {RegistrySettings.RunAllExclusive}");
+            builder.AppendLine($"{nameof(RegistrySettings.PostRunInterval)}: {RegistrySettings.PostRunInterval}");
+            builder.AppendLine($"{nameof(RegistrySettings.RetryCount)}: {RegistrySettings.RetryCount}");
+            builder.AppendLine($"{nameof(RegistrySettings.RetrySleepInterval)}: {RegistrySettings.RetrySleepInterval}");
+            builder.AppendLine($"{nameof(RegistrySettings.RetryCodes)}: {string.Join(",", RegistrySettings.RetryCodes)}");
 
             return builder.ToString();
         }

@@ -60,6 +60,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Windows.Interactivity, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\MahApps.Metro.1.5.0\lib\net45\System.Windows.Interactivity.dll</HintPath>
       <Private>True</Private>
@@ -86,6 +87,7 @@
       <DependentUpon>TimeSpanControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\ActiveDirectoryChangeTriggerViewModel.cs" />
+    <Compile Include="ViewModels\SettingsViewModel.cs" />
     <Compile Include="ViewModels\MAExecutionTriggerViewModel.cs" />
     <Compile Include="ViewModels\MainWindowViewModel.cs" />
     <Compile Include="ViewModels\FimServicePendingImportTriggerViewModel.cs" />
@@ -95,6 +97,10 @@
     <Compile Include="ViewModels\ManagementAgentsViewModel.cs" />
     <Compile Include="ViewModels\IntervalExecutionTriggerViewModel.cs" />
     <Compile Include="ViewModels\PowerShellExecutionTriggerViewModel.cs" />
+    <Page Include="Views\SettingsView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Windows\AddTriggerWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

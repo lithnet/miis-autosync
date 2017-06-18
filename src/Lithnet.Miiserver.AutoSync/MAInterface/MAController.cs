@@ -23,6 +23,7 @@ namespace Lithnet.Miiserver.AutoSync
         public MAController(MAConfigParameters config)
         {
             this.ScriptPath = config.MAControllerPath;
+            this.config = config;
 
             if (string.IsNullOrEmpty(this.ScriptPath))
             {
@@ -31,11 +32,9 @@ namespace Lithnet.Miiserver.AutoSync
 
             if (!File.Exists(this.ScriptPath))
             {
-                Logger.WriteLine("{0}: Warning: Controller script not found: {1}", this.config.ManagementAgentName, this.ScriptPath);
+                Logger.WriteLine("{0}: Warning: Controller script not found: {1}", config.ManagementAgentName, this.ScriptPath);
                 return;
             }
-
-            this.config = config;
 
             this.InitializePowerShellSession();
         }

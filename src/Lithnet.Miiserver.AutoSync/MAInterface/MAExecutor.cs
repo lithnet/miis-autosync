@@ -73,7 +73,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.unmanagedChangesCheckTimer = new System.Timers.Timer();
             this.unmanagedChangesCheckTimer.Elapsed += this.UnmanagedChangesCheckTimer_Elapsed;
             this.unmanagedChangesCheckTimer.AutoReset = true;
-            this.unmanagedChangesCheckTimer.Interval = Global.RandomizeOffset(Settings.UnmanagedChangesCheckInterval.TotalMilliseconds);
+            this.unmanagedChangesCheckTimer.Interval = Global.RandomizeOffset(RegistrySettings.UnmanagedChangesCheckInterval.TotalMilliseconds);
             this.unmanagedChangesCheckTimer.Start();
         }
 
@@ -293,7 +293,7 @@ namespace Lithnet.Miiserver.AutoSync
                     this.Trace($"LOCK: SET: StaggeredExecution");
 
                     this.token.Token.ThrowIfCancellationRequested();
-                    this.token.Token.WaitHandle.WaitOne(Settings.ExecutionStaggerInterval);
+                    this.token.Token.WaitHandle.WaitOne(RegistrySettings.ExecutionStaggerInterval);
                 }
 
                 this.Trace($"LOCK: UNSET: StaggeredExecution");
@@ -307,7 +307,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 int count = 0;
 
-                while (count <= Settings.RetryCount || Settings.RetryCount < 0)
+                while (count <= RegistrySettings.RetryCount || RegistrySettings.RetryCount < 0)
                 {
                     this.token.Token.ThrowIfCancellationRequested();
                     string result;
@@ -325,17 +325,17 @@ namespace Lithnet.Miiserver.AutoSync
                         result = ex.Result;
                     }
 
-                    if (Settings.RetryCodes.Contains(result))
+                    if (RegistrySettings.RetryCodes.Contains(result))
                     {
                         this.Trace($"Operation is retryable. {count} attempts made");
 
-                        if (count > Settings.RetryCount && Settings.RetryCount >= 0)
+                        if (count > RegistrySettings.RetryCount && RegistrySettings.RetryCount >= 0)
                         {
                             this.Log($"Aborting run profile after {count} attempts");
                             break;
                         }
 
-                        int interval = Global.RandomizeOffset(Settings.RetrySleepInterval.TotalMilliseconds*count);
+                        int interval = Global.RandomizeOffset(RegistrySettings.RetrySleepInterval.TotalMilliseconds*count);
                         this.Trace($"Sleeping thread for {interval}ms before retry");
                         this.token.Token.WaitHandle.WaitOne(interval);
                         this.Log("Retrying operation");
@@ -348,7 +348,7 @@ namespace Lithnet.Miiserver.AutoSync
                 }
 
                 this.token.Token.ThrowIfCancellationRequested();
-                this.token.Token.WaitHandle.WaitOne(Settings.PostRunInterval);
+                this.token.Token.WaitHandle.WaitOne(RegistrySettings.PostRunInterval);
                 this.token.Token.ThrowIfCancellationRequested();
 
                 this.Trace($"Getting run results");
@@ -615,11 +615,11 @@ namespace Lithnet.Miiserver.AutoSync
         private void SetExclusiveMode(ExecutionParameters action)
         {
             // If the debug flags for running serial sync operations are set, then mark the operation as exclusive
-            if (Settings.RunAllExclusive)
+            if (RegistrySettings.RunAllExclusive)
             {
                 action.Exclusive = true;
             }
-            else if (Settings.RunSyncExclusive)
+            else if (RegistrySettings.RunSyncExclusive)
             {
                 if (this.IsSyncStep(action.RunProfileName))
                 {
@@ -911,7 +911,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 if (this.perProfileLastRunStatus[r.RunProfileName] == r.LastStepStatus)
                 {
-                    if (Settings.MailSendOncePerStateChange)
+                    if (RegistrySettings.MailSendOncePerStateChange)
                     {
                         // The last run returned the same return code. Do not send again.
                         return;
@@ -942,7 +942,7 @@ namespace Lithnet.Miiserver.AutoSync
                 return false;
             }
 
-            return Settings.MailIgnoreReturnCodes == null || !Settings.MailIgnoreReturnCodes.Contains(r.LastStepStatus, StringComparer.OrdinalIgnoreCase);
+            return RegistrySettings.MailIgnoreReturnCodes == null || !RegistrySettings.MailIgnoreReturnCodes.Contains(r.LastStepStatus, StringComparer.OrdinalIgnoreCase);
         }
 
 

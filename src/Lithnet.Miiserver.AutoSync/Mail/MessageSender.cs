@@ -8,14 +8,14 @@ namespace Lithnet.Miiserver.AutoSync
         {
             using (MailMessage m = new MailMessage())
             {
-                foreach (string address in Settings.MailTo)
+                foreach (string address in RegistrySettings.MailTo)
                 {
                     m.To.Add(address);
                 }
 
-                if (!Settings.UseAppConfigMailSettings)
+                if (!RegistrySettings.UseAppConfigMailSettings)
                 {
-                    m.From = new MailAddress(Settings.MailFrom);
+                    m.From = new MailAddress(RegistrySettings.MailFrom);
                 }
 
                 m.Subject = subject;
@@ -24,10 +24,10 @@ namespace Lithnet.Miiserver.AutoSync
 
                 using (SmtpClient client = new SmtpClient())
                 {
-                    if (!Settings.UseAppConfigMailSettings)
+                    if (!RegistrySettings.UseAppConfigMailSettings)
                     {
-                        client.Host = Settings.MailServer;
-                        client.Port = Settings.MailServerPort;
+                        client.Host = RegistrySettings.MailServer;
+                        client.Port = RegistrySettings.MailServerPort;
                     }
 
                     client.Send(m);
@@ -37,21 +37,21 @@ namespace Lithnet.Miiserver.AutoSync
 
         internal static bool CanSendMail()
         {
-            if (!Settings.MailEnabled)
+            if (!RegistrySettings.MailEnabled)
             {
                 return false;
             }
 
-            if (!Settings.UseAppConfigMailSettings)
+            if (!RegistrySettings.UseAppConfigMailSettings)
             {
-                if (Settings.MailFrom == null || Settings.MailTo == null || Settings.MailServer == null)
+                if (RegistrySettings.MailFrom == null || RegistrySettings.MailTo == null || RegistrySettings.MailServer == null)
                 {
                     return false;
                 }
             }
             else
             {
-                if (Settings.MailTo == null)
+                if (RegistrySettings.MailTo == null)
                 {
                     return false;
                 }

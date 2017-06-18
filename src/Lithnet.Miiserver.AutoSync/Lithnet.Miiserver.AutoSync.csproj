@@ -77,6 +77,7 @@
       <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\WindowsPowerShell\3.0\System.Management.Automation.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="System.Net" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Security" />
     <Reference Include="System.Xml.Linq" />
@@ -87,35 +88,36 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ConfigFile.cs" />
+    <Compile Include="Config\ConfigFile.cs" />
+    <Compile Include="Config\Settings.cs" />
     <Compile Include="Enums\ExecutionErrorBehaviour.cs" />
     <Compile Include="Enums\AutoImportScheduling.cs" />
-    <Compile Include="ExecutionParameterCollection.cs" />
+    <Compile Include="MAInterface\ExecutionParameterCollection.cs" />
     <Compile Include="Extensions.cs" />
-    <Compile Include="MessageBuilder.cs" />
-    <Compile Include="MessageSender.cs" />
+    <Compile Include="Mail\MessageBuilder.cs" />
+    <Compile Include="Mail\MessageSender.cs" />
     <Compile Include="PersistentSearch\CallBackEventBridge.cs" />
-    <Compile Include="MAController.cs" />
+    <Compile Include="MAInterface\MAController.cs" />
     <Compile Include="PersistentSearch\PersistentSearchChangeType.cs" />
     <Compile Include="PersistentSearch\PersistentSearchControl.cs" />
     <Compile Include="PersistentSearch\PersistentSearchOptions.cs" />
     <Compile Include="EventArgs\ExecutionParameters.cs" />
     <Compile Include="EventArgs\ExecutionTriggerEventArgs.cs" />
-    <Compile Include="ProtectedString.cs" />
-    <Compile Include="Serializer.cs" />
-    <Compile Include="Settings.cs" />
+    <Compile Include="Config\ProtectedString.cs" />
+    <Compile Include="Config\Serializer.cs" />
+    <Compile Include="Config\RegistrySettings.cs" />
     <Compile Include="Triggers\ActiveDirectoryChangeTrigger.cs" />
     <Compile Include="Global.cs" />
-    <Compile Include="MAExecutionTriggerDiscovery.cs" />
-    <Compile Include="MAConfigDiscovery.cs" />
-    <Compile Include="MAConfigParameters.cs" />
+    <Compile Include="MAInterface\MAExecutionTriggerDiscovery.cs" />
+    <Compile Include="MAInterface\MAConfigDiscovery.cs" />
+    <Compile Include="MAInterface\MAConfigParameters.cs" />
     <Compile Include="Enums\MARunProfileType.cs" />
     <Compile Include="Triggers\PowerShellExecutionTrigger.cs" />
     <Compile Include="Triggers\ScheduledExecutionTrigger.cs" />
     <Compile Include="Triggers\IntervalExecutionTrigger.cs" />
     <Compile Include="Triggers\FimServicePendingImportTrigger.cs" />
     <Compile Include="Triggers\IMAExecutionTrigger.cs" />
-    <Compile Include="MAExecutor.cs" />
+    <Compile Include="MAInterface\MAExecutor.cs" />
     <Compile Include="AutoSyncService.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -125,7 +127,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="EventArgs\SyncCompleteEventArgs.cs" />
-    <Compile Include="UnexpectedChangeException.cs" />
+    <Compile Include="Exceptions\UnexpectedChangeException.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
