@@ -1,15 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Lithnet.Miiserver.AutoSync
 {
     [DataContract(Name = "settings")]
     public class Settings
     {
+        public Settings()
+        {
+            this.MailPort = 25;
+            this.MailMaxErrors = 10;
+            this.MailIgnoreReturnCodes = new HashSet<string> { "success", "completed-no-objects" };
+        }
+
         [DataMember(Name = "run-history-max-age")]
         public TimeSpan RunHistoryAge { get; set; }
 

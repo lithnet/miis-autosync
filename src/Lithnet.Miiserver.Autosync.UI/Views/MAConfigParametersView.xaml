@@ -131,8 +131,7 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition  />
                                 <RowDefinition  />
-                                <RowDefinition  />
-                                <RowDefinition  />
+                                <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition />
@@ -142,6 +141,7 @@
                                       Margin="0 10 0 10"
                                       Name="ListViewTriggers"
                                       MinHeight="125"
+                                          MaxHeight="125"
                                       SelectionMode="Single"
                                       ItemsSource="{Binding Path=Triggers}"
                                       BorderThickness="1">
@@ -152,8 +152,8 @@
                                 </ListView.Resources>
                                 <ListView.View>
                                     <GridView>
-                                        <GridViewColumn Header="Type" DisplayMemberBinding="{Binding Type}"/>
-                                        <GridViewColumn Header="Description" DisplayMemberBinding="{Binding Description}"/>
+                                        <GridViewColumn Header="Type" DisplayMemberBinding="{Binding Type}" Width="Auto"/>
+                                        <GridViewColumn Header="Description" DisplayMemberBinding="{Binding Description}" Width="300"/>
                                     </GridView>
                                 </ListView.View>
                             </ListView>
@@ -168,11 +168,9 @@
                                 </ContentPresenter.Resources>
                             </ContentPresenter>
                         </Grid>
-
                     </TabItem>
                 </TabControl>
             </StackPanel>
-
         </UserControl>
     </DataTemplate>
 </ResourceDictionary>

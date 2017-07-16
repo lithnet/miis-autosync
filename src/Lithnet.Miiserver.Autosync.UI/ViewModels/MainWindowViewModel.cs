@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.ServiceModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -40,7 +41,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.Commands.AddItem("Save", x => this.Save(), x => this.CanSave());
             this.Commands.AddItem("Export", x => this.Export(), x => this.CanExport());
             this.Commands.AddItem("Close", x => this.Close());
-            this.Commands.AddItem("Import", x => this.Import());
+            this.Commands.AddItem("Import", x => this.Import() , x=> this.CanImport());
 
             ViewModelBase.ViewModelChanged += this.ViewModelBase_ViewModelChanged;
             Application.Current.MainWindow.Closing += new CancelEventHandler(this.MainWindow_Closing);
@@ -67,12 +68,50 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.ResetConfigViewModel();
         }
 
-        private void ResetConfigViewModel()
+        internal void ResetConfigViewModel()
         {
-            ConfigClient c = new ConfigClient();
-            ConfigFile file = c.GetConfig();
+            try
+            {
+                UINotifyPropertyChanges.BeginIgnoreAllChanges();
 
-            this.ConfigFile = new ConfigFileViewModel(file);
+                ConfigClient c = new ConfigClient();
+                ConfigFile file;
+
+                try
+                {
+                    c.Open();
+                    file = c.GetConfig();
+                }
+                catch (EndpointNotFoundException ex)
+                {
+                    Trace.WriteLine(ex);
+                    MessageBox.Show(
+                        $"Could not contact the AutoSync service. Ensure the Lithnet MIIS AutoSync service is running",
+                        "Error",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(ex);
+                    MessageBox.Show(
+                        $"An error occurred communicating with the AutoSync service\n\n{ex.Message}",
+                        "Error",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                    return;
+                }
+
+                this.ConfigFile = new ConfigFileViewModel(file);
+                this.ConfigFile.ManagementAgents.IsExpanded = true;
+
+                this.ViewModelIsDirty = false;
+            }
+            finally
+            {
+                UINotifyPropertyChanges.EndIgnoreAllChanges();
+            }
         }
 
         private void Import()
@@ -152,8 +191,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 {
                     p.IsNew = false;
                 }
-
-                //this.ResetConfigViewModel();
             }
             catch (Exception ex)
             {
@@ -164,12 +201,17 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private bool CanSave()
         {
-            return true;
+            return this.ConfigFile != null;
+        }
+
+        private bool CanImport()
+        {
+            return this.ConfigFile != null;
         }
 
         private bool CanExport()
         {
-            return true;
+            return this.ConfigFile != null;
         }
 
         private void Export()
@@ -289,7 +331,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
             expression = (focusedItem as DateTimePicker)?.GetBindingExpression(DateTimePicker.SelectedDateProperty);
             expression?.UpdateSource();
-
         }
     }
 }
