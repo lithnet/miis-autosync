@@ -2,7 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace Lithnet.Miiserver.Autosync.UI
+namespace Lithnet.Miiserver.AutoSync.UI
 {
     public partial class TimeSpanControl : UserControl
     {

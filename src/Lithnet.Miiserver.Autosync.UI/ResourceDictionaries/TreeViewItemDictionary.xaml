@@ -1,7 +1,6 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:p="clr-namespace:Lithnet.Miiserver.Autosync.UI"
-                    xmlns:viewModels="clr-namespace:Lithnet.Miiserver.Autosync.UI.ViewModels">
+                    xmlns:viewModels="clr-namespace:Lithnet.Miiserver.AutoSync.UI.ViewModels">
 
     <HierarchicalDataTemplate DataType="{x:Type viewModels:ManagementAgentsViewModel}"
                               ItemsSource="{Binding}">
@@ -23,7 +22,7 @@
     <HierarchicalDataTemplate DataType="{x:Type viewModels:MAConfigParametersViewModel}"
                               ItemsSource="{Binding}">
         <StackPanel>
-            <TextBlock Text="{Binding Path=ManagementAgentName}">
+            <TextBlock Text="{Binding Path=DisplayName}" x:Name="tbName">
                 <!--<TextBlock.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="Add new class constructor..."
@@ -36,6 +35,17 @@
 
             </TextBlock>
         </StackPanel>
+
+        <HierarchicalDataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Path=IsNew}" Value="true">
+                <Setter TargetName="tbName" Property="FontStyle" Value="Italic"/>
+            </DataTrigger>
+
+            <DataTrigger Binding="{Binding IsMissing}" Value="true">
+                <Setter TargetName="tbName" Property="Foreground" Value="DarkRed"/>
+            </DataTrigger>
+        </HierarchicalDataTemplate.Triggers>
+
     </HierarchicalDataTemplate>
 
 

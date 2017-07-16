@@ -2,13 +2,18 @@
 using Lithnet.Miiserver.AutoSync;
 using Lithnet.Common.Presentation;
 
-namespace Lithnet.Miiserver.Autosync.UI.ViewModels
+namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
     internal class ConfigFileViewModel : ViewModelBase<ConfigFile>
     {
         public ConfigFileViewModel(ConfigFile model)
             :base (model)
         {
+            if (model.ManagementAgents == null)
+            {
+                model.ManagementAgents = new List<MAConfigParameters>();
+            }
+
             this.ManagementAgents = new ManagementAgentsViewModel(model.ManagementAgents);
             this.Settings = new SettingsViewModel(model.Settings);
         }

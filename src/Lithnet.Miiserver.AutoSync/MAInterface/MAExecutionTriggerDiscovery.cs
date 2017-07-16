@@ -9,10 +9,9 @@ namespace Lithnet.Miiserver.AutoSync
 {
     public static class MAExecutionTriggerDiscovery
     {
-        private const int DefaultIntervalMinutes = 15;
-
+        private const int DefaultIntervalMinutes = 60;
         
-        internal static int GetAverageImportInterval(ManagementAgent ma)
+        internal static int GetAverageImportIntervalMinutes(ManagementAgent ma)
         {
             int deltaCount = 0;
             int deltaTotalTime = 0;
@@ -64,20 +63,20 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 Logger.WriteLine("There was an error searching the run history. The run history may be corrupted. Using default intervals");
                 Logger.WriteException(ex);
+                return MAExecutionTriggerDiscovery.DefaultIntervalMinutes;
             }
 
             if (deltaCount == 0 && fullCount > 0)
             {
-                return ((fullTotalTime / fullCount)) + (MAExecutionTriggerDiscovery.DefaultIntervalMinutes * 60);
+                return ((fullTotalTime / fullCount)) + (MAExecutionTriggerDiscovery.DefaultIntervalMinutes);
             }
             else if (deltaCount == 0 && fullCount == 0)
             {
-                return MAExecutionTriggerDiscovery.DefaultIntervalMinutes * 60;
+                return MAExecutionTriggerDiscovery.DefaultIntervalMinutes;
             }
 
-            return ((deltaTotalTime / deltaCount)) + (MAExecutionTriggerDiscovery.DefaultIntervalMinutes * 60);
+            return ((deltaTotalTime / deltaCount)) + (MAExecutionTriggerDiscovery.DefaultIntervalMinutes);
         }
-
 
         private static bool IsSourceMA(ManagementAgent ma)
         {
@@ -91,8 +90,5 @@ namespace Lithnet.Miiserver.AutoSync
 
             return iafCount > eafCount;
         }
-
-
-     
     }
 }

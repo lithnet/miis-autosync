@@ -2,12 +2,11 @@
                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
                      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-                     xmlns:local="clr-namespace:Lithnet.Miiserver.Autosync.UI.Views"
                      xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
-                     xmlns:ui="clr-namespace:Lithnet.Miiserver.Autosync.UI"
-                     xmlns:viewModels="clr-namespace:Lithnet.Miiserver.Autosync.UI.ViewModels"
+                     xmlns:ui="clr-namespace:Lithnet.Miiserver.AutoSync.UI"
+                     xmlns:viewModels="clr-namespace:Lithnet.Miiserver.AutoSync.UI.ViewModels"
                      xmlns:presentation="clr-namespace:Lithnet.Common.Presentation;assembly=Lithnet.Common.Presentation"
-                     xmlns:autoSync="clr-namespace:Lithnet.Miiserver.AutoSync;assembly=Lithnet.Miiserver.AutoSync"
+                     xmlns:AutoSync="clr-namespace:Lithnet.Miiserver.AutoSync;assembly=Lithnet.Miiserver.AutoSync"
                      mc:Ignorable="d" >
 
     <DataTemplate DataType="{x:Type viewModels:ActiveDirectoryChangeTriggerViewModel}">
@@ -55,6 +54,7 @@
                                  IsChecked="{Binding UseServiceAccountCredentials}" 
                                  Margin="10 0 0 5"/>
                     <RadioButton Content="Use explicit credentials" 
+                                 IsChecked="{Binding UseExplicitCredentials}"
                                  Margin="10 0 0 5"/>
                 </StackPanel>
 

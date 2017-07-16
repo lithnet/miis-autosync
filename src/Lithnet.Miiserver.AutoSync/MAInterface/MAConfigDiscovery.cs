@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Lithnet.Logging;
 using Lithnet.Miiserver.Client;
 
@@ -6,11 +7,11 @@ namespace Lithnet.Miiserver.AutoSync
 {
     public static class MAConfigDiscovery
     {
-        public static MAConfigParameters DoAutoRunProfileDiscovery(ManagementAgent ma)
+        internal static void DoAutoRunProfileDiscovery(MAConfigParameters config)
         {
-            Logger.WriteLine("{0}: Performing run profile auto-discovery", ma.Name);
+            Logger.WriteLine("{0}: Performing run profile auto-discovery", config.ManagementAgentName);
+            ManagementAgent ma = config.ManagementAgent;
 
-            MAConfigParameters config = new MAConfigParameters(ma);
             bool match = false;
 
             foreach (RunConfiguration profile in ma.RunProfiles.Values)
@@ -90,12 +91,25 @@ namespace Lithnet.Miiserver.AutoSync
                     config.ScheduledImportRunProfileName = config.FullImportRunProfileName;
                     config.DeltaImportRunProfileName = config.FullImportRunProfileName;
                 }
-
-                return config;
             }
-            else
+        }
+
+        internal static void AddDefaultTriggers(MAConfigParameters config)
+        {
+            ManagementAgent ma = config.ManagementAgent;
+
+            switch (ma.Category)
             {
-                return new MAConfigParameters(ma) { Disabled = true };
+                case "FIM":
+                    FimServicePendingImportTrigger t1 = new FimServicePendingImportTrigger(ma);
+                    config.Triggers.Add(t1);
+                    break;
+
+                case "ADAM":
+                case "AD":
+                    ActiveDirectoryChangeTrigger t2 = new ActiveDirectoryChangeTrigger(ma);
+                    config.Triggers.Add(t2);
+                    break;
             }
         }
     }

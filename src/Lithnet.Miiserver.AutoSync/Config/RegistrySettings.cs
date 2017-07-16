@@ -47,6 +47,21 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
+        public static string ConfigurationFile
+        {
+            get
+            {
+                string path = RegistrySettings.BaseKey.GetValue("ConfigFile") as string;
+
+                if (path != null)
+                {
+                    return path;
+                }
+                
+                return Path.Combine(Global.AssemblyDirectory, "config.xml");
+            }
+        }
+
         public static string ConfigPath
         {
             get

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Lithnet.Miiserver.AutoSync;
 using Lithnet.Common.Presentation;
 
-namespace Lithnet.Miiserver.Autosync.UI.ViewModels
+namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
     public class MAExecutionTriggersViewModel : ListViewModel<MAExecutionTriggerViewModel, IMAExecutionTrigger>
     {

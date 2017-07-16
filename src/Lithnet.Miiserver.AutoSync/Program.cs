@@ -7,7 +7,7 @@ using Lithnet.Logging;
 using System.IO;
 using System.Timers;
 using System.Threading.Tasks;
-using System.Configuration;
+using System.ServiceModel;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -16,7 +16,11 @@ namespace Lithnet.Miiserver.AutoSync
         private static List<MAExecutor> maExecutors = new List<MAExecutor>();
 
         private static Timer runHistoryCleanupTimer;
-        
+
+        private static ServiceHost configServiceHost;
+
+        internal static ConfigFile ActiveConfig;
+
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
@@ -59,6 +63,11 @@ namespace Lithnet.Miiserver.AutoSync
             Logger.WriteException((Exception)e.ExceptionObject);
         }
 
+        public static void StartConfigServiceHost()
+        {
+            Program.configServiceHost = ConfigService.CreateInstance();
+        }
+
         internal static void Start()
         {
             try
@@ -67,6 +76,8 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     throw new UnauthorizedAccessException("The user must be a member of the FIMSyncAdmins group");
                 }
+
+                Program.StartConfigServiceHost();
 
                 Logger.WriteSeparatorLine('-');
                 Logger.WriteLine("--- Global settings ---");
@@ -87,13 +98,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 }
 
-                //Program.pingTimer = new Timer();
-                //Program.pingTimer.AutoReset = true;
-                //Program.pingTimer.Elapsed += PingTimer_Elapsed;
-                //Program.pingTimer.Interval = TimeSpan.FromMinutes(5).TotalMilliseconds;
-                //Program.pingTimer.Start();
-
-                EnumerateMAs();
+                Program.StartMAExecutors();
             }
             catch (Exception ex)
             {
@@ -133,13 +138,6 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public static void LoadAndStartMAs()
-        {
-            maExecutors = new List<MAExecutor>();
-            Logger.OutputToConsole = true;
-            EnumerateMAs();
-        }
-
         public static void Stop()
         {
             try
@@ -150,6 +148,11 @@ namespace Lithnet.Miiserver.AutoSync
                     {
                         Program.runHistoryCleanupTimer.Stop();
                     }
+                }
+
+                if (configServiceHost != null && configServiceHost.State == CommunicationState.Opened)
+                {
+                    configServiceHost.Close();
                 }
 
                 List<Task> stopTasks = new List<Task>();
@@ -188,33 +191,46 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        internal static void EnumerateMAs()
+        public static void LoadConfiguration()
         {
-            ConfigFile loaded = Serializer.Read<ConfigFile>("D:\\temp\\config.xml");
+            string path = RegistrySettings.ConfigurationFile;
 
-            foreach(MAConfigParameters config in loaded.ManagementAgents)
-            { 
-                config.ResolveManagementAgent();
+            if (!File.Exists(path))
+            {
+                Program.ActiveConfig = new ConfigFile();
+                Program.ActiveConfig.ValidateManagementAgents();
+            }
+            else
+            {
+                Program.ActiveConfig = ConfigFile.Load(path);
+            }
+        }
+
+        private static void StartMAExecutors()
+        {
+            foreach (MAConfigParameters config in Program.ActiveConfig.ManagementAgents)
+            {
+                if (config.IsNew)
+                {
+                    Logger.WriteLine("{0}: Skipping management agent because it does not yet have any configuration defined", config.ManagementAgentName);
+                    continue;
+                }
+
                 if (config.IsMissing)
                 {
-                    Logger.WriteLine("Skipping missing management agent");
+                    Logger.WriteLine("{0}: Skipping management agent because it is missing from the Sync Engine", config.ManagementAgentName);
+                    continue;
                 }
-               
-                if (!config.Disabled)
-                {
-                    MAExecutor x = new MAExecutor(config);
-                    Program.maExecutors.Add(x);
-                }
-                else
+
+                if (config.Disabled)
                 {
                     Logger.WriteLine("{0}: Skipping management agent because it has been disabled in config", config.ManagementAgentName);
+                    continue;
                 }
-            }
 
-            loaded.Settings.RunHistoryAge = new TimeSpan(1, 0, 0, 0);
-            loaded.Settings.MailTo = new HashSet<string>() {"test@test.com"};
-            loaded.Settings.MailIgnoreReturnCodes = new HashSet<string>() {"success", "completed-no-objects"};
-            Serializer.Save("D:\\temp\\config2.xml", loaded);
+                MAExecutor x = new MAExecutor(config);
+                Program.maExecutors.Add(x);
+            }
 
             foreach (MAExecutor x in Program.maExecutors)
             {

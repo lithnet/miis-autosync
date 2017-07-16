@@ -69,11 +69,7 @@ namespace Lithnet.Miiserver.AutoSync
         public bool Disabled { get; set; }
 
         [DataMember(Name = "use-explicit-credentials")]
-        public bool UseExplicitCredentials { get; set; } = true;
-
-        private ActiveDirectoryChangeTrigger()
-        {
-        }
+        public bool UseExplicitCredentials { get; set; } 
 
         private void Fire()
         {

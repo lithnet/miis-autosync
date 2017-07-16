@@ -6,7 +6,7 @@ using System.Windows.Forms;
 using Lithnet.Miiserver.AutoSync;
 using Lithnet.Common.Presentation;
 
-namespace Lithnet.Miiserver.Autosync.UI.ViewModels
+namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
     internal class SettingsViewModel : ViewModelBase<Settings>
     {

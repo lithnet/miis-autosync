@@ -17,7 +17,6 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     m.From = new MailAddress(RegistrySettings.MailFrom);
                 }
-
                 m.Subject = subject;
                 m.IsBodyHtml = true;
                 m.Body = body;

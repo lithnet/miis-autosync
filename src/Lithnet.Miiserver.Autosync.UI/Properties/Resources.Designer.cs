@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Lithnet.Miiserver.Autosync.UI.Properties {
+namespace Lithnet.Miiserver.AutoSync.UI.Properties {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace Lithnet.Miiserver.Autosync.UI.Properties {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Lithnet.Miiserver.Autosync.UI.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Lithnet.Miiserver.AutoSync.UI.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;

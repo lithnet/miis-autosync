@@ -1,6 +1,8 @@
-﻿using System.Windows;
+﻿using System.ServiceModel;
+using System.Windows;
+using Lithnet.Miiserver.AutoSync;
 
-namespace Lithnet.Miiserver.Autosync.UI
+namespace Lithnet.Miiserver.AutoSync.UI
 {
     /// <summary>
     /// Interaction logic for App.xaml

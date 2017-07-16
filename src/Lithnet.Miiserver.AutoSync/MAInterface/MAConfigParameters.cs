@@ -16,7 +16,7 @@ namespace Lithnet.Miiserver.AutoSync
     public class MAConfigParameters
     {
         private ManagementAgent ma;
-        
+
         [DataMember(Name = "id")]
         public Guid ManagementAgentID { get; set; }
 
@@ -24,6 +24,9 @@ namespace Lithnet.Miiserver.AutoSync
         public string ManagementAgentName { get; set; }
 
         public bool IsMissing { get; set; }
+
+        [DataMember(Name = "unconfigured", EmitDefaultValue = false)]
+        public bool IsNew { get; set; }
 
         public void ResolveManagementAgent()
         {
@@ -95,16 +98,16 @@ namespace Lithnet.Miiserver.AutoSync
 
         [DataMember(Name = "run-profile-export")]
         public string ExportRunProfileName { get; set; }
-        
+
         [DataMember(Name = "controller-script-path")]
         public string MAControllerPath { get; set; }
-        
+
         [DataMember(Name = "disabled")]
         public bool Disabled { get; set; }
 
         [DataMember(Name = "auto-import-scheduling")]
         public AutoImportScheduling AutoImportScheduling { get; set; }
-        
+
         [DataMember(Name = "auto-import-interval")]
         public int AutoImportIntervalMinutes { get; set; }
 

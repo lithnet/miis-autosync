@@ -3,14 +3,14 @@
                      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
                      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
                      xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
-                     xmlns:viewModels="clr-namespace:Lithnet.Miiserver.Autosync.UI.ViewModels"
+                     xmlns:viewModels="clr-namespace:Lithnet.Miiserver.AutoSync.UI.ViewModels"
                      mc:Ignorable="d" >
 
     <DataTemplate DataType="{x:Type viewModels:MAConfigParametersViewModel}">
         <UserControl Margin="20" >
 
             <StackPanel>
-                <Label  Content="{Binding ManagementAgentName}" FontSize="40" Foreground="{DynamicResource AccentColorBrush}" />
+                <TextBlock  Text="{Binding ManagementAgentName}" FontSize="40" Foreground="{DynamicResource AccentColorBrush}" />
 
                 <Separator/>
 
@@ -33,8 +33,8 @@
                                 <Label Content="Disable automation of this management agent"/>
                             </StackPanel>
 
-                            <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
-                                <CheckBox IsChecked="{Binding ScheduleImports}"/>
+                            <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" IsEnabled="{Binding IsEnabled}">
+                                <CheckBox IsChecked="{Binding ScheduleImports}" />
                                 <Label Content="Schedule an import if it has been longer than"/>
                                 <controls:NumericUpDown   Value="{Binding AutoImportIntervalMinutes}" 
                                                               Minimum="0"
@@ -47,7 +47,8 @@
 
                             <Grid Grid.Row="2"
                                       Grid.Column="1"
-                                      Margin="10 10 0 5">
+                                      Margin="10 10 0 5"
+                                  IsEnabled="{Binding IsEnabled}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
@@ -55,7 +56,7 @@
                                 <TextBox 
                                         Grid.Column="0"
                                         Margin="0 0 5 0" 
-                                        Text="{Binding MAControllerPath}"/>
+                                        Text="{Binding MAControllerPath}" />
                                 <Button Grid.Column="1"
                                             Content=" ... "
                                             Command="{Binding Commands.Browse}"/>
@@ -65,14 +66,14 @@
                                             Grid.Column="1"
                                             Margin="10 0 0 5"
                                             Orientation="Horizontal"
-                                            HorizontalAlignment="Right">
-                                <Button Margin="10 0 0 5" Content="Edit script" Command="{Binding Commands.Edit}"/>
+                                            HorizontalAlignment="Right" IsEnabled="{Binding IsEnabled}">
+                                <Button Margin="10 0 0 5" Content="Edit script" Command="{Binding Commands.Edit}" />
                                 <Button Margin="5 0 0 5" Content="New script from template" Command="{Binding Commands.New}"/>
                             </StackPanel>
                         </Grid>
                     </TabItem>
 
-                    <TabItem Header="Run Profiles">
+                    <TabItem Header="Run Profiles" IsEnabled="{Binding IsEnabled}">
                         <Grid Margin="25 10 0 0">
                             <Grid.RowDefinitions>
                                 <RowDefinition  />
@@ -125,7 +126,7 @@
                         </Grid>
                     </TabItem>
 
-                    <TabItem Header="Triggers">
+                    <TabItem Header="Triggers" IsEnabled="{Binding IsEnabled}">
                         <Grid  Margin="25 10 0 0">
                             <Grid.RowDefinitions>
                                 <RowDefinition  />

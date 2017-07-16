@@ -2,7 +2,7 @@
 using Lithnet.Miiserver.AutoSync;
 using Lithnet.Common.Presentation;
 
-namespace Lithnet.Miiserver.Autosync.UI.ViewModels
+namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
     internal class ManagementAgentsViewModel : ListViewModel<MAConfigParametersViewModel, MAConfigParameters>
     {

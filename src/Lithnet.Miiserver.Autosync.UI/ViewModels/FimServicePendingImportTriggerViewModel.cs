@@ -2,7 +2,7 @@
 using Lithnet.Miiserver.AutoSync;
 using PropertyChanged;
 
-namespace Lithnet.Miiserver.Autosync.UI.ViewModels
+namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
     public class FimServicePendingImportTriggerViewModel : MAExecutionTriggerViewModel
     {

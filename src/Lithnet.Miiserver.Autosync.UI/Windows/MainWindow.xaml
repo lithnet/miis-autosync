@@ -1,28 +1,70 @@
-﻿<controls:MetroWindow x:Class="Lithnet.Miiserver.Autosync.UI.MainWindow"
+﻿<controls:MetroWindow x:Class="Lithnet.Miiserver.AutoSync.UI.MainWindow"
                       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                       xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
-                      Title="Lithnet AutoSync for Microsoft Identity Manager"
-                      Icon="/autosync.ico"
+                      Title="{Binding Path=DisplayName}"
+                      Icon="/AutoSync.ico"
                       Height="Auto"
                       Width="Auto">
 
     <Grid>
 
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="200" />
+            <ColumnDefinition Width="250" />
             <ColumnDefinition Width="5" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="88*" />
+            <ColumnDefinition Width="467*"/>
         </Grid.ColumnDefinitions>
 
-        <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" />
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        
+        <DockPanel Grid.Row="0"
+                   Grid.ColumnSpan="4">
+            <Menu DockPanel.Dock="Top">
+                <MenuItem Header="_File">
+                    <MenuItem.ItemsSource>
+                        <CompositeCollection>
+                            <MenuItem Header="_Reload"
+                                      Command="{Binding Path=Commands.Reload}" />
+                            <MenuItem Header="_Save"
+                                      Command="{Binding Path=Commands.Save}" />
+                            <MenuItem Header="Export Config..."
+                                      Command="{Binding Path=Commands.Export}" />
+                            <MenuItem Header="Import Config..."
+                                      Command="{Binding Path=Commands.Import}" />
 
-        <TreeView Grid.Column="0" Name="TreeViewMain" DataContext="{Binding Path=ConfigFile}" BorderThickness="5"
+                            <Separator />
+
+                            <MenuItem Header="_Close"
+                                      Command="{Binding Path=Commands.Close}" />
+
+                        </CompositeCollection>
+                    </MenuItem.ItemsSource>
+                    <MenuItem.ItemContainerStyle>
+                        <Style>
+                            <Setter Property="MenuItem.Header"
+                                    Value="{Binding Path=Name}" />
+                            <Setter Property="MenuItem.Command"
+                                    Value="{Binding Path=Command}" />
+                        </Style>
+                    </MenuItem.ItemContainerStyle>
+                </MenuItem>
+            </Menu>
+        </DockPanel>
+
+
+        <GridSplitter Grid.Row="1" Grid.Column="1" Width="5" HorizontalAlignment="Stretch" />
+
+        <TreeView Grid.Row="1" Grid.Column="0" Name="TreeViewMain" DataContext="{Binding Path=ConfigFile}" BorderThickness="1"
             ItemsSource="{Binding Path=ChildNodes}">
             <TreeView.Resources>
                 <ResourceDictionary>
                     <ResourceDictionary.MergedDictionaries>
                         <ResourceDictionary Source="/ResourceDictionaries/TreeViewItemDictionary.xaml" />
+
                         <!--<ResourceDictionary>
                             <Style TargetType="{x:Type TreeViewItem}">
                                 <Setter Property="IsSelected"
@@ -35,13 +77,11 @@
                 </ResourceDictionary>
             </TreeView.Resources>
         </TreeView>
-        <ContentControl Grid.Column="2" Content="{Binding Path=SelectedItem, ElementName=TreeViewMain}"
-                        DockPanel.Dock="Top">
+        <ContentControl Grid.Row="1"  Grid.Column="2" Content="{Binding Path=SelectedItem, ElementName=TreeViewMain}" Grid.ColumnSpan="2">
             <ContentControl.Resources>
                 <ResourceDictionary Source="/ResourceDictionaries/ItemViewDictionary.xaml"/>
             </ContentControl.Resources>
         </ContentControl>
-        <!--<views:MAConfigParametersView  Grid.Column="2"/>-->
 
     </Grid>
 </controls:MetroWindow>

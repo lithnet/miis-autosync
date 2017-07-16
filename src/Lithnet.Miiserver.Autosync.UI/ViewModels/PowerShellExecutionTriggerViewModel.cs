@@ -7,7 +7,7 @@ using Lithnet.Miiserver.AutoSync;
 using Microsoft.Win32;
 using PropertyChanged;
 
-namespace Lithnet.Miiserver.Autosync.UI.ViewModels
+namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
     public class PowerShellExecutionTriggerViewModel : MAExecutionTriggerViewModel
     {

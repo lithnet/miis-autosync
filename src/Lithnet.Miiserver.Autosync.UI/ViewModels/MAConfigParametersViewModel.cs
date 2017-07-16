@@ -5,12 +5,11 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using Lithnet.Common.Presentation;
-using Lithnet.Miiserver.Autosync.UI.Windows;
-using Lithnet.Miiserver.AutoSync;
+using Lithnet.Miiserver.AutoSync.UI.Windows;
 using Lithnet.Miiserver.Client;
 using Microsoft.Win32;
 
-namespace Lithnet.Miiserver.Autosync.UI.ViewModels
+namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
     public class MAConfigParametersViewModel : ViewModelBase<MAConfigParameters>
     {
@@ -27,8 +26,44 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
             this.Commands.Add("Edit", new DelegateCommand(t => this.Edit(), u => this.CanEdit()));
         }
 
-        public string ManagementAgentName => this.Model?.ManagementAgentName ?? "Unknown MA";
+        public string DisplayName
+        {
+            get
+            {
+                string name = this.Model.ManagementAgentName ?? "Unknown MA";
 
+                if (this.IsMissing)
+                {
+                    name += " (missing)";
+                    return name;
+                }
+
+                if (this.IsNew)
+                {
+                    name += " (unconfigured)";
+                }
+
+                if (this.Disabled)
+                {
+                    name += " (disabled)";
+                }
+
+                return name;
+            }
+        }
+
+        public bool IsEnabled => !this.IsMissing && !this.Disabled;
+
+        public string ManagementAgentName => this.Model.ManagementAgentName;
+
+        public bool IsMissing => this.Model.IsMissing;
+
+        public bool IsNew
+        {
+            get => this.Model.IsNew;
+            set => this.Model.IsNew = value;
+        }
+        
         public string MAControllerPath
         {
             get => this.Model.MAControllerPath;
@@ -106,7 +141,7 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
         {
             get
             {
-                return this.Model.ManagementAgent.RunProfiles.Select(t => t.Key);
+                return this.Model.ManagementAgent?.RunProfiles.Select(t => t.Key);
             }
         }
 
@@ -149,7 +184,10 @@ namespace Lithnet.Miiserver.Autosync.UI.ViewModels
             {
                 if (this.allowedTypes == null)
                 {
-                    this.GetAllowedTypesForMa(this.Model.ManagementAgent);
+                    if (!this.IsMissing)
+                    {
+                        this.GetAllowedTypesForMa(this.Model.ManagementAgent);
+                    }
                 }
 
                 return this.allowedTypes;

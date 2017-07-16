@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 
-namespace Lithnet.Miiserver.Autosync.UI
+namespace Lithnet.Miiserver.AutoSync.UI
 {
     public static class PasswordBoxBindingHelper
     {

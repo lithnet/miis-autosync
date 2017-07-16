@@ -1,7 +1,7 @@
 ﻿using Lithnet.Common.Presentation;
 using Lithnet.Miiserver.AutoSync;
 
-namespace Lithnet.Miiserver.Autosync.UI.ViewModels
+namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
     public abstract class MAExecutionTriggerViewModel : ViewModelBase<IMAExecutionTrigger>
     {

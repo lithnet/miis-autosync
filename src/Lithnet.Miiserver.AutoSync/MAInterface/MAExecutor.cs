@@ -91,7 +91,7 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     this.importCheckTimer = new System.Timers.Timer();
                     this.importCheckTimer.Elapsed += this.ImportCheckTimer_Elapsed;
-                    int importSeconds = this.Configuration.AutoImportIntervalMinutes > 0 ? this.Configuration.AutoImportIntervalMinutes * 60 : MAExecutionTriggerDiscovery.GetAverageImportInterval(this.ma);
+                    int importSeconds = this.Configuration.AutoImportIntervalMinutes > 0 ? this.Configuration.AutoImportIntervalMinutes * 60 : MAExecutionTriggerDiscovery.GetAverageImportIntervalMinutes(this.ma) * 60;
                     this.importInterval = new TimeSpan(0, 0, Global.RandomizeOffset(importSeconds));
                     this.importCheckTimer.Interval = this.importInterval.TotalMilliseconds;
                     this.importCheckTimer.AutoReset = true;

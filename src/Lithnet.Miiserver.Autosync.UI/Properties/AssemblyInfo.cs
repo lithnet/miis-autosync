@@ -5,11 +5,11 @@ using System.Windows;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Lithnet.Miiserver.Autosync.UI")]
+[assembly: AssemblyTitle("Lithnet.Miiserver.AutoSync.UI")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Lithnet.Miiserver.Autosync.UI")]
+[assembly: AssemblyProduct("Lithnet.Miiserver.AutoSync.UI")]
 [assembly: AssemblyCopyright("Copyright ©  2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

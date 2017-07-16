@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using MahApps.Metro.Controls;
 
-namespace Lithnet.Miiserver.Autosync.UI.Windows
+namespace Lithnet.Miiserver.AutoSync.UI.Windows
 {
     /// <summary>
     /// Interaction logic for AddTrigger.xaml

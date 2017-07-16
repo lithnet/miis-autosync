@@ -22,12 +22,6 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "host-name")]
         public string HostName { get; set; }
 
-        private FimServicePendingImportTrigger(string hostname)
-        {
-            this.Interval = TimeSpan.FromSeconds(60);
-            this.HostName = hostname;
-        }
-
         private void checkTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             try
@@ -117,9 +111,8 @@ namespace Lithnet.Miiserver.AutoSync
                 throw new InvalidOperationException("The specified management agent is not a MIM Service MA");
             }
 
-            string hostname = FimServicePendingImportTrigger.GetFimServiceHostName(ma);
-
-            this.Interval = new TimeSpan(0, 0, 60);
+            this.HostName = FimServicePendingImportTrigger.GetFimServiceHostName(ma);
+            this.Interval = TimeSpan.FromSeconds(60);
         }
 
         public static bool CanCreateForMA(ManagementAgent ma)

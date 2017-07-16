@@ -10,9 +10,15 @@ namespace Lithnet.Miiserver.AutoSync
 {
     public class ProtectedString : IXmlSerializable
     {
+        public static bool EncryptOnWrite { get; set; } = true;
+
         public ProtectedString(string value)
         {
             this.Value = value.ToSecureString();
+        }
+
+        public ProtectedString()
+        {
         }
 
         private byte[] Salt { get; set; }
@@ -32,7 +38,7 @@ namespace Lithnet.Miiserver.AutoSync
                 string s = reader["salt"];
 
                 string data = reader.ReadElementContentAsString();
-                
+
                 if (string.IsNullOrEmpty(data))
                 {
                     return;
@@ -64,7 +70,7 @@ namespace Lithnet.Miiserver.AutoSync
                 }
             }
         }
-        
+
         private static byte[] GenerateSalt(int maximumSaltLength)
         {
             byte[] salt = new byte[maximumSaltLength];
@@ -99,14 +105,22 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void WriteXml(XmlWriter writer)
         {
-            if (this.Salt == null)
+            if (ProtectedString.EncryptOnWrite)
             {
-                this.Salt = GenerateSalt(32);
-            }
+                if (this.Salt == null)
+                {
+                    this.Salt = GenerateSalt(32);
+                }
 
-            writer.WriteAttributeString("salt", Convert.ToBase64String(this.Salt));
-            writer.WriteAttributeString("is-encrypted", "true");
-            writer.WriteString(this.ProtectData(this.Salt));
+                writer.WriteAttributeString("salt", Convert.ToBase64String(this.Salt));
+                writer.WriteAttributeString("is-encrypted", "true");
+                writer.WriteString(this.ProtectData(this.Salt));
+            }
+            else
+            {
+                writer.WriteAttributeString("is-encrypted", "false");
+                writer.WriteString(this.Value.ToUnsecureString());
+            }
         }
     }
 }

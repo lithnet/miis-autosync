@@ -144,7 +144,7 @@ function ExecutionComplete
 }
 
 &lt;#
-  See https://github.com/lithnet/miis-autosync/tree/master/src/Lithnet.Miiserver.AutoSync/Examples for detailed examples on how to use
+  See https://github.com/lithnet/miis-AutoSync/tree/master/src/Lithnet.Miiserver.AutoSync/Examples for detailed examples on how to use
   these functions
 #&gt;</value>
   </data>
