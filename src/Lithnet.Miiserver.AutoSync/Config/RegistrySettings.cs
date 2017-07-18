@@ -57,7 +57,7 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     return path;
                 }
-                
+
                 return Path.Combine(Global.AssemblyDirectory, "config.xml");
             }
         }
@@ -83,17 +83,6 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public static int RunHistoryAge
-        {
-            get
-            {
-                string s = RegistrySettings.BaseKey.GetValue("RunHistoryAge") as string;
-
-                int value;
-
-                return int.TryParse(s, out value) ? value : 0;
-            }
-        }
 
         public static int RetryCount
         {
@@ -239,7 +228,31 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public static string RunHistoryPath => RegistrySettings.BaseKey.GetValue("RunHistoryPath") as string;
+        public static TimeSpan RunHistoryTimerInterval
+        {
+            get
+            {
+                string s = RegistrySettings.BaseKey.GetValue("RunHistoryTimerInterval") as string;
+
+                int seconds;
+
+                if (int.TryParse(s, out seconds))
+                {
+                    if (seconds > 0)
+                    {
+                        return new TimeSpan(0, 0, seconds);
+                    }
+                    else
+                    {
+                        return TimeSpan.FromHours(8);
+                    }
+                }
+                else
+                {
+                    return TimeSpan.FromHours(8);
+                }
+            }
+        }
 
         public static string MailServer => RegistrySettings.BaseKey.GetValue("MailServer") as string;
 
@@ -269,8 +282,6 @@ namespace Lithnet.Miiserver.AutoSync
 
 
         public static bool MailSendOncePerStateChange => RegistrySettings.BaseKey.GetValue("MailSendOncePerStateChange") as string != "0";
-
-        public static bool RunHistorySave => RegistrySettings.BaseKey.GetValue("RunHistorySave") as string == "1";
 
         public static bool MailEnabled => RegistrySettings.BaseKey.GetValue("MailEnabled") as string == "1";
 
@@ -305,9 +316,6 @@ namespace Lithnet.Miiserver.AutoSync
             builder.AppendLine($"{nameof(RegistrySettings.MailServer)}: {RegistrySettings.MailServer}");
             builder.AppendLine($"{nameof(RegistrySettings.MailServerPort)}: {RegistrySettings.MailServerPort}");
             builder.AppendLine($"{nameof(RegistrySettings.MailTo)}: {string.Join(",", RegistrySettings.MailTo)}");
-            builder.AppendLine($"{nameof(RegistrySettings.RunHistoryAge)}: {RegistrySettings.RunHistoryAge}");
-            builder.AppendLine($"{nameof(RegistrySettings.RunHistoryPath)}: {RegistrySettings.RunHistoryPath}");
-            builder.AppendLine($"{nameof(RegistrySettings.RunHistorySave)}: {RegistrySettings.RunHistorySave}");
             builder.AppendLine($"{nameof(RegistrySettings.UnmanagedChangesCheckInterval)}: {RegistrySettings.UnmanagedChangesCheckInterval}");
             builder.AppendLine($"{nameof(RegistrySettings.ExecutionStaggerInterval)}: {RegistrySettings.ExecutionStaggerInterval}");
             builder.AppendLine($"{nameof(RegistrySettings.RunSyncExclusive)}: {RegistrySettings.RunSyncExclusive}");

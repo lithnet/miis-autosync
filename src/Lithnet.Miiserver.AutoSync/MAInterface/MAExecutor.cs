@@ -491,13 +491,21 @@ namespace Lithnet.Miiserver.AutoSync
                 throw new Exception("Cannot start executor as it is disabled");
             }
 
-            Logger.WriteSeparatorLine('-');
+            try
+            {
+                Logger.StartThreadLog();
+                Logger.WriteSeparatorLine('-');
 
-            this.Log($"Starting executor");
+                this.Log($"Starting executor");
 
-            Logger.WriteRaw($"{this}\n");
+                Logger.WriteRaw($"{this}\n");
 
-            Logger.WriteSeparatorLine('-');
+                Logger.WriteSeparatorLine('-');
+            }
+            finally
+            {
+                Logger.EndThreadLog();
+            }
 
             this.internalTask = new Task(() =>
             {
@@ -553,7 +561,7 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     this.Trace("LOCK: SET: LocalOp");
                     this.localOperationLock.Reset();
-                    this.Log($"Waiting for current job to finish");
+                    this.Log($"Waiting for sync engine to finish current run profile before initializing executor");
                     this.ma.Wait(this.token.Token);
                 }
                 finally
@@ -573,6 +581,8 @@ namespace Lithnet.Miiserver.AutoSync
 
             try
             {
+                this.Log($"Starting action processing queue");
+
                 // ReSharper disable once InconsistentlySynchronizedField
                 foreach (ExecutionParameters action in this.pendingActions.GetConsumingEnumerable(this.token.Token))
                 {
@@ -974,7 +984,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             foreach (IMAExecutionTrigger trigger in this.ExecutionTriggers)
             {
-                Logger.WriteLine(trigger.ToString());
+                builder.AppendLine(trigger.ToString());
             }
 
             return builder.ToString();

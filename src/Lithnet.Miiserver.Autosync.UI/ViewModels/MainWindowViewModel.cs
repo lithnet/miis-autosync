@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.ServiceModel;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -17,6 +18,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
     internal class MainWindowViewModel : ViewModelBase
     {
+        private List<Type> ignoreViewModelChanges;
+
         private bool confirmedCloseOnDirtyViewModel;
 
         public ConfigFileViewModel ConfigFile { get; set; }
@@ -25,8 +28,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private bool ViewModelIsDirty { get; set; }
 
-        private List<Type> ignoreViewModelChanges;
-
+        public Cursor Cursor { get; set; }
+        
         public MainWindowViewModel()
         {
             UINotifyPropertyChanges.BeginIgnoreAllChanges();
@@ -41,10 +44,12 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.Commands.AddItem("Save", x => this.Save(), x => this.CanSave());
             this.Commands.AddItem("Export", x => this.Export(), x => this.CanExport());
             this.Commands.AddItem("Close", x => this.Close());
-            this.Commands.AddItem("Import", x => this.Import() , x=> this.CanImport());
+            this.Commands.AddItem("Import", x => this.Import(), x => this.CanImport());
+
+            this.Cursor = Cursors.Arrow;
 
             ViewModelBase.ViewModelChanged += this.ViewModelBase_ViewModelChanged;
-            Application.Current.MainWindow.Closing += new CancelEventHandler(this.MainWindow_Closing);
+            Application.Current.MainWindow.Closing += this.MainWindow_Closing;
             UINotifyPropertyChanges.EndIgnoreAllChanges();
         }
 
@@ -53,7 +58,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.ignoreViewModelChanges = new List<Type>();
         }
 
-        private void Reload()
+        private void Reload(bool confirmRestart = true)
         {
             this.UpdateFocusedBindings();
 
@@ -65,6 +70,32 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 }
             }
 
+            if (confirmRestart)
+            {
+                if (MessageBox.Show("This will force the AutoSync service to stop and restart with the latest configuration. Are you sure you want to proceed?", "Confirm", MessageBoxButton.OKCancel, MessageBoxImage.Warning) == MessageBoxResult.Cancel)
+                {
+                    return;
+                }
+            }
+
+            try
+            {
+                this.Cursor = Cursors.Wait;
+                Task.Run(() =>
+                {
+                    ConfigClient c = new ConfigClient();
+                    c.Reload();
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred while reloading the service config. Check the service log file for details\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                this.Cursor = Cursors.Arrow;
+            }
+
             this.ResetConfigViewModel();
         }
 
@@ -72,6 +103,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
+                this.Cursor = Cursors.Wait;
                 UINotifyPropertyChanges.BeginIgnoreAllChanges();
 
                 ConfigClient c = new ConfigClient();
@@ -111,6 +143,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             finally
             {
                 UINotifyPropertyChanges.EndIgnoreAllChanges();
+                this.Cursor = Cursors.Arrow;
             }
         }
 
@@ -159,14 +192,20 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
                 try
                 {
+                    this.Cursor = Cursors.Wait;
                     ConfigClient c = new ConfigClient();
                     c.PutConfig(f);
+                    this.AskToRestartService();
                 }
                 catch (Exception ex)
                 {
                     Trace.WriteLine(ex);
                     MessageBox.Show($"Could not import the file\n\n{ex.Message}", "File import operation", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
+                }
+                finally
+                {
+                    this.Cursor = Cursors.Arrow;
                 }
             }
             finally
@@ -176,13 +215,14 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
             this.ViewModelIsDirty = false;
         }
-        
+
         private void Save()
         {
             this.UpdateFocusedBindings();
 
             try
             {
+                this.Cursor = Cursors.Wait;
                 ConfigClient c = new ConfigClient();
                 c.PutConfig(this.ConfigFile.Model);
                 this.ViewModelIsDirty = false;
@@ -191,11 +231,17 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 {
                     p.IsNew = false;
                 }
+
+                this.AskToRestartService();
             }
             catch (Exception ex)
             {
                 Trace.WriteLine(ex);
                 MessageBox.Show($"Could not save the configuration\n\n{ex.Message}", "Save operation", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                this.Cursor = Cursors.Arrow;
             }
         }
 
@@ -212,6 +258,16 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         private bool CanExport()
         {
             return this.ConfigFile != null;
+        }
+
+        private void AskToRestartService()
+        {
+            if (MessageBox.Show("Do you want to restart the service now to make the new config take effect?", "Error", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
+            {
+                return;
+            }
+
+            this.Reload(false);
         }
 
         private void Export()
@@ -241,6 +297,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
                 if (result == true)
                 {
+                    this.Cursor = Cursors.Wait;
                     ProtectedString.EncryptOnWrite = false;
                     AutoSync.ConfigFile.Save(this.ConfigFile.Model, dialog.FileName);
                     this.ViewModelIsDirty = false;
@@ -250,6 +307,10 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 Trace.WriteLine(ex);
                 MessageBox.Show($"Could not save the file\n\n{ex.Message}", "Save File", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                this.Cursor = Cursors.Arrow;
             }
         }
 

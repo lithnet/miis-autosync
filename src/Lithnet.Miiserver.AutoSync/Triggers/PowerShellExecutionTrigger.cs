@@ -155,14 +155,22 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void Stop()
         {
-            this.run = false;
-
-            this.cancellationToken?.Cancel();
-            this.powershell?.Stop();
-
-            if (this.internalTask != null && !this.internalTask.IsCompleted)
+            try
             {
-                this.internalTask.Wait();
+                this.run = false;
+
+                this.cancellationToken?.Cancel();
+                this.powershell?.Stop();
+
+                if (this.internalTask != null && !this.internalTask.IsCompleted)
+                {
+                    this.internalTask.Wait();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine("An error occurred stopping the Powershell execution trigger");
+                Logger.WriteException(ex);
             }
         }
 

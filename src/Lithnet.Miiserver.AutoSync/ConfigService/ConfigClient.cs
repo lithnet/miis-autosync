@@ -29,6 +29,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void Reload()
         {
+            this.Channel.Reload();
         }
     }
 }

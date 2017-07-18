@@ -40,12 +40,11 @@ namespace Lithnet.Miiserver.AutoSync
         {
             ProtectedString.EncryptOnWrite = true;
             ConfigFile.Save(config, RegistrySettings.ConfigurationFile);
-
-            // Reload config
         }
 
         public void Reload()
         {
+            Program.Reload();
         }
     }
 }

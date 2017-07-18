@@ -3,6 +3,7 @@
                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                       xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
                       Title="{Binding Path=DisplayName}"
+                      Cursor="{Binding Path=Cursor}"
                       Icon="/AutoSync.ico"
                       Height="Auto"
                       Width="Auto">

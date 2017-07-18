@@ -242,12 +242,20 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void Stop()
         {
-            if (this.connection != null && this.request != null)
+            try
             {
-                this.connection.Abort(this.request);
-            }
+                if (this.connection != null && this.request != null)
+                {
+                    this.connection.Abort(this.request);
+                }
 
-            this.stopped = true;
+                this.stopped = true;
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine("An error occurred trying to stop the ActiveDirectoryChangeTrigger");
+                Logger.WriteException(ex);
+            }
         }
 
         public string DisplayName => $"{this.Type} ({this.HostName})";

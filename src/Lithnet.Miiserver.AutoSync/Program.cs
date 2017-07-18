@@ -13,13 +13,15 @@ namespace Lithnet.Miiserver.AutoSync
 {
     public static class Program
     {
-        private static List<MAExecutor> maExecutors = new List<MAExecutor>();
+        private static List<MAExecutor> maExecutors;
 
         private static Timer runHistoryCleanupTimer;
 
         private static ServiceHost configServiceHost;
 
         internal static ConfigFile ActiveConfig;
+
+        private static bool hasConfig;
 
         /// <summary>
         /// The main entry point for the application.
@@ -65,7 +67,10 @@ namespace Lithnet.Miiserver.AutoSync
 
         public static void StartConfigServiceHost()
         {
-            Program.configServiceHost = ConfigService.CreateInstance();
+            if (Program.configServiceHost == null || Program.configServiceHost.State != CommunicationState.Opened)
+            {
+                Program.configServiceHost = ConfigService.CreateInstance();
+            }
         }
 
         internal static void Start()
@@ -77,33 +82,55 @@ namespace Lithnet.Miiserver.AutoSync
                     throw new UnauthorizedAccessException("The user must be a member of the FIMSyncAdmins group");
                 }
 
+                Program.LoadConfiguration();
                 Program.StartConfigServiceHost();
 
-                Logger.WriteSeparatorLine('-');
-                Logger.WriteLine("--- Global settings ---");
-                Logger.WriteLine(RegistrySettings.GetSettingsString());
-                Logger.WriteSeparatorLine('-');
-
-                if (RegistrySettings.RunHistoryAge > 0)
+                if (!Program.hasConfig)
                 {
-                    Logger.WriteLine("Run history auto-cleanup enabled");
-                    Program.runHistoryCleanupTimer = new Timer
-                    {
-                        AutoReset = true
-                    };
-
-                    Program.runHistoryCleanupTimer.Elapsed += RunHistoryCleanupTimer_Elapsed;
-                    Program.runHistoryCleanupTimer.Interval = TimeSpan.FromHours(8).TotalMilliseconds;
-                    Program.runHistoryCleanupTimer.Start();
-
+                    Logger.WriteLine("Service is not yet configured. Run the editor initialize the configuration");
+                    return;
                 }
 
+                Program.InitializeRunHistoryCleanup();
                 Program.StartMAExecutors();
             }
             catch (Exception ex)
             {
                 Logger.WriteException(ex);
                 throw;
+            }
+        }
+
+        internal static void Reload()
+        {
+            try
+            {
+                Program.StopRunHistoryCleanupTimer();
+                Program.StopMAExecutors();
+                Program.Start();
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine("An error occurred during the service reload process");
+                Logger.WriteException(ex);
+                throw;
+            }
+        }
+
+        private static void InitializeRunHistoryCleanup()
+        {
+            if (ActiveConfig.Settings.RunHistoryClear)
+            {
+                Logger.WriteLine("Run history auto-cleanup enabled");
+
+                Program.runHistoryCleanupTimer = new Timer
+                {
+                    AutoReset = true
+                };
+
+                Program.runHistoryCleanupTimer.Elapsed += Program.RunHistoryCleanupTimer_Elapsed;
+                Program.runHistoryCleanupTimer.Interval = RegistrySettings.RunHistoryTimerInterval.TotalMilliseconds;
+                Program.runHistoryCleanupTimer.Start();
             }
         }
 
@@ -119,22 +146,31 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static void ClearRunHistory()
         {
-            if (RegistrySettings.RunHistoryAge <= 0)
+            if (ActiveConfig.Settings.RunHistoryAge.TotalSeconds <= 0)
             {
                 return;
             }
 
-            Logger.WriteLine("Clearing run history older than {0} days", RegistrySettings.RunHistoryAge);
-            DateTime clearBeforeDate = DateTime.UtcNow.AddDays(-RegistrySettings.RunHistoryAge);
+            try
+            {
+                Logger.WriteLine("Clearing run history older than {0}", ActiveConfig.Settings.RunHistoryAge);
+                DateTime clearBeforeDate = DateTime.UtcNow.Add(-ActiveConfig.Settings.RunHistoryAge);
 
-            if (RegistrySettings.RunHistorySave && RegistrySettings.RunHistoryPath != null)
-            {
-                string file = Path.Combine(RegistrySettings.RunHistoryPath, $"history-{DateTime.Now.ToString("yyyy-MM-ddThh.mm.ss")}.xml");
-                SyncServer.ClearRunHistory(clearBeforeDate, file);
+                if (ActiveConfig.Settings.RunHistorySave
+                    && ActiveConfig.Settings.RunHistoryPath != null)
+                {
+                    string file = Path.Combine(ActiveConfig.Settings.RunHistoryPath, $"history-{DateTime.Now:yyyy-MM-ddThh.mm.ss}.xml");
+                    SyncServer.ClearRunHistory(clearBeforeDate, file);
+                }
+                else
+                {
+                    SyncServer.ClearRunHistory(clearBeforeDate);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                SyncServer.ClearRunHistory(clearBeforeDate);
+                Logger.WriteLine("An error occurred clearing the run history");
+                Logger.WriteException(ex);
             }
         }
 
@@ -142,45 +178,20 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                if (Program.runHistoryCleanupTimer != null)
-                {
-                    if (Program.runHistoryCleanupTimer.Enabled)
-                    {
-                        Program.runHistoryCleanupTimer.Stop();
-                    }
-                }
+                Program.StopRunHistoryCleanupTimer();
 
                 if (configServiceHost != null && configServiceHost.State == CommunicationState.Opened)
                 {
                     configServiceHost.Close();
                 }
 
-                List<Task> stopTasks = new List<Task>();
-
-                foreach (MAExecutor x in maExecutors)
+                try
                 {
-                    stopTasks.Add(Task.Factory.StartNew(() =>
-                    {
-                        try
-                        {
-                            x.Stop();
-                        }
-                        catch (OperationCanceledException)
-                        {
-                        }
-                    }));
+                    Program.StopMAExecutors();
                 }
-
-                Logger.WriteLine("Waiting for executors to stop");
-
-                if (!Task.WaitAll(stopTasks.ToArray(), 90000))
+                catch (System.TimeoutException)
                 {
-                    Logger.WriteLine("Timeout waiting for executors to stop");
                     Environment.Exit(2);
-                }
-                else
-                {
-                    Logger.WriteLine("Shutdown complete");
                 }
             }
             catch (Exception ex)
@@ -188,6 +199,53 @@ namespace Lithnet.Miiserver.AutoSync
                 Logger.WriteLine("An error occurred during termination");
                 Logger.WriteException(ex);
                 Environment.Exit(3);
+            }
+        }
+
+        private static void StopRunHistoryCleanupTimer()
+        {
+            if (Program.runHistoryCleanupTimer != null)
+            {
+                if (Program.runHistoryCleanupTimer.Enabled)
+                {
+                    Program.runHistoryCleanupTimer.Stop();
+                }
+            }
+        }
+
+        private static void StopMAExecutors()
+        {
+            if (maExecutors == null)
+            {
+                return;
+            }
+
+            List<Task> stopTasks = new List<Task>();
+
+            foreach (MAExecutor x in maExecutors)
+            {
+                stopTasks.Add(Task.Factory.StartNew(() =>
+                {
+                    try
+                    {
+                        x.Stop();
+                    }
+                    catch (OperationCanceledException)
+                    {
+                    }
+                }));
+            }
+
+            Logger.WriteLine("Waiting for executors to stop");
+
+            if (!Task.WaitAll(stopTasks.ToArray(), 90000))
+            {
+                Logger.WriteLine("Timeout waiting for executors to stop");
+                throw new System.TimeoutException();
+            }
+            else
+            {
+                Logger.WriteLine("Executors stopped successfully");
             }
         }
 
@@ -199,15 +257,19 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 Program.ActiveConfig = new ConfigFile();
                 Program.ActiveConfig.ValidateManagementAgents();
+                Program.hasConfig = false;
             }
             else
             {
                 Program.ActiveConfig = ConfigFile.Load(path);
+                Program.hasConfig = true;
             }
         }
 
         private static void StartMAExecutors()
         {
+            Program.maExecutors = new List<MAExecutor>();
+     
             foreach (MAConfigParameters config in Program.ActiveConfig.ManagementAgents)
             {
                 if (config.IsNew)
@@ -231,10 +293,12 @@ namespace Lithnet.Miiserver.AutoSync
                 MAExecutor x = new MAExecutor(config);
                 Program.maExecutors.Add(x);
             }
+            
+            //Program.maExecutors.AsParallel().Select(t => t.Start());
 
             foreach (MAExecutor x in Program.maExecutors)
             {
-                x.Start();
+                Task.Run(x.Start);
             }
         }
     }

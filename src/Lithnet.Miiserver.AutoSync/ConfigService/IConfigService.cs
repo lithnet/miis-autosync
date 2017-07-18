@@ -16,6 +16,7 @@ namespace Lithnet.Miiserver.AutoSync
         [OperationContract]
         void PutConfig(ConfigFile config);
 
+        [OperationContract]
         void Reload();
     }
 }
