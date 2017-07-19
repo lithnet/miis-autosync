@@ -19,50 +19,51 @@
                         ErrorControl="normal"
                         Start="auto"
                         Arguments="/service"
-                        Type="ownProcess" 
+                        Type="ownProcess"
                         Description="Automatically operates the FIM/MIM synchronization service"
                         Vital="yes"
                         Interactive="no">
+          <ServiceDependency Id="FIMSynchronizationService" />
+          <util:PermissionEx 
+            User="[SERVICE_PERMISSION_GROUP]"
+            ServicePauseContinue="yes"
+            ServiceQueryConfig="yes"
+            ServiceQueryStatus="yes"
+            ServiceStart="yes"
+            ServiceStop="yes" />
         </ServiceInstall>
-        <ServiceControl Id="ServiceControlEvents" Name="[SERVICE_NAME]" Stop="both" Remove="uninstall" Wait="yes"/>
-        <util:User Id="ServiceUser" Name="[SERVICE_USERNAME]" Password="[SERVICE_PASSWORD]" CreateUser="no" LogonAsService="yes" UpdateIfExists="yes" />
+        <ServiceControl Id="ServiceControlEvents" Name="[SERVICE_NAME]" Stop="both" Remove="uninstall" Wait="yes" Start="install"/>
+        <util:User Id="ServiceUser" Name="[SERVICE_USERNAME]" Password="[SERVICE_PASSWORD]" CreateUser="no" LogonAsService="yes" UpdateIfExists="yes"  />
+
         <CreateFolder Directory="APPLOGDIR">
           <util:PermissionEx User="[SERVICE_USERNAME]" GenericAll="yes" />
         </CreateFolder>
 
-        <CreateFolder Directory="CONFIGDIR">
-          <util:PermissionEx User="[SERVICE_USERNAME]" GenericAll="yes" />
-        </CreateFolder>
-
-        <CreateFolder Directory="RUNHISTORYDIR">
-          <util:PermissionEx User="[SERVICE_USERNAME]" GenericAll="yes" />
-        </CreateFolder>
-
-        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="ConfigPath" Type="string" Value="[CONFIGDIR]" />
         <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="LogPath" Type="string" Value="[APPLOGDIR]" />
-        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="RunHistoryPath" Type="string" Value="[RUNHISTORYDIR]" />
-        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="RunHistoryAge" Type="string" Value="[RUNHISTORYDAYS]" />
-        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="RunHistorySave" Type="string" Value="[SAVERUNHISTORY]" />
-        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="MailEnabled" Type="string" Value="[EMAIL_ENABLE]" />
-        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="MailTo" Type="string" Value="[MAIL_TO]" />
-        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="MailFrom" Type="string" Value="[MAIL_FROM]" />
-        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="MailServer" Type="string" Value="[MAIL_SERVER]" />
-        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="MailServerPort" Type="string" Value="[MAIL_SERVER_PORT]" />
+
       </Component>
 
       <Component Id="cmpb79b2c604b1748aa9606e987e86aad3a" Guid="*" NeverOverwrite="yes" Win64="yes">
         <File Id="App.config" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Lithnet.Miiserver.AutoSync.exe.config" />
       </Component>
 
+      <Component Id="cmpB0A7A00F68064A1CBAC65F08E16234FF" Guid="*" Win64="yes">
+        <File Id="fil0D04FCAD13404EE3AB54CC0491E5D533" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.Editor.TargetDir)\Lithnet.Miiserver.AutoSync.Editor.exe" />
+      </Component>
     </DirectoryRef>
 
+    <DirectoryRef Id="ApplicationProgramsFolder">
+      <Component Id="cmpF5883C13B9AC434D8CDB1F0271451D48" Guid="59E0AB81B2074937872F4FAA34BC99DE">
+        <Shortcut Id="ApplicationStartMenuShortcut" 
+                  Name="Lithnet AutoSync" 
+                  Target="[#fil0D04FCAD13404EE3AB54CC0491E5D533]"
+                  WorkingDirectory="APPLICATIONROOTDIRECTORY"/>
+        <RemoveFolder Id="ApplicationProgramsFolder" On="uninstall"/>
+        <RegistryValue Root="HKCU" Key="Software\[Manufacturer]\[ProductName]" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+      
     <DirectoryRef Id="EXAMPLESDIR">
-      <Component Id="cmp93a419ae5b964e959aabd53f864b56be" Guid="*" Win64="yes">
-        <File Id="fil609af776b4a447ceb346ae795fc0ec18" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Examples\Config-ACMA.ps1" />
-      </Component>
-      <Component Id="cmpa5bba24f5e21416285e99f20f545a824" Guid="*" Win64="yes">
-        <File Id="fil38f1503471f2447f8dafcd16c011922f" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Examples\Config-ADMA.ps1" />
-      </Component>
       <Component Id="cmp9dd1e29218a449c986cd9bc051352eb0" Guid="*" Win64="yes">
         <File Id="fildf31df98d2494fda8671bee4394fb457" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Examples\Trigger-ACMA-CheckPendingImports.ps1" />
       </Component>
@@ -81,18 +82,21 @@
     </DirectoryRef>
 
     <ComponentGroup Id="Examples">
-      <ComponentRef Id="cmp93a419ae5b964e959aabd53f864b56be"/>
-      <ComponentRef Id="cmpa5bba24f5e21416285e99f20f545a824"/>
       <ComponentRef Id="cmp9dd1e29218a449c986cd9bc051352eb0"/>
       <ComponentRef Id="cmp07273887e0564fbb9656af18b9d08aff"/>
       <ComponentRef Id="cmp7019fe445dcb4e44b69f13a1ebf8cdd6"/>
       <ComponentRef Id="cmp532534fc471f40b4af0421bb84ac9f8f"/>
       <ComponentRef Id="cmp075b47251b67418d80ae8418bf820b6f"/>
     </ComponentGroup>
+    <ComponentGroup Id="Editor">
+      <ComponentRef Id="cmpB0A7A00F68064A1CBAC65F08E16234FF"/>
+      <ComponentRef Id="cmpF5883C13B9AC434D8CDB1F0271451D48"/>
+    </ComponentGroup>
     <ComponentGroup Id="Binaries">
       <ComponentRef Id="EventSource"/>
       <ComponentRef Id="cmpb05fc8933594449d9aad05ca620a4331"/>
       <ComponentRef Id="cmpb79b2c604b1748aa9606e987e86aad3a"/>
+    
     </ComponentGroup>
   </Fragment>
 </Wix>

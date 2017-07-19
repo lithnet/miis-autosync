@@ -7,7 +7,20 @@ namespace Lithnet.Miiserver.AutoSync
 {
     public class ConfigServiceAuthorizationManager : ServiceAuthorizationManager
     {
-        private const string AuthZGroupName = "FimSyncAdmins";
+        private static SecurityIdentifier authZGroup;
+
+        private static SecurityIdentifier AuthZGroup
+        {
+            get
+            {
+                if (authZGroup == null)
+                {
+                    authZGroup = Lithnet.Miiserver.Client.SyncServer.GetAdministratorsGroupSid();
+                }
+
+                return authZGroup;
+            }
+        }
 
         protected override bool CheckAccessCore(OperationContext operationContext)
         {
@@ -18,10 +31,15 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 return true;
             }
-            
-            IPrincipal wp = new WindowsPrincipal(operationContext.ServiceSecurityContext.WindowsIdentity);
 
-            return wp.IsInRole(ConfigServiceAuthorizationManager.AuthZGroupName);
+            WindowsPrincipal wp = new WindowsPrincipal(operationContext.ServiceSecurityContext.WindowsIdentity);
+
+            if (ConfigServiceAuthorizationManager.AuthZGroup == null)
+            {
+                return false;
+            }
+
+            return wp.IsInRole(ConfigServiceAuthorizationManager.AuthZGroup);
         }
     }
 }

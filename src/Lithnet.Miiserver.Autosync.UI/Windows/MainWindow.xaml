@@ -4,7 +4,7 @@
                       xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
                       Title="{Binding Path=DisplayName}"
                       Cursor="{Binding Path=Cursor}"
-                      Icon="/AutoSync.ico"
+                      Icon="/autosync.ico"
                       Height="Auto"
                       Width="Auto">
 

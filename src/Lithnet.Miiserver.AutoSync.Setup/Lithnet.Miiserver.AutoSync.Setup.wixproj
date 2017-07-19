@@ -24,7 +24,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ConfigPathDialog.wxs" />
-    <Compile Include="MailSettingsDialog.wxs" />
     <Compile Include="ServiceDetailsDialog.wxs" />
     <Compile Include="Components.wxs" />
     <Compile Include="Product.wxs" />
@@ -44,6 +43,22 @@
     </WixExtension>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Lithnet.Miiserver.AutoSync.Setup.CustomActions\Lithnet.Miiserver.AutoSync.Setup.CustomActions.csproj">
+      <Name>Lithnet.Miiserver.AutoSync.Setup.CustomActions</Name>
+      <Project>{3e483581-d9ca-4737-88d6-85204e5ebae1}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
+    </ProjectReference>
+    <ProjectReference Include="..\Lithnet.Miiserver.Autosync.UI\Lithnet.Miiserver.Autosync.Editor.csproj">
+      <Name>Lithnet.Miiserver.AutoSync.Editor</Name>
+      <Project>{0f56eda9-cf7f-4c49-a67b-3fcd434d4902}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
+    </ProjectReference>
     <ProjectReference Include="..\Lithnet.Miiserver.AutoSync\Lithnet.Miiserver.AutoSync.csproj">
       <Name>Lithnet.Miiserver.AutoSync</Name>
       <Project>{9a7026f9-297e-4d2a-849c-7b0287cd3f9d}</Project>

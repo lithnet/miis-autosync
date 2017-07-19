@@ -5,6 +5,7 @@ using System.ServiceProcess;
 using Lithnet.Miiserver.Client;
 using Lithnet.Logging;
 using System.IO;
+using System.Security.Principal;
 using System.Timers;
 using System.Threading.Tasks;
 using System.ServiceModel;
