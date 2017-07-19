@@ -921,7 +921,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 if (this.perProfileLastRunStatus[r.RunProfileName] == r.LastStepStatus)
                 {
-                    if (RegistrySettings.MailSendOncePerStateChange)
+                    if (!Program.ActiveConfig.Settings.MailSendAllErrorInstances)
                     {
                         // The last run returned the same return code. Do not send again.
                         return;
@@ -952,7 +952,7 @@ namespace Lithnet.Miiserver.AutoSync
                 return false;
             }
 
-            return RegistrySettings.MailIgnoreReturnCodes == null || !RegistrySettings.MailIgnoreReturnCodes.Contains(r.LastStepStatus, StringComparer.OrdinalIgnoreCase);
+            return Program.ActiveConfig.Settings.MailIgnoreReturnCodes == null || !Program.ActiveConfig.Settings.MailIgnoreReturnCodes.Contains(r.LastStepStatus, StringComparer.OrdinalIgnoreCase);
         }
 
 

@@ -5,6 +5,7 @@ using System.IO;
 using System.Windows.Forms;
 using Lithnet.Miiserver.AutoSync;
 using Lithnet.Common.Presentation;
+using PropertyChanged;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
@@ -12,7 +13,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
     {
         private const string PlaceholderPassword = "{5A4A203E-EBB9-4D47-A3D4-CD6055C6B4FF}";
 
-        private static char[] separators = new char[] { ',', ';' };
+        private static char[] separators = new char[] {',', ';'};
 
         public SettingsViewModel(Settings model)
             : base(model)
@@ -26,7 +27,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
             if (this.Model.MailIgnoreReturnCodes == null)
             {
-                this.Model.MailIgnoreReturnCodes = new HashSet<string>() { "success", "completed-no-objects" };
+                this.Model.MailIgnoreReturnCodes = new HashSet<string>() {"success", "completed-no-objects"};
             }
         }
 
@@ -202,6 +203,53 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 }
             }
         }
+
+        [AlsoNotifyFor(nameof(IsRunModeSupported), nameof(IsRunModeExclusive), nameof(IsRunModeUnsupported))]
+        public RunMode RunMode
+        {
+            get => this.Model.RunMode;
+            set => this.Model.RunMode = value;
+        }
+
+        public bool IsRunModeSupported
+        {
+            get => this.RunMode == RunMode.Supported;
+            set
+            {
+                if (value)
+                {
+                    this.RunMode = RunMode.Supported;
+
+                }
+            }
+        }
+
+        public bool IsRunModeExclusive
+        {
+            get => this.RunMode == RunMode.Exclusive;
+            set
+            {
+                if (value)
+                {
+                    this.RunMode = RunMode.Exclusive;
+
+                }
+            }
+        }
+        public bool IsRunModeUnsupported
+        {
+            get => this.RunMode == RunMode.Unsupported;
+            set
+            {
+                if (value)
+                {
+                    this.RunMode = RunMode.Unsupported;
+
+                }
+            }
+        }
+
+
 
         private void SelectPath()
         {

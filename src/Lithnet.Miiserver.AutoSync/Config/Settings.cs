@@ -64,5 +64,8 @@ namespace Lithnet.Miiserver.AutoSync
 
         [DataMember(Name = "mail-ignore-return-codes")]
         public HashSet<string> MailIgnoreReturnCodes { get; set; }
+
+        [DataMember(Name="run-mode")]
+        public RunMode RunMode { get; set; }
     }
 }

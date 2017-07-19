@@ -208,14 +208,14 @@ namespace Lithnet.Miiserver.AutoSync
             IEnumerable<MAObjectError> errors;
             int remainingErrors = 0;
 
-            if (RegistrySettings.MailMaxErrors <= 0 || d.MADiscoveryErrors.Count <= RegistrySettings.MailMaxErrors)
+            if (Program.ActiveConfig.Settings.MailMaxErrors <= 0 || d.MADiscoveryErrors.Count <= Program.ActiveConfig.Settings.MailMaxErrors)
             {
                 errors = d.MADiscoveryErrors;
             }
             else
             {
-                errors = d.MADiscoveryErrors.Take(RegistrySettings.MailMaxErrors);
-                remainingErrors = d.MADiscoveryErrors.Count - RegistrySettings.MailMaxErrors;
+                errors = d.MADiscoveryErrors.Take(Program.ActiveConfig.Settings.MailMaxErrors);
+                remainingErrors = d.MADiscoveryErrors.Count - Program.ActiveConfig.Settings.MailMaxErrors;
             }
 
             StringBuilder errorsBuilder = new StringBuilder();
@@ -278,14 +278,14 @@ namespace Lithnet.Miiserver.AutoSync
             IEnumerable<ImportError> errors;
             int remainingErrors = 0;
 
-            if (RegistrySettings.MailMaxErrors <= 0 || d.SynchronizationErrors.ImportErrors.Count <= RegistrySettings.MailMaxErrors)
+            if (Program.ActiveConfig.Settings.MailMaxErrors <= 0 || d.SynchronizationErrors.ImportErrors.Count <= Program.ActiveConfig.Settings.MailMaxErrors)
             {
                 errors = d.SynchronizationErrors.ImportErrors;
             }
             else
             {
-                errors = d.SynchronizationErrors.ImportErrors.Take(RegistrySettings.MailMaxErrors);
-                remainingErrors = d.SynchronizationErrors.ImportErrors.Count - RegistrySettings.MailMaxErrors;
+                errors = d.SynchronizationErrors.ImportErrors.Take(Program.ActiveConfig.Settings.MailMaxErrors);
+                remainingErrors = d.SynchronizationErrors.ImportErrors.Count - Program.ActiveConfig.Settings.MailMaxErrors;
             }
 
             StringBuilder errorsBuilder = new StringBuilder();
@@ -331,14 +331,14 @@ namespace Lithnet.Miiserver.AutoSync
             IEnumerable<ExportError> errors;
             int remainingErrors = 0;
 
-            if (RegistrySettings.MailMaxErrors <= 0 || d.SynchronizationErrors.ExportErrors.Count <= RegistrySettings.MailMaxErrors)
+            if (Program.ActiveConfig.Settings.MailMaxErrors <= 0 || d.SynchronizationErrors.ExportErrors.Count <= Program.ActiveConfig.Settings.MailMaxErrors)
             {
                 errors = d.SynchronizationErrors.ExportErrors;
             }
             else
             {
-                errors = d.SynchronizationErrors.ExportErrors.Take(RegistrySettings.MailMaxErrors);
-                remainingErrors = d.SynchronizationErrors.ExportErrors.Count - RegistrySettings.MailMaxErrors;
+                errors = d.SynchronizationErrors.ExportErrors.Take(Program.ActiveConfig.Settings.MailMaxErrors);
+                remainingErrors = d.SynchronizationErrors.ExportErrors.Count - Program.ActiveConfig.Settings.MailMaxErrors;
             }
 
             StringBuilder errorsBuilder = new StringBuilder();

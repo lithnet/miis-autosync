@@ -4,29 +4,39 @@ namespace Lithnet.Miiserver.AutoSync
 {
     internal static class MessageSender
     {
+        private static Settings MailSettings => Program.ActiveConfig.Settings;
+
         public static void SendMessage(string subject, string body)
         {
             using (MailMessage m = new MailMessage())
             {
-                foreach (string address in RegistrySettings.MailTo)
+                foreach (string address in MailSettings.MailTo)
                 {
                     m.To.Add(address);
                 }
 
-                if (!RegistrySettings.UseAppConfigMailSettings)
+                if (!MailSettings.MailUseAppConfig)
                 {
-                    m.From = new MailAddress(RegistrySettings.MailFrom);
+                    m.From = new MailAddress(MailSettings.MailFrom);
                 }
+
                 m.Subject = subject;
                 m.IsBodyHtml = true;
                 m.Body = body;
 
                 using (SmtpClient client = new SmtpClient())
                 {
-                    if (!RegistrySettings.UseAppConfigMailSettings)
+                    if (!MailSettings.MailUseAppConfig)
                     {
-                        client.Host = RegistrySettings.MailServer;
-                        client.Port = RegistrySettings.MailServerPort;
+                        client.Host = MailSettings.MailHost;
+                        client.Port = MailSettings.MailPort;
+                        client.UseDefaultCredentials = MailSettings.MailUseDefaultCredentials;
+                        client.EnableSsl = MailSettings.MailUseSsl;
+                       
+                        if (!string.IsNullOrEmpty(MailSettings.MailUsername))
+                        {
+                            client.Credentials = new System.Net.NetworkCredential(MailSettings.MailUsername, MailSettings.MailPassword?.Value);
+                        }
                     }
 
                     client.Send(m);
@@ -36,21 +46,21 @@ namespace Lithnet.Miiserver.AutoSync
 
         internal static bool CanSendMail()
         {
-            if (!RegistrySettings.MailEnabled)
+            if (!MailSettings.MailEnabled)
             {
                 return false;
             }
 
-            if (!RegistrySettings.UseAppConfigMailSettings)
+            if (!MailSettings.MailUseAppConfig)
             {
-                if (RegistrySettings.MailFrom == null || RegistrySettings.MailTo == null || RegistrySettings.MailServer == null)
+                if (MailSettings.MailFrom == null || MailSettings.MailTo == null || MailSettings.MailHost == null)
                 {
                     return false;
                 }
             }
             else
             {
-                if (RegistrySettings.MailTo == null)
+                if (MailSettings.MailTo == null)
                 {
                     return false;
                 }

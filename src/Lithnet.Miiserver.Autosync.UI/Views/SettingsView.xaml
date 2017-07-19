@@ -236,13 +236,36 @@
                                 <RowDefinition  />
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition />
                             </Grid.ColumnDefinitions>
 
+                            <Label
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                Content="Execution mode"/>
+                            
+                            <StackPanel Grid.Row="0"
+                                        Grid.Column="1"
+                                        Margin="0 0 0 5"
+                                        Orientation="Vertical">
+                                <RadioButton Margin="0 10 0 0"
+                                             Content="Supported (recommended)" 
+                                             IsChecked="{Binding IsRunModeSupported}"/>
+                                <TextBlock FontStyle="Italic" TextWrapping="Wrap">Uses the Microsoft-recommended method of running multiple management agents simultaneously. Import and export operations on different management agents will be allowed to run simultaneously, but synchronization run profiles will always be run exclusively. When a synchronization run profile needs to execute, all management agents must wait for that profile to finish before they can execute their next run profile</TextBlock>
+                                
+                                <RadioButton Margin="0 10 0 0"
+                                             Content="Exclusive mode"
+                                             IsChecked="{Binding IsRunModeExclusive}"/>
+                                <TextBlock FontStyle="Italic" TextWrapping="Wrap">Run profiles execute one at a time, in the order they appeared in the execution queue. Only one management agent runs at any one time. Useful for debugging purposes or in environments where speed and throughput are not a concern</TextBlock>
 
+                                <RadioButton Margin="0 10 0 0"
+                                             Content="Unsupported mode"
+                                             IsChecked="{Binding IsRunModeUnsupported}"/>
+                                <TextBlock FontStyle="Italic" TextWrapping="Wrap">Import, export and synchronization operations on different management agents will be allowed to run simultaneously, but only one management agent can run a synchronization profile at any one time. This method of execution is not supported by Microsoft. Deadlocks are likely and data corruption could occur. Use at your own risk.</TextBlock>
 
+                            </StackPanel>
                         </Grid>
-
                     </TabItem>
                 </TabControl>
             </StackPanel>

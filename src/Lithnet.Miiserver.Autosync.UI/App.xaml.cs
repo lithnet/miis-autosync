@@ -15,7 +15,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
             AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
 
 #if DEBUG
-            if (System.Diagnostics.Debugger.IsAttached)
+            if (Debugger.IsAttached)
             {
                 // Must be started off the UI-thread
                 Task.Run(() =>
