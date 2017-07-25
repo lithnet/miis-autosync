@@ -30,6 +30,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public Cursor Cursor { get; set; }
 
+        public Visibility StatusBarVisibility { get; set; }
+
         public MainWindowViewModel()
         {
             UINotifyPropertyChanges.BeginIgnoreAllChanges();
@@ -39,12 +41,15 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.IgnorePropertyHasChanged.Add("DisplayName");
             this.IgnorePropertyHasChanged.Add("ChildNodes");
             this.IgnorePropertyHasChanged.Add("ViewModelIsDirty");
+            this.IgnorePropertyHasChanged.Add("StatusBarVisibility");
 
             this.Commands.AddItem("Reload", x => this.Reload());
             this.Commands.AddItem("Save", x => this.Save(), x => this.CanSave());
             this.Commands.AddItem("Export", x => this.Export(), x => this.CanExport());
             this.Commands.AddItem("Close", x => this.Close());
             this.Commands.AddItem("Import", x => this.Import(), x => this.CanImport());
+
+            this.StatusBarVisibility = Visibility.Collapsed;
 
             this.Cursor = Cursors.Arrow;
 
@@ -56,6 +61,20 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         private void PopulateIgnoreViewModelChanges()
         {
             this.ignoreViewModelChanges = new List<Type>();
+        }
+
+        private void CheckPendingRestart()
+        {
+            ConfigClient c = new ConfigClient();
+
+            if (c.IsPendingRestart())
+            {
+                this.StatusBarVisibility = Visibility.Visible;
+            }
+            else
+            {
+                this.StatusBarVisibility = Visibility.Collapsed;
+            }
         }
 
         private void Reload(bool confirmRestart = true)
@@ -101,7 +120,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             try
             {
                 this.Cursor = Cursors.Wait;
-                UINotifyPropertyChanges.BeginIgnoreAllChanges();
 
                 ConfigClient c = new ConfigClient();
                 ConfigFile file;
@@ -110,6 +128,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 {
                     c.Open();
                     file = c.GetConfig();
+                    this.CheckPendingRestart();
                 }
                 catch (EndpointNotFoundException ex)
                 {
@@ -139,7 +158,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
             finally
             {
-                UINotifyPropertyChanges.EndIgnoreAllChanges();
                 this.Cursor = Cursors.Arrow;
             }
         }
@@ -252,12 +270,15 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void AskToRestartService()
         {
-            if (MessageBox.Show("Do you want to restart the service now to make the new config take effect?", "Error", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
-            {
-                return;
-            }
+            this.CheckPendingRestart();
 
-            this.Reload(false);
+            //if (MessageBox.Show("Do you want to restart the service now to make the new config take effect?", "Error", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
+            //{
+            //    this.CheckPendingRestart();
+            //    return;
+            //}
+
+            //this.Reload(false);
         }
 
         private void Export()

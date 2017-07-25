@@ -31,5 +31,10 @@ namespace Lithnet.Miiserver.AutoSync
         {
             this.Channel.Reload();
         }
+
+        public bool IsPendingRestart()
+        {
+            return this.Channel.IsPendingRestart();
+        }
     }
 }

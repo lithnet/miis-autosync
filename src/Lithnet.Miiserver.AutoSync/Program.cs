@@ -16,7 +16,7 @@ namespace Lithnet.Miiserver.AutoSync
         private static ConfigFile activeConfig;
 
         private static ConfigFile currentConfig;
-        
+
         private static List<MAExecutor> maExecutors;
 
         private static Timer runHistoryCleanupTimer;
@@ -29,7 +29,8 @@ namespace Lithnet.Miiserver.AutoSync
             set
             {
                 Program.activeConfig = value;
-                Program.CurrentConfig = value;
+                Program.currentConfig = value;
+                Program.PendingRestart = false;
                 Logger.WriteLine("Active config has been set");
             }
         }
@@ -40,9 +41,12 @@ namespace Lithnet.Miiserver.AutoSync
             set
             {
                 Program.currentConfig = value;
+                Program.PendingRestart = true;
                 Logger.WriteLine("Current config has been set");
             }
         }
+
+        internal static bool PendingRestart { get; set; }
 
         private static bool hasConfig;
 

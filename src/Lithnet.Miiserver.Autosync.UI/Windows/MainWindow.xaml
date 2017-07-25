@@ -19,6 +19,7 @@
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
         
@@ -59,10 +60,17 @@
             </Menu>
         </DockPanel>
 
+        <StatusBar Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Visibility="{Binding StatusBarVisibility}"
+                     Background ="{x:Static SystemColors.InfoBrush}" Foreground="{x:Static SystemColors.ControlTextBrush}" >
+            <StatusBar.InputBindings>
+                <MouseBinding Command="{Binding Path=Commands.Reload}" MouseAction="LeftClick" />
+            </StatusBar.InputBindings>
+            <StatusBarItem Content="The AutoSync service must be restarted for the configuration to take effect. Click here to restart the service" />
+        </StatusBar>
 
-        <GridSplitter Grid.Row="1" Grid.Column="1" Width="5" HorizontalAlignment="Stretch" />
+        <GridSplitter Grid.Row="2" Grid.Column="1" Width="5" HorizontalAlignment="Stretch" />
 
-        <TreeView Grid.Row="1" Grid.Column="0" Name="TreeViewMain" DataContext="{Binding Path=ConfigFile}" BorderThickness="1"
+        <TreeView Grid.Row="2" Grid.Column="0" Name="TreeViewMain" DataContext="{Binding Path=ConfigFile}" BorderThickness="1"
             ItemsSource="{Binding Path=ChildNodes}">
             <TreeView.ItemContainerStyle>
                 <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource MetroTreeViewItem}">
@@ -80,7 +88,7 @@
                 </ResourceDictionary>
             </TreeView.Resources>
         </TreeView>
-        <ContentControl Grid.Row="1"  Grid.Column="2" Content="{Binding Path=SelectedItem, ElementName=TreeViewMain}" Grid.ColumnSpan="2">
+        <ContentControl Grid.Row="2"  Grid.Column="2" Content="{Binding Path=SelectedItem, ElementName=TreeViewMain}" Grid.ColumnSpan="2">
             <ContentControl.Resources>
                 <ResourceDictionary Source="/ResourceDictionaries/ItemViewDictionary.xaml"/>
             </ContentControl.Resources>

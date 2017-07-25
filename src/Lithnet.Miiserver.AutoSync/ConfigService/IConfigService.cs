@@ -18,5 +18,8 @@ namespace Lithnet.Miiserver.AutoSync
 
         [OperationContract]
         void Reload();
+
+        [OperationContract]
+        bool IsPendingRestart();
     }
 }
