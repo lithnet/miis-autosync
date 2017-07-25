@@ -29,7 +29,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         private bool ViewModelIsDirty { get; set; }
 
         public Cursor Cursor { get; set; }
-        
+
         public MainWindowViewModel()
         {
             UINotifyPropertyChanges.BeginIgnoreAllChanges();
@@ -81,11 +81,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             try
             {
                 this.Cursor = Cursors.Wait;
-                Task.Run(() =>
-                {
-                    ConfigClient c = new ConfigClient();
-                    c.Reload();
-                });
+                ConfigClient c = new ConfigClient();
+                c.Reload();
             }
             catch (Exception ex)
             {
@@ -176,41 +173,34 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 return;
             }
 
+            AutoSync.ConfigFile f;
             try
             {
-                AutoSync.ConfigFile f;
-                try
-                {
-                    f = AutoSync.ConfigFile.Load(dialog.FileName);
-                }
-                catch (Exception ex)
-                {
-                    Trace.WriteLine(ex);
-                    MessageBox.Show($"Could not open the file\n\n{ex.Message}", "File Open", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
+                f = AutoSync.ConfigFile.Load(dialog.FileName);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex);
+                MessageBox.Show($"Could not open the file\n\n{ex.Message}", "File Open", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
 
-                try
-                {
-                    this.Cursor = Cursors.Wait;
-                    ConfigClient c = new ConfigClient();
-                    c.PutConfig(f);
-                    this.AskToRestartService();
-                }
-                catch (Exception ex)
-                {
-                    Trace.WriteLine(ex);
-                    MessageBox.Show($"Could not import the file\n\n{ex.Message}", "File import operation", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
-                finally
-                {
-                    this.Cursor = Cursors.Arrow;
-                }
+            try
+            {
+                this.Cursor = Cursors.Wait;
+                ConfigClient c = new ConfigClient();
+                c.PutConfig(f);
+                this.AskToRestartService();
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex);
+                MessageBox.Show($"Could not import the file\n\n{ex.Message}", "File import operation", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
             }
             finally
             {
-                this.ResetConfigViewModel();
+                this.Cursor = Cursors.Arrow;
             }
 
             this.ViewModelIsDirty = false;

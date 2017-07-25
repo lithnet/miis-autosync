@@ -28,17 +28,20 @@
                 <MenuItem Header="_File">
                     <MenuItem.ItemsSource>
                         <CompositeCollection>
-                            <MenuItem Header="_Reload"
-                                      Command="{Binding Path=Commands.Reload}" />
                             <MenuItem Header="_Save"
                                       Command="{Binding Path=Commands.Save}" />
-                            <MenuItem Header="Export Config..."
-                                      Command="{Binding Path=Commands.Export}" />
-                            <MenuItem Header="Import Config..."
-                                      Command="{Binding Path=Commands.Import}" />
 
                             <Separator />
-
+                            <MenuItem Header="Import Config..."
+                                      Command="{Binding Path=Commands.Import}" />
+                            <MenuItem Header="Export Config..."
+                                      Command="{Binding Path=Commands.Export}" />
+                            
+                            <Separator />
+                            <MenuItem Header="_Restart service"
+                                      Command="{Binding Path=Commands.Reload}" />
+                            
+                            <Separator/>
                             <MenuItem Header="_Close"
                                       Command="{Binding Path=Commands.Close}" />
 

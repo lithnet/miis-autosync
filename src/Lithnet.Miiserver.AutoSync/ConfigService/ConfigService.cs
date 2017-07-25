@@ -33,13 +33,14 @@ namespace Lithnet.Miiserver.AutoSync
         public ConfigFile GetConfig()
         {
             ProtectedString.EncryptOnWrite = false;
-            return Program.ActiveConfig;
+            return Program.CurrentConfig;
         }
 
         public void PutConfig(ConfigFile config)
         {
             ProtectedString.EncryptOnWrite = true;
             ConfigFile.Save(config, RegistrySettings.ConfigurationFile);
+            Program.CurrentConfig = config;
         }
 
         public void Reload()

@@ -5,7 +5,6 @@ using System.ServiceProcess;
 using Lithnet.Miiserver.Client;
 using Lithnet.Logging;
 using System.IO;
-using System.Security.Principal;
 using System.Timers;
 using System.Threading.Tasks;
 using System.ServiceModel;
@@ -14,13 +13,36 @@ namespace Lithnet.Miiserver.AutoSync
 {
     public static class Program
     {
+        private static ConfigFile activeConfig;
+
+        private static ConfigFile currentConfig;
+        
         private static List<MAExecutor> maExecutors;
 
         private static Timer runHistoryCleanupTimer;
 
         private static ServiceHost configServiceHost;
 
-        internal static ConfigFile ActiveConfig;
+        internal static ConfigFile ActiveConfig
+        {
+            get => Program.activeConfig;
+            set
+            {
+                Program.activeConfig = value;
+                Program.CurrentConfig = value;
+                Logger.WriteLine("Active config has been set");
+            }
+        }
+
+        internal static ConfigFile CurrentConfig
+        {
+            get => Program.currentConfig;
+            set
+            {
+                Program.currentConfig = value;
+                Logger.WriteLine("Current config has been set");
+            }
+        }
 
         private static bool hasConfig;
 
@@ -270,7 +292,7 @@ namespace Lithnet.Miiserver.AutoSync
         private static void StartMAExecutors()
         {
             Program.maExecutors = new List<MAExecutor>();
-     
+
             foreach (MAConfigParameters config in Program.ActiveConfig.ManagementAgents)
             {
                 if (config.IsNew)
@@ -294,8 +316,6 @@ namespace Lithnet.Miiserver.AutoSync
                 MAExecutor x = new MAExecutor(config);
                 Program.maExecutors.Add(x);
             }
-            
-            //Program.maExecutors.AsParallel().Select(t => t.Start());
 
             foreach (MAExecutor x in Program.maExecutors)
             {
