@@ -114,10 +114,10 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
         }
 
         [CustomAction]
-        public static ActionResult AddServiceAccountToFimSyncOperators(Session session)
+        public static ActionResult AddServiceAccountToFimSyncAdmins(Session session)
         {
             string account = session["SERVICE_USERNAME"];
-            string group = session["GROUP_FIM_SYNC_OPERATORS"];
+            string group = session["GROUP_FIM_SYNC_ADMINS"];
 
             try
             {
@@ -130,12 +130,22 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
             {
 
                 session["GROUP_ADD_ACTION_FAILED"] = "1";
-                session["WIXUI_EXITDIALOGOPTIONALTEXT"] = $"The installer was unable to add the user {account} to the FIM Sync Operators group. Please add this user manually to the group before starting the AutoSync service.";
-                session.Log("!Could not add user {0} to group {1}", account, group);
+                session.Log("Could not add user {0} to group {1}", account, group);
                 session.Log(ex.ToString());
-                                
-                session.Message(InstallMessage.User, new Record($"The installer was unable to add the user {0} to the FIM Sync Operators group. Please add this user manually to the group before starting the AutoSync service.", account));
-                return ActionResult.Success;
+
+                int val = (int)InstallMessage.User | (int)MessageButtons.OKCancel | (int)MessageIcon.Error;
+
+                var result = session.Message((InstallMessage)val, 
+                    new Record($"The installer was unable to add the service account '{account}' to the MIM Sync Admins group. Please add this user manually to the group and press OK to continue, or press Cancel to exit"));
+
+                if (result != MessageResult.OK)
+                {
+                    return ActionResult.Failure;
+                }
+                else
+                {
+                    return ActionResult.Success;
+                }
             }
         }
 

@@ -105,9 +105,9 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                if (!IsInFimAdminsGroup())
+                if (!CheckSyncEnginePermissions())
                 {
-                    throw new UnauthorizedAccessException("The user must be a member of the FIMSyncAdmins group");
+                    throw new UnauthorizedAccessException("The user must be a member of the FIMSyncAdmins or FIMSyncOperators group");
                 }
 
                 Program.LoadConfiguration();
@@ -162,7 +162,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        private static bool IsInFimAdminsGroup()
+        private static bool CheckSyncEnginePermissions()
         {
             return SyncServer.IsAdmin();
         }

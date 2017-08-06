@@ -15,14 +15,14 @@ namespace Lithnet.Miiserver.AutoSync.UI
         {
             AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
 
-            if (!SyncServer.IsAdmin())
-            {
-                MessageBox.Show("You must be a member of the MIM Synchronization Administrators group to use the AutoSync editor",
-                    "Lithnet AutoSync",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Stop);
-                Environment.Exit(5);
-            }
+            //if (!SyncServer.IsAdmin())
+            //{
+            //    MessageBox.Show("You must be a member of the MIM Synchronization Administrators group to use the AutoSync editor",
+            //        "Lithnet AutoSync",
+            //        MessageBoxButton.OK,
+            //        MessageBoxImage.Stop);
+            //    Environment.Exit(5);
+            //}
 
 
 #if DEBUG

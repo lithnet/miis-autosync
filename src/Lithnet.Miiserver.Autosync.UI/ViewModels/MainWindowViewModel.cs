@@ -140,6 +140,12 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                         MessageBoxImage.Error);
                     return;
                 }
+                catch (System.ServiceModel.Security.SecurityAccessDeniedException)
+                {
+                    MessageBox.Show("You do not have permission to manage the AutoSync service", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Environment.Exit(5);
+                    return;
+                }
                 catch (Exception ex)
                 {
                     Trace.WriteLine(ex);

@@ -41,12 +41,13 @@
     <CustomAction Id="GetFimSyncGroups"
               BinaryKey="CustomActionBinary"
               DllEntry="GetFimGroups"
-              Return="check" />
+              Return="check"
+              Impersonate="yes"/>
 
-    <CustomAction Id="AddServiceAccountToFimSyncOperators"
+    <CustomAction Id="AddServiceAccountToFimSyncAdmins"
               BinaryKey="CustomActionBinary"
-              DllEntry="AddServiceAccountToFimSyncOperators"
-              Return="ignore"
+              DllEntry="AddServiceAccountToFimSyncAdmins"
+              Return="check"
               Impersonate="yes"
       />
 
@@ -75,7 +76,7 @@
                       Type="raw"
                       Win64="yes"/>
     </Property>
-    
+
     <Property Id="SERVICE_ADMINS_GROUP" Secure="yes">
       <RegistrySearch Id="ExistingServiceAdminsGroup"
                       Root="HKLM"
@@ -147,14 +148,14 @@
     </Feature>
 
     <CustomAction Id="SetServiceAdminsGroupIfBlank" Property="SERVICE_ADMINS_GROUP" Value="[GROUP_FIM_SYNC_ADMINS_NAME]"/>
-      
+
     <InstallUISequence>
       <Custom Action="GetFimSyncGroups" After="CostFinalize">NOT Installed</Custom>
       <Custom Action="SetServiceAdminsGroupIfBlank" After="CostFinalize">NOT Installed AND NOT SERVICE_ADMINS_GROUP</Custom>
     </InstallUISequence>
     <InstallExecuteSequence>
-      <Custom Action="AddServiceAccountToFimSyncOperators" After="InstallFiles">NOT Installed</Custom>
-      <Custom Action="SetServicePermissionGroupProperty" After="InstallFiles">NOT Installed</Custom>
+      <Custom Action="AddServiceAccountToFimSyncAdmins" After="InstallFiles">NOT Installed</Custom>
+      <!--<Custom Action="SetServicePermissionGroupProperty" After="InstallFiles">NOT Installed</Custom>-->
 
     </InstallExecuteSequence>
 
