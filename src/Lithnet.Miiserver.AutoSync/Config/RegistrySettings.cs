@@ -19,7 +19,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 if (RegistrySettings.key == null)
                 {
-                    RegistrySettings.key = Registry.LocalMachine.OpenSubKey("Software\\Lithnet\\MiisAutoSync");
+                    RegistrySettings.key = Registry.LocalMachine.OpenSubKey("System\\CurrentControlSet\\Services\\miisautosync\\Parameters");
                 }
 
                 return RegistrySettings.key;
@@ -43,6 +43,21 @@ namespace Lithnet.Miiserver.AutoSync
                 string dirName = Path.GetDirectoryName(path);
 
                 return Path.Combine(dirName ?? Global.AssemblyDirectory, "Logs\\autosync.log");
+            }
+        }
+
+        public static string AdminGroup
+        {
+            get
+            {
+                string value = RegistrySettings.BaseKey.GetValue("ServiceAdminGroup") as string;
+
+                if (value != null)
+                {
+                    return value;
+                }
+
+                return "FimSyncAdmins";
             }
         }
 

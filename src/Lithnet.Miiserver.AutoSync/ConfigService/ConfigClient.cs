@@ -13,6 +13,7 @@ namespace Lithnet.Miiserver.AutoSync
         public ConfigClient()
             : base(ConfigServiceConfiguration.NetNamedPipeBinding, ConfigServiceConfiguration.NetNamedPipeEndpointAddress)
         {
+            this.ClientCredentials.Windows.AllowedImpersonationLevel = System.Security.Principal.TokenImpersonationLevel.Impersonation;
         }
 
         public ConfigFile GetConfig()

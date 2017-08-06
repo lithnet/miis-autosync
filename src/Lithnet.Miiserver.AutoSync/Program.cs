@@ -97,6 +97,7 @@ namespace Lithnet.Miiserver.AutoSync
             if (Program.configServiceHost == null || Program.configServiceHost.State != CommunicationState.Opened)
             {
                 Program.configServiceHost = ConfigService.CreateInstance();
+                Logger.WriteLine("Initialized service host");
             }
         }
 

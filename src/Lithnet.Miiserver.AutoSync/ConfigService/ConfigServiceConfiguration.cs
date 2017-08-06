@@ -38,7 +38,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                int timeout = System.Diagnostics.Debugger.IsAttached ? 900 : 10;
+                int timeout = System.Diagnostics.Debugger.IsAttached ? 900 : 100;
 
                 NetNamedPipeBinding binding = new NetNamedPipeBinding();
                 binding.MaxReceivedMessageSize = int.MaxValue;

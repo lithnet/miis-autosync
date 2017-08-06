@@ -2,12 +2,12 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
      xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
   <Product Id="*"
-           Name="Lithnet FIM/MIM AutoSync Service"
+           Name="Lithnet AutoSync for Microsoft Identity Manager"
            Language="1033"
            Version="!(bind.FileVersion.filda5afc97726743f09a85d512593be8c8)"
            Manufacturer="Lithnet"
            UpgradeCode="028A57DF-28CE-47B0-9B3E-18B523A643D4">
-    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" Platform="x64" />
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" Platform="x64" InstallPrivileges="elevated" />
     <Media Id="1" Cabinet="Cab1.cab" EmbedCab="yes" />
 
     <Icon Id="autosync.ico" SourceFile="autosync.ico"/>
@@ -24,13 +24,32 @@
     <Property Id="SERVICE_PASSWORD" Hidden="yes" Secure="yes"/>
     <Property Id="SERVICE_NAME" Secure="yes" Value="miisautosync"/>
     <Property Id="SERVICE_PERMISSION_GROUP" Secure="yes"/>
+
+    <Property Id="GROUP_FIM_SYNC_ADMINS" Secure="yes"/>
+    <Property Id="GROUP_FIM_SYNC_ADMINS_NAME" Secure="yes"/>
+    <Property Id="GROUP_FIM_SYNC_OPERATORS" Secure="yes"/>
+    <Property Id="GROUP_FIM_SYNC_OPERATORS_NAME" Secure="yes"/>
+    <Property Id="GROUP_ADD_ACTION_FAILED" Secure="yes"/>
+
     <Binary Id="CustomActionBinary" SourceFile="$(var.Lithnet.Miiserver.AutoSync.Setup.CustomActions.TargetDir)\Lithnet.Miiserver.AutoSync.Setup.CustomActions.CA.dll" />
-            
+
     <CustomAction Id="SetServicePermissionGroupProperty"
                   BinaryKey="CustomActionBinary"
                   DllEntry="GetAdminGroupName"
-                  Return="check"/>
-      
+                  Return="check" />
+
+    <CustomAction Id="GetFimSyncGroups"
+              BinaryKey="CustomActionBinary"
+              DllEntry="GetFimGroups"
+              Return="check" />
+
+    <CustomAction Id="AddServiceAccountToFimSyncOperators"
+              BinaryKey="CustomActionBinary"
+              DllEntry="AddServiceAccountToFimSyncOperators"
+              Return="ignore"
+              Impersonate="yes"
+      />
+
     <Property Id="FIMINSTALLDIR" Secure="yes">
       <RegistrySearch Id="FimInstallDirFromRegistry"
                       Root="HKLM"
@@ -51,8 +70,17 @@
     <Property Id="SERVICE_USERNAME" Secure="yes">
       <RegistrySearch Id="ExistingServiceAccount"
                       Root="HKLM"
-                      Key="SYSTEM\CurrentControlSet\services\miisautosync"
+                      Key="SYSTEM\CurrentControlSet\services\[SERVICE_NAME]"
                       Name="ObjectName"
+                      Type="raw"
+                      Win64="yes"/>
+    </Property>
+    
+    <Property Id="SERVICE_ADMINS_GROUP" Secure="yes">
+      <RegistrySearch Id="ExistingServiceAdminsGroup"
+                      Root="HKLM"
+                      Key="SYSTEM\CurrentControlSet\services\[SERVICE_NAME]\Parameters"
+                      Name="ServiceAdminsGroup"
                       Type="raw"
                       Win64="yes"/>
     </Property>
@@ -65,7 +93,6 @@
                       Type="raw"
                       Win64="yes" />
     </Property>
-
 
     <Condition Message="This application requires the Forefront Identity Manager 2010 R2 4.1.3441 or later to be installed">
       <![CDATA[Installed OR SYNCVERSION]]>
@@ -102,13 +129,16 @@
       <DialogRef Id="UserExit" />
 
       <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="ServiceDetailsDialog">NOT Installed</Publish>
-      <Publish Dialog="ServiceDetailsDialog" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="1">NOT INSTALLED</Publish>
+      <Publish Dialog="ServiceDetailsDialog" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="1"></Publish>
       <Publish Dialog="ServiceDetailsDialog" Control="Next" Event="NewDialog" Value="ConfigPathDialog" Order="4">PASSWORD_COMPARE = "1"</Publish>
       <Publish Dialog="ConfigPathDialog" Control="Back" Event="NewDialog" Value="ServiceDetailsDialog" Order="1"></Publish>
       <Publish Dialog="ConfigPathDialog" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="1"></Publish>
       <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="ConfigPathDialog" Order="1"></Publish>
+
       <Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="999">1</Publish>
     </UI>
+
+
 
     <Feature Id="AutoSync" Title="Lithnet Miiserver AutoSync" Level="1">
       <ComponentGroupRef Id="Binaries" />
@@ -116,8 +146,17 @@
       <ComponentGroupRef Id="Editor" />
     </Feature>
 
+    <CustomAction Id="SetServiceAdminsGroupIfBlank" Property="SERVICE_ADMINS_GROUP" Value="[GROUP_FIM_SYNC_ADMINS_NAME]"/>
+      
+    <InstallUISequence>
+      <Custom Action="GetFimSyncGroups" After="CostFinalize">NOT Installed</Custom>
+      <Custom Action="SetServiceAdminsGroupIfBlank" After="CostFinalize">NOT Installed AND NOT SERVICE_ADMINS_GROUP</Custom>
+    </InstallUISequence>
     <InstallExecuteSequence>
-      <Custom Action="SetServicePermissionGroupProperty" After="InstallInitialize" />
+      <Custom Action="AddServiceAccountToFimSyncOperators" After="InstallFiles">NOT Installed</Custom>
+      <Custom Action="SetServicePermissionGroupProperty" After="InstallFiles">NOT Installed</Custom>
+
     </InstallExecuteSequence>
+
   </Product>
 </Wix>

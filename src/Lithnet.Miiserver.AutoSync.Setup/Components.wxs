@@ -31,15 +31,18 @@
             ServiceQueryStatus="yes"
             ServiceStart="yes"
             ServiceStop="yes" />
-        </ServiceInstall>
-        <ServiceControl Id="ServiceControlEvents" Name="[SERVICE_NAME]" Stop="both" Remove="uninstall" Wait="yes" Start="install"/>
-        <util:User Id="ServiceUser" Name="[SERVICE_USERNAME]" Password="[SERVICE_PASSWORD]" CreateUser="no" LogonAsService="yes" UpdateIfExists="yes"  />
 
+        
+        </ServiceInstall>
+        
+        <ServiceControl Id="ServiceControlEvents" Name="[SERVICE_NAME]" Stop="both" Remove="uninstall" Wait="yes" Start="install"/>
+        <util:User Id="ServiceUser" Name="[SERVICE_USERNAME]" Password="[SERVICE_PASSWORD]" CreateUser="no" LogonAsService="yes" UpdateIfExists="yes"/>
         <CreateFolder Directory="APPLOGDIR">
           <util:PermissionEx User="[SERVICE_USERNAME]" GenericAll="yes" />
         </CreateFolder>
 
-        <RegistryValue Root="HKLM" Key="Software\Lithnet\MiisAutoSync" Name="LogPath" Type="string" Value="[APPLOGDIR]" />
+        <RegistryValue Root="HKLM" Key="System\CurrentControlSet\Services\[SERVICE_NAME]\Parameters" Name="LogPath" Type="string" Value="[APPLOGDIR]" />
+        <RegistryValue Root="HKLM" Key="System\CurrentControlSet\Services\[SERVICE_NAME]\Parameters" Name="ServiceAdminsGroup" Type="string" Value="[SERVICE_ADMINS_GROUP]" />
 
       </Component>
 

@@ -26,7 +26,7 @@
           <Condition Action="hide">(PASSWORD_COMPARE = "2")</Condition>
           <Condition Action="show">(PASSWORD_COMPARE = "3")</Condition>
         </Control>
-        <Control Id="WarningLabel" Type="Text" X="20" Y="190" Width="325" Height="25" TabSkip="no" Text="Warning: The credentials will not be verfied by the installer. Ensure the provided credentials are correct" />
+        <Control Id="WarningLabel" Type="Text" X="20" Y="190" Width="325" Height="25" TabSkip="no" Text="Warning: The credentials will not be verified by the installer. Ensure the provided credentials are correct" />
         <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)"></Control>
         <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)">
           <Publish Property="PASSWORD_COMPARE" Value="1" Order="1"><![CDATA[ (SERVICE_PASSWORD = PASSWD_CONFIRM) ]]></Publish>
