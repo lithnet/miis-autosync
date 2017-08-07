@@ -14,6 +14,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
     public class MAConfigParametersViewModel : ViewModelBase<MAConfigParameters>
     {
         private List<Type> allowedTypes;
+        private static string nullPlaceholder = "(none)";
 
         public MAConfigParametersViewModel(MAConfigParameters model)
             : base(model)
@@ -73,44 +74,44 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public string ScheduledImportRunProfileName
         {
-            get => this.Model.ScheduledImportRunProfileName;
-            set => this.Model.ScheduledImportRunProfileName = value;
+            get => this.Model.ScheduledImportRunProfileName ?? nullPlaceholder;
+            set => this.Model.ScheduledImportRunProfileName = value == nullPlaceholder ? null : value;
         }
 
         public string FullSyncRunProfileName
         {
-            get => this.Model.FullSyncRunProfileName;
-            set => this.Model.FullSyncRunProfileName = value;
+            get => this.Model.FullSyncRunProfileName ?? nullPlaceholder;
+            set => this.Model.FullSyncRunProfileName = value == nullPlaceholder ? null : value;
         }
 
         public string FullImportRunProfileName
         {
-            get => this.Model.FullImportRunProfileName;
-            set => this.Model.FullImportRunProfileName = value;
+            get => this.Model.FullImportRunProfileName ?? nullPlaceholder;
+            set => this.Model.FullImportRunProfileName = value == nullPlaceholder ? null : value;
         }
 
         public string ExportRunProfileName
         {
-            get => this.Model.ExportRunProfileName;
-            set => this.Model.ExportRunProfileName = value;
+            get => this.Model.ExportRunProfileName ?? nullPlaceholder;
+            set => this.Model.ExportRunProfileName = value == nullPlaceholder ? null : value;
         }
 
         public string DeltaSyncRunProfileName
         {
-            get => this.Model.DeltaSyncRunProfileName;
-            set => this.Model.DeltaSyncRunProfileName = value;
+            get => this.Model.DeltaSyncRunProfileName ?? nullPlaceholder;
+            set => this.Model.DeltaSyncRunProfileName = value == nullPlaceholder ? null : value;
         }
 
         public string DeltaImportRunProfileName
         {
-            get => this.Model.DeltaImportRunProfileName;
-            set => this.Model.DeltaImportRunProfileName = value;
+            get => this.Model.DeltaImportRunProfileName ?? nullPlaceholder;
+            set => this.Model.DeltaImportRunProfileName = value == nullPlaceholder ? null : value;
         }
 
         public string ConfirmingImportRunProfileName
         {
-            get => this.Model.ConfirmingImportRunProfileName;
-            set => this.Model.ConfirmingImportRunProfileName = value;
+            get => this.Model.ConfirmingImportRunProfileName ?? nullPlaceholder;
+            set => this.Model.ConfirmingImportRunProfileName = value == nullPlaceholder ? null : value;
         }
 
         public bool Disabled
@@ -141,7 +142,12 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             get
             {
-                return this.Model.ManagementAgent?.RunProfiles.Select(t => t.Key);
+                yield return "(none)";
+
+                foreach(var i in this.Model.ManagementAgent?.RunProfiles)
+                {
+                    yield return i.Key;
+                }
             }
         }
 
@@ -173,7 +179,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"An unexpected error occured.\n{ex.Message}", "Unable to create trigger");
+                MessageBox.Show($"An unexpected error occurred.\n{ex.Message}", "Unable to create trigger");
                 Trace.WriteLine(ex);
             }
         }

@@ -42,7 +42,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public static void Save(ConfigFile config, string filename)
         {
-            //ConfigFile.MarkManagementAgentsAsConfigured(config);
+            ConfigFile.MarkManagementAgentsAsConfigured(config);
             Serializer.Save(filename, config);
         }
 

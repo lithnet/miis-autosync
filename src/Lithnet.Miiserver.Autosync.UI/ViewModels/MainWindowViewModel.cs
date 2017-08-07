@@ -228,6 +228,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
 
             this.ViewModelIsDirty = false;
+
+            this.ResetConfigViewModel();
         }
 
         private void Save()
@@ -236,15 +238,12 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
             try
             {
+                MarkManagementAgentsAsConfigured();
+
                 this.Cursor = Cursors.Wait;
                 ConfigClient c = new ConfigClient();
                 c.PutConfig(this.ConfigFile.Model);
                 this.ViewModelIsDirty = false;
-
-                foreach (MAConfigParametersViewModel p in this.ConfigFile.ManagementAgents)
-                {
-                    p.IsNew = false;
-                }
 
                 this.AskToRestartService();
             }
@@ -256,6 +255,14 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             finally
             {
                 this.Cursor = Cursors.Arrow;
+            }
+        }
+
+        private void MarkManagementAgentsAsConfigured()
+        {
+            foreach (MAConfigParametersViewModel p in this.ConfigFile.ManagementAgents)
+            {
+                p.IsNew = false;
             }
         }
 
@@ -316,6 +323,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 {
                     this.Cursor = Cursors.Wait;
                     ProtectedString.EncryptOnWrite = false;
+                    this.MarkManagementAgentsAsConfigured();
                     AutoSync.ConfigFile.Save(this.ConfigFile.Model, dialog.FileName);
                     this.ViewModelIsDirty = false;
                 }

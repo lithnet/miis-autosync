@@ -5,6 +5,8 @@
                       Title="{Binding Path=DisplayName}"
                       Cursor="{Binding Path=Cursor}"
                       Icon="/autosync.ico"
+                      BorderThickness="1"
+                      BorderBrush="{DynamicResource AccentColorBrush}"
                       Height="Auto"
                       Width="Auto">
 

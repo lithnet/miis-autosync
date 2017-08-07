@@ -31,8 +31,8 @@ namespace Lithnet.Miiserver.AutoSync.UI
                 // Must be started off the UI-thread
                 Task.Run(() =>
                 {
-                    Program.StartConfigServiceHost();
-                    Program.LoadConfiguration();
+                   // Program.StartConfigServiceHost();
+                   // Program.LoadConfiguration();
                 }).Wait();
             }
 #endif

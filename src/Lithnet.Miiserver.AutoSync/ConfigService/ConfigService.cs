@@ -6,6 +6,7 @@ using System.ServiceModel.Description;
 using System.Text;
 using System.Threading.Tasks;
 using Lithnet.Logging;
+using System.Diagnostics;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -52,6 +53,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
+                Trace.WriteLine($"Calling {nameof(GetConfig)} as {Environment.UserName}");
                 ProtectedString.EncryptOnWrite = false;
                 return Program.CurrentConfig;
             }
@@ -66,6 +68,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
+                Trace.WriteLine($"Calling {nameof(PutConfig)} as {Environment.UserName}");
                 ProtectedString.EncryptOnWrite = true;
                 ConfigFile.Save(config, RegistrySettings.ConfigurationFile);
                 Program.CurrentConfig = config;
@@ -81,6 +84,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
+                Trace.WriteLine($"Calling {nameof(Reload)} as {Environment.UserName}");
                 Program.Reload();
             }
             catch (Exception ex)
@@ -94,6 +98,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
+                Trace.WriteLine($"Calling {nameof(IsPendingRestart)} as {Environment.UserName}");
                 return Program.PendingRestart;
             }
             catch (Exception ex)

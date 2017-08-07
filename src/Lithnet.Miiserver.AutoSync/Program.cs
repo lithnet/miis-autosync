@@ -55,9 +55,10 @@ namespace Lithnet.Miiserver.AutoSync
         /// </summary>
         public static void Main(string[] args)
         {
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+
             bool runService = args != null && args.Contains("/service");
             Logger.LogPath = RegistrySettings.LogPath;
-            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
             if (!runService)
             {
@@ -89,7 +90,9 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
+            Logger.WriteLine("An unhandled exception has occurred in the service");
             Logger.WriteException((Exception)e.ExceptionObject);
+            Environment.Exit(1);
         }
 
         public static void StartConfigServiceHost()
