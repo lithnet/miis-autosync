@@ -12,12 +12,12 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         private MAConfigParametersViewModel config;
 
         public IntervalExecutionTriggerViewModel(IntervalExecutionTrigger model, MAConfigParametersViewModel config)
-            :base(model)
+            : base(model)
         {
             this.typedModel = model;
             this.config = config;
         }
-        
+
         public string Type => this.Model.Type;
 
         public string Description => this.Model.Description;
@@ -25,8 +25,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         [AlsoNotifyFor("Description")]
         public string RunProfileName
         {
-            get => this.typedModel.RunProfileName;
-            set => this.typedModel.RunProfileName = value;
+            get => this.typedModel.RunProfileName ?? App.NullPlaceholder;
+            set => this.typedModel.RunProfileName = value == App.NullPlaceholder ? null : value;
         }
 
         [AlsoNotifyFor("Description")]
@@ -37,5 +37,22 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         }
 
         public IEnumerable<string> RunProfileNames => this.config.RunProfileNames;
+
+        protected override void ValidatePropertyChange(string propertyName)
+        {
+            if (propertyName == nameof(this.RunProfileName))
+            {
+                if (string.IsNullOrEmpty(this.RunProfileName) || this.RunProfileName == App.NullPlaceholder)
+                {
+                    this.AddError(nameof(this.RunProfileName), "An interval execution trigger must have a run profile specified");
+                }
+                else
+                {
+                    this.RemoveError(nameof(this.RunProfileName));
+                }
+            }
+
+            base.ValidatePropertyChange(propertyName);
+        }
     }
 }

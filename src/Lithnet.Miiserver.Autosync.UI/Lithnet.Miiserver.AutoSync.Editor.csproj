@@ -92,10 +92,14 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Controls\TreeViewItemControl.xaml.cs">
+      <DependentUpon>TreeViewItemControl.xaml</DependentUpon>
+    </Compile>
     <Compile Include="PasswordBoxBindingHelper.cs" />
     <Compile Include="Controls\TimeSpanControl.xaml.cs">
       <DependentUpon>TimeSpanControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="TypeDescriptionConverter.cs" />
     <Compile Include="ViewModels\ActiveDirectoryChangeTriggerViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
     <Compile Include="ViewModels\MAExecutionTriggerViewModel.cs" />
@@ -107,9 +111,25 @@
     <Compile Include="ViewModels\ManagementAgentsViewModel.cs" />
     <Compile Include="ViewModels\IntervalExecutionTriggerViewModel.cs" />
     <Compile Include="ViewModels\PowerShellExecutionTriggerViewModel.cs" />
+    <Page Include="Controls\TreeViewItemControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ResourceDictionaries\ErrorNotifications.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ManagementAgentsView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Views\SettingsView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Windows\About.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Windows\AddTriggerWindow.xaml">
       <SubType>Designer</SubType>
@@ -124,6 +144,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="ViewModels\MAConfigParametersViewModel.cs" />
+    <Compile Include="Windows\About.xaml.cs">
+      <DependentUpon>About.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Windows\AddTriggerWindow.xaml.cs">
       <DependentUpon>AddTriggerWindow.xaml</DependentUpon>
     </Compile>

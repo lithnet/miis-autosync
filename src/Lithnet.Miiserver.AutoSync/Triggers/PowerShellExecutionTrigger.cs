@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Management.Automation;
 using System.Threading.Tasks;
 using System.Threading;
@@ -10,8 +11,11 @@ using Lithnet.Miiserver.Client;
 namespace Lithnet.Miiserver.AutoSync
 {
     [DataContract(Name = "powershell-trigger")]
+    [Description(TypeDescription)]
     public class PowerShellExecutionTrigger : IMAExecutionTrigger
     {
+        private const string TypeDescription = "PowerShell script";
+
         private bool run = true;
 
         private Task internalTask;
@@ -28,7 +32,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public string DisplayName => $"{this.Type}: {this.Description}";
 
-        public string Type => "PowerShell script";
+        public string Type => TypeDescription;
 
         public string Description => $"{System.IO.Path.GetFileName(this.ScriptPath)}";
 
@@ -39,6 +43,12 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void Start()
         {
+            if (!System.IO.File.Exists(this.ScriptPath))
+            {
+                Logger.WriteLine($"Could not start PowerShell trigger as the script '{this.ScriptPath}' could not be found");
+                return;
+            }
+
             this.cancellationToken = new CancellationTokenSource();
 
             if (this.Interval.TotalSeconds <= 0)

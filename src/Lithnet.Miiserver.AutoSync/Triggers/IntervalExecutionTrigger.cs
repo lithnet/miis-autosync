@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Timers;
@@ -8,9 +9,12 @@ using Lithnet.Miiserver.Client;
 namespace Lithnet.Miiserver.AutoSync
 {
     [DataContract(Name = "interval-trigger")]
+    [Description(TypeDescription)]
     public class IntervalExecutionTrigger : IMAExecutionTrigger
     {
-        private Timer checkTimer;
+        private const string TypeDescription = "Timed execution";
+            
+            private Timer checkTimer;
 
         [DataMember(Name = "interval")]
         public TimeSpan Interval { get; set; }
@@ -26,6 +30,12 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void Start()
         {
+            if (this.RunProfileName == null)
+            {
+                Logger.WriteLine("Ignoring interval trigger with no run profile name");
+                return;
+            }
+
             Logger.WriteLine("Starting interval timer for {0} at {1}", LogLevel.Debug, this.RunProfileName, this.Interval);
 
             this.checkTimer = new Timer
@@ -53,7 +63,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public string DisplayName => $"{this.Type} - {this.Description}";
 
-        public string Type => "Timed execution";
+        public string Type => TypeDescription;
 
         public string Description => $"{this.RunProfileName} every {this.Interval}";
 

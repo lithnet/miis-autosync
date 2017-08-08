@@ -16,6 +16,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
             this.ManagementAgents = new ManagementAgentsViewModel(model.ManagementAgents);
             this.Settings = new SettingsViewModel(model.Settings);
+
+            this.SubscribeToErrors(this.ManagementAgents);
+            this.SubscribeToErrors(this.Settings);
         }
 
         public ManagementAgentsViewModel ManagementAgents { get; private set; }

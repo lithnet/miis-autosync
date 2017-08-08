@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Timers;
@@ -8,8 +9,11 @@ using Lithnet.Miiserver.Client;
 namespace Lithnet.Miiserver.AutoSync
 {
     [DataContract(Name = "scheduled-trigger")]
+    [Description(TypeDescription)]
     public class ScheduledExecutionTrigger : IMAExecutionTrigger
     {
+        private const string TypeDescription = "Scheduled trigger";
+
         private Timer checkTimer;
 
         [DataMember(Name = "start-date")]
@@ -58,6 +62,12 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void Start()
         {
+            if (this.RunProfileName == null)
+            {
+                Logger.WriteLine("Ignoring scheduled trigger with no run profile name");
+                return;
+            }
+
             this.SetRemainingMilliseconds();
             this.checkTimer = new Timer
             {
@@ -84,7 +94,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public string DisplayName => $"{this.Type}: {this.Description}";
 
-        public string Type => "Scheduled trigger";
+        public string Type => TypeDescription;
 
         public string Description => $"{this.RunProfileName} every {this.Interval} start from {this.StartDateTime}";
 

@@ -6,6 +6,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
     internal class ManagementAgentsViewModel : ListViewModel<MAConfigParametersViewModel, MAConfigParameters>
     {
+        public string DisplayName => "Management Agents";
+
         public ManagementAgentsViewModel(IList<MAConfigParameters> items)
             :base (items, ManagementAgentsViewModel.ViewModelResolver)
         {

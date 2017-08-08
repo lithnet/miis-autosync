@@ -33,11 +33,13 @@
                         <CompositeCollection>
                             <MenuItem Header="_Save"
                                       Command="{Binding Path=Commands.Save}" />
+                            <MenuItem Header="Re_vert Changes"
+                                      Command="{Binding Path=Commands.Revert}" />
 
                             <Separator />
-                            <MenuItem Header="Import Config..."
+                            <MenuItem Header="_Import Config..."
                                       Command="{Binding Path=Commands.Import}" />
-                            <MenuItem Header="Export Config..."
+                            <MenuItem Header="_Export Config..."
                                       Command="{Binding Path=Commands.Export}" />
                             
                             <Separator />
@@ -59,6 +61,27 @@
                         </Style>
                     </MenuItem.ItemContainerStyle>
                 </MenuItem>
+                <MenuItem Header="_Help">
+                    <MenuItem.ItemsSource>
+                        <CompositeCollection>
+                            <MenuItem Header="_Online Help..."
+                                      Command="{Binding Path=Commands.Help}" />
+
+                            <Separator />
+                            <MenuItem Header="_About..."
+                                      Command="{Binding Path=Commands.About}" />
+                        </CompositeCollection>
+                    </MenuItem.ItemsSource>
+                    <MenuItem.ItemContainerStyle>
+                        <Style>
+                            <Setter Property="MenuItem.Header"
+                                    Value="{Binding Path=Name}" />
+                            <Setter Property="MenuItem.Command"
+                                    Value="{Binding Path=Command}" />
+                        </Style>
+                    </MenuItem.ItemContainerStyle>
+                </MenuItem>
+
             </Menu>
         </DockPanel>
 

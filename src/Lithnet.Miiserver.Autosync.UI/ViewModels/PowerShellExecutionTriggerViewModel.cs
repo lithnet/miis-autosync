@@ -127,5 +127,21 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
         }
 
+        protected override void ValidatePropertyChange(string propertyName)
+        {
+            if (propertyName == nameof(this.ScriptPath))
+            {
+                if (System.IO.File.Exists(this.ScriptPath))
+                {
+                    this.RemoveError(nameof(this.ScriptPath));
+                }
+                else
+                {
+                    this.AddError(nameof(this.ScriptPath), "The specified file was not found");
+                }
+            }
+
+            base.ValidatePropertyChange(propertyName);
+        }
     }
 }

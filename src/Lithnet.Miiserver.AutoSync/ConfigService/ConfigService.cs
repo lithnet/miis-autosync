@@ -28,13 +28,14 @@ namespace Lithnet.Miiserver.AutoSync
                 if (d == null)
                 {
                     s.Description.Behaviors.Add(ConfigServiceConfiguration.ServiceDebugBehavior);
-                    Logger.WriteLine("Added fault detail");
+                    Trace.WriteLine("Added service debug behavior");
 
                 }
                 else
                 {
-                    d.IncludeExceptionDetailInFaults = true;
-                    Logger.WriteLine("Turned on fault detail");
+                    s.Description.Behaviors.Remove(d);
+                    s.Description.Behaviors.Add(ConfigServiceConfiguration.ServiceDebugBehavior);
+                    Trace.WriteLine("Replaced service debug behavior");
                 }
 
                 s.Authorization.ServiceAuthorizationManager = new ConfigServiceAuthorizationManager();
@@ -53,7 +54,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                Trace.WriteLine($"Calling {nameof(GetConfig)} as {Environment.UserName}");
+                Trace.WriteLine($"Calling {nameof(this.GetConfig)} as {Environment.UserName}");
                 ProtectedString.EncryptOnWrite = false;
                 return Program.CurrentConfig;
             }
@@ -68,10 +69,11 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                Trace.WriteLine($"Calling {nameof(PutConfig)} as {Environment.UserName}");
+                Trace.WriteLine($"Calling {nameof(this.PutConfig)} as {Environment.UserName}");
                 ProtectedString.EncryptOnWrite = true;
                 ConfigFile.Save(config, RegistrySettings.ConfigurationFile);
                 Program.CurrentConfig = config;
+                Logger.WriteLine("The configuration has been updated. The service must be restarted for the new configuration to take effect");
             }
             catch (Exception ex)
             {
@@ -84,7 +86,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                Trace.WriteLine($"Calling {nameof(Reload)} as {Environment.UserName}");
+                Trace.WriteLine($"Calling {nameof(this.Reload)} as {Environment.UserName}");
                 Program.Reload();
             }
             catch (Exception ex)
@@ -98,7 +100,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                Trace.WriteLine($"Calling {nameof(IsPendingRestart)} as {Environment.UserName}");
+                Trace.WriteLine($"Calling {nameof(this.IsPendingRestart)} as {Environment.UserName}");
                 return Program.PendingRestart;
             }
             catch (Exception ex)

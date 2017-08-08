@@ -18,6 +18,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
     internal class MainWindowViewModel : ViewModelBase
     {
+        private const string HelpUrl = "https://bit.ly/autosync-help";
+
         private List<Type> ignoreViewModelChanges;
 
         private bool confirmedCloseOnDirtyViewModel;
@@ -45,8 +47,11 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
             this.Commands.AddItem("Reload", x => this.Reload());
             this.Commands.AddItem("Save", x => this.Save(), x => this.CanSave());
+            this.Commands.AddItem("Revert", x => this.Revert(), x => this.CanRevert());
             this.Commands.AddItem("Export", x => this.Export(), x => this.CanExport());
             this.Commands.AddItem("Close", x => this.Close());
+            this.Commands.AddItem("Help", x => this.Help());
+            this.Commands.AddItem("About", x => this.About());
             this.Commands.AddItem("Import", x => this.Import(), x => this.CanImport());
 
             this.StatusBarVisibility = Visibility.Collapsed;
@@ -61,6 +66,24 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         private void PopulateIgnoreViewModelChanges()
         {
             this.ignoreViewModelChanges = new List<Type>();
+        }
+
+        private void Help()
+        {
+            try
+            {
+                Process.Start(MainWindowViewModel.HelpUrl);
+            }
+            catch
+            {
+                MessageBox.Show(MainWindowViewModel.HelpUrl);
+            }
+        }
+
+        private void About()
+        {
+            Windows.About w = new Windows.About();
+            w.ShowDialog();
         }
 
         private void CheckPendingRestart()
@@ -113,6 +136,24 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
 
             this.ResetConfigViewModel();
+        }
+
+        private void Revert()
+        {
+            if (this.ViewModelIsDirty)
+            {
+                if (MessageBox.Show("There are unsaved changes. Do you want to continue?", "Unsaved Changes", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
+                {
+                    return;
+                }
+            }
+
+            this.ResetConfigViewModel();
+        }
+
+        private bool CanRevert()
+        {
+            return this.ViewModelIsDirty;
         }
 
         internal void ResetConfigViewModel()
@@ -238,7 +279,13 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
             try
             {
-                MarkManagementAgentsAsConfigured();
+                if (this.ConfigFile.HasErrors)
+                {
+                    MessageBox.Show("There are one or more errors in the config file that must be fixed before the file can be saved");
+                    return;
+                }
+
+                this.MarkManagementAgentsAsConfigured();
 
                 this.Cursor = Cursors.Wait;
                 ConfigClient c = new ConfigClient();

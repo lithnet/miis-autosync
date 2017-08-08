@@ -137,7 +137,15 @@ namespace Lithnet.Miiserver.AutoSync
             try
             {
                 Program.StopRunHistoryCleanupTimer();
-                Program.StopMAExecutors();
+
+                try
+                {
+                    Program.StopMAExecutors();
+                }
+                catch (System.TimeoutException)
+                {
+                }
+
                 Program.Start();
             }
             catch (Exception ex)

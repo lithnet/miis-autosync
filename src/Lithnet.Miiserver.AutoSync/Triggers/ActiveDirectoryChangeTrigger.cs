@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using Lithnet.Logging;
@@ -12,8 +13,12 @@ using Lithnet.Miiserver.Client;
 namespace Lithnet.Miiserver.AutoSync
 {
     [DataContract(Name = "active-directory-change-trigger")]
+    [Description(TypeDescription)]
+
     public class ActiveDirectoryChangeTrigger : IMAExecutionTrigger
     {
+        private const string TypeDescription = "AD/LDS change detection";
+
         private const string LastLogonAttributeName = "lastLogon";
         private const string LastLogonTimeStampAttributeName = "lastLogonTimeStamp";
         private const string BadPasswordAttribute = "badPasswordTime";
@@ -260,7 +265,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public string DisplayName => $"{this.Type} ({this.HostName})";
 
-        public string Type => "AD/LDS change detection";
+        public string Type => TypeDescription;
 
         public string Description => $"{this.HostName}";
 

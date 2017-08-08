@@ -34,7 +34,7 @@
                     <TextBox 
                         Grid.Column="0"
                         Margin="0 0 5 0" 
-                    Text="{Binding ScriptPath}"/>
+                        Text="{Binding ScriptPath, ValidatesOnDataErrors=True, ValidatesOnExceptions=true}"/>
                     <Button Grid.Column="1"
                             Content=" ... "
                             Command="{Binding Commands.Browse}"/>

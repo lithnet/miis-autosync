@@ -11,6 +11,8 @@ namespace Lithnet.Miiserver.AutoSync.UI
     /// </summary>
     public partial class App : Application
     {
+        internal const string NullPlaceholder = "(none)";
+
         public App()
         {
             AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;

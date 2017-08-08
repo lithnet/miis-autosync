@@ -27,7 +27,7 @@
                           Grid.Column="1"
                           Margin="10 0 0 5"
                           ItemsSource="{Binding RunProfileNames}"
-                          SelectedItem="{Binding RunProfileName}"/>
+                          SelectedItem="{Binding RunProfileName, ValidatesOnDataErrors=True, ValidatesOnExceptions=true}"/>
 
                 <Label Grid.Row="1" 
                        Grid.Column="0" 

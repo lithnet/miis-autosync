@@ -14,12 +14,14 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
     public class MAConfigParametersViewModel : ViewModelBase<MAConfigParameters>
     {
         private List<Type> allowedTypes;
-        private static string nullPlaceholder = "(none)";
+
 
         public MAConfigParametersViewModel(MAConfigParameters model)
             : base(model)
         {
             this.Triggers = new MAExecutionTriggersViewModel(model.Triggers, this);
+            this.SubscribeToErrors(this.Triggers);
+
             this.Commands.Add("AddTrigger", new DelegateCommand(t => this.AddTrigger(), u => this.CanAddTrigger()));
             this.Commands.Add("RemoveTrigger", new DelegateCommand(t => this.RemoveTrigger(), u => this.CanRemoveTrigger()));
             this.Commands.Add("Browse", new DelegateCommand(t => this.Browse()));
@@ -74,44 +76,44 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public string ScheduledImportRunProfileName
         {
-            get => this.Model.ScheduledImportRunProfileName ?? nullPlaceholder;
-            set => this.Model.ScheduledImportRunProfileName = value == nullPlaceholder ? null : value;
+            get => this.Model.ScheduledImportRunProfileName ?? App.NullPlaceholder;
+            set => this.Model.ScheduledImportRunProfileName = value == App.NullPlaceholder ? null : value;
         }
 
         public string FullSyncRunProfileName
         {
-            get => this.Model.FullSyncRunProfileName ?? nullPlaceholder;
-            set => this.Model.FullSyncRunProfileName = value == nullPlaceholder ? null : value;
+            get => this.Model.FullSyncRunProfileName ?? App.NullPlaceholder;
+            set => this.Model.FullSyncRunProfileName = value == App.NullPlaceholder ? null : value;
         }
 
         public string FullImportRunProfileName
         {
-            get => this.Model.FullImportRunProfileName ?? nullPlaceholder;
-            set => this.Model.FullImportRunProfileName = value == nullPlaceholder ? null : value;
+            get => this.Model.FullImportRunProfileName ?? App.NullPlaceholder;
+            set => this.Model.FullImportRunProfileName = value == App.NullPlaceholder ? null : value;
         }
 
         public string ExportRunProfileName
         {
-            get => this.Model.ExportRunProfileName ?? nullPlaceholder;
-            set => this.Model.ExportRunProfileName = value == nullPlaceholder ? null : value;
+            get => this.Model.ExportRunProfileName ?? App.NullPlaceholder;
+            set => this.Model.ExportRunProfileName = value == App.NullPlaceholder ? null : value;
         }
 
         public string DeltaSyncRunProfileName
         {
-            get => this.Model.DeltaSyncRunProfileName ?? nullPlaceholder;
-            set => this.Model.DeltaSyncRunProfileName = value == nullPlaceholder ? null : value;
+            get => this.Model.DeltaSyncRunProfileName ?? App.NullPlaceholder;
+            set => this.Model.DeltaSyncRunProfileName = value == App.NullPlaceholder ? null : value;
         }
 
         public string DeltaImportRunProfileName
         {
-            get => this.Model.DeltaImportRunProfileName ?? nullPlaceholder;
-            set => this.Model.DeltaImportRunProfileName = value == nullPlaceholder ? null : value;
+            get => this.Model.DeltaImportRunProfileName ?? App.NullPlaceholder;
+            set => this.Model.DeltaImportRunProfileName = value == App.NullPlaceholder ? null : value;
         }
 
         public string ConfirmingImportRunProfileName
         {
-            get => this.Model.ConfirmingImportRunProfileName ?? nullPlaceholder;
-            set => this.Model.ConfirmingImportRunProfileName = value == nullPlaceholder ? null : value;
+            get => this.Model.ConfirmingImportRunProfileName ?? App.NullPlaceholder;
+            set => this.Model.ConfirmingImportRunProfileName = value == App.NullPlaceholder ? null : value;
         }
 
         public bool Disabled
@@ -144,7 +146,12 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 yield return "(none)";
 
-                foreach(var i in this.Model.ManagementAgent?.RunProfiles)
+                if (this.Model?.ManagementAgent?.RunProfiles == null)
+                {
+                    yield break;
+                }
+
+                foreach(var i in this.Model.ManagementAgent.RunProfiles)
                 {
                     yield return i.Key;
                 }
@@ -165,6 +172,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 AddTriggerWindow window = new AddTriggerWindow();
                 window.DataContext = this;
                 this.GetAllowedTypesForMa(this.Model.ManagementAgent);
+                this.SelectedTrigger = this.AllowedTriggers?.FirstOrDefault();
 
                 if (window.ShowDialog() == true)
                 {

@@ -3,6 +3,7 @@
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/Views/MAConfigParametersView.xaml" />
         <ResourceDictionary Source="/Views/SettingsView.xaml" />
+        <ResourceDictionary Source="/Views/ManagementAgentsView.xaml" />
     </ResourceDictionary.MergedDictionaries>
 </ResourceDictionary>
             

@@ -26,8 +26,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         [AlsoNotifyFor("Description")]
         public string RunProfileName
         {
-            get => this.typedModel.RunProfileName;
-            set => this.typedModel.RunProfileName = value;
+            get => this.typedModel.RunProfileName ?? App.NullPlaceholder;
+            set => this.typedModel.RunProfileName = value == App.NullPlaceholder ? null : value;
         }
 
         [AlsoNotifyFor("Description")]
@@ -47,5 +47,25 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         public CultureInfo Culture => CultureInfo.CurrentCulture;
 
         public IEnumerable<string> RunProfileNames => this.config.RunProfileNames;
+
+        protected override void ValidatePropertyChange(string propertyName)
+        {
+            if (propertyName == nameof(this.RunProfileName))
+            {
+                if (propertyName == nameof(this.RunProfileName))
+                {
+                    if (string.IsNullOrEmpty(this.RunProfileName) || this.RunProfileName == App.NullPlaceholder)
+                    {
+                        this.AddError(nameof(this.RunProfileName), "A scheduled execution trigger must have a run profile specified");
+                    }
+                    else
+                    {
+                        this.RemoveError(nameof(this.RunProfileName));
+                    }
+                }
+            }
+
+            base.ValidatePropertyChange(propertyName);
+        }
     }
 }

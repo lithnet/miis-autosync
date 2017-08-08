@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Timers;
@@ -10,8 +11,12 @@ using Lithnet.Miiserver.Client;
 namespace Lithnet.Miiserver.AutoSync
 {
     [DataContract(Name = "mim-service-pending-import-trigger")]
+    [Description(TypeDescription)]
+
     public class FimServicePendingImportTrigger : IMAExecutionTrigger
     {
+        private const string TypeDescription = "MIM service change detection";
+
         private Timer checkTimer;
 
         [DataMember(Name = "interval")]
@@ -90,7 +95,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public string DisplayName => $"{this.Type} ({this.Description})";
 
-        public string Type => "MIM service change detection";
+        public string Type => TypeDescription;
 
         public string Description => $"{this.HostName}";
 
