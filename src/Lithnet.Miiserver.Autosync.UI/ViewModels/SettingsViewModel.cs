@@ -31,6 +31,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
         }
 
+        public string DisplayName => "Settings";
+
         public bool RunHistoryClear
         {
             get => this.Model.RunHistoryClear;
