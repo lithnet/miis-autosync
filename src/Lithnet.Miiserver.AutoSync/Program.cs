@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.ServiceProcess;
 using Lithnet.Miiserver.Client;
@@ -8,6 +9,8 @@ using System.IO;
 using System.Timers;
 using System.Threading.Tasks;
 using System.ServiceModel;
+using System.Threading;
+using Timer = System.Timers.Timer;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -17,11 +20,13 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static ConfigFile currentConfig;
 
-        private static List<MAExecutor> maExecutors;
+        private static ExecutionEngine engine;
 
         private static Timer runHistoryCleanupTimer;
 
         private static ServiceHost configServiceHost;
+
+        private static AppDomain executionDomain;
 
         internal static ConfigFile ActiveConfig
         {
@@ -84,7 +89,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 Logger.WriteLine("Starting standalone process");
                 Start();
-                System.Threading.Thread.Sleep(System.Threading.Timeout.Infinite);
+                Thread.Sleep(Timeout.Infinite);
             }
         }
 
@@ -123,7 +128,7 @@ namespace Lithnet.Miiserver.AutoSync
                 }
 
                 Program.InitializeRunHistoryCleanup();
-                Program.StartMAExecutors();
+                Program.CreateExecutionEngineInstance();
             }
             catch (Exception ex)
             {
@@ -136,17 +141,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                Program.StopRunHistoryCleanupTimer();
-
-                try
-                {
-                    Program.StopMAExecutors();
-                }
-                catch (System.TimeoutException)
-                {
-                }
-
-                Program.Start();
+                Program.RestartExecutionEngine();
             }
             catch (Exception ex)
             {
@@ -226,7 +221,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 try
                 {
-                    Program.StopMAExecutors();
+                    Program.ShutdownExecutionEngineInstance();
                 }
                 catch (System.TimeoutException)
                 {
@@ -252,42 +247,6 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        private static void StopMAExecutors()
-        {
-            if (maExecutors == null)
-            {
-                return;
-            }
-
-            List<Task> stopTasks = new List<Task>();
-
-            foreach (MAExecutor x in maExecutors)
-            {
-                stopTasks.Add(Task.Factory.StartNew(() =>
-                {
-                    try
-                    {
-                        x.Stop();
-                    }
-                    catch (OperationCanceledException)
-                    {
-                    }
-                }));
-            }
-
-            Logger.WriteLine("Waiting for executors to stop");
-
-            if (!Task.WaitAll(stopTasks.ToArray(), 90000))
-            {
-                Logger.WriteLine("Timeout waiting for executors to stop");
-                throw new System.TimeoutException();
-            }
-            else
-            {
-                Logger.WriteLine("Executors stopped successfully");
-            }
-        }
-
         public static void LoadConfiguration()
         {
             string path = RegistrySettings.ConfigurationFile;
@@ -305,38 +264,26 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        private static void StartMAExecutors()
+        private static void CreateExecutionEngineInstance()
         {
-            Program.maExecutors = new List<MAExecutor>();
+            Logger.WriteLine("Starting execution engine");
+            Program.engine = new ExecutionEngine();
+            Program.engine.Start();
+        }
 
-            foreach (MAConfigParameters config in Program.ActiveConfig.ManagementAgents)
-            {
-                if (config.IsNew)
-                {
-                    Logger.WriteLine("{0}: Skipping management agent because it does not yet have any configuration defined", config.ManagementAgentName);
-                    continue;
-                }
+        private static void ShutdownExecutionEngineInstance()
+        {
+            Logger.WriteLine("Stopping execution engine");
+            Program.engine?.Stop();
+            Program.engine = null;
+        }
 
-                if (config.IsMissing)
-                {
-                    Logger.WriteLine("{0}: Skipping management agent because it is missing from the Sync Engine", config.ManagementAgentName);
-                    continue;
-                }
+        private static void RestartExecutionEngine()
+        {
+            Logger.WriteLine("Restarting execution engine");
 
-                if (config.Disabled)
-                {
-                    Logger.WriteLine("{0}: Skipping management agent because it has been disabled in config", config.ManagementAgentName);
-                    continue;
-                }
-
-                MAExecutor x = new MAExecutor(config);
-                Program.maExecutors.Add(x);
-            }
-
-            foreach (MAExecutor x in Program.maExecutors)
-            {
-                Task.Run(x.Start);
-            }
+            Program.ShutdownExecutionEngineInstance();
+            Program.CreateExecutionEngineInstance();
         }
     }
 }
