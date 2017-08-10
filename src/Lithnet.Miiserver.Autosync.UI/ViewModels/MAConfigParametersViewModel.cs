@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.ServiceModel;
 using System.Windows;
 using Lithnet.Common.Presentation;
 using Lithnet.Miiserver.AutoSync.UI.Windows;
@@ -11,10 +12,11 @@ using Microsoft.Win32;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
-    public class MAConfigParametersViewModel : ViewModelBase<MAConfigParameters>
+    public class MAConfigParametersViewModel : ViewModelBase<MAConfigParameters>, IEventCallBack
     {
         private List<Type> allowedTypes;
 
+        private EventClient client;
 
         public MAConfigParametersViewModel(MAConfigParameters model)
             : base(model)
@@ -27,6 +29,13 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.Commands.Add("Browse", new DelegateCommand(t => this.Browse()));
             this.Commands.Add("New", new DelegateCommand(t => this.New()));
             this.Commands.Add("Edit", new DelegateCommand(t => this.Edit(), u => this.CanEdit()));
+
+            if (!model.IsMissing)
+            {
+                InstanceContext i = new InstanceContext(this);
+                this.client = new EventClient(i);
+                this.client.Register();
+            }
         }
 
         public string DisplayName
@@ -57,7 +66,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public bool IsEnabled => !this.IsMissing && !this.Disabled;
 
-        public string ManagementAgentName => this.Model.ManagementAgentName;
+        public string ManagementAgentName => this.Model.ManagementAgentName ?? "Unknown MA";
 
         public bool IsMissing => this.Model.IsMissing;
 
@@ -66,7 +75,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             get => this.Model.IsNew;
             set => this.Model.IsNew = value;
         }
-        
+
         public string MAControllerPath
         {
             get => this.Model.MAControllerPath;
@@ -151,7 +160,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                     yield break;
                 }
 
-                foreach(var i in this.Model.ManagementAgent.RunProfiles)
+                foreach (var i in this.Model.ManagementAgent.RunProfiles)
                 {
                     yield return i.Key;
                 }
@@ -181,7 +190,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                         return;
                     }
 
-                    IMAExecutionTrigger instance = (IMAExecutionTrigger) Activator.CreateInstance(this.SelectedTrigger, this.Model.ManagementAgent);
+                    IMAExecutionTrigger instance = (IMAExecutionTrigger)Activator.CreateInstance(this.SelectedTrigger, this.Model.ManagementAgent);
                     this.Triggers.Add(instance, true);
                 }
             }
@@ -268,7 +277,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             //this.model = MAConfigDiscovery.DoAutoRunProfileDiscovery(this.model.ManagementAgent);
         }
-        
+
         private void New()
         {
             SaveFileDialog dialog = new SaveFileDialog();
@@ -344,6 +353,37 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             if (openFileDialog.ShowDialog() == true)
             {
                 this.MAControllerPath = openFileDialog.FileName;
+            }
+        }
+
+        public string ExecutionQueue { get; private set; }
+
+        public string Status { get; private set; }
+
+        public string ExecutingRunProfile { get; private set; }
+
+
+        public void ExecutionQueueChanged(string executionQueue, string managementAgent)
+        {
+            if (this.ManagementAgentName.Equals(managementAgent, StringComparison.OrdinalIgnoreCase))
+            {
+                this.ExecutionQueue = executionQueue;
+            }
+        }
+
+        public void ExecutingRunProfileChanged(string executingRunProfile, string managementAgent)
+        {
+            if (this.ManagementAgentName.Equals(managementAgent, StringComparison.OrdinalIgnoreCase))
+            {
+                this.ExecutingRunProfile = executingRunProfile;
+            }
+        }
+
+        public void StatusChanged(string status, string managementAgent)
+        {
+            if (this.ManagementAgentName.Equals(managementAgent, StringComparison.OrdinalIgnoreCase))
+            {
+                this.Status = status;
             }
         }
     }

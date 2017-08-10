@@ -71,5 +71,10 @@ namespace Lithnet.Miiserver.AutoSync
                 Marshal.ZeroFreeGlobalAllocUnicode(valuePtr);
             }
         }
+
+        public static string Pluralize(this int number)
+        {
+            return number == 1 ? string.Empty : "s";
+        }
     }
 }

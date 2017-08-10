@@ -6,6 +6,17 @@
                      mc:Ignorable="d" >
 
     <DataTemplate DataType="{x:Type viewModels:ManagementAgentsViewModel}">
-      
+        <StackPanel>
+            <ListView ScrollViewer.VerticalScrollBarVisibility="Auto" ItemsSource="{Binding}">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Management Agent" DisplayMemberBinding="{Binding ManagementAgentName}"/>
+                        <GridViewColumn Header="Executing Run Profile"  DisplayMemberBinding="{Binding ExecutingRunProfile}"/>
+                        <GridViewColumn Header="Execution Queue" DisplayMemberBinding="{Binding ExecutionQueue}"/>
+                        <GridViewColumn Header="Status" DisplayMemberBinding="{Binding Status}" Width="300"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </StackPanel>
     </DataTemplate>
 </ResourceDictionary>

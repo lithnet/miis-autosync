@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using Lithnet.Miiserver.Client;
@@ -33,9 +34,13 @@ namespace Lithnet.Miiserver.AutoSync.UI
                 // Must be started off the UI-thread
                 Task.Run(() =>
                 {
-                    Program.StartConfigServiceHost();
                     Program.LoadConfiguration();
+                    Program.StartConfigServiceHost();
+                    Program.CreateExecutionEngineInstance();
+
                 }).Wait();
+
+                Thread.Sleep(3000);
             }
 #endif
         }

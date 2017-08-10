@@ -101,6 +101,7 @@
     </Compile>
     <Compile Include="TypeDescriptionConverter.cs" />
     <Compile Include="ViewModels\ActiveDirectoryChangeTriggerViewModel.cs" />
+    <Compile Include="ViewModels\EventSubscriberViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
     <Compile Include="ViewModels\MAExecutionTriggerViewModel.cs" />
     <Compile Include="ViewModels\MainWindowViewModel.cs" />

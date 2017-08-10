@@ -264,7 +264,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        private static void CreateExecutionEngineInstance()
+        public static void CreateExecutionEngineInstance()
         {
             Logger.WriteLine("Starting execution engine");
             Program.engine = new ExecutionEngine();

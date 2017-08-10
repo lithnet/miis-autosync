@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.ServiceModel;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,7 +14,15 @@ namespace Lithnet.Miiserver.AutoSync
         private List<MAExecutor> maExecutors;
 
         private CancellationTokenSource token;
-        
+
+        private ServiceHost service;
+
+        public ExecutionEngine()
+        {
+            this.service = EventService.CreateInstance();
+            Logger.WriteLine("Initialized event service host");
+        }
+
         public void Start()
         {
             this.StartMAExecutors();
@@ -50,6 +59,9 @@ namespace Lithnet.Miiserver.AutoSync
                 }
 
                 MAExecutor x = new MAExecutor(config);
+                x.ExecutingRunProfileChanged += this.X_ExecutingRunProfileChanged;
+                x.ExecutionQueueChanged += this.X_ExecutionQueueChanged;
+                x.StatusChanged += this.X_StatusChanged;
                 this.maExecutors.Add(x);
             }
 
@@ -57,6 +69,21 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 Task.Run(() => x.Start(this.token.Token));
             }
+        }
+
+        private void X_StatusChanged(object sender, StatusChangedEventArgs e)
+        {
+            EventService.StatusChanged?.Invoke(e.Status, e.MAName);
+        }
+
+        private void X_ExecutionQueueChanged(object sender, ExecutionQueueChangedEventArgs e)
+        {
+            EventService.ExecutionQueueChanged?.Invoke(e.ExecutionQueue, e.MAName);
+        }
+
+        private void X_ExecutingRunProfileChanged(object sender, ExecutingRunProfileChangedEventArgs e)
+        {
+            EventService.ExecutingRunProfileChanged?.Invoke(e.ExecutingRunProfile, e.MAName);
         }
 
         private void StopMAExecutors()
@@ -76,6 +103,9 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     try
                     {
+                        x.ExecutingRunProfileChanged -= this.X_ExecutingRunProfileChanged;
+                        x.ExecutionQueueChanged -= this.X_ExecutionQueueChanged;
+                        x.StatusChanged -= this.X_StatusChanged;
                         x.Stop();
                     }
                     catch (OperationCanceledException)
