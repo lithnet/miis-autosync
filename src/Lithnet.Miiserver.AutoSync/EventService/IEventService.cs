@@ -13,7 +13,7 @@ namespace Lithnet.Miiserver.AutoSync
         [OperationContract]
         void Register(string managementAgentName);
 
-        [OperationContract]
+        [OperationContract()]
         MAStatus GetFullUpdate(string managementAgentName);
     }
 }

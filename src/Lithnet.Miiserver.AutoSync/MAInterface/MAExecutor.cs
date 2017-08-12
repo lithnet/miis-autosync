@@ -30,14 +30,16 @@ namespace Lithnet.Miiserver.AutoSync
         internal MAStatus InternalStatus;
 
         private ManualResetEvent localOperationLock;
+        private ManualResetEvent pauseLock;
         private System.Timers.Timer importCheckTimer;
         private System.Timers.Timer unmanagedChangesCheckTimer;
         private TimeSpan importInterval;
+        private CancellationTokenSource tokenSource;
 
         private Dictionary<string, string> perProfileLastRunStatus;
 
         public MAConfigParameters Configuration { get; }
-
+        
         internal void RaiseStateChange()
         {
             this.StateChanged?.Invoke(this, new MAStatusChangedEventArgs(this.InternalStatus, this.ma.Name));
@@ -140,7 +142,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
 
             this.InternalStatus = new MAStatus { MAName = this.ma?.Name, LastRunProfileResult = lastrun?.LastStepStatus, LastRunProfileName = lastrun?.RunProfileName };
-
+            this.State = config.Disabled ? ExecutorState.Disabled : ExecutorState.Stopped;
             this.pendingActionList = new ExecutionParameterCollection();
             this.pendingActions = new BlockingCollection<ExecutionParameters>(this.pendingActionList);
             this.perProfileLastRunStatus = new Dictionary<string, string>();
@@ -148,10 +150,9 @@ namespace Lithnet.Miiserver.AutoSync
             this.Configuration = config;
             this.controller = new MAController(config);
             this.localOperationLock = new ManualResetEvent(true);
+            this.pauseLock = new ManualResetEvent(true);
             MAExecutor.AllMaLocalOperationLocks.Add(this.localOperationLock);
             MAExecutor.SyncComplete += this.MAExecutor_SyncComplete;
-            this.SetupImportSchedule();
-            this.SetupUnmanagedChangesCheckTimer();
             this.AttachTrigger(config.Triggers?.ToArray());
         }
 
@@ -166,6 +167,11 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void UnmanagedChangesCheckTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
+            if (this.State == ExecutorState.Paused)
+            {
+                return;
+            }
+
             this.CheckAndQueueUnmanagedChanges();
         }
 
@@ -198,6 +204,11 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void ImportCheckTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
+            if (this.State == ExecutorState.Paused)
+            {
+                return;
+            }
+
             this.AddPendingActionIfNotQueued(new ExecutionParameters(this.Configuration.ScheduledImportRunProfileName), "Import timer");
         }
 
@@ -385,9 +396,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             this.Trace($"LOCK: RELEASE: {name}");
             mre.Set();
-            this.token.ThrowIfCancellationRequested();
         }
-
 
         private void Execute(ExecutionParameters e)
         {
@@ -471,8 +480,6 @@ namespace Lithnet.Miiserver.AutoSync
                         this.Log($"Executing {e.RunProfileName}");
                         result = this.ma.ExecuteRunProfile(e.RunProfileName, this.token);
                         this.UpdateStatus(ExecutorState.Processing, "Evaluating run results");
-                        this.UpdateLastRunStatus(e.RunProfileName, result);
-                        
                         this.Log($"{e.RunProfileName} returned {result}");
                     }
                     catch (MAExecutionException ex)
@@ -481,6 +488,8 @@ namespace Lithnet.Miiserver.AutoSync
                         result = ex.Result;
                     }
 
+                    this.UpdateLastRunStatus(e.RunProfileName, result);
+                    
                     if (RegistrySettings.RetryCodes.Contains(result))
                     {
                         this.Trace($"Operation is retryable. {count} attempt{count.Pluralize()} made");
@@ -500,7 +509,7 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                     else
                     {
-                        this.Trace($"Result code {result} was not listed as retryable");
+                        this.Trace($"Result code '{result}' was not listed as retryable");
                         break;
                     }
                 }
@@ -638,14 +647,17 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public Task Start(CancellationToken token)
+        public Task Start()
         {
-            if (this.Configuration.Disabled)
+            if (this.State != ExecutorState.Stopped)
             {
-                throw new Exception("Cannot start executor as it is disabled");
+                throw new InvalidOperationException($"Cannot start an executor that is in the {this.State} state");
             }
 
-            this.token = token;
+            this.State = ExecutorState.Starting;
+
+            this.tokenSource = new CancellationTokenSource();
+            this.token = this.tokenSource.Token;
 
             try
             {
@@ -686,9 +698,18 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void Stop()
         {
+            if (this.State == ExecutorState.Stopped || this.State == ExecutorState.Disabled)
+            {
+                return;
+            }
+
+            this.State = ExecutorState.Stopping;
+
             this.Log("Stopping MAExecutor");
 
+            this.tokenSource.Cancel();
             this.importCheckTimer?.Stop();
+            this.ReleaseLock(this.pauseLock, nameof(this.pauseLock));
 
             foreach (IMAExecutionTrigger x in this.ExecutionTriggers)
             {
@@ -711,6 +732,58 @@ namespace Lithnet.Miiserver.AutoSync
             }
 
             this.internalTask = null;
+            
+            this.UpdateStatus(ExecutorState.Stopped, null);
+
+        }
+
+        public void Pause()
+        {
+            if (this.State == ExecutorState.Stopped || this.State == ExecutorState.Stopping || this.State == ExecutorState.Disabled)
+            {
+                throw new InvalidOperationException($"The service cannot be paused while it is in the {this.State} state");
+            }
+
+            this.State = ExecutorState.Pausing;
+
+            this.Log("Attempting to pause executor");
+            
+            if (this.importCheckTimer != null)
+            {
+                this.importCheckTimer.Enabled = false;
+            }
+
+            if (this.unmanagedChangesCheckTimer != null)
+            {
+                this.unmanagedChangesCheckTimer.Enabled = false;
+            }
+
+            this.WaitAndTakeLock(this.localOperationLock, nameof(this.localOperationLock));
+            this.TakeLock(this.pauseLock, nameof(this.pauseLock));
+            this.ReleaseLock(this.localOperationLock, nameof(this.localOperationLock));
+            this.Log("Executor has been paused");
+            this.UpdateStatus(ExecutorState.Paused, null);
+        }
+
+        public void Resume()
+        {
+            if (this.State != ExecutorState.Paused)
+            {
+                throw new InvalidOperationException($"The service cannot be resumed while it is in the {this.State} state");
+            }
+
+            if (this.importCheckTimer != null)
+            {
+                this.importCheckTimer.Enabled = true;
+            }
+
+            if (this.unmanagedChangesCheckTimer != null)
+            {
+                this.unmanagedChangesCheckTimer.Enabled = true;
+            }
+
+            this.State = ExecutorState.Idle;
+            this.ReleaseLock(this.pauseLock, nameof(this.pauseLock));
         }
 
         private void UpdateExecutionQueueState()
@@ -789,14 +862,19 @@ namespace Lithnet.Miiserver.AutoSync
 
             this.StartTriggers();
 
+            this.SetupImportSchedule();
+            this.SetupUnmanagedChangesCheckTimer();
+
             try
             {
                 this.Log("Starting action processing queue");
+                this.UpdateStatus(ExecutorState.Idle, null, null);
 
                 // ReSharper disable once InconsistentlySynchronizedField
                 foreach (ExecutionParameters action in this.pendingActions.GetConsumingEnumerable(this.token))
                 {
                     this.token.ThrowIfCancellationRequested();
+                    this.Wait(this.pauseLock, nameof(this.pauseLock));
 
                     try
                     {
@@ -841,12 +919,11 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void SetExclusiveMode(ExecutionParameters action)
         {
-            // If the debug flags for running serial sync operations are set, then mark the operation as exclusive
-            if (RegistrySettings.RunAllExclusive)
+            if (Program.ActiveConfig.Settings.RunMode == RunMode.Exclusive)
             {
                 action.Exclusive = true;
             }
-            else if (RegistrySettings.RunSyncExclusive)
+            else if (Program.ActiveConfig.Settings.RunMode == RunMode.Supported)
             {
                 if (this.IsSyncStep(action.RunProfileName))
                 {
@@ -882,13 +959,12 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
+                this.Wait(this.pauseLock, nameof(this.pauseLock));
+
                 this.Trace("Checking for unmanaged changes");
                 // If another operation in this executor is already running, then wait for it to finish
-                this.Wait(this.localOperationLock, nameof(this.localOperationLock));
-
-                // Signal the local lock that an event is running
-                this.TakeLock(this.localOperationLock, nameof(this.localOperationLock));
-
+                this.WaitAndTakeLock(this.localOperationLock, nameof(this.localOperationLock));
+                
                 if (this.ShouldExportPendingChanges())
                 {
                     this.AddPendingActionIfNotQueued(new ExecutionParameters(this.Configuration.ExportRunProfileName), "Pending export check");

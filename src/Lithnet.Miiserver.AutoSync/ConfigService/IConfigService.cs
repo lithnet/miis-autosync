@@ -21,5 +21,32 @@ namespace Lithnet.Miiserver.AutoSync
 
         [OperationContract]
         bool IsPendingRestart();
+
+        [OperationContract(IsOneWay = true)]
+        void Stop(string managementAgentName);
+
+        [OperationContract(IsOneWay = true)]
+        void Start(string managementAgentName);
+
+        [OperationContract(IsOneWay = true)]
+        void Pause(string managementAgentName);
+
+        [OperationContract(IsOneWay = true)]
+        void Resume(string managementAgentName);
+
+        [OperationContract(IsOneWay = true)]
+        void StopAll();
+
+        [OperationContract(IsOneWay = true)]
+        void StartAll();
+
+        [OperationContract(IsOneWay = true)]
+        void PauseAll();
+
+        [OperationContract(IsOneWay = true)]
+        void ResumeAll();
+
+        [OperationContract]
+        ExecutorState GetEngineState();
     }
 }

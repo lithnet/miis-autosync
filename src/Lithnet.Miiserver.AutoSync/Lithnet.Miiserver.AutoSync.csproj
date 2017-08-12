@@ -106,6 +106,7 @@
     <Compile Include="EventService\EventService.cs" />
     <Compile Include="EventService\IEventService.cs" />
     <Compile Include="EventService\IEventCallback.cs" />
+    <Compile Include="Exceptions\NoSuchManagementAgentException.cs" />
     <Compile Include="MAInterface\MAStatus.cs" />
     <Compile Include="ExecutionEngine.cs" />
     <Compile Include="MAInterface\ExecutionParameterCollection.cs" />

@@ -19,11 +19,21 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 if (RegistrySettings.key == null)
                 {
-                    RegistrySettings.key = Registry.LocalMachine.OpenSubKey("System\\CurrentControlSet\\Services\\miisautosync\\Parameters");
+                    RegistrySettings.key = Registry.LocalMachine.OpenSubKey("System\\CurrentControlSet\\Services\\miisautosync\\Parameters", true);
                 }
 
                 return RegistrySettings.key;
             }
+        }
+
+        public static bool ExecutionEngineEnabled
+        {
+            get
+            {
+                int? value = RegistrySettings.BaseKey.GetValue("ExecutionEngineEnabled", 0) as int?;
+                return value.HasValue && value.Value != 0;
+            }
+            set => RegistrySettings.BaseKey.SetValue("ExecutionEngineEnabled", value ? 1 : 0);
         }
 
         public static string LogPath
@@ -136,7 +146,7 @@ namespace Lithnet.Miiserver.AutoSync
                 }
             }
         }
-        
+
         public static TimeSpan ExecutionStaggerInterval
         {
             get
@@ -223,10 +233,6 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public static bool RunSyncExclusive => RegistrySettings.BaseKey.GetValue("ExclusiveSync") as string == "1";
-
-        public static bool RunAllExclusive => RegistrySettings.BaseKey.GetValue("ExclusiveAll") as string == "1";
-
         public static string GetSettingsString()
         {
             StringBuilder builder = new StringBuilder();
@@ -234,8 +240,6 @@ namespace Lithnet.Miiserver.AutoSync
             builder.AppendLine($"{nameof(RegistrySettings.LogPath)}: {RegistrySettings.LogPath}");
             builder.AppendLine($"{nameof(RegistrySettings.UnmanagedChangesCheckInterval)}: {RegistrySettings.UnmanagedChangesCheckInterval}");
             builder.AppendLine($"{nameof(RegistrySettings.ExecutionStaggerInterval)}: {RegistrySettings.ExecutionStaggerInterval}");
-            builder.AppendLine($"{nameof(RegistrySettings.RunSyncExclusive)}: {RegistrySettings.RunSyncExclusive}");
-            builder.AppendLine($"{nameof(RegistrySettings.RunAllExclusive)}: {RegistrySettings.RunAllExclusive}");
             builder.AppendLine($"{nameof(RegistrySettings.PostRunInterval)}: {RegistrySettings.PostRunInterval}");
             builder.AppendLine($"{nameof(RegistrySettings.RetryCount)}: {RegistrySettings.RetryCount}");
             builder.AppendLine($"{nameof(RegistrySettings.RetrySleepInterval)}: {RegistrySettings.RetrySleepInterval}");

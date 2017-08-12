@@ -8,8 +8,32 @@
     <DataTemplate DataType="{x:Type viewModels:ManagementAgentsViewModel}">
         <StackPanel>
             <ListView ScrollViewer.VerticalScrollBarVisibility="Auto" ItemsSource="{Binding}">
+
+                <ListView.Resources>
+                    <DataTemplate x:Key="ImageTemplate">
+                        <Image Source="{Binding Path=StatusIcon}" />
+                    </DataTemplate>
+                    <ContextMenu x:Key="ItemContextMenu">
+                        <MenuItem Header="Start"
+                                  Command="{Binding Commands.Start}" />
+                        <MenuItem Header="Stop"
+                                  Command="{Binding Commands.Stop}" />
+                        <Separator/>
+                        <MenuItem Header="Pause"
+                                  Command="{Binding Commands.Pause}" />
+                        <MenuItem Header="Resume"
+                                  Command="{Binding Commands.Resume}" />
+                    </ContextMenu>
+                </ListView.Resources>
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="{x:Type ListViewItem}">
+                        <Setter Property="ContextMenu"
+                                Value="{StaticResource ItemContextMenu}" />
+                    </Style>
+                </ListView.ItemContainerStyle>
                 <ListView.View>
                     <GridView>
+                        <GridViewColumn CellTemplate="{StaticResource ImageTemplate}"/>
                         <GridViewColumn Header="Management Agent" DisplayMemberBinding="{Binding ManagementAgentName}"/>
                         <GridViewColumn Header="State" DisplayMemberBinding="{Binding State}"/>
                         <GridViewColumn Header="Status" DisplayMemberBinding="{Binding Message}" Width="300"/>

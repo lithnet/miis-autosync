@@ -3,12 +3,16 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.ServiceModel;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media.Imaging;
 using Lithnet.Common.Presentation;
 using Lithnet.Miiserver.AutoSync.UI.Windows;
 using Lithnet.Miiserver.Client;
 using Microsoft.Win32;
+using PropertyChanged;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
@@ -23,7 +27,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             this.Triggers = new MAExecutionTriggersViewModel(model.Triggers, this);
             this.SubscribeToErrors(this.Triggers);
-            
+
             this.IgnorePropertyHasChanged.Add(nameof(this.ExecutingRunProfile));
             this.IgnorePropertyHasChanged.Add(nameof(this.Message));
             this.IgnorePropertyHasChanged.Add(nameof(this.ExecutionQueue));
@@ -38,7 +42,88 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.Commands.Add("New", new DelegateCommand(t => this.New()));
             this.Commands.Add("Edit", new DelegateCommand(t => this.Edit(), u => this.CanEdit()));
 
+            this.Commands.Add("Start", new DelegateCommand(t => this.Start(), u => this.CanStart()));
+            this.Commands.Add("Stop", new DelegateCommand(t => this.Stop(), u => this.CanStop()));
+            this.Commands.Add("Pause", new DelegateCommand(t => this.Pause(), u => this.CanPause()));
+            this.Commands.Add("Resume", new DelegateCommand(t => this.Resume(), u => this.CanResume()));
+
             this.SubscribeToStateChanges(model);
+        }
+
+        private void Stop()
+        {
+            try
+            {
+                ConfigClient c = new ConfigClient();
+                c.Stop(this.ManagementAgentName);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex);
+                MessageBox.Show($"Could not stop the management agent\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private bool CanStop()
+        {
+            return this.State != ExecutorState.Stopped && this.State != ExecutorState.Stopping && this.State != ExecutorState.Disabled;
+        }
+
+        private void Start()
+        {
+            try
+            {
+                ConfigClient c = new ConfigClient();
+                c.Start(this.ManagementAgentName);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex);
+                MessageBox.Show($"Could not start the management agent\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private bool CanStart()
+        {
+            return this.State == ExecutorState.Stopped;
+        }
+
+        private void Pause()
+        {
+            try
+            {
+                ConfigClient c = new ConfigClient();
+                c.Pause(this.ManagementAgentName);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex);
+                MessageBox.Show($"Could not pause the management agent\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private bool CanPause()
+        {
+            return !MAStatus.IsControlState(this.State);
+        }
+
+        private void Resume()
+        {
+            try
+            {
+                ConfigClient c = new ConfigClient();
+                c.Resume(this.ManagementAgentName);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex);
+                MessageBox.Show($"Could not resume the management agent\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private bool CanResume()
+        {
+            return this.State == ExecutorState.Paused;
         }
 
         private void SubscribeToStateChanges(MAConfigParameters model)
@@ -56,6 +141,42 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 }
             }
         }
+
+        public BitmapImage StatusIcon
+        {
+            get
+            {
+                switch (this.State)
+                {
+                    case ExecutorState.Disabled:
+                        return App.GetImageResource("Stop.png");
+
+                    case ExecutorState.Idle:
+                        return App.GetImageResource("Clock1.png");
+
+                    case ExecutorState.Paused:
+                        return App.GetImageResource("Pause.png");
+
+                    case ExecutorState.Processing:
+                    case ExecutorState.Running:
+                        return App.GetImageResource("Run.png");
+
+                    case ExecutorState.Pausing:
+                    case ExecutorState.Resuming:
+                    case ExecutorState.Starting:
+                    case ExecutorState.Waiting:
+                    case ExecutorState.Stopping:
+                        return App.GetImageResource("Hourglass.png");
+
+                    case ExecutorState.Stopped:
+                        return App.GetImageResource("Stop.png");
+
+                    default:
+                        return null;
+                }
+            }
+        }
+
 
         public string DisplayName
         {
@@ -376,8 +497,10 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public string ExecutingRunProfile { get; private set; }
 
+        [AlsoNotifyFor(nameof(LastRun))]
         public string LastRunProfileResult { get; private set; }
 
+        [AlsoNotifyFor(nameof(LastRun))]
         public string LastRunProfileName { get; private set; }
 
         public string LastRun => this.LastRunProfileName == null ? null : $"{this.LastRunProfileName}: {this.LastRunProfileResult}";
@@ -392,6 +515,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.LastRunProfileResult = status.LastRunProfileResult;
             this.LastRunProfileName = status.LastRunProfileName;
             this.State = status.State;
+
+            Trace.WriteLine($"{status.MAName} : {status.LastRunProfileName} : {status.LastRunProfileResult} : {this.LastRun}");
         }
     }
 }

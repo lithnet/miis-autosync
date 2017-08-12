@@ -237,7 +237,25 @@
       <Name>Lithnet.Miiserver.AutoSync</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="Resources\Cancel.ico" />
+    <Resource Include="Resources\Pause.ico" />
+    <Resource Include="Resources\Pause.png" />
+    <Resource Include="Resources\Restart.png" />
+    <Resource Include="Resources\Run.ico" />
+    <Resource Include="Resources\Run.png" />
+    <Resource Include="Resources\Stop.png" />
+    <Resource Include="Resources\Hourglass.png" />
+    <Resource Include="Resources\Timer.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Clock1.png" />
+    <Resource Include="Resources\Clock2.png" />
+    <Resource Include="Resources\Diamond.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Stop.ico" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets" Condition="Exists('..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

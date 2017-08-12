@@ -24,6 +24,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private bool confirmedCloseOnDirtyViewModel;
 
+        private EventClient client;
+
         public ConfigFileViewModel ConfigFile { get; set; }
 
         public string DisplayName => "Lithnet AutoSync for Microsoft Identity Manager" + (this.ViewModelIsDirty ? "*" : string.Empty);
@@ -54,13 +56,59 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.Commands.AddItem("About", x => this.About());
             this.Commands.AddItem("Import", x => this.Import(), x => this.CanImport());
 
+            this.Commands.AddItem("StartEngine", x => this.StartEngine(), x => this.CanStartEngine());
+            this.Commands.AddItem("PauseEngine", x => this.PauseEngine(), x => this.CanPauseEngine());
+            this.Commands.AddItem("StopEngine", x => this.StopEngine(), x => this.CanStopEngine());
+            
             this.StatusBarVisibility = Visibility.Collapsed;
 
             this.Cursor = Cursors.Arrow;
-
             ViewModelBase.ViewModelChanged += this.ViewModelBase_ViewModelChanged;
             Application.Current.MainWindow.Closing += this.MainWindow_Closing;
             UINotifyPropertyChanges.EndIgnoreAllChanges();
+        }
+
+        private void StartEngine()
+        {
+            ConfigClient c = new ConfigClient();
+            c.StartAll();
+        }
+
+        private bool CanStartEngine()
+        {
+            // ConfigClient c = new ConfigClient();
+            //ExecutorState state = c.GetEngineState();
+            //  return state == ExecutorState.Paused || state == ExecutorState.Stopped;
+            return true;
+
+        }
+
+        private void PauseEngine()
+        {
+            ConfigClient c = new ConfigClient();
+            c.PauseAll();
+        }
+
+        private bool CanPauseEngine()
+        {
+           // ConfigClient c = new ConfigClient();
+           // ExecutorState state = c.GetEngineState();
+           // return state == ExecutorState.Idle;
+            return true;
+        }
+
+        private void StopEngine()
+        {
+            ConfigClient c = new ConfigClient();
+            c.StopAll();
+        }
+
+        private bool CanStopEngine()
+        {
+           // ConfigClient c = new ConfigClient();
+           // ExecutorState state = c.GetEngineState();
+           // return state == ExecutorState.Idle || state == ExecutorState.Paused;
+            return true;
         }
 
         private void PopulateIgnoreViewModelChanges()

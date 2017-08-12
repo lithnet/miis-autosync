@@ -275,6 +275,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             Logger.WriteLine("Stopping execution engine");
             Program.engine?.Stop();
+            Program.engine?.ShutdownService();
             Program.engine = null;
         }
 
@@ -294,6 +295,52 @@ namespace Lithnet.Miiserver.AutoSync
         internal static MAStatus GetMAState(string maName)
         {
             return engine?.GetMAState(maName);
+        }
+
+
+        internal static void StopExecutors()
+        {
+            engine?.Stop();
+        }
+
+        internal static void StartExecutors()
+        {
+            engine?.Start();
+        }
+
+        internal static void PauseExecutors()
+        {
+            engine?.Pause();
+        }
+
+        internal static void ResumeExecutors()
+        {
+            engine?.Resume();
+        }
+
+        internal static ExecutorState GetEngineState()
+        {
+            return engine?.State ?? ExecutorState.Stopped;
+        }
+
+        internal static void StopExecutor(string managementAgentName)
+        {
+            engine?.Stop(managementAgentName);
+        }
+
+        internal static void StartExecutor(string managementAgentName)
+        {
+            engine?.Start(managementAgentName);
+        }
+
+        internal static void PauseExecutor(string managementAgentName)
+        {
+            engine?.Pause(managementAgentName);
+        }
+
+        internal static void ResumeExecutor(string managementAgentName)
+        {
+            engine?.Resume(managementAgentName);
         }
     }
 }

@@ -15,7 +15,6 @@ namespace Lithnet.Miiserver.AutoSync
         {
         }
 
-
         public void Register(string managementAgentName)
         {
             this.Channel.Register(managementAgentName);

@@ -39,5 +39,50 @@ namespace Lithnet.Miiserver.AutoSync
         {
             return this.Channel.IsPendingRestart();
         }
+
+        public void Stop(string managementAgentName)
+        {
+            this.Channel.Stop(managementAgentName);
+        }
+
+        public void Start(string managementAgentName)
+        {
+            this.Channel.Start(managementAgentName);
+        }
+
+        public void Pause(string managementAgentName)
+        {
+            this.Channel.Pause(managementAgentName);
+        }
+
+        public void Resume(string managementAgentName)
+        {
+            this.Channel.Resume(managementAgentName);
+        }
+
+        public void StopAll()
+        {
+            this.Channel.StopAll();
+        }
+
+        public void StartAll()
+        {
+            this.Channel.StartAll();
+        }
+
+        public void PauseAll()
+        {
+            this.Channel.PauseAll();
+        }
+
+        public void ResumeAll()
+        {
+            this.Channel.ResumeAll();
+        }
+
+        public ExecutorState GetEngineState()
+        {
+            return this.Channel.GetEngineState();
+        }
     }
 }

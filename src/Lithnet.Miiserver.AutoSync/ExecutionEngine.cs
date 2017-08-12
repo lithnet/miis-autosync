@@ -13,24 +13,96 @@ namespace Lithnet.Miiserver.AutoSync
     {
         private Dictionary<string, MAExecutor> maExecutors;
 
-        private CancellationTokenSource token;
-
         private ServiceHost service;
+
+        public ExecutorState State { get; set; }
 
         public ExecutionEngine()
         {
             this.service = EventService.CreateInstance();
             Logger.WriteLine("Initialized event service host");
+
+            this.InitializeMAExecutors();
         }
 
         public void Start()
         {
             this.StartMAExecutors();
+            this.State = ExecutorState.Idle;
         }
 
         public void Stop()
         {
             this.StopMAExecutors();
+            this.State = ExecutorState.Stopped;
+        }
+
+        public void Pause()
+        {
+            List<Task> tasks = new List<Task>();
+            foreach (MAExecutor x in this.maExecutors.Values)
+            {
+                if (x.State != ExecutorState.Disabled && x.State != ExecutorState.Paused && x.State != ExecutorState.Stopped)
+                {
+                    tasks.Add(Task.Run(() => x.Pause()));
+                }
+            }
+
+            Task.WhenAll(tasks).ContinueWith(t => this.State = ExecutorState.Paused);
+        }
+
+        public void Resume()
+        {
+            foreach (MAExecutor x in this.maExecutors.Values)
+            {
+                if (x.State == ExecutorState.Paused)
+                {
+                    x.Resume();
+                }
+            }
+
+            this.State = ExecutorState.Idle;
+        }
+
+        public void ShutdownService()
+        {
+            try
+            {
+                if (this.service != null)
+                {
+                    if (this.service.State != CommunicationState.Closed)
+                    {
+                        this.service.Close();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine("The service host did not shutdown cleanly");
+                Logger.WriteException(ex);
+            }
+
+            this.service = null;
+        }
+
+        public void Stop(string managementAgentName)
+        {
+            this.GetExecutorOrThrow(managementAgentName).Stop();
+        }
+
+        public void Start(string managementAgentName)
+        {
+            this.GetExecutorOrThrow(managementAgentName).Start();
+        }
+
+        public void Pause(string managementAgentName)
+        {
+            this.GetExecutorOrThrow(managementAgentName).Pause();
+        }
+
+        public void Resume(string managementAgentName)
+        {
+            this.GetExecutorOrThrow(managementAgentName).Resume();
         }
 
         internal IList<MAStatus> GetMAState()
@@ -50,51 +122,53 @@ namespace Lithnet.Miiserver.AutoSync
             return states;
         }
 
-        internal MAStatus GetMAState(string maName)
+        internal MAStatus GetMAState(string managementAgentName)
         {
-            if (this.maExecutors.ContainsKey(maName))
+            return this.GetExecutorOrThrow(managementAgentName).InternalStatus;
+        }
+
+        private void InitializeMAExecutors()
+        {
+            this.maExecutors = new Dictionary<string, MAExecutor>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (MAConfigParameters config in Program.ActiveConfig.ManagementAgents)
             {
-                return this.maExecutors[maName].InternalStatus;
-            }
-            else
-            {
-                return null;
+                MAExecutor x = new MAExecutor(config);
+                x.StateChanged += this.X_StateChanged;
+                this.maExecutors.Add(config.ManagementAgentName, x);
             }
         }
 
         private void StartMAExecutors()
         {
-            this.maExecutors = new Dictionary<string, MAExecutor>(StringComparer.OrdinalIgnoreCase);
-            this.token = new CancellationTokenSource();
-
-            foreach (MAConfigParameters config in Program.ActiveConfig.ManagementAgents)
+            if (RegistrySettings.ExecutionEngineEnabled)
             {
-                if (config.IsNew)
+                foreach (MAExecutor x in this.maExecutors.Values)
                 {
-                    Logger.WriteLine("{0}: Skipping management agent because it does not yet have any configuration defined", config.ManagementAgentName);
-                    continue;
-                }
+                    if (x.Configuration.IsNew)
+                    {
+                        Logger.WriteLine("{0}: Skipping management agent because it does not yet have any configuration defined", x.Configuration.ManagementAgentName);
+                        continue;
+                    }
 
-                if (config.IsMissing)
-                {
-                    Logger.WriteLine("{0}: Skipping management agent because it is missing from the Sync Engine", config.ManagementAgentName);
-                    continue;
-                }
+                    if (x.Configuration.IsMissing)
+                    {
+                        Logger.WriteLine("{0}: Skipping management agent because it is missing from the Sync Engine", x.Configuration.ManagementAgentName);
+                        continue;
+                    }
 
-                if (config.Disabled)
-                {
-                    Logger.WriteLine("{0}: Skipping management agent because it has been disabled in config", config.ManagementAgentName);
-                    continue;
-                }
+                    if (x.Configuration.Disabled)
+                    {
+                        Logger.WriteLine("{0}: Skipping management agent because it has been disabled in config", x.Configuration.ManagementAgentName);
+                        continue;
+                    }
 
-                MAExecutor x = new MAExecutor(config);
-                x.StateChanged += this.X_StateChanged;
-                this.maExecutors.Add(config.ManagementAgentName, x);
+                    Task.Run(() => x.Start());
+                }
             }
-
-            foreach (MAExecutor x in this.maExecutors.Values)
+            else
             {
-                Task.Run(() => x.Start(this.token.Token));
+                Logger.WriteLine("Execution engine has been disabled");
             }
         }
 
@@ -110,8 +184,6 @@ namespace Lithnet.Miiserver.AutoSync
                 return;
             }
 
-            this.token?.Cancel();
-
             List<Task> stopTasks = new List<Task>();
 
             foreach (MAExecutor x in this.maExecutors.Values)
@@ -120,7 +192,6 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     try
                     {
-                        x.StateChanged -= this.X_StateChanged;
                         x.Stop();
                     }
                     catch (OperationCanceledException)
@@ -139,6 +210,20 @@ namespace Lithnet.Miiserver.AutoSync
             else
             {
                 Logger.WriteLine("Executors stopped successfully");
+            }
+
+            this.State = ExecutorState.Stopped;
+        }
+
+        private MAExecutor GetExecutorOrThrow(string managementAgentName)
+        {
+            if (this.maExecutors.ContainsKey(managementAgentName))
+            {
+                return this.maExecutors[managementAgentName];
+            }
+            else
+            {
+                throw new NoSuchManagementAgentException(managementAgentName);
             }
         }
     }

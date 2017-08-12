@@ -2,6 +2,7 @@
 
 namespace Lithnet.Miiserver.AutoSync
 {
+    [Serializable]
     public class UnexpectedChangeException : Exception
     {
         public bool ShouldTerminateService { get; set; }

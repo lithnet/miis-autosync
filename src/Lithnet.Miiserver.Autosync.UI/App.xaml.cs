@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media.Imaging;
 using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync.UI
@@ -47,6 +49,11 @@ namespace Lithnet.Miiserver.AutoSync.UI
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             Trace.WriteLine(e.ExceptionObject);
+        }
+
+        internal static BitmapImage GetImageResource(string name)
+        {
+            return new BitmapImage(new Uri($"pack://application:,,,/Resources/{name}", UriKind.Absolute));
         }
     }
 }

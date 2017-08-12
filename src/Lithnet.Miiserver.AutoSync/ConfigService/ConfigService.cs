@@ -109,5 +109,115 @@ namespace Lithnet.Miiserver.AutoSync
                 throw;
             }
         }
+
+        public void Stop(string managementAgentName)
+        {
+            try
+            {
+                Program.StopExecutor(managementAgentName);
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteException(ex);
+                throw;
+            }
+        }
+
+        public void Start(string managementAgentName)
+        {
+            try
+            {
+                Program.StartExecutor(managementAgentName);
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteException(ex);
+                throw;
+            }
+        }
+
+        public void Pause(string managementAgentName)
+        {
+            try
+            {
+                Program.PauseExecutor(managementAgentName);
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteException(ex);
+                throw;
+            }
+        }
+
+        public void Resume(string managementAgentName)
+        {
+            try
+            {
+                Program.ResumeExecutor(managementAgentName);
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteException(ex);
+                throw;
+            }
+        }
+
+        public void StopAll()
+        {
+            try
+            {
+                Program.StopExecutors();
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteException(ex);
+                throw;
+            }
+        }
+
+        public void StartAll()
+        {
+            try
+            {
+                Program.StartExecutors();
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteException(ex);
+                throw;
+            }
+        }
+
+        public void PauseAll()
+        {
+            try
+            {
+                Program.PauseExecutors();
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteException(ex);
+                throw;
+            }
+        }
+
+        public void ResumeAll()
+        {
+            try
+            {
+                Program.ResumeExecutors();
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteException(ex);
+                throw;
+            }
+        }
+
+        public ExecutorState GetEngineState()
+        {
+            return Program.GetEngineState();
+        }
+
     }
 }

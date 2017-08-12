@@ -81,8 +81,14 @@
                         </Style>
                     </MenuItem.ItemContainerStyle>
                 </MenuItem>
-
             </Menu>
+            <ToolBarTray DockPanel.Dock="Bottom">
+                <ToolBar Height="36">
+                    <Button Command="{Binding Path=Commands.StartEngine}"><Image Source="/Resources/Run.ico"/></Button>
+                    <Button Command="{Binding Path=Commands.PauseEngine}"><Image Source="/Resources/Pause.ico"/></Button>
+                    <Button Command="{Binding Path=Commands.StopEngine}"><Image Source="/Resources/Stop.ico"/></Button>
+                </ToolBar>
+            </ToolBarTray>
         </DockPanel>
 
         <StatusBar Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Visibility="{Binding StatusBarVisibility}"
