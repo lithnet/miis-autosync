@@ -285,5 +285,15 @@ namespace Lithnet.Miiserver.AutoSync
             Program.ShutdownExecutionEngineInstance();
             Program.CreateExecutionEngineInstance();
         }
+
+        internal static IList<MAStatus> GetMAState()
+        {
+            return engine?.GetMAState();
+        }
+
+        internal static MAStatus GetMAState(string maName)
+        {
+            return engine?.GetMAState(maName);
+        }
     }
 }

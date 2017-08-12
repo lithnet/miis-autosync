@@ -10,12 +10,6 @@ namespace Lithnet.Miiserver.AutoSync
     public interface IEventCallBack
     {
         [OperationContract (IsOneWay = true)]
-        void ExecutionQueueChanged(string executionQueue, string managementAgent);
-
-        [OperationContract(IsOneWay = true)]
-        void ExecutingRunProfileChanged(string executingRunProfile, string managementAgent);
-
-        [OperationContract(IsOneWay = true)]
-        void StatusChanged(string status, string managementAgent);
+        void MAStatusChanged(MAStatus status);
     }
 }

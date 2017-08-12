@@ -11,9 +11,11 @@
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Header="Management Agent" DisplayMemberBinding="{Binding ManagementAgentName}"/>
+                        <GridViewColumn Header="State" DisplayMemberBinding="{Binding State}"/>
+                        <GridViewColumn Header="Status" DisplayMemberBinding="{Binding Message}" Width="300"/>
                         <GridViewColumn Header="Executing Run Profile"  DisplayMemberBinding="{Binding ExecutingRunProfile}"/>
                         <GridViewColumn Header="Execution Queue" DisplayMemberBinding="{Binding ExecutionQueue}"/>
-                        <GridViewColumn Header="Status" DisplayMemberBinding="{Binding Status}" Width="300"/>
+                        <GridViewColumn Header="Last run result" DisplayMemberBinding="{Binding LastRun}"/>
                     </GridView>
                 </ListView.View>
             </ListView>

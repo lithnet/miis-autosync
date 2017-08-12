@@ -48,22 +48,57 @@ namespace Lithnet.Miiserver.AutoSync
                 throw;
             }
         }
-        
-        internal static StatusChangedEventHandler StatusChanged;
-        internal delegate void StatusChangedEventHandler(string status, string managementAgentName);
 
-        internal static ExecutingRunProfileChangedEventHandler ExecutingRunProfileChanged;
-        internal delegate void ExecutingRunProfileChangedEventHandler(string runProfileName, string managementAgentName);
-        
-        internal static ExecutionQueueChangedEventHandler ExecutionQueueChanged;
-        internal delegate void ExecutionQueueChangedEventHandler(string executionQueue, string managementAgentName);
+        private static Dictionary<string, MAStateChangedEventHandler> eventHandlers;
 
-        public void Register()
+        internal delegate void MAStateChangedEventHandler(MAStatus status);
+
+        internal static void NotifySubscribers(MAStatus status)
         {
-            IEventCallBack subscriber = OperationContext.Current.GetCallbackChannel<IEventCallBack>();
-            EventService.StatusChanged += subscriber.StatusChanged;
-            EventService.ExecutionQueueChanged += subscriber.ExecutionQueueChanged;
-            EventService.ExecutingRunProfileChanged += subscriber.ExecutingRunProfileChanged;
+            if (EventService.eventHandlers.ContainsKey(status.MAName))
+            {
+                EventService.eventHandlers[status.MAName]?.Invoke(status);
+            }
+        }
+
+        static EventService()
+        {
+            EventService.eventHandlers = new Dictionary<string, MAStateChangedEventHandler>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        public void Register(string managementAgentName)
+        {
+            try
+            {
+                IEventCallBack subscriber = OperationContext.Current.GetCallbackChannel<IEventCallBack>();
+
+                if (!EventService.eventHandlers.ContainsKey(managementAgentName))
+                {
+                    EventService.eventHandlers.Add(managementAgentName, null);
+                }
+
+                EventService.eventHandlers[managementAgentName] += subscriber.MAStatusChanged;
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine("An error occurred with the client registration");
+                Logger.WriteException(ex);
+                throw;
+            }
+        }
+
+        public MAStatus GetFullUpdate(string managementAgentName)
+        {
+            try
+            {
+                return Program.GetMAState(managementAgentName);
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine($"An error occurred while getting the client a full state update for {managementAgentName}");
+                Logger.WriteException(ex);
+                throw;
+            }
         }
     }
 }

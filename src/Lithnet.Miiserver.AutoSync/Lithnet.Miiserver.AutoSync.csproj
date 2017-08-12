@@ -97,16 +97,16 @@
     <Compile Include="Config\Settings.cs" />
     <Compile Include="Enums\ExecutionErrorBehaviour.cs" />
     <Compile Include="Enums\AutoImportScheduling.cs" />
+    <Compile Include="Enums\ExecutorState.cs" />
     <Compile Include="Enums\RunMode.cs" />
-    <Compile Include="EventArgs\StatusChangedEventArgs.cs" />
-    <Compile Include="EventArgs\ExecutingRunProfileChangedEventArgs.cs" />
-    <Compile Include="EventArgs\ExecutionQueueChangedEventArgs.cs" />
+    <Compile Include="EventArgs\MAStatusChangedEventArgs.cs" />
     <Compile Include="EventService\EventClient.cs" />
     <Compile Include="EventService\EventServiceConfiguration.cs" />
     <Compile Include="EventService\EventServiceAuthorizationManager.cs" />
     <Compile Include="EventService\EventService.cs" />
     <Compile Include="EventService\IEventService.cs" />
     <Compile Include="EventService\IEventCallback.cs" />
+    <Compile Include="MAInterface\MAStatus.cs" />
     <Compile Include="ExecutionEngine.cs" />
     <Compile Include="MAInterface\ExecutionParameterCollection.cs" />
     <Compile Include="Extensions.cs" />
@@ -225,6 +225,9 @@ foreach (var item in filesToCleanup)
     <Error Condition="!Exists('..\packages\Costura.Fody.1.6.2\build\dotnet\Costura.Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Costura.Fody.1.6.2\build\dotnet\Costura.Fody.targets'))" />
   </Target>
   <Import Project="..\packages\Costura.Fody.1.6.2\build\dotnet\Costura.Fody.targets" Condition="Exists('..\packages\Costura.Fody.1.6.2\build\dotnet\Costura.Fody.targets')" />
+  <PropertyGroup>
+    <PostBuildEvent>"C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe" sign /sha1 5ce168989b1359309dddee460c10e96fa60fa78b /t http://time.certum.pl /v $(TargetFileName)</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

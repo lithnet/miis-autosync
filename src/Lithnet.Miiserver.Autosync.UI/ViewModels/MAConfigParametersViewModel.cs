@@ -23,6 +23,14 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             this.Triggers = new MAExecutionTriggersViewModel(model.Triggers, this);
             this.SubscribeToErrors(this.Triggers);
+            
+            this.IgnorePropertyHasChanged.Add(nameof(this.ExecutingRunProfile));
+            this.IgnorePropertyHasChanged.Add(nameof(this.Message));
+            this.IgnorePropertyHasChanged.Add(nameof(this.ExecutionQueue));
+            this.IgnorePropertyHasChanged.Add(nameof(this.LastRunProfileResult));
+            this.IgnorePropertyHasChanged.Add(nameof(this.LastRunProfileName));
+            this.IgnorePropertyHasChanged.Add(nameof(this.LastRun));
+            this.IgnorePropertyHasChanged.Add(nameof(this.State));
 
             this.Commands.Add("AddTrigger", new DelegateCommand(t => this.AddTrigger(), u => this.CanAddTrigger()));
             this.Commands.Add("RemoveTrigger", new DelegateCommand(t => this.RemoveTrigger(), u => this.CanRemoveTrigger()));
@@ -30,11 +38,22 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.Commands.Add("New", new DelegateCommand(t => this.New()));
             this.Commands.Add("Edit", new DelegateCommand(t => this.Edit(), u => this.CanEdit()));
 
+            this.SubscribeToStateChanges(model);
+        }
+
+        private void SubscribeToStateChanges(MAConfigParameters model)
+        {
             if (!model.IsMissing)
             {
                 InstanceContext i = new InstanceContext(this);
                 this.client = new EventClient(i);
-                this.client.Register();
+                this.client.Register(this.ManagementAgentName);
+                MAStatus status = this.client.GetFullUpdate(this.ManagementAgentName);
+
+                if (status != null)
+                {
+                    this.MAStatusChanged(status);
+                }
             }
         }
 
@@ -273,11 +292,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             return this.Triggers.Any(t => t.IsSelected);
         }
 
-        public void DoAutoDiscovery()
-        {
-            //this.model = MAConfigDiscovery.DoAutoRunProfileDiscovery(this.model.ManagementAgent);
-        }
-
         private void New()
         {
             SaveFileDialog dialog = new SaveFileDialog();
@@ -358,33 +372,26 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public string ExecutionQueue { get; private set; }
 
-        public string Status { get; private set; }
+        public string Message { get; private set; }
 
         public string ExecutingRunProfile { get; private set; }
 
+        public string LastRunProfileResult { get; private set; }
 
-        public void ExecutionQueueChanged(string executionQueue, string managementAgent)
-        {
-            if (this.ManagementAgentName.Equals(managementAgent, StringComparison.OrdinalIgnoreCase))
-            {
-                this.ExecutionQueue = executionQueue;
-            }
-        }
+        public string LastRunProfileName { get; private set; }
 
-        public void ExecutingRunProfileChanged(string executingRunProfile, string managementAgent)
-        {
-            if (this.ManagementAgentName.Equals(managementAgent, StringComparison.OrdinalIgnoreCase))
-            {
-                this.ExecutingRunProfile = executingRunProfile;
-            }
-        }
+        public string LastRun => this.LastRunProfileName == null ? null : $"{this.LastRunProfileName}: {this.LastRunProfileResult}";
 
-        public void StatusChanged(string status, string managementAgent)
+        public ExecutorState State { get; private set; }
+
+        public void MAStatusChanged(MAStatus status)
         {
-            if (this.ManagementAgentName.Equals(managementAgent, StringComparison.OrdinalIgnoreCase))
-            {
-                this.Status = status;
-            }
+            this.Message = status.Message;
+            this.ExecutingRunProfile = status.ExecutingRunProfile;
+            this.ExecutionQueue = status.ExecutionQueue;
+            this.LastRunProfileResult = status.LastRunProfileResult;
+            this.LastRunProfileName = status.LastRunProfileName;
+            this.State = status.State;
         }
     }
 }

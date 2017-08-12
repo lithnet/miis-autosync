@@ -11,7 +11,7 @@ namespace Lithnet.Miiserver.AutoSync
 {
     internal class ExecutionEngine : MarshalByRefObject
     {
-        private List<MAExecutor> maExecutors;
+        private Dictionary<string, MAExecutor> maExecutors;
 
         private CancellationTokenSource token;
 
@@ -33,9 +33,38 @@ namespace Lithnet.Miiserver.AutoSync
             this.StopMAExecutors();
         }
 
+        internal IList<MAStatus> GetMAState()
+        {
+            List<MAStatus> states = new List<MAStatus>();
+
+            if (this.maExecutors == null)
+            {
+                return states;
+            }
+
+            foreach (MAExecutor x in this.maExecutors.Values)
+            {
+                states.Add(x.InternalStatus);
+            }
+
+            return states;
+        }
+
+        internal MAStatus GetMAState(string maName)
+        {
+            if (this.maExecutors.ContainsKey(maName))
+            {
+                return this.maExecutors[maName].InternalStatus;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         private void StartMAExecutors()
         {
-            this.maExecutors = new List<MAExecutor>();
+            this.maExecutors = new Dictionary<string, MAExecutor>(StringComparer.OrdinalIgnoreCase);
             this.token = new CancellationTokenSource();
 
             foreach (MAConfigParameters config in Program.ActiveConfig.ManagementAgents)
@@ -59,31 +88,19 @@ namespace Lithnet.Miiserver.AutoSync
                 }
 
                 MAExecutor x = new MAExecutor(config);
-                x.ExecutingRunProfileChanged += this.X_ExecutingRunProfileChanged;
-                x.ExecutionQueueChanged += this.X_ExecutionQueueChanged;
-                x.StatusChanged += this.X_StatusChanged;
-                this.maExecutors.Add(x);
+                x.StateChanged += this.X_StateChanged;
+                this.maExecutors.Add(config.ManagementAgentName, x);
             }
 
-            foreach (MAExecutor x in this.maExecutors)
+            foreach (MAExecutor x in this.maExecutors.Values)
             {
                 Task.Run(() => x.Start(this.token.Token));
             }
         }
 
-        private void X_StatusChanged(object sender, StatusChangedEventArgs e)
+        private void X_StateChanged(object sender, MAStatusChangedEventArgs e)
         {
-            EventService.StatusChanged?.Invoke(e.Status, e.MAName);
-        }
-
-        private void X_ExecutionQueueChanged(object sender, ExecutionQueueChangedEventArgs e)
-        {
-            EventService.ExecutionQueueChanged?.Invoke(e.ExecutionQueue, e.MAName);
-        }
-
-        private void X_ExecutingRunProfileChanged(object sender, ExecutingRunProfileChangedEventArgs e)
-        {
-            EventService.ExecutingRunProfileChanged?.Invoke(e.ExecutingRunProfile, e.MAName);
+            EventService.NotifySubscribers(e.Status);
         }
 
         private void StopMAExecutors()
@@ -97,15 +114,13 @@ namespace Lithnet.Miiserver.AutoSync
 
             List<Task> stopTasks = new List<Task>();
 
-            foreach (MAExecutor x in this.maExecutors)
+            foreach (MAExecutor x in this.maExecutors.Values)
             {
                 stopTasks.Add(Task.Factory.StartNew(() =>
                 {
                     try
                     {
-                        x.ExecutingRunProfileChanged -= this.X_ExecutingRunProfileChanged;
-                        x.ExecutionQueueChanged -= this.X_ExecutionQueueChanged;
-                        x.StatusChanged -= this.X_StatusChanged;
+                        x.StateChanged -= this.X_StateChanged;
                         x.Stop();
                     }
                     catch (OperationCanceledException)

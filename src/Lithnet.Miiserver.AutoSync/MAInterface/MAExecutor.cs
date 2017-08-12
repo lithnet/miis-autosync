@@ -24,15 +24,10 @@ namespace Lithnet.Miiserver.AutoSync
         private BlockingCollection<ExecutionParameters> pendingActions;
         private ExecutionParameterCollection pendingActionList;
 
-        public delegate void StatusChangedEventHandler(object sender, StatusChangedEventArgs e);
-        public event StatusChangedEventHandler StatusChanged;
+        public delegate void StateChangedEventHandler(object sender, MAStatusChangedEventArgs e);
+        public event StateChangedEventHandler StateChanged;
 
-        public delegate void ExecutionQueueChangedEventHandler(object sender, ExecutionQueueChangedEventArgs e);
-        public event ExecutionQueueChangedEventHandler ExecutionQueueChanged;
-
-        public delegate void ExecutingRunProfileChangedEventHandler(object sender, ExecutingRunProfileChangedEventArgs e);
-        public event ExecutingRunProfileChangedEventHandler ExecutingRunProfileChanged;
-
+        internal MAStatus InternalStatus;
 
         private ManualResetEvent localOperationLock;
         private System.Timers.Timer importCheckTimer;
@@ -43,23 +38,74 @@ namespace Lithnet.Miiserver.AutoSync
 
         public MAConfigParameters Configuration { get; }
 
+        internal void RaiseStateChange()
+        {
+            this.StateChanged?.Invoke(this, new MAStatusChangedEventArgs(this.InternalStatus, this.ma.Name));
+        }
+
         public string ExecutingRunProfile
         {
-            get => this.executingRunProfile;
+            get => this.InternalStatus.ExecutingRunProfile;
             private set
             {
-                this.executingRunProfile = value;
-                this.ExecutingRunProfileChanged?.Invoke(this, new ExecutingRunProfileChangedEventArgs(value, this.ma.Name));
+                if (this.InternalStatus.ExecutingRunProfile != value)
+                {
+                    this.InternalStatus.ExecutingRunProfile = value;
+                    this.RaiseStateChange();
+                }
             }
         }
 
-        public string Status
+        public string LastRunProfileResult
         {
-            get => this.status;
+            get => this.InternalStatus.LastRunProfileResult;
             private set
             {
-                this.status = value;
-                this.StatusChanged?.Invoke(this, new StatusChangedEventArgs(value, this.ma.Name));
+                if (this.InternalStatus.LastRunProfileResult != value)
+                {
+                    this.InternalStatus.LastRunProfileResult = value;
+                    this.RaiseStateChange();
+                }
+            }
+        }
+
+        public string LastRunProfileName
+        {
+            get => this.InternalStatus.LastRunProfileName;
+            private set
+            {
+                if (this.InternalStatus.LastRunProfileName != value)
+                {
+                    this.InternalStatus.LastRunProfileName = value;
+                    this.RaiseStateChange();
+                }
+            }
+        }
+
+
+        public string Message
+        {
+            get => this.InternalStatus.Message;
+            private set
+            {
+                if (this.InternalStatus.Message != value)
+                {
+                    this.InternalStatus.Message = value;
+                    this.RaiseStateChange();
+                }
+            }
+        }
+
+        public ExecutorState State
+        {
+            get => this.InternalStatus.State;
+            private set
+            {
+                if (this.InternalStatus.State != value)
+                {
+                    this.InternalStatus.State = value;
+                    this.RaiseStateChange();
+                }
             }
         }
 
@@ -70,10 +116,6 @@ namespace Lithnet.Miiserver.AutoSync
         private CancellationToken token;
 
         private Task internalTask;
-
-        private string executingRunProfile;
-
-        private string status;
 
         static MAExecutor()
         {
@@ -86,6 +128,19 @@ namespace Lithnet.Miiserver.AutoSync
         public MAExecutor(MAConfigParameters config)
         {
             this.ma = config.ManagementAgent;
+
+            RunDetails lastrun = null;
+
+            try
+            {
+                lastrun = this.ma?.GetLastRun();
+            }
+            catch
+            {
+            }
+
+            this.InternalStatus = new MAStatus { MAName = this.ma?.Name, LastRunProfileResult = lastrun?.LastStepStatus, LastRunProfileName = lastrun?.RunProfileName };
+
             this.pendingActionList = new ExecutionParameterCollection();
             this.pendingActions = new BlockingCollection<ExecutionParameters>(this.pendingActionList);
             this.perProfileLastRunStatus = new Dictionary<string, string>();
@@ -341,12 +396,11 @@ namespace Lithnet.Miiserver.AutoSync
             try
             {
                 this.token.ThrowIfCancellationRequested();
-
-                this.Status = "Waiting for exclusive operations to complete";
+                this.UpdateStatus(ExecutorState.Waiting, "Waiting for exclusive operations to complete", e.RunProfileName);
 
                 this.Wait(MAExecutor.GlobalExclusiveOperationLock, nameof(MAExecutor.GlobalExclusiveOperationLock));
 
-                this.Status = null;
+                this.Message = "Asking controller for execution permission";
 
                 if (!this.controller.ShouldExecute(e.RunProfileName))
                 {
@@ -356,11 +410,13 @@ namespace Lithnet.Miiserver.AutoSync
 
                 this.WaitOnUnmanagedRun();
 
+                this.State = ExecutorState.Waiting;
+                this.ExecutingRunProfile = e.RunProfileName;
                 this.token.ThrowIfCancellationRequested();
 
                 if (e.Exclusive)
                 {
-                    this.Status = "Waiting for exclusive operation lock";
+                    this.Message = "Waiting for exclusive operation lock";
                     this.Log($"Entering exclusive mode for {e.RunProfileName}");
 
                     // Signal all executors to wait before running their next job
@@ -373,13 +429,13 @@ namespace Lithnet.Miiserver.AutoSync
                 }
 
                 // If another operation in this executor is already running, then wait for it to finish before taking the lock for ourselves
-                this.Status = "Waiting for lock on management agent";
+                this.Message = "Waiting for lock on management agent";
                 this.WaitAndTakeLock(this.localOperationLock, nameof(this.localOperationLock));
 
                 // Grab the staggered execution lock, and hold for x seconds
                 // This ensures that no MA can start within x seconds of another MA
                 // to avoid deadlock conditions
-                this.Status = "Waiting for MA start";
+                this.Message = "Waiting for MA start";
                 bool tookStaggerLock = false;
                 try
                 {
@@ -411,9 +467,12 @@ namespace Lithnet.Miiserver.AutoSync
                     try
                     {
                         count++;
-                        this.Status = "Executing";
+                        this.UpdateStatus(ExecutorState.Running, "Executing");
                         this.Log($"Executing {e.RunProfileName}");
                         result = this.ma.ExecuteRunProfile(e.RunProfileName, this.token);
+                        this.UpdateStatus(ExecutorState.Processing, "Evaluating run results");
+                        this.UpdateLastRunStatus(e.RunProfileName, result);
+                        
                         this.Log($"{e.RunProfileName} returned {result}");
                     }
                     catch (MAExecutionException ex)
@@ -424,8 +483,6 @@ namespace Lithnet.Miiserver.AutoSync
 
                     if (RegistrySettings.RetryCodes.Contains(result))
                     {
-                        this.Status = "Waiting to retry operation";
-
                         this.Trace($"Operation is retryable. {count} attempt{count.Pluralize()} made");
 
                         if (count > RegistrySettings.RetryCount && RegistrySettings.RetryCount >= 0)
@@ -433,6 +490,8 @@ namespace Lithnet.Miiserver.AutoSync
                             this.Log($"Aborting run profile after {count} attempt{count.Pluralize()}");
                             break;
                         }
+
+                        this.UpdateStatus(ExecutorState.Waiting, "Waiting to retry operation");
 
                         int interval = Global.RandomizeOffset(RegistrySettings.RetrySleepInterval.TotalMilliseconds * count);
                         this.Trace($"Sleeping thread for {interval}ms before retry");
@@ -448,7 +507,6 @@ namespace Lithnet.Miiserver.AutoSync
 
                 this.Wait(RegistrySettings.PostRunInterval, nameof(RegistrySettings.PostRunInterval));
 
-                this.Status = "Processing run results";
                 this.Trace("Getting run results");
                 using (RunDetails r = this.ma.GetLastRun())
                 {
@@ -482,7 +540,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             finally
             {
-                this.Status = null;
+                this.UpdateStatus(ExecutorState.Idle, null, null);
 
                 // Reset the local lock so the next operation can run
                 this.ReleaseLock(this.localOperationLock, nameof(this.localOperationLock));
@@ -502,11 +560,13 @@ namespace Lithnet.Miiserver.AutoSync
                 return;
             }
 
-            this.Trace("Unmanaged run in progress");
-            this.TakeLock(this.localOperationLock, nameof(this.localOperationLock));
-
             try
             {
+                this.UpdateStatus(ExecutorState.Running, "Unmanaged run in progress", this.ma.ExecutingRunProfileName);
+
+                this.Trace("Unmanaged run in progress");
+                this.TakeLock(this.localOperationLock, nameof(this.localOperationLock));
+
                 this.Log($"Waiting on unmanaged run {this.ma.ExecutingRunProfileName} to finish");
 
                 if (this.ma.RunProfiles[this.ma.ExecutingRunProfileName].RunSteps.Any(t => t.IsSyncStep))
@@ -533,10 +593,12 @@ namespace Lithnet.Miiserver.AutoSync
                     this.ma.Wait(this.token);
                 }
 
+                this.UpdateStatus(ExecutorState.Processing, "Evaluating run results");
                 this.token.ThrowIfCancellationRequested();
 
                 using (RunDetails ur = this.ma.GetLastRun())
                 {
+                    this.UpdateLastRunStatus(ur.RunProfileName, ur.LastStepStatus);
                     this.PerformPostRunActions(ur);
                 }
             }
@@ -544,6 +606,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 this.ReleaseLock(this.localOperationLock, nameof(this.localOperationLock));
                 this.Trace("Unmanaged run complete");
+                this.UpdateStatus(ExecutorState.Idle, null, null);
             }
         }
 
@@ -650,19 +713,71 @@ namespace Lithnet.Miiserver.AutoSync
             this.internalTask = null;
         }
 
+        private void UpdateExecutionQueueState()
+        {
+            string items = this.GetQueueItemNames(false);
+
+            if (items != this.InternalStatus.ExecutionQueue)
+            {
+                this.InternalStatus.ExecutionQueue = items;
+                this.RaiseStateChange();
+            }
+        }
+
+        private void UpdateStatus(ExecutorState state, string message)
+        {
+            this.InternalStatus.State = state;
+            this.InternalStatus.Message = message;
+            this.RaiseStateChange();
+        }
+
+        private void UpdateStatus(ExecutorState state, string message, string executingRunProfile)
+        {
+            this.InternalStatus.State = state;
+            this.InternalStatus.Message = message;
+            this.InternalStatus.ExecutingRunProfile = executingRunProfile;
+            this.RaiseStateChange();
+        }
+
+        private void UpdateStatus(ExecutorState state, string message, string executingRunProfile, string executionQueue)
+        {
+            this.InternalStatus.State = state;
+            this.InternalStatus.Message = message;
+            this.InternalStatus.ExecutingRunProfile = executingRunProfile;
+            this.InternalStatus.ExecutionQueue = executionQueue;
+            this.RaiseStateChange();
+        }
+
+        private void UpdateLastRunStatus(string runProfileName, string result)
+        {
+            this.InternalStatus.LastRunProfileName = runProfileName;
+            this.InternalStatus.LastRunProfileResult = result;
+            this.RaiseStateChange();
+        }
+
         private void Init()
         {
             if (!this.ma.IsIdle())
             {
                 try
                 {
+                    this.UpdateStatus(ExecutorState.Running, "Unmanaged run in progress", this.ma.ExecutingRunProfileName);
                     this.Log("Waiting for sync engine to finish current run profile before initializing executor");
                     this.TakeLock(this.localOperationLock, nameof(this.localOperationLock));
                     this.ma.Wait(this.token);
+                    this.State = ExecutorState.Processing;
+                    RunDetails r = this.ma.GetLastRun();
+                    this.UpdateLastRunStatus(r.RunProfileName, r.LastStepStatus);
+                }
+                catch (Exception ex)
+                {
+                    Logger.WriteLine("An error occurred in an unmanaged run");
+                    Logger.WriteException(ex);
                 }
                 finally
                 {
                     this.ReleaseLock(this.localOperationLock, nameof(this.localOperationLock));
+                    this.UpdateStatus(ExecutorState.Idle, null, null);
                 }
             }
 
@@ -685,15 +800,13 @@ namespace Lithnet.Miiserver.AutoSync
 
                     try
                     {
-                        this.ExecutionQueueChanged?.Invoke(this, new ExecutionQueueChangedEventArgs(this.GetQueueItemNames(false), this.ma.Name));
-                        this.ExecutingRunProfile = action.RunProfileName;
-                        this.Status = "Staging run";
+                        this.UpdateStatus(ExecutorState.Waiting, "Staging run", action.RunProfileName, this.GetQueueItemNames(false));
 
                         this.SetExclusiveMode(action);
 
                         if (this.IsSyncStepOrFimMADeltaImport(action.RunProfileName))
                         {
-                            this.Status = "Waiting for synchronization lock";
+                            this.Message = "Waiting for synchronization lock";
                             bool tookLock = false;
 
                             try
@@ -717,7 +830,7 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                     finally
                     {
-                        this.ExecutingRunProfile = null;
+                        this.UpdateStatus(ExecutorState.Idle, null, null);
                     }
                 }
             }
@@ -892,7 +1005,7 @@ namespace Lithnet.Miiserver.AutoSync
                     this.Log($"Added {p.RunProfileName} to the execution queue (triggered by: {source})");
                 }
 
-                this.ExecutionQueueChanged?.Invoke(this, new ExecutionQueueChangedEventArgs(this.GetQueueItemNames(false), this.ma.Name));
+                this.UpdateExecutionQueueState();
 
                 this.Log($"Current queue: {this.GetQueueItemNames()}");
             }
@@ -998,7 +1111,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             return Program.ActiveConfig.Settings.MailIgnoreReturnCodes == null || !Program.ActiveConfig.Settings.MailIgnoreReturnCodes.Contains(r.LastStepStatus, StringComparer.OrdinalIgnoreCase);
         }
-        
+
         public override string ToString()
         {
             StringBuilder builder = new StringBuilder();

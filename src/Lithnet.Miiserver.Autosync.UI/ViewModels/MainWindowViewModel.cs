@@ -421,6 +421,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 return;
             }
 
+            Trace.WriteLine($"Setting view model to dirty due to change of property {e.PropertyName} on object of type {sender.GetType().Name}");
             this.ViewModelIsDirty = true;
             this.RaisePropertyChanged("DisplayName");
         }

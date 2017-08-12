@@ -16,9 +16,14 @@ namespace Lithnet.Miiserver.AutoSync
         }
 
 
-        public void Register()
+        public void Register(string managementAgentName)
         {
-            this.Channel.Register();
+            this.Channel.Register(managementAgentName);
+        }
+
+        public MAStatus GetFullUpdate(string managementAgentName)
+        {
+            return this.Channel.GetFullUpdate(managementAgentName);
         }
     }
 }
