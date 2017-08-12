@@ -40,7 +40,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
                 }).Wait();
 
-                Thread.Sleep(3000);
+                Thread.Sleep(1000);
             }
 #endif
         }
