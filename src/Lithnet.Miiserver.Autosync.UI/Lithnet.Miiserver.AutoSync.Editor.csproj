@@ -68,6 +68,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Linq" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Windows.Forms" />
@@ -95,12 +96,15 @@
     <Compile Include="Controls\TreeViewItemControl.xaml.cs">
       <DependentUpon>TreeViewItemControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Converters\SortedListConverter.cs" />
     <Compile Include="PasswordBoxBindingHelper.cs" />
     <Compile Include="Controls\TimeSpanControl.xaml.cs">
       <DependentUpon>TimeSpanControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="TypeDescriptionConverter.cs" />
+    <Compile Include="Converters\TypeDescriptionConverter.cs" />
     <Compile Include="ViewModels\ActiveDirectoryChangeTriggerViewModel.cs" />
+    <Compile Include="ViewModels\ExecutionMonitorViewModel.cs" />
+    <Compile Include="ViewModels\ExecutionMonitorsViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
     <Compile Include="ViewModels\MAExecutionTriggerViewModel.cs" />
     <Compile Include="ViewModels\MainWindowViewModel.cs" />
@@ -118,6 +122,14 @@
     <Page Include="ResourceDictionaries\ErrorNotifications.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ExecutionMonitorsView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\ConfigFileView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\ManagementAgentsView.xaml">
       <Generator>MSBuild:Compile</Generator>

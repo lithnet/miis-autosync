@@ -21,9 +21,17 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.SubscribeToErrors(this.Settings);
         }
 
+        public string DisplayName => "Configuration";
+
         public ManagementAgentsViewModel ManagementAgents { get; private set; }
 
         public SettingsViewModel Settings { get; private set; }
+
+        public string Description
+        {
+            get => this.Model.Description;
+            set => this.Model.Description = value;
+        }
 
         public override IEnumerable<ViewModelBase> ChildNodes
         {

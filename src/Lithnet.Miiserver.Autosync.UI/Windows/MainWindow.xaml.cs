@@ -16,7 +16,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
             this.DataContext = m;
             m.ResetConfigViewModel();
-            m.ConfigFile.ManagementAgents.IsSelected = true;
+            m.ExecutionMonitor.IsSelected = true;
         }
     }
 }

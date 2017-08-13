@@ -5,14 +5,14 @@
                      xmlns:viewModels="clr-namespace:Lithnet.Miiserver.AutoSync.UI.ViewModels"
                      mc:Ignorable="d" >
 
-    <DataTemplate DataType="{x:Type viewModels:ManagementAgentsViewModel}">
+    <DataTemplate DataType="{x:Type viewModels:ConfigFileViewModel}">
         <StackPanel>
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-
+                
                 <Label Grid.Column="0" Content="Description/Notes"/>
                 <TextBox Grid.Column="1" Text="{Binding Path=Description}" AcceptsReturn="True"/>
             </Grid>

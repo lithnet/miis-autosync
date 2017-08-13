@@ -157,12 +157,13 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void Setup(MAConfigParameters config)
         {
-            if (!this.ma.Name.Equals(config.ManagementAgent.Name, StringComparison.OrdinalIgnoreCase))
+            if (!this.ma.Name.Equals(config.ManagementAgentName, StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException($"Configuration was provided for the management agent {config.ManagementAgent.Name} for an executor configured for {this.ma.Name}");
             }
 
             this.Configuration = config;
+            this.InternalStatus.ActiveVersion = config.Version;
             this.ControlState = config.Disabled ? ExecutorState.Disabled : ExecutorState.Stopped;
             this.controller = new MAController(config);
             this.AttachTrigger(config.Triggers?.ToArray());

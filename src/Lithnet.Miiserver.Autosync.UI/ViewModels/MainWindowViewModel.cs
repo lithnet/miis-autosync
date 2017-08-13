@@ -12,6 +12,7 @@ using Lithnet.Common.ObjectModel;
 using Lithnet.Common.Presentation;
 using MahApps.Metro.Controls;
 using Microsoft.Win32;
+using System.Linq;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
@@ -24,7 +25,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private bool confirmedCloseOnDirtyViewModel;
 
-        private EventClient client;
+        internal ExecutionMonitorsViewModel ExecutionMonitor { get; set; }
 
         public ConfigFileViewModel ConfigFile { get; set; }
 
@@ -33,6 +34,16 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         private bool ViewModelIsDirty { get; set; }
 
         public Cursor Cursor { get; set; }
+
+        public override IEnumerable<ViewModelBase> ChildNodes
+        {
+            get
+            {
+                yield return this.ExecutionMonitor;
+                yield return this.ConfigFile?.ManagementAgents;
+                yield return this.ConfigFile?.Settings;
+            }
+        }
 
         public Visibility StatusBarVisibility { get; set; }
 
@@ -56,8 +67,10 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.Commands.AddItem("About", x => this.About());
             this.Commands.AddItem("Import", x => this.Import(), x => this.CanImport());
 
-            
             this.StatusBarVisibility = Visibility.Collapsed;
+
+            ConfigClient c = new ConfigClient();
+            this.ExecutionMonitor = new ExecutionMonitorsViewModel(c.GetManagementAgentNames());
 
             this.Cursor = Cursors.Arrow;
             ViewModelBase.ViewModelChanged += this.ViewModelBase_ViewModelChanged;
@@ -68,6 +81,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         private void PopulateIgnoreViewModelChanges()
         {
             this.ignoreViewModelChanges = new List<Type>();
+            this.ignoreViewModelChanges.Add(typeof(ExecutionMonitorViewModel));
+            this.ignoreViewModelChanges.Add(typeof(ExecutionMonitorsViewModel));
         }
 
         private void Help()

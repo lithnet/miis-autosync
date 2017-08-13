@@ -50,6 +50,8 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember]
         public ExecutorState ExecutionState { get; set; }
 
+        [DataMember]
+        public int ActiveVersion { get; set; }
         
         public static bool IsControlState(ExecutorState state)
         {

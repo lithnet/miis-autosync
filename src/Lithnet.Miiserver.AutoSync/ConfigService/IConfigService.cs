@@ -36,5 +36,8 @@ namespace Lithnet.Miiserver.AutoSync
 
         [OperationContract]
         ExecutorState GetEngineState();
+
+        [OperationContract]
+        IList<string> GetManagementAgentNames();
     }
 }

@@ -95,7 +95,7 @@
 
         <GridSplitter Grid.Row="2" Grid.Column="1" Width="5" HorizontalAlignment="Stretch" />
 
-        <TreeView Grid.Row="2" Grid.Column="0" Name="TreeViewMain" DataContext="{Binding Path=ConfigFile}" BorderThickness="1"
+        <TreeView Grid.Row="2" Grid.Column="0" Name="TreeViewMain" DataContext="{Binding}" BorderThickness="1"
             ItemsSource="{Binding Path=ChildNodes}">
             <TreeView.ItemContainerStyle>
                 <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource MetroTreeViewItem}">

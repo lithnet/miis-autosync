@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.ServiceProcess;
 using Lithnet.Miiserver.Client;
 using Lithnet.Logging;
 using System.IO;
 using System.Timers;
-using System.Threading.Tasks;
 using System.ServiceModel;
 using System.Threading;
 using Timer = System.Timers.Timer;
@@ -17,8 +15,6 @@ namespace Lithnet.Miiserver.AutoSync
     public static class Program
     {
         private static ConfigFile activeConfig;
-
-        private static ConfigFile currentConfig;
 
         private static ExecutionEngine engine;
 
@@ -32,24 +28,9 @@ namespace Lithnet.Miiserver.AutoSync
             set
             {
                 Program.activeConfig = value;
-                Program.currentConfig = value;
-                Program.PendingRestart = false;
                 Logger.WriteLine("Active config has been set");
             }
         }
-
-        internal static ConfigFile CurrentConfig
-        {
-            get => Program.currentConfig;
-            set
-            {
-                Program.currentConfig = value;
-                Program.PendingRestart = true;
-                Logger.WriteLine("Current config has been set");
-            }
-        }
-
-        internal static bool PendingRestart { get; set; }
 
         private static bool hasConfig;
 
@@ -262,8 +243,6 @@ namespace Lithnet.Miiserver.AutoSync
                 Program.ActiveConfig = ConfigFile.Load(path);
                 Program.hasConfig = true;
             }
-
-            Program.PendingRestart = false;
         }
 
         public static void CreateExecutionEngineInstance()

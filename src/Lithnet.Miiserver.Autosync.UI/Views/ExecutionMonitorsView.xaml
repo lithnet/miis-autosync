@@ -1,0 +1,72 @@
+﻿<ResourceDictionary  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+                     xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+                     xmlns:viewModels="clr-namespace:Lithnet.Miiserver.AutoSync.UI.ViewModels"
+                     xmlns:cm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+                     mc:Ignorable="d" >
+
+    <DataTemplate DataType="{x:Type viewModels:ExecutionMonitorsViewModel}">
+        <StackPanel>
+            <StackPanel.Resources>
+                <CollectionViewSource x:Key="SortedItems" Source="{Binding}">
+                    <CollectionViewSource.SortDescriptions>
+                        <cm:SortDescription PropertyName="Disabled"/>
+                        <cm:SortDescription PropertyName="DisplayName"/>
+                    </CollectionViewSource.SortDescriptions>
+                </CollectionViewSource>
+            </StackPanel.Resources>
+            
+            <ToolBarTray>
+                <ToolBar Height="36">
+                    <Button Command="{Binding Path=Commands.StartEngine}" ToolTip="Start execution engine">
+                        <Image Source="/Resources/Run.ico"/>
+                    </Button>
+                    <Button Command="{Binding Path=Commands.StopEngine}" ToolTip="Stop execution engine">
+                        <Image Source="/Resources/Stop.ico"/>
+                    </Button>
+                </ToolBar>
+            </ToolBarTray>
+
+            <ListView ScrollViewer.VerticalScrollBarVisibility="Auto" ItemsSource="{Binding Source={StaticResource SortedItems}}">
+
+                <ListView.Resources>
+                    <DataTemplate x:Key="ImageTemplate">
+                        <Image Source="{Binding Path=StatusIcon}" />
+                    </DataTemplate>
+                    <ContextMenu x:Key="ItemContextMenu">
+                        <MenuItem Header="Start" 
+                                  Command="{Binding Commands.Start}" >
+                            <MenuItem.Icon>
+                                <Image Source="/Resources/Run.ico" Height="16" Width="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Stop"
+                                  Command="{Binding Commands.Stop}" >
+                            <MenuItem.Icon>
+                                <Image Source="/Resources/Stop.ico" Height="16" Width="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                    </ContextMenu>
+                </ListView.Resources>
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="{x:Type ListViewItem}">
+                        <Setter Property="ContextMenu"
+                                Value="{StaticResource ItemContextMenu}" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn CellTemplate="{StaticResource ImageTemplate}"/>
+                        <GridViewColumn Header="Management Agent" DisplayMemberBinding="{Binding ManagementAgentName}"/>
+                        <GridViewColumn Header="State" DisplayMemberBinding="{Binding DisplayState}"/>
+                        <GridViewColumn Header="Status" DisplayMemberBinding="{Binding Message}" Width="300"/>
+                        <GridViewColumn Header="Executing Run Profile"  DisplayMemberBinding="{Binding ExecutingRunProfile}"/>
+                        <GridViewColumn Header="Execution Queue" DisplayMemberBinding="{Binding ExecutionQueue}"/>
+                        <GridViewColumn Header="Last run result" DisplayMemberBinding="{Binding LastRun}"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </StackPanel>
+    </DataTemplate>
+</ResourceDictionary>

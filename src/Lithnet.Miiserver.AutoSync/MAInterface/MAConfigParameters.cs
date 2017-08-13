@@ -28,6 +28,9 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "unconfigured", EmitDefaultValue = false)]
         public bool IsNew { get; set; }
 
+        [DataMember(Name = "version")]
+        public int Version { get; set; }
+
         public void ResolveManagementAgent()
         {
             try

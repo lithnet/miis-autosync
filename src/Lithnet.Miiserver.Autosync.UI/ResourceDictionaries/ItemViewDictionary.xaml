@@ -4,6 +4,8 @@
         <ResourceDictionary Source="/Views/MAConfigParametersView.xaml" />
         <ResourceDictionary Source="/Views/SettingsView.xaml" />
         <ResourceDictionary Source="/Views/ManagementAgentsView.xaml" />
+        <ResourceDictionary Source="/Views/ExecutionMonitorsView.xaml" />
+        <ResourceDictionary Source="/Views/ConfigFileView.xaml" />
     </ResourceDictionary.MergedDictionaries>
 </ResourceDictionary>
             

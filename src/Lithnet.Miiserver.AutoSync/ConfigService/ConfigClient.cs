@@ -64,5 +64,9 @@ namespace Lithnet.Miiserver.AutoSync
         {
             return this.Channel.GetEngineState();
         }
+        public IList<string> GetManagementAgentNames()
+        {
+            return this.Channel.GetManagementAgentNames();
+        }
     }
 }

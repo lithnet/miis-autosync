@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Lithnet.Logging;
 using System.Diagnostics;
+using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -56,7 +57,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 Trace.WriteLine($"Calling {nameof(this.GetConfig)} as {Environment.UserName}");
                 ProtectedString.EncryptOnWrite = false;
-                return Program.CurrentConfig;
+                return Program.ActiveConfig;
             }
             catch (Exception ex)
             {
@@ -72,7 +73,7 @@ namespace Lithnet.Miiserver.AutoSync
                 Trace.WriteLine($"Calling {nameof(this.PutConfig)} as {Environment.UserName}");
                 ProtectedString.EncryptOnWrite = true;
                 ConfigFile.Save(config, RegistrySettings.ConfigurationFile);
-                Program.CurrentConfig = config;
+                Program.ActiveConfig = config;
                 Logger.WriteLine("The configuration has been updated. The service must be restarted for the new configuration to take effect");
             }
             catch (Exception ex)
@@ -101,7 +102,7 @@ namespace Lithnet.Miiserver.AutoSync
             try
             {
                 Trace.WriteLine($"Calling {nameof(this.IsPendingRestart)} as {Environment.UserName}");
-                return Program.PendingRestart;
+                return false;
             }
             catch (Exception ex)
             {
@@ -167,5 +168,9 @@ namespace Lithnet.Miiserver.AutoSync
             return Program.GetEngineState();
         }
 
+        public IList<string> GetManagementAgentNames()
+        {
+            return ManagementAgent.GetManagementAgents().Select(t => t.Name).ToList();
+        }
     }
 }

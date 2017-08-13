@@ -1,22 +1,19 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:viewModels="clr-namespace:Lithnet.Miiserver.AutoSync.UI.ViewModels"
-                    xmlns:controls="clr-namespace:Lithnet.Miiserver.AutoSync.UI.Controls">
+                    xmlns:controls="clr-namespace:Lithnet.Miiserver.AutoSync.UI.Controls"
+                    xmlns:converters="clr-namespace:Lithnet.Miiserver.AutoSync.UI.Converters">
+
+    <converters:SortedListConverter x:Key="ListConverter" />
+
+    <HierarchicalDataTemplate DataType="{x:Type viewModels:ConfigFileViewModel}"
+                              ItemsSource="{Binding Path=ChildNodes}">
+        <controls:TreeViewItemControl/>
+    </HierarchicalDataTemplate>
 
     <HierarchicalDataTemplate DataType="{x:Type viewModels:ManagementAgentsViewModel}"
-                              ItemsSource="{Binding}">
-        <controls:TreeViewItemControl>
-            <!--<controls:TreeViewItemControl.ContextMenu
-                <ContextMenu>
-                    <MenuItem Header="Add new class constructor..."
-                              Command="{Binding Commands.AddConstructor}" />
-                    <Separator />
-                    <MenuItem Header="Paste"
-                              Command="{Binding Commands.Paste}" />
-                </ContextMenu>
-            </controls:TreeViewItemControl.ContextMenu>-->
-        </controls:TreeViewItemControl>
-
+                              ItemsSource="{Binding Converter={StaticResource ListConverter}, ConverterParameter=SortName}">
+        <controls:TreeViewItemControl/>
     </HierarchicalDataTemplate>
 
     <HierarchicalDataTemplate DataType="{x:Type viewModels:MAConfigParametersViewModel}"
@@ -24,7 +21,7 @@
         <controls:TreeViewItemControl x:Name="Item"/>
 
         <HierarchicalDataTemplate.Triggers>
-            
+
             <DataTrigger Binding="{Binding Path=IsNew}" Value="true">
                 <Setter TargetName="Item" Property="FontStyle" Value="Italic"/>
             </DataTrigger>
@@ -38,6 +35,11 @@
 
     <HierarchicalDataTemplate DataType="{x:Type viewModels:SettingsViewModel}"
                               ItemsSource="{Binding}">
+        <controls:TreeViewItemControl/>
+    </HierarchicalDataTemplate>
+
+    <HierarchicalDataTemplate DataType="{x:Type viewModels:ExecutionMonitorsViewModel}"
+                              >
         <controls:TreeViewItemControl/>
     </HierarchicalDataTemplate>
 
