@@ -6,16 +6,33 @@
                      mc:Ignorable="d" >
 
     <DataTemplate DataType="{x:Type viewModels:ManagementAgentsViewModel}">
-        <StackPanel>
-            <Grid>
+        <DockPanel LastChildFill="True">
+            <Grid DockPanel.Dock="Bottom">
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition />
                 </Grid.ColumnDefinitions>
 
-                <Label Grid.Column="0" Content="Description/Notes"/>
-                <TextBox Grid.Column="1" Text="{Binding Path=Description}" AcceptsReturn="True"/>
+                <Label Content="Notes"
+                       Grid.Row="0"
+                       Grid.Column="0"
+                       Margin="10" />
+
+                <TextBox Text="{Binding Path=Description, ValidatesOnDataErrors=True, ValidatesOnExceptions=true}"
+                         Grid.Row="0"
+                         Grid.Column="1"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Visible"
+                         AcceptsReturn="True"
+                         AcceptsTab="True"
+                         Height="Auto"
+                         SpellCheck.IsEnabled="True"
+                         Margin="10" />
+
             </Grid>
-        </StackPanel>
+        </DockPanel>
     </DataTemplate>
 </ResourceDictionary>

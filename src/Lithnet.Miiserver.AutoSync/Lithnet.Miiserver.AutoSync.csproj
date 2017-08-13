@@ -57,8 +57,8 @@
       <HintPath>..\packages\Lithnet.Logging.1.0.5774.20685\lib\net40\Lithnet.Logging.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Lithnet.Miiserver.Client, Version=1.0.6427.35635, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Lithnet.Miiserver.Client.1.0.6427.35635\lib\net45\Lithnet.Miiserver.Client.dll</HintPath>
+    <Reference Include="Lithnet.Miiserver.Client, Version=1.0.6434.38666, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Lithnet.Miiserver.Client.1.0.6434.38666\lib\net45\Lithnet.Miiserver.Client.dll</HintPath>
     </Reference>
     <Reference Include="Lithnet.ResourceManagement.Client, Version=1.0.6297.14599, Culture=neutral, PublicKeyToken=bd0636700c1e2538, processorArchitecture=MSIL">
       <HintPath>..\packages\Lithnet.ResourceManagement.Client.1.0.6297.14599\lib\net40\Lithnet.ResourceManagement.Client.dll</HintPath>

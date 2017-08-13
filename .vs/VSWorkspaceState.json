@@ -2,8 +2,9 @@
   "ExpandedNodes": [
     "",
     "\\src",
-    "\\src\\Lithnet.Miiserver.Autosync.UI"
+    "\\src\\Lithnet.Miiserver.Autosync.UI",
+    "\\src\\Lithnet.Miiserver.Autosync.UI\\ViewModels"
   ],
-  "SelectedNode": "\\src\\Lithnet.Miiserver.AutoSync.sln",
+  "SelectedNode": "\\src\\Lithnet.Miiserver.Autosync.UI\\Resources",
   "PreviewInSolutionExplorer": false
 }
