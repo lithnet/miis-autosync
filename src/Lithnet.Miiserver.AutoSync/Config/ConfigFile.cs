@@ -9,14 +9,20 @@ namespace Lithnet.Miiserver.AutoSync
     public class ConfigFile
     {
         [DataMember(Name = "management-agents")]
-        public List<MAConfigParameters> ManagementAgents { get; set; }
+        public MAConfigParametersCollection ManagementAgents { get; set; }
 
         [DataMember(Name = "settings")]
         public Settings Settings { get; set; }
 
+        [DataMember(Name = "description")]
+        public string Description { get; set; }
+
+        [DataMember(Name = "version")]
+        public int Version { get; set; }
+
         public ConfigFile()
         {
-            this.ManagementAgents = new List<MAConfigParameters>();
+            this.ManagementAgents = new MAConfigParametersCollection();
             this.Settings = new Settings();
         }
 
@@ -28,8 +34,6 @@ namespace Lithnet.Miiserver.AutoSync
             }
 
             this.AddMissingManagementAgents();
-
-            this.ManagementAgents = this.ManagementAgents.OrderBy(t => t.Disabled).ThenBy(t => t.ManagementAgentName).ToList();
         }
 
         public static ConfigFile Load(string file)
@@ -42,16 +46,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public static void Save(ConfigFile config, string filename)
         {
-            //ConfigFile.MarkManagementAgentsAsConfigured(config);
             Serializer.Save(filename, config);
-        }
-
-        private static void MarkManagementAgentsAsConfigured(ConfigFile config)
-        {
-            foreach (MAConfigParameters p in config.ManagementAgents)
-            {
-                p.IsNew = false;
-            }
         }
 
         private void AddMissingManagementAgents()

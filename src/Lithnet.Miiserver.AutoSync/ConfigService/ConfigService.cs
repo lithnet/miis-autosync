@@ -136,32 +136,6 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public void Pause(string managementAgentName)
-        {
-            try
-            {
-                Program.PauseExecutor(managementAgentName);
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteException(ex);
-                throw;
-            }
-        }
-
-        public void Resume(string managementAgentName)
-        {
-            try
-            {
-                Program.ResumeExecutor(managementAgentName);
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteException(ex);
-                throw;
-            }
-        }
-
         public void StopAll()
         {
             try
@@ -180,32 +154,6 @@ namespace Lithnet.Miiserver.AutoSync
             try
             {
                 Program.StartExecutors();
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteException(ex);
-                throw;
-            }
-        }
-
-        public void PauseAll()
-        {
-            try
-            {
-                Program.PauseExecutors();
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteException(ex);
-                throw;
-            }
-        }
-
-        public void ResumeAll()
-        {
-            try
-            {
-                Program.ResumeExecutors();
             }
             catch (Exception ex)
             {

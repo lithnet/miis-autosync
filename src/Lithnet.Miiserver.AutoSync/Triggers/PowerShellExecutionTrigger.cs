@@ -16,8 +16,6 @@ namespace Lithnet.Miiserver.AutoSync
     {
         private const string TypeDescription = "PowerShell script";
 
-        private bool run = true;
-
         private Task internalTask;
 
         private CancellationTokenSource cancellationToken;
@@ -75,7 +73,7 @@ namespace Lithnet.Miiserver.AutoSync
                     return;
                 }
 
-                while (this.run)
+                while (!this.cancellationToken.Token.IsCancellationRequested)
                 {
                     this.cancellationToken.Token.ThrowIfCancellationRequested();
 
@@ -168,8 +166,6 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                this.run = false;
-
                 this.cancellationToken?.Cancel();
                 this.powershell?.Stop();
 
@@ -207,7 +203,7 @@ namespace Lithnet.Miiserver.AutoSync
             return true;
         }
 
-        public  PowerShellExecutionTrigger (ManagementAgent ma)
+        public PowerShellExecutionTrigger(ManagementAgent ma)
         {
             this.ExceptionBehaviour = ExecutionErrorBehaviour.Terminate;
             this.Interval = new TimeSpan(0, 0, 5);

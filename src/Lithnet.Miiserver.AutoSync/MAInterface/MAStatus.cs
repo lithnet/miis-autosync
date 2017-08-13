@@ -10,8 +10,6 @@ namespace Lithnet.Miiserver.AutoSync
     [DataContract]
     public class MAStatus
     {
-        private ExecutorState state;
-
         [DataMember]
         public string MAName { get; set; }
 
@@ -30,27 +28,29 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember]
         public string LastRunProfileName { get; set; }
 
-        [DataMember]
-        public ExecutorState State
+        public ExecutorState DisplayState
         {
             get
             {
-                return this.state;
-            }
-            set
-            {
-                if (this.state == ExecutorState.Pausing || this.state == ExecutorState.Stopping)
+                if (this.ControlState != ExecutorState.Running)
                 {
-                    if (!MAStatus.IsControlState(value))
-                    {
-                        return;
-                    }
+                    return this.ControlState;
                 }
-
-                this.state = value;
+                else
+                {
+                    return this.ExecutionState;
+                }
             }
         }
 
+        [DataMember]
+        public ExecutorState ControlState { get; set; }
+
+
+        [DataMember]
+        public ExecutorState ExecutionState { get; set; }
+
+        
         public static bool IsControlState(ExecutorState state)
         {
             return state == ExecutorState.Disabled ||

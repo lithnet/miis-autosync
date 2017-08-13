@@ -11,7 +11,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             if (model.ManagementAgents == null)
             {
-                model.ManagementAgents = new List<MAConfigParameters>();
+                model.ManagementAgents = new MAConfigParametersCollection();
             }
 
             this.ManagementAgents = new ManagementAgentsViewModel(model.ManagementAgents);

@@ -50,16 +50,6 @@ namespace Lithnet.Miiserver.AutoSync
             this.Channel.Start(managementAgentName);
         }
 
-        public void Pause(string managementAgentName)
-        {
-            this.Channel.Pause(managementAgentName);
-        }
-
-        public void Resume(string managementAgentName)
-        {
-            this.Channel.Resume(managementAgentName);
-        }
-
         public void StopAll()
         {
             this.Channel.StopAll();
@@ -68,16 +58,6 @@ namespace Lithnet.Miiserver.AutoSync
         public void StartAll()
         {
             this.Channel.StartAll();
-        }
-
-        public void PauseAll()
-        {
-            this.Channel.PauseAll();
-        }
-
-        public void ResumeAll()
-        {
-            this.Channel.ResumeAll();
         }
 
         public ExecutorState GetEngineState()

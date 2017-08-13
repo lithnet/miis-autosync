@@ -26,8 +26,6 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static ServiceHost configServiceHost;
 
-        private static AppDomain executionDomain;
-
         internal static ConfigFile ActiveConfig
         {
             get => Program.activeConfig;
@@ -141,7 +139,9 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                Program.RestartExecutionEngine();
+                Program.StopExecutors();
+                Program.LoadConfiguration();
+                Program.StartExecutors();
             }
             catch (Exception ex)
             {
@@ -262,6 +262,8 @@ namespace Lithnet.Miiserver.AutoSync
                 Program.ActiveConfig = ConfigFile.Load(path);
                 Program.hasConfig = true;
             }
+
+            Program.PendingRestart = false;
         }
 
         public static void CreateExecutionEngineInstance()
@@ -308,16 +310,6 @@ namespace Lithnet.Miiserver.AutoSync
             engine?.Start();
         }
 
-        internal static void PauseExecutors()
-        {
-            engine?.Pause();
-        }
-
-        internal static void ResumeExecutors()
-        {
-            engine?.Resume();
-        }
-
         internal static ExecutorState GetEngineState()
         {
             return engine?.State ?? ExecutorState.Stopped;
@@ -331,16 +323,6 @@ namespace Lithnet.Miiserver.AutoSync
         internal static void StartExecutor(string managementAgentName)
         {
             engine?.Start(managementAgentName);
-        }
-
-        internal static void PauseExecutor(string managementAgentName)
-        {
-            engine?.Pause(managementAgentName);
-        }
-
-        internal static void ResumeExecutor(string managementAgentName)
-        {
-            engine?.Resume(managementAgentName);
         }
     }
 }

@@ -30,7 +30,7 @@ namespace Lithnet.Miiserver.AutoSync
         internal MAStatus InternalStatus;
 
         private ManualResetEvent localOperationLock;
-        private ManualResetEvent pauseLock;
+        private ManualResetEvent serviceControlLock;
         private System.Timers.Timer importCheckTimer;
         private System.Timers.Timer unmanagedChangesCheckTimer;
         private TimeSpan importInterval;
@@ -38,8 +38,8 @@ namespace Lithnet.Miiserver.AutoSync
 
         private Dictionary<string, string> perProfileLastRunStatus;
 
-        public MAConfigParameters Configuration { get; }
-        
+        public MAConfigParameters Configuration { get; private set; }
+
         internal void RaiseStateChange()
         {
             this.StateChanged?.Invoke(this, new MAStatusChangedEventArgs(this.InternalStatus, this.ma.Name));
@@ -98,14 +98,27 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public ExecutorState State
+        public ExecutorState ControlState
         {
-            get => this.InternalStatus.State;
+            get => this.InternalStatus.ControlState;
             private set
             {
-                if (this.InternalStatus.State != value)
+                if (this.InternalStatus.ControlState != value)
                 {
-                    this.InternalStatus.State = value;
+                    this.InternalStatus.ControlState = value;
+                    this.RaiseStateChange();
+                }
+            }
+        }
+
+        public ExecutorState ExecutionState
+        {
+            get => this.InternalStatus.ExecutionState;
+            private set
+            {
+                if (this.InternalStatus.ExecutionState != value)
+                {
+                    this.InternalStatus.ExecutionState = value;
                     this.RaiseStateChange();
                 }
             }
@@ -127,9 +140,32 @@ namespace Lithnet.Miiserver.AutoSync
             MAExecutor.AllMaLocalOperationLocks = new List<WaitHandle>();
         }
 
-        public MAExecutor(MAConfigParameters config)
+        public MAExecutor(ManagementAgent ma)
         {
-            this.ma = config.ManagementAgent;
+            this.ma = ma;
+            this.InternalStatus = new MAStatus() { MAName = this.ma.Name };
+            this.ControlState = ExecutorState.Stopped;
+            this.pendingActionList = new ExecutionParameterCollection();
+            this.pendingActions = new BlockingCollection<ExecutionParameters>(this.pendingActionList);
+            this.perProfileLastRunStatus = new Dictionary<string, string>();
+            this.ExecutionTriggers = new List<IMAExecutionTrigger>();
+            this.localOperationLock = new ManualResetEvent(true);
+            this.serviceControlLock = new ManualResetEvent(true);
+            MAExecutor.AllMaLocalOperationLocks.Add(this.localOperationLock);
+            MAExecutor.SyncComplete += this.MAExecutor_SyncComplete;
+        }
+
+        private void Setup(MAConfigParameters config)
+        {
+            if (!this.ma.Name.Equals(config.ManagementAgent.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException($"Configuration was provided for the management agent {config.ManagementAgent.Name} for an executor configured for {this.ma.Name}");
+            }
+
+            this.Configuration = config;
+            this.ControlState = config.Disabled ? ExecutorState.Disabled : ExecutorState.Stopped;
+            this.controller = new MAController(config);
+            this.AttachTrigger(config.Triggers?.ToArray());
 
             RunDetails lastrun = null;
 
@@ -141,19 +177,8 @@ namespace Lithnet.Miiserver.AutoSync
             {
             }
 
-            this.InternalStatus = new MAStatus { MAName = this.ma?.Name, LastRunProfileResult = lastrun?.LastStepStatus, LastRunProfileName = lastrun?.RunProfileName };
-            this.State = config.Disabled ? ExecutorState.Disabled : ExecutorState.Stopped;
-            this.pendingActionList = new ExecutionParameterCollection();
-            this.pendingActions = new BlockingCollection<ExecutionParameters>(this.pendingActionList);
-            this.perProfileLastRunStatus = new Dictionary<string, string>();
-            this.ExecutionTriggers = new List<IMAExecutionTrigger>();
-            this.Configuration = config;
-            this.controller = new MAController(config);
-            this.localOperationLock = new ManualResetEvent(true);
-            this.pauseLock = new ManualResetEvent(true);
-            MAExecutor.AllMaLocalOperationLocks.Add(this.localOperationLock);
-            MAExecutor.SyncComplete += this.MAExecutor_SyncComplete;
-            this.AttachTrigger(config.Triggers?.ToArray());
+            this.InternalStatus.LastRunProfileResult = lastrun?.LastStepStatus;
+            this.InternalStatus.LastRunProfileName = lastrun?.RunProfileName;
         }
 
         private void SetupUnmanagedChangesCheckTimer()
@@ -167,7 +192,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void UnmanagedChangesCheckTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            if (this.State == ExecutorState.Paused)
+            if (this.ControlState != ExecutorState.Running)
             {
                 return;
             }
@@ -204,7 +229,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void ImportCheckTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            if (this.State == ExecutorState.Paused)
+            if (this.ControlState != ExecutorState.Running)
             {
                 return;
             }
@@ -248,6 +273,24 @@ namespace Lithnet.Miiserver.AutoSync
                 catch (Exception ex)
                 {
                     this.Log($"Could not start execution trigger {t.DisplayName}");
+                    Logger.WriteException(ex);
+                }
+            }
+        }
+
+        private void StopTriggers()
+        {
+            foreach (IMAExecutionTrigger t in this.ExecutionTriggers)
+            {
+                try
+                {
+                    this.Log($"Unregistering execution trigger '{t.DisplayName}'");
+                    t.TriggerExecution -= this.Notifier_TriggerExecution;
+                    t.Stop();
+                }
+                catch (Exception ex)
+                {
+                    this.Log($"Could not stop execution trigger {t.DisplayName}");
                     Logger.WriteException(ex);
                 }
             }
@@ -405,7 +448,7 @@ namespace Lithnet.Miiserver.AutoSync
             try
             {
                 this.token.ThrowIfCancellationRequested();
-                this.UpdateStatus(ExecutorState.Waiting, "Waiting for exclusive operations to complete", e.RunProfileName);
+                this.UpdateExecutionStatus(ExecutorState.Waiting, "Waiting for exclusive operations to complete", e.RunProfileName);
 
                 this.Wait(MAExecutor.GlobalExclusiveOperationLock, nameof(MAExecutor.GlobalExclusiveOperationLock));
 
@@ -419,7 +462,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 this.WaitOnUnmanagedRun();
 
-                this.State = ExecutorState.Waiting;
+                this.ExecutionState = ExecutorState.Waiting;
                 this.ExecutingRunProfile = e.RunProfileName;
                 this.token.ThrowIfCancellationRequested();
 
@@ -476,10 +519,10 @@ namespace Lithnet.Miiserver.AutoSync
                     try
                     {
                         count++;
-                        this.UpdateStatus(ExecutorState.Running, "Executing");
+                        this.UpdateExecutionStatus(ExecutorState.Running, "Executing");
                         this.Log($"Executing {e.RunProfileName}");
                         result = this.ma.ExecuteRunProfile(e.RunProfileName, this.token);
-                        this.UpdateStatus(ExecutorState.Processing, "Evaluating run results");
+                        this.UpdateExecutionStatus(ExecutorState.Processing, "Evaluating run results");
                         this.Log($"{e.RunProfileName} returned {result}");
                     }
                     catch (MAExecutionException ex)
@@ -489,7 +532,7 @@ namespace Lithnet.Miiserver.AutoSync
                     }
 
                     this.UpdateLastRunStatus(e.RunProfileName, result);
-                    
+
                     if (RegistrySettings.RetryCodes.Contains(result))
                     {
                         this.Trace($"Operation is retryable. {count} attempt{count.Pluralize()} made");
@@ -500,7 +543,7 @@ namespace Lithnet.Miiserver.AutoSync
                             break;
                         }
 
-                        this.UpdateStatus(ExecutorState.Waiting, "Waiting to retry operation");
+                        this.UpdateExecutionStatus(ExecutorState.Waiting, "Waiting to retry operation");
 
                         int interval = Global.RandomizeOffset(RegistrySettings.RetrySleepInterval.TotalMilliseconds * count);
                         this.Trace($"Sleeping thread for {interval}ms before retry");
@@ -549,7 +592,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             finally
             {
-                this.UpdateStatus(ExecutorState.Idle, null, null);
+                this.UpdateExecutionStatus(ExecutorState.Idle, null, null);
 
                 // Reset the local lock so the next operation can run
                 this.ReleaseLock(this.localOperationLock, nameof(this.localOperationLock));
@@ -571,7 +614,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             try
             {
-                this.UpdateStatus(ExecutorState.Running, "Unmanaged run in progress", this.ma.ExecutingRunProfileName);
+                this.UpdateExecutionStatus(ExecutorState.Running, "Unmanaged run in progress", this.ma.ExecutingRunProfileName);
 
                 this.Trace("Unmanaged run in progress");
                 this.TakeLock(this.localOperationLock, nameof(this.localOperationLock));
@@ -602,7 +645,7 @@ namespace Lithnet.Miiserver.AutoSync
                     this.ma.Wait(this.token);
                 }
 
-                this.UpdateStatus(ExecutorState.Processing, "Evaluating run results");
+                this.UpdateExecutionStatus(ExecutorState.Processing, "Evaluating run results");
                 this.token.ThrowIfCancellationRequested();
 
                 using (RunDetails ur = this.ma.GetLastRun())
@@ -615,7 +658,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 this.ReleaseLock(this.localOperationLock, nameof(this.localOperationLock));
                 this.Trace("Unmanaged run complete");
-                this.UpdateStatus(ExecutorState.Idle, null, null);
+                this.UpdateExecutionStatus(ExecutorState.Idle, null, null);
             }
         }
 
@@ -647,145 +690,136 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public Task Start()
+        public void Start(MAConfigParameters config)
         {
-            if (this.State != ExecutorState.Stopped)
+            if (config.IsNew || config.IsMissing || config.Disabled)
             {
-                throw new InvalidOperationException($"Cannot start an executor that is in the {this.State} state");
+                this.Log("Ignoring start request as management agent is disabled or unconfigured");
+                this.ControlState = ExecutorState.Disabled;
+                return;
             }
 
-            this.State = ExecutorState.Starting;
-
-            this.tokenSource = new CancellationTokenSource();
-            this.token = this.tokenSource.Token;
-
+            if (this.ControlState != ExecutorState.Stopped)
+            {
+                throw new InvalidOperationException($"Cannot start an executor that is in the {this.ControlState} state");
+            }
+          
             try
             {
-                Logger.StartThreadLog();
-                Logger.WriteSeparatorLine('-');
+                this.tokenSource = new CancellationTokenSource();
+                this.token = this.tokenSource.Token;
 
-                this.Log("Starting executor");
+                this.WaitAndTakeLock(this.serviceControlLock, nameof(this.serviceControlLock));
 
-                Logger.WriteRaw($"{this}\n");
-                Logger.WriteSeparatorLine('-');
+                this.ControlState = ExecutorState.Starting;
+
+                this.Setup(config);
+
+                try
+                {
+                    Logger.StartThreadLog();
+                    Logger.WriteSeparatorLine('-');
+
+                    this.Log("Starting executor");
+
+                    Logger.WriteRaw($"{this}\n");
+                    Logger.WriteSeparatorLine('-');
+                }
+                finally
+                {
+                    Logger.EndThreadLog();
+                }
+
+                this.internalTask = new Task(() =>
+                {
+                    try
+                    {
+                        this.token.ThrowIfCancellationRequested();
+                        this.Init();
+                    }
+                    catch (OperationCanceledException)
+                    {
+                    }
+                    catch (Exception ex)
+                    {
+                        this.Log("The MAExecutor encountered a unrecoverable error");
+                        Logger.WriteLine(ex.Message);
+                        Logger.WriteLine(ex.StackTrace);
+                    }
+                }, this.token);
+
+                this.internalTask.Start();
+
+                this.ControlState = ExecutorState.Running;
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine("An error occurred starting the executor");
+                Logger.WriteException(ex);
+                this.Stop();
+                this.Message = $"Startup error: {ex.Message}";
             }
             finally
             {
-                Logger.EndThreadLog();
+                this.ReleaseLock(this.serviceControlLock, nameof(this.serviceControlLock));
             }
-
-            this.internalTask = new Task(() =>
-            {
-                try
-                {
-                    this.Init();
-                }
-                catch (OperationCanceledException)
-                {
-                }
-                catch (Exception ex)
-                {
-                    this.Log("The MAExecutor encountered a unrecoverable error");
-                    Logger.WriteLine(ex.Message);
-                    Logger.WriteLine(ex.StackTrace);
-                }
-            }, this.token);
-
-            this.internalTask.Start();
-
-            return this.internalTask;
         }
 
         public void Stop()
         {
-            if (this.State == ExecutorState.Stopped || this.State == ExecutorState.Disabled)
+            if (this.ControlState == ExecutorState.Stopped || this.ControlState == ExecutorState.Disabled || this.ControlState == ExecutorState.Stopping)
             {
                 return;
             }
 
-            this.State = ExecutorState.Stopping;
-
-            this.Log("Stopping MAExecutor");
-
-            this.tokenSource.Cancel();
-            this.importCheckTimer?.Stop();
-            this.ReleaseLock(this.pauseLock, nameof(this.pauseLock));
-
-            foreach (IMAExecutionTrigger x in this.ExecutionTriggers)
+            try
             {
-                x.Stop();
-            }
+                this.WaitAndTakeLock(this.serviceControlLock, nameof(this.serviceControlLock));
 
-            this.Log("Stopped execution triggers");
+                this.ControlState = ExecutorState.Stopping;
 
-            if (this.internalTask != null && !this.internalTask.IsCompleted)
-            {
-                this.Log("Waiting for cancellation to complete");
-                if (this.internalTask.Wait(TimeSpan.FromSeconds(30)))
+                this.Log("Stopping MAExecutor");
+
+                this.tokenSource?.Cancel();
+                this.importCheckTimer?.Stop();
+
+                this.StopTriggers();
+                this.ExecutionTriggers.Clear();
+
+                this.Log("Stopped execution triggers");
+
+                if (this.internalTask != null && !this.internalTask.IsCompleted)
                 {
-                    this.Log("Cancellation completed");
+                    this.Log("Waiting for cancellation to complete");
+                    if (this.internalTask.Wait(TimeSpan.FromSeconds(30)))
+                    {
+                        this.Log("Cancellation completed");
+                    }
+                    else
+                    {
+                        this.Log("MAExecutor internal task did not stop in the allowed time");
+                    }
                 }
-                else
-                {
-                    this.Log("MAExecutor internal task did not stop in the allowed time");
-                }
+
+                this.internalTask = null;
+
+                this.ControlState = ExecutorState.Stopped;
             }
-
-            this.internalTask = null;
-            
-            this.UpdateStatus(ExecutorState.Stopped, null);
-
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine("An error occurred starting the executor");
+                Logger.WriteException(ex);
+                this.Message = $"Stop error: {ex.Message}";
+            }
+            finally
+            {
+                this.ReleaseLock(this.serviceControlLock, nameof(this.serviceControlLock));
+            }
         }
-
-        public void Pause()
-        {
-            if (this.State == ExecutorState.Stopped || this.State == ExecutorState.Stopping || this.State == ExecutorState.Disabled)
-            {
-                throw new InvalidOperationException($"The service cannot be paused while it is in the {this.State} state");
-            }
-
-            this.State = ExecutorState.Pausing;
-
-            this.Log("Attempting to pause executor");
-            
-            if (this.importCheckTimer != null)
-            {
-                this.importCheckTimer.Enabled = false;
-            }
-
-            if (this.unmanagedChangesCheckTimer != null)
-            {
-                this.unmanagedChangesCheckTimer.Enabled = false;
-            }
-
-            this.WaitAndTakeLock(this.localOperationLock, nameof(this.localOperationLock));
-            this.TakeLock(this.pauseLock, nameof(this.pauseLock));
-            this.ReleaseLock(this.localOperationLock, nameof(this.localOperationLock));
-            this.Log("Executor has been paused");
-            this.UpdateStatus(ExecutorState.Paused, null);
-        }
-
-        public void Resume()
-        {
-            if (this.State != ExecutorState.Paused)
-            {
-                throw new InvalidOperationException($"The service cannot be resumed while it is in the {this.State} state");
-            }
-
-            if (this.importCheckTimer != null)
-            {
-                this.importCheckTimer.Enabled = true;
-            }
-
-            if (this.unmanagedChangesCheckTimer != null)
-            {
-                this.unmanagedChangesCheckTimer.Enabled = true;
-            }
-
-            this.State = ExecutorState.Idle;
-            this.ReleaseLock(this.pauseLock, nameof(this.pauseLock));
-        }
-
+        
         private void UpdateExecutionQueueState()
         {
             string items = this.GetQueueItemNames(false);
@@ -797,24 +831,24 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        private void UpdateStatus(ExecutorState state, string message)
+        private void UpdateExecutionStatus(ExecutorState state, string message)
         {
-            this.InternalStatus.State = state;
+            this.InternalStatus.ExecutionState = state;
             this.InternalStatus.Message = message;
             this.RaiseStateChange();
         }
 
-        private void UpdateStatus(ExecutorState state, string message, string executingRunProfile)
+        private void UpdateExecutionStatus(ExecutorState state, string message, string executingRunProfile)
         {
-            this.InternalStatus.State = state;
+            this.InternalStatus.ExecutionState = state;
             this.InternalStatus.Message = message;
             this.InternalStatus.ExecutingRunProfile = executingRunProfile;
             this.RaiseStateChange();
         }
 
-        private void UpdateStatus(ExecutorState state, string message, string executingRunProfile, string executionQueue)
+        private void UpdateExecutionStatus(ExecutorState state, string message, string executingRunProfile, string executionQueue)
         {
-            this.InternalStatus.State = state;
+            this.InternalStatus.ExecutionState = state;
             this.InternalStatus.Message = message;
             this.InternalStatus.ExecutingRunProfile = executingRunProfile;
             this.InternalStatus.ExecutionQueue = executionQueue;
@@ -834,11 +868,11 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 try
                 {
-                    this.UpdateStatus(ExecutorState.Running, "Unmanaged run in progress", this.ma.ExecutingRunProfileName);
+                    this.UpdateExecutionStatus(ExecutorState.Running, "Unmanaged run in progress", this.ma.ExecutingRunProfileName);
                     this.Log("Waiting for sync engine to finish current run profile before initializing executor");
                     this.TakeLock(this.localOperationLock, nameof(this.localOperationLock));
                     this.ma.Wait(this.token);
-                    this.State = ExecutorState.Processing;
+                    this.ExecutionState = ExecutorState.Processing;
                     RunDetails r = this.ma.GetLastRun();
                     this.UpdateLastRunStatus(r.RunProfileName, r.LastStepStatus);
                 }
@@ -850,7 +884,7 @@ namespace Lithnet.Miiserver.AutoSync
                 finally
                 {
                     this.ReleaseLock(this.localOperationLock, nameof(this.localOperationLock));
-                    this.UpdateStatus(ExecutorState.Idle, null, null);
+                    this.UpdateExecutionStatus(ExecutorState.Idle, null, null);
                 }
             }
 
@@ -863,22 +897,24 @@ namespace Lithnet.Miiserver.AutoSync
             this.StartTriggers();
 
             this.SetupImportSchedule();
+
             this.SetupUnmanagedChangesCheckTimer();
+
+            this.token.ThrowIfCancellationRequested();
 
             try
             {
                 this.Log("Starting action processing queue");
-                this.UpdateStatus(ExecutorState.Idle, null, null);
+                this.UpdateExecutionStatus(ExecutorState.Idle, null, null);
 
                 // ReSharper disable once InconsistentlySynchronizedField
                 foreach (ExecutionParameters action in this.pendingActions.GetConsumingEnumerable(this.token))
                 {
                     this.token.ThrowIfCancellationRequested();
-                    this.Wait(this.pauseLock, nameof(this.pauseLock));
 
                     try
                     {
-                        this.UpdateStatus(ExecutorState.Waiting, "Staging run", action.RunProfileName, this.GetQueueItemNames(false));
+                        this.UpdateExecutionStatus(ExecutorState.Waiting, "Staging run", action.RunProfileName, this.GetQueueItemNames(false));
 
                         this.SetExclusiveMode(action);
 
@@ -908,7 +944,7 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                     finally
                     {
-                        this.UpdateStatus(ExecutorState.Idle, null, null);
+                        this.UpdateExecutionStatus(ExecutorState.Idle, null, null);
                     }
                 }
             }
@@ -959,12 +995,10 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                this.Wait(this.pauseLock, nameof(this.pauseLock));
-
                 this.Trace("Checking for unmanaged changes");
                 // If another operation in this executor is already running, then wait for it to finish
                 this.WaitAndTakeLock(this.localOperationLock, nameof(this.localOperationLock));
-                
+
                 if (this.ShouldExportPendingChanges())
                 {
                     this.AddPendingActionIfNotQueued(new ExecutionParameters(this.Configuration.ExportRunProfileName), "Pending export check");

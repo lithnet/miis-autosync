@@ -34,7 +34,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.IgnorePropertyHasChanged.Add(nameof(this.LastRunProfileResult));
             this.IgnorePropertyHasChanged.Add(nameof(this.LastRunProfileName));
             this.IgnorePropertyHasChanged.Add(nameof(this.LastRun));
-            this.IgnorePropertyHasChanged.Add(nameof(this.State));
+            this.IgnorePropertyHasChanged.Add(nameof(this.DisplayState));
 
             this.Commands.Add("AddTrigger", new DelegateCommand(t => this.AddTrigger(), u => this.CanAddTrigger()));
             this.Commands.Add("RemoveTrigger", new DelegateCommand(t => this.RemoveTrigger(), u => this.CanRemoveTrigger()));
@@ -44,8 +44,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
             this.Commands.Add("Start", new DelegateCommand(t => this.Start(), u => this.CanStart()));
             this.Commands.Add("Stop", new DelegateCommand(t => this.Stop(), u => this.CanStop()));
-            this.Commands.Add("Pause", new DelegateCommand(t => this.Pause(), u => this.CanPause()));
-            this.Commands.Add("Resume", new DelegateCommand(t => this.Resume(), u => this.CanResume()));
 
             this.SubscribeToStateChanges(model);
         }
@@ -66,7 +64,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private bool CanStop()
         {
-            return this.State != ExecutorState.Stopped && this.State != ExecutorState.Stopping && this.State != ExecutorState.Disabled;
+            return this.ControlState == ExecutorState.Running;
         }
 
         private void Start()
@@ -85,45 +83,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private bool CanStart()
         {
-            return this.State == ExecutorState.Stopped;
-        }
-
-        private void Pause()
-        {
-            try
-            {
-                ConfigClient c = new ConfigClient();
-                c.Pause(this.ManagementAgentName);
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine(ex);
-                MessageBox.Show($"Could not pause the management agent\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private bool CanPause()
-        {
-            return !MAStatus.IsControlState(this.State);
-        }
-
-        private void Resume()
-        {
-            try
-            {
-                ConfigClient c = new ConfigClient();
-                c.Resume(this.ManagementAgentName);
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine(ex);
-                MessageBox.Show($"Could not resume the management agent\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private bool CanResume()
-        {
-            return this.State == ExecutorState.Paused;
+            return this.ControlState == ExecutorState.Stopped;
         }
 
         private void SubscribeToStateChanges(MAConfigParameters model)
@@ -146,7 +106,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             get
             {
-                switch (this.State)
+                switch (this.DisplayState)
                 {
                     case ExecutorState.Disabled:
                         return App.GetImageResource("Stop.png");
@@ -505,7 +465,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public string LastRun => this.LastRunProfileName == null ? null : $"{this.LastRunProfileName}: {this.LastRunProfileResult}";
 
-        public ExecutorState State { get; private set; }
+        public ExecutorState DisplayState { get; private set; }
+        
+        public ExecutorState ControlState { get; private set; }
 
         public void MAStatusChanged(MAStatus status)
         {
@@ -514,9 +476,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.ExecutionQueue = status.ExecutionQueue;
             this.LastRunProfileResult = status.LastRunProfileResult;
             this.LastRunProfileName = status.LastRunProfileName;
-            this.State = status.State;
-
-            Trace.WriteLine($"{status.MAName} : {status.LastRunProfileName} : {status.LastRunProfileResult} : {this.LastRun}");
+            this.DisplayState = status.DisplayState;
+            this.ControlState = status.ControlState;
         }
     }
 }

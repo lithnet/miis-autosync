@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.ServiceModel;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Lithnet.Logging;
+using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -14,6 +16,10 @@ namespace Lithnet.Miiserver.AutoSync
         private Dictionary<string, MAExecutor> maExecutors;
 
         private ServiceHost service;
+
+        internal static object ServiceControlLock = new object();
+
+        private CancellationTokenSource cancellationToken;
 
         public ExecutorState State { get; set; }
 
@@ -27,41 +33,22 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void Start()
         {
-            this.StartMAExecutors();
-            this.State = ExecutorState.Idle;
+            lock (ExecutionEngine.ServiceControlLock)
+            {
+                this.State = ExecutorState.Starting;
+                this.StartMAExecutors();
+                this.State = ExecutorState.Running;
+            }
         }
 
         public void Stop()
         {
-            this.StopMAExecutors();
-            this.State = ExecutorState.Stopped;
-        }
-
-        public void Pause()
-        {
-            List<Task> tasks = new List<Task>();
-            foreach (MAExecutor x in this.maExecutors.Values)
+            lock (ExecutionEngine.ServiceControlLock)
             {
-                if (x.State != ExecutorState.Disabled && x.State != ExecutorState.Paused && x.State != ExecutorState.Stopped)
-                {
-                    tasks.Add(Task.Run(() => x.Pause()));
-                }
+                this.State = ExecutorState.Stopping;
+                this.StopMAExecutors();
+                this.State = ExecutorState.Stopped;
             }
-
-            Task.WhenAll(tasks).ContinueWith(t => this.State = ExecutorState.Paused);
-        }
-
-        public void Resume()
-        {
-            foreach (MAExecutor x in this.maExecutors.Values)
-            {
-                if (x.State == ExecutorState.Paused)
-                {
-                    x.Resume();
-                }
-            }
-
-            this.State = ExecutorState.Idle;
         }
 
         public void ShutdownService()
@@ -92,17 +79,15 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void Start(string managementAgentName)
         {
-            this.GetExecutorOrThrow(managementAgentName).Start();
-        }
+            MAConfigParameters c = Program.ActiveConfig.ManagementAgents.GetItemOrDefault(managementAgentName);
 
-        public void Pause(string managementAgentName)
-        {
-            this.GetExecutorOrThrow(managementAgentName).Pause();
-        }
+            if (c == null)
+            {
+                throw new InvalidOperationException($"There was no active configuration found for the management agent {managementAgentName}");
+            }
 
-        public void Resume(string managementAgentName)
-        {
-            this.GetExecutorOrThrow(managementAgentName).Resume();
+            Trace.WriteLine($"Starting {managementAgentName}");
+            this.GetExecutorOrThrow(managementAgentName).Start(c);
         }
 
         internal IList<MAStatus> GetMAState()
@@ -131,39 +116,37 @@ namespace Lithnet.Miiserver.AutoSync
         {
             this.maExecutors = new Dictionary<string, MAExecutor>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (MAConfigParameters config in Program.ActiveConfig.ManagementAgents)
+            foreach (ManagementAgent ma in ManagementAgent.GetManagementAgents())
             {
-                MAExecutor x = new MAExecutor(config);
+                MAExecutor x = new MAExecutor(ma);
                 x.StateChanged += this.X_StateChanged;
-                this.maExecutors.Add(config.ManagementAgentName, x);
+                this.maExecutors.Add(ma.Name, x);
             }
         }
 
         private void StartMAExecutors()
         {
+            this.cancellationToken = new CancellationTokenSource();
+
             if (RegistrySettings.ExecutionEngineEnabled)
             {
-                foreach (MAExecutor x in this.maExecutors.Values)
+                foreach (MAConfigParameters c in Program.ActiveConfig.ManagementAgents)
                 {
-                    if (x.Configuration.IsNew)
+                    if (c.IsMissing)
                     {
-                        Logger.WriteLine("{0}: Skipping management agent because it does not yet have any configuration defined", x.Configuration.ManagementAgentName);
+                        Logger.WriteLine("{0}: Skipping management agent because it is missing from the Sync Engine", c.ManagementAgentName);
                         continue;
                     }
 
-                    if (x.Configuration.IsMissing)
+                    if (this.maExecutors.ContainsKey(c.ManagementAgentName))
                     {
-                        Logger.WriteLine("{0}: Skipping management agent because it is missing from the Sync Engine", x.Configuration.ManagementAgentName);
-                        continue;
+                        Trace.WriteLine($"Starting {c.ManagementAgentName}");
+                        Task.Run(() => this.maExecutors[c.ManagementAgentName].Start(c), this.cancellationToken.Token);
                     }
-
-                    if (x.Configuration.Disabled)
+                    else
                     {
-                        Logger.WriteLine("{0}: Skipping management agent because it has been disabled in config", x.Configuration.ManagementAgentName);
-                        continue;
+                        Logger.WriteLine($"Cannot start management agent executor '{c.ManagementAgentName}' because the management agent was not found");
                     }
-
-                    Task.Run(() => x.Start());
                 }
             }
             else
@@ -183,6 +166,8 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 return;
             }
+
+            this.cancellationToken?.Cancel();
 
             List<Task> stopTasks = new List<Task>();
 
