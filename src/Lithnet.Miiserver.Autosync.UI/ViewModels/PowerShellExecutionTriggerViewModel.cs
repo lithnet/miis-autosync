@@ -20,6 +20,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.Commands.Add("Browse", new DelegateCommand(t => this.Browse()));
             this.Commands.Add("New", new DelegateCommand(t => this.New()));
             this.Commands.Add("Edit", new DelegateCommand(t => this.Edit(), u => this.CanEdit()));
+            this.AddIsDirtyProperty(nameof(this.ScriptPath));
+            this.AddIsDirtyProperty(nameof(this.Interval));
+            this.AddIsDirtyProperty(nameof(this.ExceptionBehaviour));
         }
 
         [AlsoNotifyFor("Description")]
@@ -34,7 +37,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             get => this.typedModel.Interval;
             set => this.typedModel.Interval = value;
         }
-
 
         public ExecutionErrorBehaviour ExceptionBehaviour
         {

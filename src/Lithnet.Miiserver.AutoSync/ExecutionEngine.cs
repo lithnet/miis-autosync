@@ -51,6 +51,49 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
+        public void RestartChangedExecutors()
+        {
+            foreach (string item in this.GetManagementAgentsPendingRestart())
+            {
+                Logger.WriteLine($"Restarting executor '{item}' with new configuration");
+                this.Stop(item);
+                this.Start(item);
+            }
+        }
+
+        public IList<string> GetManagementAgentsPendingRestart()
+        {
+            List<string> restartItems = new List<string>();
+
+            foreach (MAConfigParameters newItem in Program.ActiveConfig.ManagementAgents)
+            {
+                if (!this.maExecutors.ContainsKey(newItem.ManagementAgentName))
+                {
+                    continue;
+                }
+
+                MAExecutor e = this.maExecutors[newItem.ManagementAgentName];
+
+                if ((e.ControlState == ControlState.Disabled || e.Configuration == null) && newItem.Disabled)
+                {
+                    continue;
+                }
+
+                if (e.ControlState == ControlState.Disabled && !newItem.Disabled)
+                {
+                    restartItems.Add(newItem.ManagementAgentName);
+                    continue;
+                }
+
+                if (e.Configuration == null || e.Configuration.Version != newItem.Version)
+                {
+                    restartItems.Add(newItem.ManagementAgentName);
+                }
+            }
+
+            return restartItems;
+        }
+
         public void ShutdownService()
         {
             try
@@ -74,7 +117,12 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void Stop(string managementAgentName)
         {
-            this.GetExecutorOrThrow(managementAgentName).Stop();
+            MAExecutor e = this.GetExecutorOrThrow(managementAgentName);
+
+            lock (e)
+            {
+                e.Stop();
+            }
         }
 
         public void Start(string managementAgentName)
@@ -86,8 +134,12 @@ namespace Lithnet.Miiserver.AutoSync
                 throw new InvalidOperationException($"There was no active configuration found for the management agent {managementAgentName}");
             }
 
-            Trace.WriteLine($"Starting {managementAgentName}");
-            this.GetExecutorOrThrow(managementAgentName).Start(c);
+            MAExecutor e = this.GetExecutorOrThrow(managementAgentName);
+            lock (e)
+            {
+                Trace.WriteLine($"Starting {managementAgentName}");
+                e.Start(c);
+            }
         }
 
         internal IList<MAStatus> GetMAState()
@@ -141,7 +193,14 @@ namespace Lithnet.Miiserver.AutoSync
                     if (this.maExecutors.ContainsKey(c.ManagementAgentName))
                     {
                         Trace.WriteLine($"Starting {c.ManagementAgentName}");
-                        Task.Run(() => this.maExecutors[c.ManagementAgentName].Start(c), this.cancellationToken.Token);
+                        Task.Run(() =>
+                        {
+                            MAExecutor e = this.maExecutors[c.ManagementAgentName];
+                            lock (e)
+                            {
+                                e.Start(c);
+                            }
+                        }, this.cancellationToken.Token);
                     }
                     else
                     {
@@ -171,13 +230,16 @@ namespace Lithnet.Miiserver.AutoSync
 
             List<Task> stopTasks = new List<Task>();
 
-            foreach (MAExecutor x in this.maExecutors.Values)
+            foreach (MAExecutor e in this.maExecutors.Values)
             {
                 stopTasks.Add(Task.Factory.StartNew(() =>
                 {
                     try
                     {
-                        x.Stop();
+                        lock (e)
+                        {
+                            e.Stop();
+                        }
                     }
                     catch (OperationCanceledException)
                     {

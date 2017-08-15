@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Reflection;
+using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -33,15 +34,18 @@ namespace Lithnet.Miiserver.AutoSync.UI
 #if DEBUG
             if (Debugger.IsAttached)
             {
-                // Must be started off the UI-thread
-                Task.Run(() =>
+                ServiceController sc = new ServiceController("miisautosync");
+                if (sc.Status == ServiceControllerStatus.Stopped)
                 {
-                    Program.LoadConfiguration();
-                    Program.StartConfigServiceHost();
-                    Program.CreateExecutionEngineInstance();
+                    // Must be started off the UI-thread
+                    Task.Run(() =>
+                    {
+                        Program.LoadConfiguration();
+                        Program.StartConfigServiceHost();
+                        Program.CreateExecutionEngineInstance();
 
-                }).Wait();
-
+                    }).Wait();
+                }
             }
 #endif
         }

@@ -16,6 +16,16 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             this.typedModel = model;
             this.ObjectClasses = new ObservableCollection<string>(this.typedModel.ObjectClasses);
+            this.AddIsDirtyProperty(nameof(this.MinimumIntervalBetweenEvents));
+            this.AddIsDirtyProperty(nameof(this.LastLogonTimestampOffset));
+            this.AddIsDirtyProperty(nameof(this.BaseDN));
+            this.AddIsDirtyProperty(nameof(this.UseServiceAccountCredentials));
+            this.AddIsDirtyProperty(nameof(this.UseExplicitCredentials));
+            this.AddIsDirtyProperty(nameof(this.Username));
+            this.AddIsDirtyProperty(nameof(this.Password));
+            this.AddIsDirtyProperty(nameof(this.Disabled));
+            this.AddIsDirtyProperty(nameof(this.HostName));
+            this.AddIsDirtyProperty(nameof(this.ObjectClasses));
         }
 
         public TimeSpan MinimumIntervalBetweenEvents

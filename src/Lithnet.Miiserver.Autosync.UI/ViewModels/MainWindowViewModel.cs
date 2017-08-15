@@ -21,17 +21,13 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
     {
         private const string HelpUrl = "https://bit.ly/autosync-help";
 
-        private List<Type> ignoreViewModelChanges;
-
         private bool confirmedCloseOnDirtyViewModel;
 
         internal ExecutionMonitorsViewModel ExecutionMonitor { get; set; }
 
         public ConfigFileViewModel ConfigFile { get; set; }
 
-        public string DisplayName => "Lithnet AutoSync for Microsoft Identity Manager" + (this.ViewModelIsDirty ? "*" : string.Empty);
-
-        private bool ViewModelIsDirty { get; set; }
+        public string DisplayName => "Lithnet AutoSync for Microsoft Identity Manager" + (this.IsDirty ? "*" : string.Empty);
 
         public Cursor Cursor { get; set; }
 
@@ -49,14 +45,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public MainWindowViewModel()
         {
-            UINotifyPropertyChanges.BeginIgnoreAllChanges();
-            this.PopulateIgnoreViewModelChanges();
-            this.AddDependentPropertyNotification("ViewModelIsDirty", "DisplayName");
-
-            this.IgnorePropertyHasChanged.Add("DisplayName");
-            this.IgnorePropertyHasChanged.Add("ChildNodes");
-            this.IgnorePropertyHasChanged.Add("ViewModelIsDirty");
-            this.IgnorePropertyHasChanged.Add("StatusBarVisibility");
+            this.AddDependentPropertyNotification("IsDirty", "DisplayName");
 
             this.Commands.AddItem("Reload", x => this.Reload());
             this.Commands.AddItem("Save", x => this.Save(), x => this.CanSave());
@@ -73,16 +62,20 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.ExecutionMonitor = new ExecutionMonitorsViewModel(c.GetManagementAgentNames());
 
             this.Cursor = Cursors.Arrow;
-            ViewModelBase.ViewModelChanged += this.ViewModelBase_ViewModelChanged;
             Application.Current.MainWindow.Closing += this.MainWindow_Closing;
-            UINotifyPropertyChanges.EndIgnoreAllChanges();
+
+            ViewModelBase.ViewModelIsDirtySet += this.ViewModelBase_ViewModelIsDirtySet;
         }
 
-        private void PopulateIgnoreViewModelChanges()
+        private void ViewModelBase_ViewModelIsDirtySet(object sender, PropertyChangedEventArgs e)
         {
-            this.ignoreViewModelChanges = new List<Type>();
-            this.ignoreViewModelChanges.Add(typeof(ExecutionMonitorViewModel));
-            this.ignoreViewModelChanges.Add(typeof(ExecutionMonitorsViewModel));
+            Debug.WriteLine($"A view model of type '{sender.GetType().Name}' changed its state to dirty based on a change of property '{e.PropertyName}'");
+
+            if (!this.IsDirty)
+            {
+                this.IsDirty = true;
+                Trace.WriteLine($"Setting view model state to dirty based on a change of property '{e.PropertyName}' on an object of type '{sender.GetType().Name}'");
+            }
         }
 
         private void Help()
@@ -121,7 +114,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             this.UpdateFocusedBindings();
 
-            if (this.ViewModelIsDirty)
+            if (this.IsDirty)
             {
                 if (MessageBox.Show("There are unsaved changes. Are you sure you want to reload the config?", "Unsaved Changes", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
                 {
@@ -157,7 +150,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void Revert()
         {
-            if (this.ViewModelIsDirty)
+            if (this.IsDirty)
             {
                 if (MessageBox.Show("There are unsaved changes. Do you want to continue?", "Unsaved Changes", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
                 {
@@ -170,7 +163,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private bool CanRevert()
         {
-            return this.ViewModelIsDirty;
+            return this.IsDirty;
         }
 
         internal void ResetConfigViewModel()
@@ -218,7 +211,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 this.ConfigFile = new ConfigFileViewModel(file);
                 this.ConfigFile.ManagementAgents.IsExpanded = true;
 
-                this.ViewModelIsDirty = false;
+                this.IsDirty = false;
             }
             finally
             {
@@ -230,7 +223,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             this.UpdateFocusedBindings();
 
-            if (this.ViewModelIsDirty)
+            if (this.IsDirty)
             {
                 if (MessageBox.Show("There are unsaved changes. Do you want to continue?", "Unsaved Changes", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
                 {
@@ -285,7 +278,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 this.Cursor = Cursors.Arrow;
             }
 
-            this.ViewModelIsDirty = false;
+            this.IsDirty = false;
 
             this.ResetConfigViewModel();
         }
@@ -307,7 +300,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 this.Cursor = Cursors.Wait;
                 ConfigClient c = new ConfigClient();
                 c.PutConfig(this.ConfigFile.Model);
-                this.ViewModelIsDirty = false;
+                this.Commit();
 
                 this.AskToRestartService();
             }
@@ -330,6 +323,12 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
         }
 
+        private void Commit()
+        {
+            this.IsDirty = false;
+            this.ConfigFile.Commit();
+        }
+
         private bool CanSave()
         {
             return this.ConfigFile != null;
@@ -347,15 +346,18 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void AskToRestartService()
         {
-            this.CheckPendingRestart();
+            ConfigClient c = new ConfigClient();
+            List<string> pendingRestartItems = c.GetManagementAgentsPendingRestart()?.ToList();
 
-            //if (MessageBox.Show("Do you want to restart the service now to make the new config take effect?", "Error", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
-            //{
-            //    this.CheckPendingRestart();
-            //    return;
-            //}
+            if (pendingRestartItems != null && pendingRestartItems.Count > 0)
+            {
+                string pendingRestartItemList = string.Join("\r\n", pendingRestartItems);
 
-            //this.Reload(false);
+                if (MessageBox.Show($"The configuration for the following management agents have changed\r\n\r\n{pendingRestartItemList}\r\n\r\nDo you want to restart them now?", "Restart management agents", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                {
+                    c.RestartChangedExecutors();
+                }
+            }
         }
 
         private void Export()
@@ -389,7 +391,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                     ProtectedString.EncryptOnWrite = false;
                     this.MarkManagementAgentsAsConfigured();
                     AutoSync.ConfigFile.Save(this.ConfigFile.Model, dialog.FileName);
-                    this.ViewModelIsDirty = false;
+                    this.IsDirty = false;
                 }
             }
             catch (Exception ex)
@@ -407,7 +409,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             this.UpdateFocusedBindings();
 
-            if (this.ViewModelIsDirty && !this.confirmedCloseOnDirtyViewModel)
+            if (this.IsDirty && !this.confirmedCloseOnDirtyViewModel)
             {
                 if (MessageBox.Show("There are unsaved changes. Are you sure you want to exit?", "Unsaved Changes", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
                 {
@@ -416,38 +418,11 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
         }
 
-        private void ViewModelBase_ViewModelChanged(object sender, PropertyChangedEventArgs e)
-        {
-            if (sender == this)
-            {
-                return;
-            }
-
-            if (this.ViewModelIsDirty)
-            {
-                return;
-            }
-
-            if (this.IgnorePropertyHasChanged.Contains(e.PropertyName))
-            {
-                return;
-            }
-
-            if (this.ignoreViewModelChanges.Contains(sender.GetType()))
-            {
-                return;
-            }
-
-            Trace.WriteLine($"Setting view model to dirty due to change of property {e.PropertyName} on object of type {sender.GetType().Name}");
-            this.ViewModelIsDirty = true;
-            this.RaisePropertyChanged("DisplayName");
-        }
-
         private void Close()
         {
             this.UpdateFocusedBindings();
 
-            if (this.ViewModelIsDirty)
+            if (this.IsDirty)
             {
                 if (MessageBox.Show("There are unsaved changes. Are you sure you want to exit?", "Unsaved Changes", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
                 {

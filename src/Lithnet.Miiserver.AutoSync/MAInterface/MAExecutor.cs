@@ -98,7 +98,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public ExecutorState ControlState
+        public ControlState ControlState
         {
             get => this.InternalStatus.ControlState;
             private set
@@ -144,10 +144,8 @@ namespace Lithnet.Miiserver.AutoSync
         {
             this.ma = ma;
             this.InternalStatus = new MAStatus() { MAName = this.ma.Name };
-            this.ControlState = ExecutorState.Stopped;
-            this.pendingActionList = new ExecutionParameterCollection();
-            this.pendingActions = new BlockingCollection<ExecutionParameters>(this.pendingActionList);
-            this.perProfileLastRunStatus = new Dictionary<string, string>();
+            this.ControlState = ControlState.Stopped;
+            
             this.ExecutionTriggers = new List<IMAExecutionTrigger>();
             this.localOperationLock = new ManualResetEvent(true);
             this.serviceControlLock = new ManualResetEvent(true);
@@ -164,7 +162,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             this.Configuration = config;
             this.InternalStatus.ActiveVersion = config.Version;
-            this.ControlState = config.Disabled ? ExecutorState.Disabled : ExecutorState.Stopped;
+            this.ControlState = config.Disabled ? ControlState.Disabled : ControlState.Stopped;
             this.controller = new MAController(config);
             this.AttachTrigger(config.Triggers?.ToArray());
 
@@ -193,7 +191,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void UnmanagedChangesCheckTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            if (this.ControlState != ExecutorState.Running)
+            if (this.ControlState != ControlState.Running)
             {
                 return;
             }
@@ -230,7 +228,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void ImportCheckTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            if (this.ControlState != ExecutorState.Running)
+            if (this.ControlState != ControlState.Running)
             {
                 return;
             }
@@ -288,6 +286,9 @@ namespace Lithnet.Miiserver.AutoSync
                     this.Log($"Unregistering execution trigger '{t.DisplayName}'");
                     t.TriggerExecution -= this.Notifier_TriggerExecution;
                     t.Stop();
+                }
+                catch (OperationCanceledException)
+                {
                 }
                 catch (Exception ex)
                 {
@@ -695,24 +696,36 @@ namespace Lithnet.Miiserver.AutoSync
         {
             if (config.IsNew || config.IsMissing || config.Disabled)
             {
-                this.Log("Ignoring start request as management agent is disabled or unconfigured");
-                this.ControlState = ExecutorState.Disabled;
+                Logger.WriteLine($"Ignoring start request as management agent {config.ManagementAgentName} is disabled or unconfigured");
+                this.ControlState = ControlState.Disabled;
                 return;
             }
 
-            if (this.ControlState != ExecutorState.Stopped)
+            if (this.ControlState == ControlState.Running)
+            {
+                this.Trace($"Ignoring request to start {config.ManagementAgentName} as it is already running");
+                return;
+            }
+
+            if (this.ControlState != ControlState.Stopped && this.ControlState != ControlState.Disabled)
             {
                 throw new InvalidOperationException($"Cannot start an executor that is in the {this.ControlState} state");
             }
-          
+
             try
             {
+                Logger.WriteLine($"Preparing to start executor for {config.ManagementAgentName}");
+
                 this.tokenSource = new CancellationTokenSource();
                 this.token = this.tokenSource.Token;
 
                 this.WaitAndTakeLock(this.serviceControlLock, nameof(this.serviceControlLock));
 
-                this.ControlState = ExecutorState.Starting;
+                this.ControlState = ControlState.Starting;
+
+                this.pendingActionList = new ExecutionParameterCollection();
+                this.pendingActions = new BlockingCollection<ExecutionParameters>(this.pendingActionList);
+                this.perProfileLastRunStatus = new Dictionary<string, string>();
 
                 this.Setup(config);
 
@@ -751,7 +764,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 this.internalTask.Start();
 
-                this.ControlState = ExecutorState.Running;
+                this.ControlState = ControlState.Running;
             }
             catch (Exception ex)
             {
@@ -768,7 +781,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void Stop()
         {
-            if (this.ControlState == ExecutorState.Stopped || this.ControlState == ExecutorState.Disabled || this.ControlState == ExecutorState.Stopping)
+            if (this.ControlState == ControlState.Stopped || this.ControlState == ControlState.Disabled || this.ControlState == ControlState.Stopping)
             {
                 return;
             }
@@ -777,15 +790,13 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 this.WaitAndTakeLock(this.serviceControlLock, nameof(this.serviceControlLock));
 
-                this.ControlState = ExecutorState.Stopping;
+                this.ControlState = ControlState.Stopping;
 
                 this.Log("Stopping MAExecutor");
-
+                this.pendingActions?.CompleteAdding();
                 this.tokenSource?.Cancel();
-                this.importCheckTimer?.Stop();
 
                 this.StopTriggers();
-                this.ExecutionTriggers.Clear();
 
                 this.Log("Stopped execution triggers");
 
@@ -801,26 +812,30 @@ namespace Lithnet.Miiserver.AutoSync
                         this.Log("MAExecutor internal task did not stop in the allowed time");
                     }
                 }
-
-                this.internalTask = null;
-
-                this.ControlState = ExecutorState.Stopped;
             }
             catch (OperationCanceledException)
             {
             }
             catch (Exception ex)
             {
-                Logger.WriteLine("An error occurred starting the executor");
+                Logger.WriteLine("An error occurred stopping the executor");
                 Logger.WriteException(ex);
                 this.Message = $"Stop error: {ex.Message}";
             }
             finally
             {
+                this.importCheckTimer?.Stop();
+                this.ExecutionTriggers.Clear();
+
+                this.pendingActionList = null;
+                this.pendingActions = null;
+                this.internalTask = null;
+                this.InternalStatus.Clear();
+                this.ControlState = ControlState.Stopped;
                 this.ReleaseLock(this.serviceControlLock, nameof(this.serviceControlLock));
             }
         }
-        
+
         private void UpdateExecutionQueueState()
         {
             string items = this.GetQueueItemNames(false);
@@ -1220,7 +1235,8 @@ namespace Lithnet.Miiserver.AutoSync
                 return false;
             }
 
-            return Program.ActiveConfig.Settings.MailIgnoreReturnCodes == null || !Program.ActiveConfig.Settings.MailIgnoreReturnCodes.Contains(r.LastStepStatus, StringComparer.OrdinalIgnoreCase);
+            return Program.ActiveConfig.Settings.MailIgnoreReturnCodes == null ||
+                !Program.ActiveConfig.Settings.MailIgnoreReturnCodes.Contains(r.LastStepStatus, StringComparer.OrdinalIgnoreCase);
         }
 
         public override string ToString()

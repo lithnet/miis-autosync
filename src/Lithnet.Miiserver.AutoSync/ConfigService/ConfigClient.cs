@@ -13,7 +13,6 @@ namespace Lithnet.Miiserver.AutoSync
         public ConfigClient()
             : base(ConfigServiceConfiguration.NetNamedPipeBinding, ConfigServiceConfiguration.NetNamedPipeEndpointAddress)
         {
-          //  this.ClientCredentials.Windows.AllowedImpersonationLevel = System.Security.Principal.TokenImpersonationLevel.Impersonation;
         }
 
         public ConfigFile GetConfig()
@@ -28,6 +27,11 @@ namespace Lithnet.Miiserver.AutoSync
         {
             ProtectedString.EncryptOnWrite = false;
             this.Channel.PutConfig(config);
+        }
+
+        public void PutConfigAndReloadChanged(ConfigFile config)
+        {
+            this.Channel.PutConfigAndReloadChanged(config);
         }
 
         public void Reload()
@@ -67,6 +71,16 @@ namespace Lithnet.Miiserver.AutoSync
         public IList<string> GetManagementAgentNames()
         {
             return this.Channel.GetManagementAgentNames();
+        }
+
+        public IList<string> GetManagementAgentsPendingRestart()
+        {
+            return this.Channel.GetManagementAgentsPendingRestart();
+        }
+
+        public void RestartChangedExecutors()
+        {
+            this.Channel.RestartChangedExecutors();
         }
     }
 }

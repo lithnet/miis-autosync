@@ -19,6 +19,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
             this.SubscribeToErrors(this.ManagementAgents);
             this.SubscribeToErrors(this.Settings);
+
+            this.AddIsDirtyProperty("Description");
         }
 
         public string DisplayName => "Configuration";
@@ -26,6 +28,18 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         public ManagementAgentsViewModel ManagementAgents { get; private set; }
 
         public SettingsViewModel Settings { get; private set; }
+
+        public void Commit()
+        {
+            this.IsDirty = false;
+            this.Settings.IsDirty = false;
+            this.ManagementAgents.IsDirty = false;
+
+            foreach (MAConfigParametersViewModel item in this.ManagementAgents)
+            {
+                item.Commit();
+            }
+        }
 
         public string Description
         {

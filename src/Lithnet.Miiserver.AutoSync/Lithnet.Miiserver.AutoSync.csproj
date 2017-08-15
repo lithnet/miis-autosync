@@ -97,6 +97,7 @@
     <Compile Include="Config\Settings.cs" />
     <Compile Include="Enums\ExecutionErrorBehaviour.cs" />
     <Compile Include="Enums\AutoImportScheduling.cs" />
+    <Compile Include="Enums\ControlState.cs" />
     <Compile Include="Enums\ExecutorState.cs" />
     <Compile Include="Enums\RunMode.cs" />
     <Compile Include="EventArgs\MAStatusChangedEventArgs.cs" />

@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.ServiceModel;
 using System.Windows;
-using System.Windows.Media.Imaging;
 using Lithnet.Common.Presentation;
 using Lithnet.Miiserver.AutoSync.UI.Windows;
 using Lithnet.Miiserver.Client;
 using Microsoft.Win32;
-using PropertyChanged;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
@@ -18,10 +16,13 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
     {
         private List<Type> allowedTypes;
 
+        private int originalVersion;
+
         public MAConfigParametersViewModel(MAConfigParameters model)
             : base(model)
         {
             this.Triggers = new MAExecutionTriggersViewModel(model.Triggers, this);
+
             this.SubscribeToErrors(this.Triggers);
 
             this.Commands.Add("AddTrigger", new DelegateCommand(t => this.AddTrigger(), u => this.CanAddTrigger()));
@@ -29,6 +30,62 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.Commands.Add("Browse", new DelegateCommand(t => this.Browse()));
             this.Commands.Add("New", new DelegateCommand(t => this.New()));
             this.Commands.Add("Edit", new DelegateCommand(t => this.Edit(), u => this.CanEdit()));
+
+            this.originalVersion = this.Model.Version;
+
+            this.AddIsDirtyProperty(nameof(this.MAControllerPath));
+            this.AddIsDirtyProperty(nameof(this.ScheduledImportRunProfileName));
+            this.AddIsDirtyProperty(nameof(this.FullSyncRunProfileName));
+            this.AddIsDirtyProperty(nameof(this.FullImportRunProfileName));
+            this.AddIsDirtyProperty(nameof(this.ExportRunProfileName));
+            this.AddIsDirtyProperty(nameof(this.DeltaSyncRunProfileName));
+            this.AddIsDirtyProperty(nameof(this.DeltaImportRunProfileName));
+            this.AddIsDirtyProperty(nameof(this.ConfirmingImportRunProfileName));
+            this.AddIsDirtyProperty(nameof(this.AutoImportIntervalMinutes));
+            this.AddIsDirtyProperty(nameof(this.ScheduleImports));
+            this.AddIsDirtyProperty(nameof(this.AutoImportScheduling));
+            this.AddIsDirtyProperty(nameof(this.Triggers));
+            this.AddIsDirtyProperty(nameof(this.Disabled));
+
+            this.IsDirtySet += this.MAConfigParametersViewModel_IsDirtySet;
+
+            this.Triggers.CollectionChanged += this.Triggers_CollectionChanged;
+
+            foreach (MAExecutionTriggerViewModel item in this.Triggers)
+            {
+                item.IsDirtySet += this.MAConfigParametersViewModel_IsDirtySet;
+            }
+        }
+
+        private void MAConfigParametersViewModel_IsDirtySet(object sender, PropertyChangedEventArgs e)
+        {
+            this.IncrementVersion();
+        }
+
+        private void Triggers_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            this.IncrementVersion();
+        }
+
+        internal void Commit()
+        {
+            this.originalVersion = this.Version;
+            this.IsDirty = false;
+            foreach (MAExecutionTriggerViewModel item in this.Triggers)
+            {
+                item.IsDirty = false;
+            }
+        }
+
+        private void IncrementVersion()
+        {
+            if (this.Model.Version > this.originalVersion)
+            {
+                return;
+            }
+
+            this.Model.Version++;
+            this.RaisePropertyChanged(nameof(this.Version));
         }
 
         public string DisplayName
@@ -82,6 +139,11 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             get => this.Model.ScheduledImportRunProfileName ?? App.NullPlaceholder;
             set => this.Model.ScheduledImportRunProfileName = value == App.NullPlaceholder ? null : value;
+        }
+
+        public int Version
+        {
+            get => this.Model.Version;
         }
 
         public string FullSyncRunProfileName
@@ -185,8 +247,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                         return;
                     }
 
-                    IMAExecutionTrigger instance = (IMAExecutionTrigger) Activator.CreateInstance(this.SelectedTrigger, this.Model.ManagementAgent);
+                    IMAExecutionTrigger instance = (IMAExecutionTrigger)Activator.CreateInstance(this.SelectedTrigger, this.Model.ManagementAgent);
                     this.Triggers.Add(instance, true);
+                    this.Triggers.Find(instance).IsDirtySet += this.MAConfigParametersViewModel_IsDirtySet;
                 }
             }
             catch (Exception ex)
@@ -259,6 +322,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 if (MessageBox.Show("Are you sure you want to remove the selected trigger?", "Confirm", MessageBoxButton.OKCancel, MessageBoxImage.Question, MessageBoxResult.OK) == MessageBoxResult.OK)
                 {
                     this.Triggers.Remove(selected);
+                    selected.IsDirtySet -= this.MAConfigParametersViewModel_IsDirtySet;
                 }
             }
         }
@@ -305,8 +369,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                ProcessStartInfo startInfo = new ProcessStartInfo(this.MAControllerPath) {Verb = "Edit"};
-                Process newProcess = new Process {StartInfo = startInfo};
+                ProcessStartInfo startInfo = new ProcessStartInfo(this.MAControllerPath) { Verb = "Edit" };
+                Process newProcess = new Process { StartInfo = startInfo };
                 newProcess.Start();
             }
             catch (Exception ex)

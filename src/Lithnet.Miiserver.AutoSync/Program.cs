@@ -294,6 +294,29 @@ namespace Lithnet.Miiserver.AutoSync
             return engine?.State ?? ExecutorState.Stopped;
         }
 
+        public static IList<string> GetManagementAgentsPendingRestart()
+        {
+            return engine?.GetManagementAgentsPendingRestart();
+        }
+
+        internal static void RestartChangedExecutors()
+        {
+            engine?.RestartChangedExecutors();
+        }
+
+        internal static void RestartManagementAgents(params string[] managementAgentNames)
+        {
+            foreach (string ma in managementAgentNames)
+            {
+                engine?.Stop(ma);
+            }
+
+            foreach (string ma in managementAgentNames)
+            {
+                engine?.Start(ma);
+            }
+        }
+
         internal static void StopExecutor(string managementAgentName)
         {
             engine?.Stop(managementAgentName);

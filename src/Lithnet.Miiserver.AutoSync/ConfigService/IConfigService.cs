@@ -17,6 +17,9 @@ namespace Lithnet.Miiserver.AutoSync
         void PutConfig(ConfigFile config);
 
         [OperationContract]
+        void PutConfigAndReloadChanged(ConfigFile config);
+
+        [OperationContract]
         void Reload();
 
         [OperationContract]
@@ -27,7 +30,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         [OperationContract(IsOneWay = true)]
         void Start(string managementAgentName);
-        
+
         [OperationContract(IsOneWay = true)]
         void StopAll();
 
@@ -39,5 +42,11 @@ namespace Lithnet.Miiserver.AutoSync
 
         [OperationContract]
         IList<string> GetManagementAgentNames();
+
+        [OperationContract]
+        IList<string> GetManagementAgentsPendingRestart();
+
+        [OperationContract]
+        void RestartChangedExecutors();
     }
 }

@@ -33,13 +33,13 @@
                         <CompositeCollection>
                             <MenuItem Header="_Save"
                                       Command="{Binding Path=Commands.Save}" />
-                            <MenuItem Header="Re_vert Changes"
+                            <MenuItem Header="Undo pending changes"
                                       Command="{Binding Path=Commands.Revert}" />
-
+                            
                             <Separator />
-                            <MenuItem Header="_Import Config..."
+                            <MenuItem Header="_Import config..."
                                       Command="{Binding Path=Commands.Import}" />
-                            <MenuItem Header="_Export Config..."
+                            <MenuItem Header="_Export config..."
                                       Command="{Binding Path=Commands.Export}" />
                             
                             <Separator />

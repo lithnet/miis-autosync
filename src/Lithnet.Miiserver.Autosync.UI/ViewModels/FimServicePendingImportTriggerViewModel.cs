@@ -12,8 +12,10 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             : base(model)
         {
             this.typedModel = model;
+            this.AddIsDirtyProperty(nameof(this.HostName));
+            this.AddIsDirtyProperty(nameof(this.Interval));
         }
-      
+
         public string Type => this.Model.Type;
 
         public string Description => this.Model.Description;

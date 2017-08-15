@@ -29,6 +29,25 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 this.Model.MailIgnoreReturnCodes = new HashSet<string>() {"success", "completed-no-objects"};
             }
+
+            this.AddIsDirtyProperty(nameof(this.RunHistoryClear));
+            this.AddIsDirtyProperty(nameof(this.RunHistoryAge));
+            this.AddIsDirtyProperty(nameof(this.RunHistoryPath));
+            this.AddIsDirtyProperty(nameof(this.RunHistorySave));
+            this.AddIsDirtyProperty(nameof(this.MailEnabled));
+            this.AddIsDirtyProperty(nameof(this.MailUseAppConfig));
+            this.AddIsDirtyProperty(nameof(this.MailHost));
+            this.AddIsDirtyProperty(nameof(this.MailPort));
+            this.AddIsDirtyProperty(nameof(this.MailUseSsl));
+            this.AddIsDirtyProperty(nameof(this.MailUseDefaultCredentials));
+            this.AddIsDirtyProperty(nameof(this.MailUsername));
+            this.AddIsDirtyProperty(nameof(this.MailPassword));
+            this.AddIsDirtyProperty(nameof(this.MailTo));
+            this.AddIsDirtyProperty(nameof(this.MailFrom));
+            this.AddIsDirtyProperty(nameof(this.MailMaxErrors));
+            this.AddIsDirtyProperty(nameof(this.MailSendAllErrorInstances));
+            this.AddIsDirtyProperty(nameof(this.MailIgnoreReturnCodes));
+            this.AddIsDirtyProperty(nameof(this.RunMode));
         }
 
         public string DisplayName => "Settings";
@@ -238,6 +257,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 }
             }
         }
+
         public bool IsRunModeUnsupported
         {
             get => this.RunMode == RunMode.Unsupported;

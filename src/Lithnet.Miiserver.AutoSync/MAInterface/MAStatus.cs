@@ -28,25 +28,24 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember]
         public string LastRunProfileName { get; set; }
 
-        public ExecutorState DisplayState
+        public string DisplayState
         {
             get
             {
-                if (this.ControlState != ExecutorState.Running)
+                if (this.ControlState != ControlState.Running)
                 {
-                    return this.ControlState;
+                    return this.ControlState.ToString();
                 }
                 else
                 {
-                    return this.ExecutionState;
+                    return this.ExecutionState.ToString();
                 }
             }
         }
 
         [DataMember]
-        public ExecutorState ControlState { get; set; }
-
-
+        public ControlState ControlState { get; set; }
+        
         [DataMember]
         public ExecutorState ExecutionState { get; set; }
 
@@ -62,6 +61,15 @@ namespace Lithnet.Miiserver.AutoSync
                    state == ExecutorState.Starting ||
                    state == ExecutorState.Stopped ||
                    state == ExecutorState.Stopping;
+        }
+
+        public void Clear()
+        {
+            this.ExecutingRunProfile = null;
+            this.ExecutionQueue = null;
+            this.Message = null;
+            this.LastRunProfileName = null;
+            this.LastRunProfileResult = null;
         }
     }
 }

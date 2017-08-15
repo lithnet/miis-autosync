@@ -11,6 +11,7 @@
 
             <StackPanel>
                 <TextBlock  Text="{Binding ManagementAgentName}" FontSize="40" Foreground="{DynamicResource AccentColorBrush}" />
+                <Label Content="{Binding Path=Version}"/>
 
                 <Separator/>
 
@@ -70,6 +71,8 @@
                                 <Button Margin="10 0 0 5" Content="Edit script" Command="{Binding Commands.Edit}" />
                                 <Button Margin="5 0 0 5" Content="New script from template" Command="{Binding Commands.New}"/>
                             </StackPanel>
+
+
                         </Grid>
                     </TabItem>
 

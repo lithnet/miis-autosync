@@ -174,6 +174,16 @@ namespace Lithnet.Miiserver.AutoSync
                     this.internalTask.Wait(TimeSpan.FromSeconds(10));
                 }
             }
+            catch (AggregateException e)
+            {
+                if (!(e.InnerException is TaskCanceledException))
+                {
+                    throw;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
             catch (TimeoutException)
             {
             }

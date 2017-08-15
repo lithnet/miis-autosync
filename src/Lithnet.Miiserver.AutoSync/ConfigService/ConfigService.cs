@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
@@ -74,7 +75,31 @@ namespace Lithnet.Miiserver.AutoSync
                 ProtectedString.EncryptOnWrite = true;
                 ConfigFile.Save(config, RegistrySettings.ConfigurationFile);
                 Program.ActiveConfig = config;
-                Logger.WriteLine("The configuration has been updated. The service must be restarted for the new configuration to take effect");
+
+                IList<string> items = this.GetManagementAgentsPendingRestart();
+
+                if (items != null && items.Count > 0)
+                {
+                    string list = string.Join("\r\n", items);
+                    Logger.WriteLine($"The configuration has been updated. The following management agents must be restarted for the configuration to take effect\r\n{list}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteException(ex);
+                throw;
+            }
+        }
+
+        public void PutConfigAndReloadChanged(ConfigFile config)
+        {
+            try
+            {
+                Trace.WriteLine($"Calling {nameof(this.PutConfig)} as {Environment.UserName}");
+                ProtectedString.EncryptOnWrite = true;
+                ConfigFile.Save(config, RegistrySettings.ConfigurationFile);
+                Program.ActiveConfig = config;
+                Program.RestartChangedExecutors();
             }
             catch (Exception ex)
             {
@@ -171,6 +196,16 @@ namespace Lithnet.Miiserver.AutoSync
         public IList<string> GetManagementAgentNames()
         {
             return ManagementAgent.GetManagementAgents().Select(t => t.Name).ToList();
+        }
+
+        public IList<string> GetManagementAgentsPendingRestart()
+        {
+            return Program.GetManagementAgentsPendingRestart();
+        }
+
+        public void RestartChangedExecutors()
+        {
+            Program.RestartChangedExecutors();
         }
     }
 }

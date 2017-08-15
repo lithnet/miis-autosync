@@ -16,6 +16,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             this.typedModel = model;
             this.config = config;
+            this.AddIsDirtyProperty(nameof(this.RunProfileName));
+            this.AddIsDirtyProperty(nameof(this.Interval));
         }
 
         public string Type => this.Model.Type;

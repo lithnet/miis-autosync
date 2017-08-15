@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Lithnet.Miiserver.AutoSync;
 using Lithnet.Common.Presentation;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
