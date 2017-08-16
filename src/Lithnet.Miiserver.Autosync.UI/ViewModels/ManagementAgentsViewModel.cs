@@ -16,8 +16,10 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             : base((IList<MAConfigParameters>)items, ManagementAgentsViewModel.ViewModelResolver)
         {
             this.model = items;
+            this.DisplayIcon = App.GetImageResource("SettingsGroup.ico");
+
         }
-        
+
         private static MAConfigParametersViewModel ViewModelResolver(MAConfigParameters model)
         {
             return new MAConfigParametersViewModel(model);

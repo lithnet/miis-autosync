@@ -7,28 +7,48 @@
                      mc:Ignorable="d" >
 
     <DataTemplate DataType="{x:Type viewModels:ExecutionMonitorsViewModel}">
-        <StackPanel>
-            <StackPanel.Resources>
+        <Grid Margin="5">
+            <Grid.Resources>
                 <CollectionViewSource x:Key="SortedItems" Source="{Binding}">
                     <CollectionViewSource.SortDescriptions>
                         <cm:SortDescription PropertyName="Disabled"/>
                         <cm:SortDescription PropertyName="DisplayName"/>
                     </CollectionViewSource.SortDescriptions>
                 </CollectionViewSource>
-            </StackPanel.Resources>
-            
-            <ToolBarTray>
+            </Grid.Resources>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+
+            <ToolBarTray Grid.Row="0">
                 <ToolBar Height="36">
-                    <Button Command="{Binding Path=Commands.StartEngine}" ToolTip="Start execution engine">
-                        <Image Source="/Resources/Run.ico"/>
+                    <Button Command="{Binding Path=Commands.StartEngine}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="/Resources/Run.ico" Height="16" Width="16"/>
+                            <TextBlock Margin="3,0,0,0">Start all</TextBlock>
+                        </StackPanel>
                     </Button>
-                    <Button Command="{Binding Path=Commands.StopEngine}" ToolTip="Stop execution engine">
-                        <Image Source="/Resources/Stop.ico"/>
+                    <Button Command="{Binding Path=Commands.StopEngine}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="/Resources/Stop.ico" Height="16" Width="16"/>
+                            <TextBlock Margin="3,0,0,0">Stop all</TextBlock>
+                        </StackPanel>
                     </Button>
                 </ToolBar>
             </ToolBarTray>
 
-            <ListView ScrollViewer.VerticalScrollBarVisibility="Auto" ItemsSource="{Binding Source={StaticResource SortedItems}}">
+
+
+            <ListView Grid.Row="1"
+                x:Name="ListView" 
+                      ScrollViewer.VerticalScrollBarVisibility="Auto" 
+                      ItemsSource="{Binding Source={StaticResource SortedItems}}" 
+                      Margin="5"
+                      BorderThickness="1">
 
                 <ListView.Resources>
                     <DataTemplate x:Key="ImageTemplate">
@@ -36,7 +56,7 @@
                     </DataTemplate>
                     <ContextMenu x:Key="ItemContextMenu">
                         <MenuItem Header="Start" 
-                                  Command="{Binding Commands.Start}" >
+                                  Command="{Binding Commands.Start}"  >
                             <MenuItem.Icon>
                                 <Image Source="/Resources/Run.ico" Height="16" Width="16"/>
                             </MenuItem.Icon>
@@ -63,10 +83,58 @@
                         <GridViewColumn Header="Status" DisplayMemberBinding="{Binding Message}" Width="300"/>
                         <GridViewColumn Header="Executing Run Profile"  DisplayMemberBinding="{Binding ExecutingRunProfile}"/>
                         <GridViewColumn Header="Execution Queue" DisplayMemberBinding="{Binding ExecutionQueue}"/>
-                        <GridViewColumn Header="Last run result" DisplayMemberBinding="{Binding LastRun}"/>
+                        <!--<GridViewColumn Header="Last run result" DisplayMemberBinding="{Binding LastRun}"/>-->
                     </GridView>
                 </ListView.View>
             </ListView>
-        </StackPanel>
+
+            <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch" />
+
+            <!--<ScrollViewer Grid.Row="2" 
+                          VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <Grid DataContext="{Binding Path=SelectedItem, ElementName=ListView}" Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+
+                        <Label Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Content="{Binding Path=DisplayName}" FontSize="20" Foreground="{DynamicResource AccentColorBrush}"/>
+                        <Label Grid.Row="1" Grid.Column="0" Content="{Binding Path=DisplayState}"/>
+
+                        <Label Grid.Row="2" Grid.Column="0" Content="Current run profile"  FontWeight="Bold"/>
+                        <Label Grid.Row="2" Grid.Column="1" Content="{Binding Path=ExecutingRunProfile}"/>
+
+                        <Label Grid.Row="2" Grid.Column="2" Content="Execution queue" FontWeight="Bold"/>
+                        <Label Grid.Row="2" Grid.Column="3" Content="{Binding Path=ExecutionQueue}"/>
+
+                        <Label Grid.Row="3" Grid.Column="0" Content="Last run profile"  FontWeight="Bold"/>
+                        <Label Grid.Row="3" Grid.Column="1" Content="{Binding Path=LastRunProfileName}"/>
+
+                        <Label Grid.Row="3" Grid.Column="2" Content="Last run profile result"  FontWeight="Bold"/>
+                        <Label Grid.Row="3" Grid.Column="3" Content="{Binding Path=LastRunProfileResult}"/>
+
+                    </Grid>
+                </StackPanel>
+            </ScrollViewer>-->
+
+            <ListView Grid.Row="3" 
+                      DataContext="{Binding Path=SelectedItem, ElementName=ListView}" 
+                      ScrollViewer.VerticalScrollBarVisibility="Auto" 
+                      ItemsSource="{Binding Path=DetailMessages}" />
+
+        </Grid>
     </DataTemplate>
 </ResourceDictionary>
+ 

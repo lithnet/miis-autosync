@@ -48,6 +48,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.AddIsDirtyProperty(nameof(this.MailSendAllErrorInstances));
             this.AddIsDirtyProperty(nameof(this.MailIgnoreReturnCodes));
             this.AddIsDirtyProperty(nameof(this.RunMode));
+
+            this.DisplayIcon = App.GetImageResource("SettingsFile.ico");
+
         }
 
         public string DisplayName => "Settings";

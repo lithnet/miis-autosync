@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Lithnet.Miiserver.AutoSync;
 using Lithnet.Common.Presentation;
 
@@ -13,6 +14,14 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             this.Commands.AddItem("StartEngine", x => this.StartEngine(), x => this.CanStartEngine());
             this.Commands.AddItem("StopEngine", x => this.StopEngine(), x => this.CanStopEngine());
+
+            this.DisplayIcon = App.GetImageResource("Monitor.ico");
+
+            ExecutionMonitorViewModel vm = this.ViewModels.FirstOrDefault();
+            if (vm != null)
+            {
+                vm.IsSelected = true;
+            }
         }
 
         private static ExecutionMonitorViewModel ViewModelResolver(string model)
@@ -28,9 +37,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private bool CanStartEngine()
         {
-            ConfigClient c = new ConfigClient();
-            ExecutorState state = c.GetEngineState();
-            return state == ExecutorState.Stopped;
+            return this.ViewModels.Any(t => t.ControlState == ControlState.Stopped);
         }
 
         private void StopEngine()
@@ -41,9 +48,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private bool CanStopEngine()
         {
-            ConfigClient c = new ConfigClient();
-            ExecutorState state = c.GetEngineState();
-            return state == ExecutorState.Running;
+            return this.ViewModels.Any(t => t.ControlState == ControlState.Running);
         }
     }
 }

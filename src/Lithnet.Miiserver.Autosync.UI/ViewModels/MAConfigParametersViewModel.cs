@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows;
+using System.Windows.Media.Imaging;
 using Lithnet.Common.Presentation;
 using Lithnet.Miiserver.AutoSync.UI.Windows;
 using Lithnet.Miiserver.Client;
@@ -55,6 +56,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 item.IsDirtySet += this.MAConfigParametersViewModel_IsDirtySet;
             }
+
+            this.DisplayIcon = App.GetImageResource("Settings.ico");
         }
 
         private void MAConfigParametersViewModel_IsDirtySet(object sender, PropertyChangedEventArgs e)

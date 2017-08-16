@@ -267,6 +267,18 @@
   <ItemGroup>
     <Resource Include="Resources\Stop.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Activity.ico" />
+    <Resource Include="Resources\Measure.ico" />
+    <Resource Include="Resources\Monitor.ico" />
+    <Resource Include="Resources\Refresh_grey.ico" />
+    <Resource Include="Resources\Settings.ico" />
+    <Resource Include="Resources\SettingsFile.ico" />
+    <Resource Include="Resources\SettingsGroup.ico" />
+    <Resource Include="Resources\SyncArrow.ico" />
+    <Resource Include="Resources\SyncArrow_inverse.ico" />
+    <Resource Include="Resources\Watch.ico" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets" Condition="Exists('..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

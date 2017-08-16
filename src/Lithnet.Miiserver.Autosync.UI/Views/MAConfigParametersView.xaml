@@ -11,6 +11,7 @@
 
             <StackPanel>
                 <TextBlock  Text="{Binding ManagementAgentName}" FontSize="40" Foreground="{DynamicResource AccentColorBrush}" />
+              
                 <Label Content="{Binding Path=Version}"/>
 
                 <Separator/>

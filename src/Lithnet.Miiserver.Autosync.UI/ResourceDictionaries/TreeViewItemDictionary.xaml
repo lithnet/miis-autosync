@@ -11,7 +11,7 @@
         <controls:TreeViewItemControl/>
     </HierarchicalDataTemplate>
 
-    <HierarchicalDataTemplate DataType="{x:Type viewModels:ManagementAgentsViewModel}"
+    <HierarchicalDataTemplate DataType="{x:Type viewModels:ManagementAgentsViewModel}" 
                               ItemsSource="{Binding Converter={StaticResource ListConverter}, ConverterParameter=SortName}">
         <controls:TreeViewItemControl/>
     </HierarchicalDataTemplate>

@@ -98,6 +98,19 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
+        public string Detail
+        {
+            get => this.InternalStatus.Detail;
+            private set
+            {
+                if (this.InternalStatus.Detail != value)
+                {
+                    this.InternalStatus.Detail = value;
+                    this.RaiseStateChange();
+                }
+            }
+        }
+
         public ControlState ControlState
         {
             get => this.InternalStatus.ControlState;
@@ -366,6 +379,7 @@ namespace Lithnet.Miiserver.AutoSync
         private void Log(string message)
         {
             Logger.WriteLine($"{this.ma.Name}: {message}");
+            this.Detail = message;
         }
 
         private void Trace(string message)
@@ -1087,6 +1101,8 @@ namespace Lithnet.Miiserver.AutoSync
                     if (p.RunProfileType == MARunProfileType.None)
                     {
                         this.Trace("Dropping pending action request as no run profile name or run profile type was specified");
+                        this.Detail = $"{source} did not specify a run profile";
+                        this.RaiseStateChange();
                         return;
                     }
 
@@ -1103,6 +1119,7 @@ namespace Lithnet.Miiserver.AutoSync
                     else
                     {
                         this.Trace($"Ignoring queue request for {p.RunProfileName} as it already exists in the queue");
+                        this.Detail = $"{p.RunProfileName} requested by {source} was ignored because the run profile was already queued";
                     }
 
                     return;
@@ -1130,6 +1147,8 @@ namespace Lithnet.Miiserver.AutoSync
                     this.pendingActions.Add(p, this.token);
                     this.Log($"Added {p.RunProfileName} to the execution queue (triggered by: {source})");
                 }
+
+                //this.Detail = $"{p.RunProfileName} added by {source}";
 
                 this.UpdateExecutionQueueState();
 

@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 using System.ServiceModel;
 using System.Windows;
 using System.Windows.Media.Imaging;
@@ -13,11 +16,12 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         private EventClient client;
 
         public ExecutionMonitorViewModel(string maName)
-            :base (maName)
+            : base(maName)
         {
             this.Commands.Add("Start", new DelegateCommand(t => this.Start(), u => this.CanStart()));
             this.Commands.Add("Stop", new DelegateCommand(t => this.Stop(), u => this.CanStop()));
             this.ManagementAgentName = maName;
+            this.DetailMessages = new ObservableCollection<string>();
             this.SubscribeToStateChanges();
         }
 
@@ -131,6 +135,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public ControlState ControlState { get; private set; }
 
+        public ObservableCollection<string> DetailMessages { get; private set; }
+
         public void MAStatusChanged(MAStatus status)
         {
             this.Message = status.Message;
@@ -141,6 +147,34 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.DisplayState = status.DisplayState;
             this.ControlState = status.ControlState;
             this.Disabled = this.ControlState == ControlState.Disabled;
+            this.AddDetailMessage(status.Detail);
+        }
+
+        private string lastDetail;
+
+        private void AddDetailMessage(string message)
+        {
+            if (this.lastDetail == message)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return;
+            }
+
+            this.lastDetail = message;
+
+            lock (this.DetailMessages)
+            {
+                while (this.DetailMessages.Count >= 100)
+                {
+                    this.DetailMessages.RemoveAt(this.DetailMessages.Count - 1);
+                }
+
+                this.DetailMessages.Insert(0, $"{DateTime.Now}: {message}");
+            }
         }
     }
 }

@@ -45,13 +45,16 @@ namespace Lithnet.Miiserver.AutoSync
 
         [DataMember]
         public ControlState ControlState { get; set; }
-        
+
         [DataMember]
         public ExecutorState ExecutionState { get; set; }
 
         [DataMember]
         public int ActiveVersion { get; set; }
-        
+
+        [DataMember]
+        public string Detail { get; set; }
+
         public static bool IsControlState(ExecutorState state)
         {
             return state == ExecutorState.Disabled ||
@@ -70,6 +73,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.Message = null;
             this.LastRunProfileName = null;
             this.LastRunProfileResult = null;
+            this.Detail = null;
         }
     }
 }
