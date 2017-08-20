@@ -51,6 +51,9 @@
     <Reference Include="Lithnet.Common.Presentation, Version=1.0.6436.35771, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Lithnet.Common.Presentation.1.0.6436.35771\lib\net40\Lithnet.Common.Presentation.dll</HintPath>
     </Reference>
+    <Reference Include="Lithnet.Logging, Version=1.0.5774.20685, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Lithnet.Logging.1.0.5774.20685\lib\net40\Lithnet.Logging.dll</HintPath>
+    </Reference>
     <Reference Include="Lithnet.Miiserver.Client, Version=1.0.6434.38666, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Lithnet.Miiserver.Client.1.0.6434.38666\lib\net45\Lithnet.Miiserver.Client.dll</HintPath>
     </Reference>
@@ -104,6 +107,7 @@
     <Compile Include="ViewModels\ActiveDirectoryChangeTriggerViewModel.cs" />
     <Compile Include="ViewModels\ExecutionMonitorViewModel.cs" />
     <Compile Include="ViewModels\ExecutionMonitorsViewModel.cs" />
+    <Compile Include="ViewModels\RunProfileResultViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
     <Compile Include="ViewModels\MAExecutionTriggerViewModel.cs" />
     <Compile Include="ViewModels\MainWindowViewModel.cs" />
