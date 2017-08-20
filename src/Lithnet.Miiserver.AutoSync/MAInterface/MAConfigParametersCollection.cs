@@ -32,8 +32,5 @@ namespace Lithnet.Miiserver.AutoSync
         {
             return item.ManagementAgentName;
         }
-        
-        [DataMember]
-        public string Description { get; set; }
     }
 }

@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Reflection;
+using System.ServiceModel;
 using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
+using Lithnet.Logging;
 using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync.UI
@@ -21,20 +23,11 @@ namespace Lithnet.Miiserver.AutoSync.UI
         {
             AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
 
-            //if (!SyncServer.IsAdmin())
-            //{
-            //    MessageBox.Show("You must be a member of the MIM Synchronization Administrators group to use the AutoSync editor",
-            //        "Lithnet AutoSync",
-            //        MessageBoxButton.OK,
-            //        MessageBoxImage.Stop);
-            //    Environment.Exit(5);
-            //}
-
+            ServiceController sc = new ServiceController("miisautosync");
 
 #if DEBUG
             if (Debugger.IsAttached)
             {
-                ServiceController sc = new ServiceController("miisautosync");
                 if (sc.Status == ServiceControllerStatus.Stopped)
                 {
                     // Must be started off the UI-thread
@@ -46,13 +39,73 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
                     }).Wait();
                 }
+
+                return;
             }
 #endif
+
+            sc = new ServiceController("fimsynchronizationservice");
+            if (sc.Status != ServiceControllerStatus.Running)
+            {
+                MessageBox.Show("The MIM Synchronization service is not running. Please start the service and try again.",
+                    "Lithnet AutoSync",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Stop);
+                Environment.Exit(1);
+            }
+
+            sc = new ServiceController("miisautosync");
+            if (sc.Status != ServiceControllerStatus.Running)
+            {
+                MessageBox.Show("The AutoSync service is not running. Please start the service and try again.",
+                    "Lithnet AutoSync",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Stop);
+                Environment.Exit(1);
+            }
+
+            try
+            {
+                ConfigClient c = new ConfigClient();
+                c.Open();
+            }
+            catch (EndpointNotFoundException ex)
+            {
+                Trace.WriteLine(ex);
+                MessageBox.Show(
+                    $"Could not contact the AutoSync service. Ensure the Lithnet MIIS AutoSync service is running",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                Environment.Exit(1);
+            }
+            catch (System.ServiceModel.Security.SecurityAccessDeniedException)
+            {
+                MessageBox.Show("You do not have permission to manage the AutoSync service", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Error);
+                Environment.Exit(5);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex);
+                MessageBox.Show(
+                    $"An unexpected error occurred communicating with the AutoSync service. Restart the AutoSync service and try again",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                Environment.Exit(1);
+            }
         }
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            Trace.WriteLine(e.ExceptionObject);
+            Logger.WriteLine("Unhandled exception in application");
+            Logger.WriteLine(e.ExceptionObject?.ToString());
+            MessageBox.Show(
+                $"An unexpected error occurred and the editor will terminate\n\n {((Exception)e.ExceptionObject)?.Message}",
+                "Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            Environment.Exit(1);
         }
 
         internal static BitmapImage GetImageResource(string name)

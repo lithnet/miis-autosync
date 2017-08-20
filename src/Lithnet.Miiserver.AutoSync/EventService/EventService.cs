@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.ServiceModel;
 using System.ServiceModel.Description;
-using System.Text;
-using System.Threading.Tasks;
 using Lithnet.Logging;
 using System.Diagnostics;
 
@@ -49,21 +47,51 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        private static Dictionary<string, MAStateChangedEventHandler> eventHandlers;
+        private static ConcurrentDictionary<string, MAStateChangedEventHandler> statusChangedEventHandlers;
+
+        private static ConcurrentDictionary<string, RunProfileExecutionCompleteEventHandler> executionCompleteEventHandlers;
 
         internal delegate void MAStateChangedEventHandler(MAStatus status);
 
-        internal static void NotifySubscribers(MAStatus status)
+        internal delegate void RunProfileExecutionCompleteEventHandler(string runProfileName, string runProfileResult);
+
+        internal static void NotifySubscribersOnStatusChange(MAStatus status)
         {
-            if (EventService.eventHandlers.ContainsKey(status.MAName))
+            if (EventService.statusChangedEventHandlers.ContainsKey(status.MAName))
             {
-                EventService.eventHandlers[status.MAName]?.Invoke(status);
+                try
+                {
+                    EventService.statusChangedEventHandlers[status.MAName]?.Invoke(status);
+                }
+                catch (Exception ex)
+                {
+                    Logger.WriteLine("Error notifying client");
+                    Logger.WriteException(ex);
+                }
             }
         }
 
+        internal static void NotifySubscribersOnRunProfileExecutionComplete(string managementAgentName, string runProfileName, string runProfileResult)
+        {
+            if (EventService.executionCompleteEventHandlers.ContainsKey(managementAgentName))
+            {
+                try
+                {
+                    EventService.executionCompleteEventHandlers[managementAgentName]?.Invoke(runProfileName, runProfileResult);
+                }
+                catch (Exception ex)
+                {
+                    Logger.WriteLine("Error notifying client");
+                    Logger.WriteException(ex);
+                }
+            }
+        }
+
+
         static EventService()
         {
-            EventService.eventHandlers = new Dictionary<string, MAStateChangedEventHandler>(StringComparer.OrdinalIgnoreCase);
+            EventService.statusChangedEventHandlers = new ConcurrentDictionary<string, MAStateChangedEventHandler>(StringComparer.OrdinalIgnoreCase);
+            EventService.executionCompleteEventHandlers = new ConcurrentDictionary<string, RunProfileExecutionCompleteEventHandler>(StringComparer.OrdinalIgnoreCase);
         }
 
         public void Register(string managementAgentName)
@@ -72,18 +100,75 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 IEventCallBack subscriber = OperationContext.Current.GetCallbackChannel<IEventCallBack>();
 
-                if (!EventService.eventHandlers.ContainsKey(managementAgentName))
+                if (!EventService.statusChangedEventHandlers.ContainsKey(managementAgentName))
                 {
-                    EventService.eventHandlers.Add(managementAgentName, null);
+                    EventService.statusChangedEventHandlers.TryAdd(managementAgentName, null);
                 }
 
-                EventService.eventHandlers[managementAgentName] += subscriber.MAStatusChanged;
+                EventService.statusChangedEventHandlers[managementAgentName] += subscriber.MAStatusChanged;
+
+
+                if (!EventService.executionCompleteEventHandlers.ContainsKey(managementAgentName))
+                {
+                    EventService.executionCompleteEventHandlers.TryAdd(managementAgentName, null);
+                }
+
+                EventService.executionCompleteEventHandlers[managementAgentName] += subscriber.RunProfileExecutionComplete;
+
+
+                // ReSharper disable once SuspiciousTypeConversion.Global
+                ICommunicationObject commObj = subscriber as ICommunicationObject;
+                if (commObj != null)
+                {
+                    commObj.Faulted += this.CommObj_Faulted;
+                    commObj.Closed += this.CommObj_Closed;
+                }
+
+                Trace.WriteLine($"Registered callback channel for {managementAgentName}");
+
             }
             catch (Exception ex)
             {
                 Logger.WriteLine("An error occurred with the client registration");
                 Logger.WriteException(ex);
                 throw;
+            }
+        }
+
+        private void CommObj_Closed(object sender, EventArgs e)
+        {
+            this.DeregisterCallbackChannel(sender);
+            Trace.WriteLine("Deregistered closed callback channel");
+        }
+
+        private void CommObj_Faulted(object sender, EventArgs e)
+        {
+            this.DeregisterCallbackChannel(sender);
+            Trace.WriteLine("Deregistered faulted callback channel");
+        }
+
+        private void DeregisterCallbackChannel(object sender)
+        {
+            IEventCallBack subscriber = sender as IEventCallBack;
+
+            if (subscriber != null)
+            {
+                foreach (string ma in EventService.statusChangedEventHandlers.Keys.ToArray())
+                {
+                    EventService.statusChangedEventHandlers[ma] -= subscriber.MAStatusChanged;
+                }
+
+                foreach (string ma in EventService.executionCompleteEventHandlers.Keys.ToArray())
+                {
+                    EventService.executionCompleteEventHandlers[ma] -= subscriber.RunProfileExecutionComplete;
+                }
+
+                // ReSharper disable once SuspiciousTypeConversion.Global
+                ICommunicationObject commObj = subscriber as ICommunicationObject;
+                if (commObj != null)
+                {
+                    commObj.Closed -= this.CommObj_Closed;
+                }
             }
         }
 

@@ -20,6 +20,10 @@ namespace Lithnet.Miiserver.AutoSync
 
         public static event SyncCompleteEventHandler SyncComplete;
         public delegate void SyncCompleteEventHandler(object sender, SyncCompleteEventArgs e);
+
+        public event RunProfileExecutionCompleteEventHandler RunProfileExecutionComplete;
+        public delegate void RunProfileExecutionCompleteEventHandler(object sender, string runProfileName, string result);
+
         private ManagementAgent ma;
         private BlockingCollection<ExecutionParameters> pendingActions;
         private ExecutionParameterCollection pendingActionList;
@@ -58,32 +62,10 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public string LastRunProfileResult
+        public string ManagementAgentName
         {
-            get => this.InternalStatus.LastRunProfileResult;
-            private set
-            {
-                if (this.InternalStatus.LastRunProfileResult != value)
-                {
-                    this.InternalStatus.LastRunProfileResult = value;
-                    this.RaiseStateChange();
-                }
-            }
+            get => this.ma?.Name; 
         }
-
-        public string LastRunProfileName
-        {
-            get => this.InternalStatus.LastRunProfileName;
-            private set
-            {
-                if (this.InternalStatus.LastRunProfileName != value)
-                {
-                    this.InternalStatus.LastRunProfileName = value;
-                    this.RaiseStateChange();
-                }
-            }
-        }
-
 
         public string Message
         {
@@ -178,19 +160,6 @@ namespace Lithnet.Miiserver.AutoSync
             this.ControlState = config.Disabled ? ControlState.Disabled : ControlState.Stopped;
             this.controller = new MAController(config);
             this.AttachTrigger(config.Triggers?.ToArray());
-
-            RunDetails lastrun = null;
-
-            try
-            {
-                lastrun = this.ma?.GetLastRun();
-            }
-            catch
-            {
-            }
-
-            this.InternalStatus.LastRunProfileResult = lastrun?.LastStepStatus;
-            this.InternalStatus.LastRunProfileName = lastrun?.RunProfileName;
         }
 
         private void SetupUnmanagedChangesCheckTimer()
@@ -547,7 +516,7 @@ namespace Lithnet.Miiserver.AutoSync
                         result = ex.Result;
                     }
 
-                    this.UpdateLastRunStatus(e.RunProfileName, result);
+                    this.RunProfileExecutionComplete?.Invoke(this, e.RunProfileName, result);
 
                     if (RegistrySettings.RetryCodes.Contains(result))
                     {
@@ -666,7 +635,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 using (RunDetails ur = this.ma.GetLastRun())
                 {
-                    this.UpdateLastRunStatus(ur.RunProfileName, ur.LastStepStatus);
+                    this.RunProfileExecutionComplete?.Invoke(this, ur.RunProfileName, ur.LastStepStatus);
                     this.PerformPostRunActions(ur);
                 }
             }
@@ -885,13 +854,6 @@ namespace Lithnet.Miiserver.AutoSync
             this.RaiseStateChange();
         }
 
-        private void UpdateLastRunStatus(string runProfileName, string result)
-        {
-            this.InternalStatus.LastRunProfileName = runProfileName;
-            this.InternalStatus.LastRunProfileResult = result;
-            this.RaiseStateChange();
-        }
-
         private void Init()
         {
             if (!this.ma.IsIdle())
@@ -904,7 +866,7 @@ namespace Lithnet.Miiserver.AutoSync
                     this.ma.Wait(this.token);
                     this.ExecutionState = ExecutorState.Processing;
                     RunDetails r = this.ma.GetLastRun();
-                    this.UpdateLastRunStatus(r.RunProfileName, r.LastStepStatus);
+                    this.RunProfileExecutionComplete?.Invoke(this, r.RunProfileName, r.LastStepStatus);
                 }
                 catch (Exception ex)
                 {

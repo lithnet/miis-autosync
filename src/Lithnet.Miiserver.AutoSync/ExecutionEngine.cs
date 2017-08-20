@@ -85,7 +85,17 @@ namespace Lithnet.Miiserver.AutoSync
                     continue;
                 }
 
-                if (e.Configuration == null || e.Configuration.Version != newItem.Version)
+                if (e.ControlState == ControlState.Stopped)
+                {
+                    continue;
+                }
+
+                if (e.Configuration == null)
+                {
+                    continue;
+                }
+
+                if (e.Configuration.Version != newItem.Version)
                 {
                     restartItems.Add(newItem.ManagementAgentName);
                 }
@@ -172,51 +182,50 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 MAExecutor x = new MAExecutor(ma);
                 x.StateChanged += this.X_StateChanged;
+                x.RunProfileExecutionComplete += this.X_RunProfileExecutionComplete;
                 this.maExecutors.Add(ma.Name, x);
             }
+        }
+
+        private void X_RunProfileExecutionComplete(object sender, string runProfileName, string result)
+        {
+            EventService.NotifySubscribersOnRunProfileExecutionComplete(((MAExecutor)sender).ManagementAgentName, runProfileName, result);
+        }
+
+        private void X_StateChanged(object sender, MAStatusChangedEventArgs e)
+        {
+            EventService.NotifySubscribersOnStatusChange(e.Status);
         }
 
         private void StartMAExecutors()
         {
             this.cancellationToken = new CancellationTokenSource();
 
-            if (RegistrySettings.ExecutionEngineEnabled)
+            foreach (MAConfigParameters c in Program.ActiveConfig.ManagementAgents)
             {
-                foreach (MAConfigParameters c in Program.ActiveConfig.ManagementAgents)
+                if (c.IsMissing)
                 {
-                    if (c.IsMissing)
-                    {
-                        Logger.WriteLine("{0}: Skipping management agent because it is missing from the Sync Engine", c.ManagementAgentName);
-                        continue;
-                    }
+                    Logger.WriteLine("{0}: Skipping management agent because it is missing from the Sync Engine", c.ManagementAgentName);
+                    continue;
+                }
 
-                    if (this.maExecutors.ContainsKey(c.ManagementAgentName))
+                if (this.maExecutors.ContainsKey(c.ManagementAgentName))
+                {
+                    Trace.WriteLine($"Starting {c.ManagementAgentName}");
+                    Task.Run(() =>
                     {
-                        Trace.WriteLine($"Starting {c.ManagementAgentName}");
-                        Task.Run(() =>
+                        MAExecutor e = this.maExecutors[c.ManagementAgentName];
+                        lock (e)
                         {
-                            MAExecutor e = this.maExecutors[c.ManagementAgentName];
-                            lock (e)
-                            {
-                                e.Start(c);
-                            }
-                        }, this.cancellationToken.Token);
-                    }
-                    else
-                    {
-                        Logger.WriteLine($"Cannot start management agent executor '{c.ManagementAgentName}' because the management agent was not found");
-                    }
+                            e.Start(c);
+                        }
+                    }, this.cancellationToken.Token);
+                }
+                else
+                {
+                    Logger.WriteLine($"Cannot start management agent executor '{c.ManagementAgentName}' because the management agent was not found");
                 }
             }
-            else
-            {
-                Logger.WriteLine("Execution engine has been disabled");
-            }
-        }
-
-        private void X_StateChanged(object sender, MAStatusChangedEventArgs e)
-        {
-            EventService.NotifySubscribers(e.Status);
         }
 
         private void StopMAExecutors()

@@ -19,7 +19,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 if (RegistrySettings.key == null)
                 {
-                    RegistrySettings.key = Registry.LocalMachine.OpenSubKey("System\\CurrentControlSet\\Services\\miisautosync\\Parameters", true);
+                    RegistrySettings.key = Registry.LocalMachine.OpenSubKey("System\\CurrentControlSet\\Services\\miisautosync\\Parameters", false);
                 }
 
                 return RegistrySettings.key;
@@ -30,10 +30,9 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                int? value = RegistrySettings.BaseKey.GetValue("ExecutionEngineEnabled", 0) as int?;
+                int? value = RegistrySettings.BaseKey.GetValue("ExecutionEngineEnabled", 1) as int?;
                 return value.HasValue && value.Value != 0;
             }
-            set => RegistrySettings.BaseKey.SetValue("ExecutionEngineEnabled", value ? 1 : 0);
         }
 
         public static string LogPath

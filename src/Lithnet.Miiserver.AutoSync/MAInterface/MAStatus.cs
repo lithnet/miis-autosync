@@ -22,12 +22,6 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember]
         public string Message { get; set; }
 
-        [DataMember]
-        public string LastRunProfileResult { get; set; }
-
-        [DataMember]
-        public string LastRunProfileName { get; set; }
-
         public string DisplayState
         {
             get
@@ -71,8 +65,6 @@ namespace Lithnet.Miiserver.AutoSync
             this.ExecutingRunProfile = null;
             this.ExecutionQueue = null;
             this.Message = null;
-            this.LastRunProfileName = null;
-            this.LastRunProfileResult = null;
             this.Detail = null;
         }
     }

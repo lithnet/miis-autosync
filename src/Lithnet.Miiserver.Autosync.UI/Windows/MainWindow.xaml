@@ -31,16 +31,17 @@
                 <MenuItem Header="_File">
                     <MenuItem.ItemsSource>
                         <CompositeCollection>
-                            <MenuItem Header="_Save"
+                            <MenuItem Header="Commi_t changes"
                                       Command="{Binding Path=Commands.Save}" />
-                            <MenuItem Header="Undo pending changes"
+                            <MenuItem Header="_Undo pending changes"
                                       Command="{Binding Path=Commands.Revert}" />
                             
                             <Separator />
-                            <MenuItem Header="_Import config..."
-                                      Command="{Binding Path=Commands.Import}" />
-                            <MenuItem Header="_Export config..."
+                            <MenuItem Header="_Backup config..."
                                       Command="{Binding Path=Commands.Export}" />
+                            <MenuItem Header="R_estore config..."
+                                      Command="{Binding Path=Commands.Import}" />
+                            
                             
                             <Separator />
                             <MenuItem Header="_Restart service"

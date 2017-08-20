@@ -249,7 +249,15 @@ namespace Lithnet.Miiserver.AutoSync
         {
             Logger.WriteLine("Starting execution engine");
             Program.engine = new ExecutionEngine();
-            Program.engine.Start();
+
+            if (RegistrySettings.ExecutionEngineEnabled)
+            {
+                Program.engine.Start();
+            }
+            else
+            {
+                Logger.WriteLine("Execution engine auto-start disabled");
+            }
         }
 
         private static void ShutdownExecutionEngineInstance()

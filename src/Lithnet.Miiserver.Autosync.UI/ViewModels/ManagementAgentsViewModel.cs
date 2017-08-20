@@ -12,12 +12,15 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private MAConfigParametersCollection model;
 
-        public ManagementAgentsViewModel(MAConfigParametersCollection items)
+        private ConfigFileViewModel config;
+
+        public ManagementAgentsViewModel(MAConfigParametersCollection items, ConfigFileViewModel configFile)
             : base((IList<MAConfigParameters>)items, ManagementAgentsViewModel.ViewModelResolver)
         {
             this.model = items;
+            this.config = configFile;
             this.DisplayIcon = App.GetImageResource("SettingsGroup.ico");
-
+            this.AddIsDirtyProperty(nameof(this.Description));
         }
 
         private static MAConfigParametersViewModel ViewModelResolver(MAConfigParameters model)
@@ -27,8 +30,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public string Description
         {
-            get => this.model.Description;
-            set => this.model.Description = value;
+            get => this.config.Description;
+            set => this.config.Description = value;
         }
     }
 }

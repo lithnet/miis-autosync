@@ -14,13 +14,11 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 model.ManagementAgents = new MAConfigParametersCollection();
             }
 
-            this.ManagementAgents = new ManagementAgentsViewModel(model.ManagementAgents);
+            this.ManagementAgents = new ManagementAgentsViewModel(model.ManagementAgents, this);
             this.Settings = new SettingsViewModel(model.Settings);
 
             this.SubscribeToErrors(this.ManagementAgents);
             this.SubscribeToErrors(this.Settings);
-
-            this.AddIsDirtyProperty("Description");
         }
 
         public string DisplayName => "Configuration";

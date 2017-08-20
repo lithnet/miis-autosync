@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.ServiceModel;
 using System.Runtime.Serialization;
+using System.ServiceModel.Channels;
 using System.ServiceModel.Description;
 
 namespace Lithnet.Miiserver.AutoSync
@@ -82,5 +83,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             this.Channel.RestartChangedExecutors();
         }
+
+        
     }
 }

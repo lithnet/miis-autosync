@@ -4,6 +4,8 @@ using System.Text;
 using System.Management.Automation;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.ServiceModel;
+using System.ServiceModel.Channels;
 using Lithnet.Logging;
 using Lithnet.Miiserver.Client;
 
@@ -134,6 +136,82 @@ namespace Lithnet.Miiserver.AutoSync
         public static bool HasUnconfirmedExports(this StepDetails s)
         {
             return s?.ExportCounters?.HasChanges ?? false;
+        }
+
+        //public static TResult InvokeThenClose<TChannel, TResult>(this ClientBase<TChannel> client, Func<TResult> func) where TChannel : class
+        //{
+        //    try
+        //    {
+        //        return func();
+        //    }
+        //    finally
+        //    {
+        //        if (client != null)
+        //        {
+        //            try
+        //            {
+        //                if (client.State != CommunicationState.Faulted)
+        //                {
+        //                    client.Close();
+        //                }
+        //                else
+        //                {
+        //                    client.Abort();
+        //                }
+        //            }
+        //            catch (CommunicationException)
+        //            {
+        //                client.Abort();
+        //            }
+        //            catch (TimeoutException)
+        //            {
+        //                client.Abort();
+        //            }
+        //            catch (Exception)
+        //            {
+        //                client.Abort();
+        //                throw;
+        //            }
+        //        }
+        //    }
+        //}
+
+        public static void InvokeThenClose<TChannel>(this TChannel client, Action<TChannel> function) where TChannel : ICommunicationObject
+        {
+            try
+            {
+                function(client);
+            }
+            finally
+            {
+                if (client != null)
+                {
+                    try
+                    {
+                        if (client.State != CommunicationState.Faulted)
+                        {
+                            client.Close();
+                        }
+                        else
+                        {
+                            client.Abort();
+                        }
+                    }
+                    catch (CommunicationException)
+                    {
+                        client.Abort();
+                    }
+                    catch (TimeoutException)
+                    {
+                        client.Abort();
+                    }
+                    catch (Exception)
+                    {
+                        client.Abort();
+                        throw;
+                    }
+                }
+            }
         }
     }
 }

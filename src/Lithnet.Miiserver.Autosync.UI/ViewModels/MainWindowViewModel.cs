@@ -57,14 +57,40 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.Commands.AddItem("Import", x => this.Import(), x => this.CanImport());
 
             this.StatusBarVisibility = Visibility.Collapsed;
-
-            ConfigClient c = new ConfigClient();
-            this.ExecutionMonitor = new ExecutionMonitorsViewModel(c.GetManagementAgentNames());
-
+            
             this.Cursor = Cursors.Arrow;
             Application.Current.MainWindow.Closing += this.MainWindow_Closing;
 
             ViewModelBase.ViewModelIsDirtySet += this.ViewModelBase_ViewModelIsDirtySet;
+
+            this.SetupExecutionMonitors();
+        }
+
+        private void SetupExecutionMonitors()
+        {
+            try
+            {
+                ConfigClient c = new ConfigClient();
+                IList<string> maNames = new List<string>();
+                c.InvokeThenClose(x => maNames = x.GetManagementAgentNames());
+                this.ExecutionMonitor = new ExecutionMonitorsViewModel(maNames);
+            }
+            catch (EndpointNotFoundException ex)
+            {
+                Trace.WriteLine(ex);
+                MessageBox.Show(
+                    $"Could not contact the AutoSync service. Ensure the Lithnet MIIS AutoSync service is running",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
+            }
+            catch (System.ServiceModel.Security.SecurityAccessDeniedException)
+            {
+                MessageBox.Show("You do not have permission to manage the AutoSync service", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Error);
+                Environment.Exit(5);
+                return;
+            }
         }
 
         private void ViewModelBase_ViewModelIsDirtySet(object sender, PropertyChangedEventArgs e)
@@ -96,20 +122,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             w.ShowDialog();
         }
 
-        private void CheckPendingRestart()
-        {
-            ConfigClient c = new ConfigClient();
-
-            if (c.IsPendingRestart())
-            {
-                this.StatusBarVisibility = Visibility.Visible;
-            }
-            else
-            {
-                this.StatusBarVisibility = Visibility.Collapsed;
-            }
-        }
-
         private void Reload(bool confirmRestart = true)
         {
             this.UpdateFocusedBindings();
@@ -134,7 +146,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 this.Cursor = Cursors.Wait;
                 ConfigClient c = new ConfigClient();
-                c.Reload();
+                c.InvokeThenClose(x => x.Reload());
             }
             catch (Exception ex)
             {
@@ -172,14 +184,12 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 this.Cursor = Cursors.Wait;
 
-                ConfigClient c = new ConfigClient();
-                ConfigFile file;
+                ConfigFile file = null;
 
                 try
                 {
-                    c.Open();
-                    file = c.GetConfig();
-                    this.CheckPendingRestart();
+                    ConfigClient c = new ConfigClient();
+                    c.InvokeThenClose(x => file = x.GetConfig());
                 }
                 catch (EndpointNotFoundException ex)
                 {
@@ -189,6 +199,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                         "Error",
                         MessageBoxButton.OK,
                         MessageBoxImage.Error);
+                    Environment.Exit(1);
                     return;
                 }
                 catch (System.ServiceModel.Security.SecurityAccessDeniedException)
@@ -206,6 +217,11 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                         MessageBoxButton.OK,
                         MessageBoxImage.Error);
                     return;
+                }
+
+                if (file == null)
+                {
+                    file = new AutoSync.ConfigFile();
                 }
 
                 this.ConfigFile = new ConfigFileViewModel(file);
@@ -264,7 +280,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 this.Cursor = Cursors.Wait;
                 ConfigClient c = new ConfigClient();
-                c.PutConfig(f);
+                c.InvokeThenClose(x => x.PutConfig(f));
                 this.AskToRestartService();
             }
             catch (Exception ex)
@@ -299,7 +315,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
                 this.Cursor = Cursors.Wait;
                 ConfigClient c = new ConfigClient();
-                c.PutConfig(this.ConfigFile.Model);
+                c.InvokeThenClose(t => t.PutConfig(this.ConfigFile.Model));
                 this.Commit();
 
                 this.AskToRestartService();
@@ -331,7 +347,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private bool CanSave()
         {
-            return this.ConfigFile != null;
+            return this.ConfigFile != null && this.IsDirty;
         }
 
         private bool CanImport()
@@ -355,7 +371,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
                 if (MessageBox.Show($"The configuration for the following management agents have changed\r\n\r\n{pendingRestartItemList}\r\n\r\nDo you want to restart them now?", "Restart management agents", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 {
-                    c.RestartChangedExecutors();
+                    c.InvokeThenClose(t => t.RestartChangedExecutors());
                 }
             }
         }

@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Windows;
 using Lithnet.Miiserver.AutoSync;
 using Lithnet.Common.Presentation;
 
@@ -31,8 +34,16 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         
         private void StartEngine()
         {
-            ConfigClient c = new ConfigClient();
-            c.StartAll();
+            try
+            {
+                ConfigClient c = new ConfigClient();
+                c.InvokeThenClose(x => x.StartAll());
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex);
+                MessageBox.Show($"Error starting the management agents\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private bool CanStartEngine()
@@ -42,8 +53,16 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void StopEngine()
         {
-            ConfigClient c = new ConfigClient();
-            c.StopAll();
+            try
+            {
+                ConfigClient c = new ConfigClient();
+                c.InvokeThenClose(x => x.StopAll());
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex);
+                MessageBox.Show($"Error stopping the management agents\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private bool CanStopEngine()

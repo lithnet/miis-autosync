@@ -57,6 +57,7 @@ namespace Lithnet.Miiserver.AutoSync
             try
             {
                 Trace.WriteLine($"Calling {nameof(this.GetConfig)} as {Environment.UserName}");
+                Global.ThrowOnSyncEngineNotRunning();
                 ProtectedString.EncryptOnWrite = false;
                 return Program.ActiveConfig;
             }
@@ -96,6 +97,7 @@ namespace Lithnet.Miiserver.AutoSync
             try
             {
                 Trace.WriteLine($"Calling {nameof(this.PutConfig)} as {Environment.UserName}");
+                Global.ThrowOnSyncEngineNotRunning();
                 ProtectedString.EncryptOnWrite = true;
                 ConfigFile.Save(config, RegistrySettings.ConfigurationFile);
                 Program.ActiveConfig = config;
@@ -113,6 +115,7 @@ namespace Lithnet.Miiserver.AutoSync
             try
             {
                 Trace.WriteLine($"Calling {nameof(this.Reload)} as {Environment.UserName}");
+                Global.ThrowOnSyncEngineNotRunning();
                 Program.Reload();
             }
             catch (Exception ex)
@@ -153,6 +156,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
+                Global.ThrowOnSyncEngineNotRunning();
                 Program.StartExecutor(managementAgentName);
             }
             catch (Exception ex)
@@ -179,6 +183,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
+                Global.ThrowOnSyncEngineNotRunning();
                 Program.StartExecutors();
             }
             catch (Exception ex)
@@ -195,6 +200,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public IList<string> GetManagementAgentNames()
         {
+            Global.ThrowOnSyncEngineNotRunning();
             return ManagementAgent.GetManagementAgents().Select(t => t.Name).ToList();
         }
 
@@ -205,6 +211,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void RestartChangedExecutors()
         {
+            Global.ThrowOnSyncEngineNotRunning();
             Program.RestartChangedExecutors();
         }
     }

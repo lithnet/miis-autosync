@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using System.IO;
+using System.ServiceProcess;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -44,6 +45,21 @@ namespace Lithnet.Miiserver.AutoSync
         public static int RandomizeOffset(int number, int offsetPercent)
         {
             return random.Next(number - (number / offsetPercent), number + (number / offsetPercent));
+        }
+
+        private static ServiceController serviceController = new ServiceController("fimsynchronizationservice");
+
+        public static bool IsSyncEngineRunning()
+        {
+            return serviceController.Status == ServiceControllerStatus.Running;
+        }
+
+        public static void ThrowOnSyncEngineNotRunning()
+        {
+            if (!IsSyncEngineRunning())
+            {
+                throw new SyncEngineStoppedException("The MIM Synchronization service is not running");
+            }
         }
     }
 }
