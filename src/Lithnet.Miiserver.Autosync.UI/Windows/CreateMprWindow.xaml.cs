@@ -4,11 +4,11 @@ using MahApps.Metro.Controls;
 namespace Lithnet.Miiserver.AutoSync.UI.Windows
 {
     /// <summary>
-    /// Interaction logic for AddTriggerWindow.xaml
+    /// Interaction logic for AddTrigger.xaml
     /// </summary>
-    public partial class AddTriggerWindow : MetroWindow
+    public partial class CreateMprWindow : MetroWindow
     {
-        public AddTriggerWindow()
+        public CreateMprWindow()
         {
             this.InitializeComponent();
         }

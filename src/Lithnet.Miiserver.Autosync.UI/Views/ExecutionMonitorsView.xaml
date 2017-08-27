@@ -38,6 +38,10 @@
                             <TextBlock Margin="3,0,0,0">Stop all</TextBlock>
                         </StackPanel>
                     </Button>
+
+                    <StackPanel Orientation="Horizontal" Margin="10 0 0 0">
+                        <CheckBox IsChecked="{Binding Path=AutoStartEnabled}" Content="Automatically start executors when service starts" VerticalContentAlignment="Center"/>
+                    </StackPanel>
                 </ToolBar>
             </ToolBarTray>
 

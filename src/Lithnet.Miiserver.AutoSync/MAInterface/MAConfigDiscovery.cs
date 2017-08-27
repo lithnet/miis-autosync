@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using Lithnet.Logging;
 using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync
@@ -9,7 +9,7 @@ namespace Lithnet.Miiserver.AutoSync
     {
         internal static void DoAutoRunProfileDiscovery(MAConfigParameters config)
         {
-            Logger.WriteLine("{0}: Performing run profile auto-discovery", config.ManagementAgentName);
+            Trace.WriteLine("{config.ManagementAgentName}: Performing run profile auto-discovery");
             ManagementAgent ma = config.ManagementAgent;
 
             bool match = false;
@@ -23,19 +23,19 @@ namespace Lithnet.Miiserver.AutoSync
 
                 if (profile.RunSteps.Count > 1)
                 {
-                    Logger.WriteLine("{0}: Ignoring multi-step run profile {1}", LogLevel.Debug, ma.Name, profile.Name);
+                    Trace.WriteLine($"{ma.Name}: Ignoring multi-step run profile {profile.Name}");
                     continue;
                 }
 
                 if (profile.RunSteps.Any(t => t.IsTestRun))
                 {
-                    Logger.WriteLine("{0}: Ignoring test run profile {1}", LogLevel.Debug, ma.Name, profile.Name);
+                    Trace.WriteLine($"{ma.Name}: Ignoring test run profile {profile.Name}");
                     continue;
                 }
 
                 if (profile.RunSteps.Any(t => t.IsCombinedStep))
                 {
-                    Logger.WriteLine("{0}: Ignoring combined step profile {1}", LogLevel.Debug, ma.Name, profile.Name);
+                    Trace.WriteLine($"{ma.Name}: Ignoring combined step profile {profile.Name}");
                     continue;
                 }
 
@@ -43,7 +43,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 if (step.ObjectLimit > 0)
                 {
-                    Logger.WriteLine("{0}: Ignoring limited step run profile {1}", LogLevel.Debug, ma.Name, profile.Name);
+                    Trace.WriteLine($"{ma.Name}: Ignoring limited step run profile {profile.Name}");
                     continue;
                 }
 
@@ -75,7 +75,7 @@ namespace Lithnet.Miiserver.AutoSync
                         continue;
                 }
 
-                Logger.WriteLine("{0}: Found {1} profile {2}", ma.Name, step.Type, profile.Name);
+                Trace.WriteLine($"{ma.Name}: Found {step.Type} profile {profile.Name}");
                 match = true;
             }
 

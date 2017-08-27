@@ -6,13 +6,13 @@
     <DirectoryRef Id="APPROOTDIR">
       <Component Id="EventSource" Guid="*" Win64="yes" >
         <Util:EventSource xmlns:Util="http://schemas.microsoft.com/wix/UtilExtension"
-                    Name="miis-autosync" Log="Application" EventMessageFile="[NETFRAMEWORK45FULLINSTALLROOTDIR64]EventLogMessages.dll" KeyPath="yes"/>
+                    Name="autosync" Log="Application" EventMessageFile="[NETFRAMEWORK45FULLINSTALLROOTDIR64]EventLogMessages.dll" KeyPath="yes"/>
       </Component>
 
       <Component Id="cmpb05fc8933594449d9aad05ca620a4331" Guid="*" Win64="yes">
         <File Id="filda5afc97726743f09a85d512593be8c8" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)\Lithnet.Miiserver.AutoSync.exe" />
         <ServiceInstall Id="autosync"
-                        DisplayName="Lithnet MIIS AutoSync"
+                        DisplayName="Lithnet AutoSync"
                         Account="[SERVICE_USERNAME]"
                         Password="[SERVICE_PASSWORD]"
                         Name="[SERVICE_NAME]"
@@ -37,12 +37,15 @@
         
         <ServiceControl Id="ServiceControlEvents" Name="[SERVICE_NAME]" Stop="both" Remove="uninstall" Wait="yes" Start="install"/>
         <util:User Id="ServiceUser" Name="[SERVICE_USERNAME]" Password="[SERVICE_PASSWORD]" CreateUser="no" LogonAsService="yes" UpdateIfExists="yes"/>
-        <CreateFolder Directory="APPLOGDIR">
+        <CreateFolder Directory="APPROOTDIR">
           <util:PermissionEx User="[SERVICE_USERNAME]" GenericAll="yes" />
         </CreateFolder>
 
-        <RegistryValue Root="HKLM" Key="System\CurrentControlSet\Services\[SERVICE_NAME]\Parameters" Name="LogPath" Type="string" Value="[APPLOGDIR]" />
+        <RegistryValue Root="HKLM" Key="System\CurrentControlSet\Services\[SERVICE_NAME]\Parameters" Name="LogPath" Type="string" Value="[APPLOGDIR]" >
+          <util:PermissionEx User="[SERVICE_USERNAME]" GenericAll="yes" />
+        </RegistryValue>
         <RegistryValue Root="HKLM" Key="System\CurrentControlSet\Services\[SERVICE_NAME]\Parameters" Name="ServiceAdminsGroup" Type="string" Value="[SERVICE_ADMINS_GROUP]" />
+        <RegistryValue Root="HKLM" Key="System\CurrentControlSet\Services\[SERVICE_NAME]\Parameters" Name="ConfigFile" Type="string" Value="[APPROOTDIR]\config.xml" />
 
       </Component>
 
@@ -53,6 +56,7 @@
       <Component Id="cmpB0A7A00F68064A1CBAC65F08E16234FF" Guid="*" Win64="yes">
         <File Id="fil0D04FCAD13404EE3AB54CC0491E5D533" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.Editor.TargetDir)\Lithnet.Miiserver.AutoSync.Editor.exe" />
       </Component>
+
     </DirectoryRef>
 
     <DirectoryRef Id="ApplicationProgramsFolder">

@@ -35,11 +35,6 @@ namespace Lithnet.Miiserver.AutoSync
             this.Channel.PutConfigAndReloadChanged(config);
         }
 
-        public void Reload()
-        {
-            this.Channel.Reload();
-        }
-
         public bool IsPendingRestart()
         {
             return this.Channel.IsPendingRestart();
@@ -84,6 +79,14 @@ namespace Lithnet.Miiserver.AutoSync
             this.Channel.RestartChangedExecutors();
         }
 
-        
+        public void SetAutoStartState(bool autoStart)
+        {
+            this.Channel.SetAutoStartState(autoStart);
+        }
+
+        public bool GetAutoStartState()
+        {
+            return this.Channel.GetAutoStartState();
+        }
     }
 }

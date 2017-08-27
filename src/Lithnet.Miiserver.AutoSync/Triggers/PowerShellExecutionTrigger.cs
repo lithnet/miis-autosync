@@ -4,7 +4,6 @@ using System.ComponentModel;
 using System.Management.Automation;
 using System.Threading.Tasks;
 using System.Threading;
-using Lithnet.Logging;
 using System.Runtime.Serialization;
 using Lithnet.Miiserver.Client;
 
@@ -12,7 +11,7 @@ namespace Lithnet.Miiserver.AutoSync
 {
     [DataContract(Name = "powershell-trigger")]
     [Description(TypeDescription)]
-    public class PowerShellExecutionTrigger : IMAExecutionTrigger
+    public class PowerShellExecutionTrigger : MAExecutionTrigger
     {
         private const string TypeDescription = "PowerShell script";
 
@@ -28,22 +27,20 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "exception-behaviour")]
         public ExecutionErrorBehaviour ExceptionBehaviour { get; set; }
 
-        public string DisplayName => $"{this.Type}: {this.Description}";
+        public override string DisplayName => $"{this.Type}: {this.Description}";
 
-        public string Type => TypeDescription;
+        public override string Type => TypeDescription;
 
-        public string Description => $"{System.IO.Path.GetFileName(this.ScriptPath)}";
+        public override string Description => $"{System.IO.Path.GetFileName(this.ScriptPath)}";
 
         [DataMember(Name = "interval")]
         public TimeSpan Interval { get; set; }
 
-        public event ExecutionTriggerEventHandler TriggerExecution;
-
-        public void Start()
+        public override void Start()
         {
             if (!System.IO.File.Exists(this.ScriptPath))
             {
-                Logger.WriteLine($"Could not start PowerShell trigger as the script '{this.ScriptPath}' could not be found");
+                this.LogError($"Could not start PowerShell trigger as the script '{this.ScriptPath}' could not be found");
                 return;
             }
 
@@ -69,7 +66,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 if (this.powershell.Runspace.SessionStateProxy.InvokeCommand.GetCommand("Get-RunProfileToExecute", CommandTypes.All) == null)
                 {
-                    Logger.WriteLine("The file '{0}' did not contain a function called Get-RunProfileToExecute and will be ignored", this.ScriptPath);
+                    this.LogError($"The file '{this.ScriptPath}' did not contain a function called Get-RunProfileToExecute and will be ignored");
                     return;
                 }
 
@@ -105,8 +102,7 @@ namespace Lithnet.Miiserver.AutoSync
                             message = $"The PowerShell execution trigger '{this.DisplayName}' encountered an error";
                         }
 
-                        Logger.WriteLine(message);
-                        Logger.WriteException(ex);
+                        this.LogError(message, ex);
 
                         if (MessageSender.CanSendMail())
                         {
@@ -152,8 +148,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteLine("The PowerShell execution trigger encountered an error and has been terminated");
-                Logger.WriteException(ex);
+                this.LogError("The PowerShell execution trigger encountered an error and has been terminated", ex);
 
                 if (MessageSender.CanSendMail())
                 {
@@ -162,7 +157,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public void Stop()
+        public override void Stop()
         {
             try
             {
@@ -189,23 +184,8 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteLine("An error occurred stopping the Powershell execution trigger");
-                Logger.WriteException(ex);
+                this.LogError("An error occurred stopping the Powershell execution trigger", ex);
             }
-        }
-
-        public void Fire(string runProfileName)
-        {
-            ExecutionTriggerEventHandler registeredHandlers = this.TriggerExecution;
-
-            registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(runProfileName));
-        }
-
-        public void Fire(ExecutionParameters p)
-        {
-            ExecutionTriggerEventHandler registeredHandlers = this.TriggerExecution;
-
-            registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(p));
         }
 
         public static bool CanCreateForMA(ManagementAgent ma)

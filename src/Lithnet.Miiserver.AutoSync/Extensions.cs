@@ -138,43 +138,44 @@ namespace Lithnet.Miiserver.AutoSync
             return s?.ExportCounters?.HasChanges ?? false;
         }
 
-        //public static TResult InvokeThenClose<TChannel, TResult>(this ClientBase<TChannel> client, Func<TResult> func) where TChannel : class
-        //{
-        //    try
-        //    {
-        //        return func();
-        //    }
-        //    finally
-        //    {
-        //        if (client != null)
-        //        {
-        //            try
-        //            {
-        //                if (client.State != CommunicationState.Faulted)
-        //                {
-        //                    client.Close();
-        //                }
-        //                else
-        //                {
-        //                    client.Abort();
-        //                }
-        //            }
-        //            catch (CommunicationException)
-        //            {
-        //                client.Abort();
-        //            }
-        //            catch (TimeoutException)
-        //            {
-        //                client.Abort();
-        //            }
-        //            catch (Exception)
-        //            {
-        //                client.Abort();
-        //                throw;
-        //            }
-        //        }
-        //    }
-        //}
+        public static TResult InvokeThenClose<TChannel, TResult>(this TChannel client, Func<TChannel, TResult> function) where TChannel : ICommunicationObject
+        {
+            try
+            {
+                return function(client);
+            }
+            finally
+            {
+                if (client != null)
+                {
+                    try
+                    {
+                        if (client.State != CommunicationState.Faulted)
+                        {
+                            client.Close();
+                        }
+                        else
+                        {
+                            client.Abort();
+                        }
+                    }
+                    catch (CommunicationException)
+                    {
+                        client.Abort();
+                    }
+                    catch (TimeoutException)
+                    {
+                        client.Abort();
+                    }
+                    catch (Exception)
+                    {
+                        client.Abort();
+                        throw;
+                    }
+                }
+            }
+        }
+
 
         public static void InvokeThenClose<TChannel>(this TChannel client, Action<TChannel> function) where TChannel : ICommunicationObject
         {

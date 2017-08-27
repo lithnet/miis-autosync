@@ -248,7 +248,9 @@ namespace Lithnet.Miiserver.AutoSync
                 try
                 {
                     this.Log($"Registering execution trigger '{t.DisplayName}'");
-                    t.TriggerExecution += this.Notifier_TriggerExecution;
+                    t.Message += this.NotifierTriggerMessage;
+                    t.Error += this.NotifierTriggerError;
+                    t.TriggerFired += this.NotifierTriggerFired;
                     t.Start();
                 }
                 catch (Exception ex)
@@ -259,6 +261,18 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
+        private void NotifierTriggerMessage(object sender, TriggerMessageEventArgs e)
+        {
+            IMAExecutionTrigger t = (IMAExecutionTrigger)sender;
+            this.Log($"{t.DisplayName}: {e.Message}\n{e.Details}");
+        }
+
+        private void NotifierTriggerError(object sender, TriggerMessageEventArgs e)
+        {
+            IMAExecutionTrigger t = (IMAExecutionTrigger) sender;
+            this.Log($"{t.DisplayName}: ERROR: {e.Message}\n{e.Details}");
+        }
+
         private void StopTriggers()
         {
             foreach (IMAExecutionTrigger t in this.ExecutionTriggers)
@@ -266,7 +280,7 @@ namespace Lithnet.Miiserver.AutoSync
                 try
                 {
                     this.Log($"Unregistering execution trigger '{t.DisplayName}'");
-                    t.TriggerExecution -= this.Notifier_TriggerExecution;
+                    t.TriggerFired -= this.NotifierTriggerFired;
                     t.Stop();
                 }
                 catch (OperationCanceledException)
@@ -1028,7 +1042,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.AddPendingActionIfNotQueued(p, "Synchronization on " + e.SendingMAName);
         }
 
-        private void Notifier_TriggerExecution(object sender, ExecutionTriggerEventArgs e)
+        private void NotifierTriggerFired(object sender, ExecutionTriggerEventArgs e)
         {
             IMAExecutionTrigger trigger = null;
 

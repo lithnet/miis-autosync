@@ -9,29 +9,51 @@ namespace Lithnet.Miiserver.AutoSync
 {
     internal static class RegistrySettings
     {
-        private static RegistryKey key;
+        private static RegistryKey parametersKey;
+
+        private static RegistryKey serviceKey;
+
 
         private static HashSet<string> retryCodes;
 
-        public static RegistryKey BaseKey
+        public static RegistryKey ParametersKey
         {
             get
             {
-                if (RegistrySettings.key == null)
+                if (RegistrySettings.parametersKey == null)
                 {
-                    RegistrySettings.key = Registry.LocalMachine.OpenSubKey("System\\CurrentControlSet\\Services\\miisautosync\\Parameters", false);
+                    RegistrySettings.parametersKey = Registry.LocalMachine.OpenSubKey("System\\CurrentControlSet\\Services\\autosync\\Parameters", true);
                 }
 
-                return RegistrySettings.key;
+                return RegistrySettings.parametersKey;
             }
         }
 
-        public static bool ExecutionEngineEnabled
+        public static RegistryKey ServiceKey
         {
             get
             {
-                int? value = RegistrySettings.BaseKey.GetValue("ExecutionEngineEnabled", 1) as int?;
+                if (RegistrySettings.serviceKey == null)
+                {
+                    RegistrySettings.serviceKey = Registry.LocalMachine.OpenSubKey("System\\CurrentControlSet\\Services\\autosync", false);
+                }
+
+                return RegistrySettings.serviceKey;
+            }
+        }
+
+        public static string ServiceAccount => (string)RegistrySettings.ServiceKey.GetValue("ObjectName", null);
+
+        public static bool AutoStartEnabled
+        {
+            get
+            {
+                int? value = RegistrySettings.ParametersKey.GetValue("AutoStartEnabled", 1) as int?;
                 return value.HasValue && value.Value != 0;
+            }
+            set
+            {
+                RegistrySettings.ParametersKey.SetValue(nameof(AutoStartEnabled), value ? 1 : 0, RegistryValueKind.DWord);
             }
         }
 
@@ -39,7 +61,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string logPath = RegistrySettings.BaseKey.GetValue("LogPath") as string;
+                string logPath = RegistrySettings.ParametersKey.GetValue("LogPath") as string;
 
                 if (logPath != null)
                 {
@@ -59,7 +81,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string value = RegistrySettings.BaseKey.GetValue("ServiceAdminGroup") as string;
+                string value = RegistrySettings.ParametersKey.GetValue("ServiceAdminGroup") as string;
 
                 if (value != null)
                 {
@@ -74,7 +96,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string path = RegistrySettings.BaseKey.GetValue("ConfigFile") as string;
+                string path = RegistrySettings.ParametersKey.GetValue("ConfigFile") as string;
 
                 if (path != null)
                 {
@@ -89,7 +111,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = RegistrySettings.BaseKey.GetValue("RetryCount") as string;
+                string s = RegistrySettings.ParametersKey.GetValue("RetryCount") as string;
 
                 int value;
 
@@ -105,7 +127,7 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     retryCodes = new HashSet<string>();
 
-                    string[] values = RegistrySettings.BaseKey.GetValue("RetryCodes") as string[];
+                    string[] values = RegistrySettings.ParametersKey.GetValue("RetryCodes") as string[];
 
                     if (values != null && values.Length > 0)
                     {
@@ -131,7 +153,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = RegistrySettings.BaseKey.GetValue("RetrySleepInterval") as string;
+                string s = RegistrySettings.ParametersKey.GetValue("RetrySleepInterval") as string;
 
                 int seconds;
 
@@ -150,7 +172,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = RegistrySettings.BaseKey.GetValue("ExecutionStaggerInterval") as string;
+                string s = RegistrySettings.ParametersKey.GetValue("ExecutionStaggerInterval") as string;
 
                 int seconds;
 
@@ -172,7 +194,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = RegistrySettings.BaseKey.GetValue("PostRunInterval") as string;
+                string s = RegistrySettings.ParametersKey.GetValue("PostRunInterval") as string;
 
                 int seconds;
 
@@ -191,7 +213,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = RegistrySettings.BaseKey.GetValue("UnmanagedChangesCheckInterval") as string;
+                string s = RegistrySettings.ParametersKey.GetValue("UnmanagedChangesCheckInterval") as string;
 
                 int seconds;
 
@@ -210,7 +232,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = RegistrySettings.BaseKey.GetValue("RunHistoryTimerInterval") as string;
+                string s = RegistrySettings.ParametersKey.GetValue("RunHistoryTimerInterval") as string;
 
                 int seconds;
 
@@ -230,21 +252,6 @@ namespace Lithnet.Miiserver.AutoSync
                     return TimeSpan.FromHours(8);
                 }
             }
-        }
-
-        public static string GetSettingsString()
-        {
-            StringBuilder builder = new StringBuilder();
-
-            builder.AppendLine($"{nameof(RegistrySettings.LogPath)}: {RegistrySettings.LogPath}");
-            builder.AppendLine($"{nameof(RegistrySettings.UnmanagedChangesCheckInterval)}: {RegistrySettings.UnmanagedChangesCheckInterval}");
-            builder.AppendLine($"{nameof(RegistrySettings.ExecutionStaggerInterval)}: {RegistrySettings.ExecutionStaggerInterval}");
-            builder.AppendLine($"{nameof(RegistrySettings.PostRunInterval)}: {RegistrySettings.PostRunInterval}");
-            builder.AppendLine($"{nameof(RegistrySettings.RetryCount)}: {RegistrySettings.RetryCount}");
-            builder.AppendLine($"{nameof(RegistrySettings.RetrySleepInterval)}: {RegistrySettings.RetrySleepInterval}");
-            builder.AppendLine($"{nameof(RegistrySettings.RetryCodes)}: {string.Join(",", RegistrySettings.RetryCodes)}");
-
-            return builder.ToString();
         }
     }
 }

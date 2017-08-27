@@ -12,6 +12,20 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
     {
         public string DisplayName => "Execution Monitor";
 
+        public bool AutoStartEnabled
+        {
+            get
+            {
+                ConfigClient c = new ConfigClient();
+                return c.InvokeThenClose(x => x.GetAutoStartState());
+            }
+            set
+            {
+                ConfigClient c = new ConfigClient();
+                c.InvokeThenClose(x => x.SetAutoStartState(value));
+            }
+        }
+
         public ExecutionMonitorsViewModel(IList<string> items)
             : base(items, ExecutionMonitorsViewModel.ViewModelResolver)
         {

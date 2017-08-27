@@ -1,11 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Runtime.Serialization;
 using System.Timers;
 using System.Xml;
 using Lithnet.ResourceManagement.Client;
-using Lithnet.Logging;
 using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync
@@ -13,7 +15,7 @@ namespace Lithnet.Miiserver.AutoSync
     [DataContract(Name = "mim-service-pending-import-trigger")]
     [Description(TypeDescription)]
 
-    public class FimServicePendingImportTrigger : IMAExecutionTrigger
+    public class FimServicePendingImportTrigger : MAExecutionTrigger
     {
         private const string TypeDescription = "MIM service change detection";
 
@@ -27,7 +29,7 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "host-name")]
         public string HostName { get; set; }
 
-        private void checkTimer_Elapsed(object sender, ElapsedEventArgs e)
+        private void CheckTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             try
             {
@@ -38,17 +40,17 @@ namespace Lithnet.Miiserver.AutoSync
                 if (this.lastCheckDateTime == null)
                 {
                     xpath = "/Request";
-                    Logger.WriteLine("No watermark available. Querying for latest request history item", LogLevel.Debug);
+                    Trace.WriteLine("No watermark available. Querying for latest request history item");
                 }
                 else
                 {
                     xpath = string.Format("/Request[msidmCompletedTime > '{0}']", this.lastCheckDateTime.Value.ToResourceManagementServiceDateFormat(false));
-                    Logger.WriteLine("Searching for changes since {0}", LogLevel.Debug, this.lastCheckDateTime.Value.ToResourceManagementServiceDateFormat(false));
+                    Trace.WriteLine("Searching for changes since {0}", this.lastCheckDateTime.Value.ToResourceManagementServiceDateFormat(false));
                 }
 
                 ISearchResultCollection r = c.GetResources(xpath, 1, new[] { "msidmCompletedTime" }, "msidmCompletedTime", false);
 
-                Logger.WriteLine("Found {0} change{1}", LogLevel.Debug, r.Count, r.Count == 1 ? string.Empty : "s");
+               Trace.WriteLine($"Found {r.Count} change{r.Count.Pluralize()}");
 
                 if (r.Count <= 0)
                 {
@@ -56,19 +58,16 @@ namespace Lithnet.Miiserver.AutoSync
                 }
 
                 this.lastCheckDateTime = r.First().Attributes["msidmCompletedTime"].DateTimeValue;
-
-                ExecutionTriggerEventHandler registeredHandlers = this.TriggerExecution;
-
-                registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(MARunProfileType.DeltaImport));
+             
+                this.Fire(MARunProfileType.DeltaImport);
             }
             catch (Exception ex)
             {
-                Logger.WriteLine("Change detection failed");
-                Logger.WriteException(ex);
+                this.LogError("Change detection failed", ex);
             }
         }
-
-        public void Start()
+        
+        public override void Start()
         {
             this.checkTimer = new Timer
             {
@@ -76,11 +75,11 @@ namespace Lithnet.Miiserver.AutoSync
                 Interval = this.Interval.TotalMilliseconds
             };
 
-            this.checkTimer.Elapsed += this.checkTimer_Elapsed;
+            this.checkTimer.Elapsed += this.CheckTimer_Elapsed;
             this.checkTimer.Start();
         }
 
-        public void Stop()
+        public override void Stop()
         {
             if (this.checkTimer == null)
             {
@@ -93,18 +92,87 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public string DisplayName => $"{this.Type} ({this.Description})";
+        public static void CreateMpr(string hostname, NetworkCredential creds, string accountName, string setName, string mprName)
+        {
+            ResourceManagementClient c = new ResourceManagementClient(hostname, creds);
 
-        public string Type => TypeDescription;
+            Dictionary<string, object> keys = new Dictionary<string, object>();
+            string[] split = accountName.Split('\\');
 
-        public string Description => $"{this.HostName}";
+            if (split.Length > 1)
+            {
+                keys.Add("Domain", split[0]);
+                keys.Add("AccountName", split[1]);
+            }
+            else
+            {
+                keys.Add("AccountName", accountName);
+            }
 
-        public event ExecutionTriggerEventHandler TriggerExecution;
+            ResourceObject user = c.GetResourceByKey("Person", keys);
 
+            if (user == null)
+            {
+                Trace.WriteLine($"Person {accountName} was not found");
+                throw new ResourceNotFoundException($"The user {accountName} could not be found");
+            }
+
+            ResourceObject set = c.GetResourceByKey("Set", "DisplayName", setName);
+
+            if (set == null)
+            {
+                Trace.WriteLine($"Set {setName} was not found");
+                set = c.CreateResource("Set");
+            }
+
+            set.SetValue("DisplayName", setName);
+            set.AddValue("ExplicitMember", user);
+            set.SetValue("Description", "Contains the Lithnet AutoSync service account");
+            set.Save();
+            Trace.WriteLine($"Set {setName} saved");
+
+            ResourceObject allRequestsSet = c.GetResourceByKey("Set", "DisplayName", "All Requests");
+
+            if (allRequestsSet == null)
+            {
+                Trace.WriteLine("Set All Requests was not found");
+                allRequestsSet = c.CreateResource("Set");
+                allRequestsSet.SetValue("DisplayName", "All Requests");
+                allRequestsSet.SetValue("Filter", "<Filter xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" Dialect=\"http://schemas.microsoft.com/2006/11/XPathFilterDialect\" xmlns=\"http://schemas.xmlsoap.org/ws/2004/09/enumeration\">/Request</Filter>");
+                allRequestsSet.Save();
+                Trace.WriteLine($"Set All Requests created");
+            }
+
+            ResourceObject mpr = c.GetResourceByKey("ManagementPolicyRule", "DisplayName", mprName);
+
+            if (mpr == null)
+            {
+                Trace.WriteLine($"MPR {mprName} does not exist");
+                mpr = c.CreateResource("ManagementPolicyRule");
+            }
+
+            mpr.SetValue("DisplayName", mprName);
+            mpr.SetValue("Description", "Allows the Lithnet AutoSync service account access to read the msidmCompletedTime attribute from Request objects");
+            mpr.SetValue("ActionParameter", "msidmCompletedTime");
+            mpr.SetValue("ActionType", "Read");
+            mpr.SetValue("GrantRight", true);
+            mpr.SetValue("Disabled", false);
+            mpr.SetValue("ManagementPolicyRuleType", "Request");
+            mpr.SetValue("ResourceCurrentSet", allRequestsSet);
+            mpr.SetValue("PrincipalSet", set);
+            mpr.Save();
+            Trace.WriteLine($"MPR {mprName} saved");
+
+        }
+
+        public override string DisplayName => $"{this.Type} ({this.Description})";
+
+        public override string Type => TypeDescription;
+
+        public override string Description => $"{this.HostName}";
+        
         private static string GetFimServiceHostName(ManagementAgent ma)
         {
-
-
             XmlNode privateData = ma.GetPrivateData();
             return privateData.SelectSingleNode("fimma-configuration/connection-info/serviceHost")?.InnerText;
         }

@@ -99,6 +99,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 Program.LoadConfiguration();
                 Program.StartConfigServiceHost();
+                Program.CreateExecutionEngineInstance();
 
                 if (!Program.hasConfig)
                 {
@@ -107,26 +108,10 @@ namespace Lithnet.Miiserver.AutoSync
                 }
 
                 Program.InitializeRunHistoryCleanup();
-                Program.CreateExecutionEngineInstance();
+                Program.StartExecutionEngineInstance();
             }
             catch (Exception ex)
             {
-                Logger.WriteException(ex);
-                throw;
-            }
-        }
-
-        internal static void Reload()
-        {
-            try
-            {
-                Program.StopExecutors();
-                Program.LoadConfiguration();
-                Program.StartExecutors();
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteLine("An error occurred during the service reload process");
                 Logger.WriteException(ex);
                 throw;
             }
@@ -247,10 +232,24 @@ namespace Lithnet.Miiserver.AutoSync
 
         public static void CreateExecutionEngineInstance()
         {
-            Logger.WriteLine("Starting execution engine");
-            Program.engine = new ExecutionEngine();
+            Logger.WriteLine("Creating execution engine");
 
-            if (RegistrySettings.ExecutionEngineEnabled)
+            try
+            {
+                Program.engine = new ExecutionEngine();
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine("Could not create execution engine instance");
+                Logger.WriteException(ex);
+            }
+        }
+
+        public static void StartExecutionEngineInstance()
+        {
+            Logger.WriteLine("Starting execution engine");
+
+            if (RegistrySettings.AutoStartEnabled)
             {
                 Program.engine.Start();
             }

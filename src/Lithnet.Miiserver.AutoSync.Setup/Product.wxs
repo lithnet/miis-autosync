@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
      xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
+  
   <Product Id="*"
            Name="Lithnet AutoSync for Microsoft Identity Manager"
            Language="1033"
@@ -12,7 +13,6 @@
 
     <Icon Id="autosync.ico" SourceFile="autosync.ico"/>
     <Property Id="ARPPRODUCTICON" Value="autosync.ico" />
-
     <MajorUpgrade Schedule="afterInstallExecute" AllowSameVersionUpgrades="yes"
                 DowngradeErrorMessage="A later version of [ProductName] is already installed" />
 
@@ -22,7 +22,7 @@
     </Condition>
 
     <Property Id="SERVICE_PASSWORD" Hidden="yes" Secure="yes"/>
-    <Property Id="SERVICE_NAME" Secure="yes" Value="miisautosync"/>
+    <Property Id="SERVICE_NAME" Secure="yes" Value="autosync"/>
     <Property Id="SERVICE_PERMISSION_GROUP" Secure="yes"/>
 
     <Property Id="GROUP_FIM_SYNC_ADMINS" Secure="yes"/>
@@ -89,7 +89,7 @@
     <Property Id="APPLOGDIR" Secure="yes">
       <RegistrySearch Id="e7c30a80b48c48a3853e0ad02792c90a"
                       Root="HKLM"
-                      Key="Software\Lithnet\MiisAutoSync"
+                      Key="Software\Lithnet\AutoSync"
                       Name="LogPath"
                       Type="raw"
                       Win64="yes" />
@@ -106,7 +106,7 @@
       </Directory>
       <Directory Id="ProgramFiles64Folder" >
         <Directory Id="LITHNETROOTDIR" Name="Lithnet">
-          <Directory Id="APPROOTDIR" Name="MiisAutoSync">
+          <Directory Id="APPROOTDIR" Name="AutoSync">
             <Directory Id="EXAMPLESDIR" Name="Examples"/>
             <Directory Id="APPLOGDIR" Name="Logs"/>
           </Directory>
@@ -127,11 +127,19 @@
       <DialogRef Id="ErrorDlg" />
       <DialogRef Id="FilesInUse" />
       <DialogRef Id="FatalError" />
+      <DialogRef Id="InstallDirDlg" />
       <DialogRef Id="UserExit" />
 
-      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="ServiceDetailsDialog">NOT Installed</Publish>
-      <Publish Dialog="ServiceDetailsDialog" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="1"></Publish>
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg">NOT Installed</Publish>
+
+      <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="ServiceDetailsDialog">1</Publish>
+      <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg">1</Publish>
+      <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Property="_BrowseProperty" Value="[WIXUI_INSTALLDIR]" Order="10">1</Publish>
+      <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Event="SpawnDialog" Value="BrowseDlg" Order="20">1</Publish>
+      
+      <Publish Dialog="ServiceDetailsDialog" Control="Back" Event="NewDialog" Value="InstallDirDlg" Order="1"></Publish>
       <Publish Dialog="ServiceDetailsDialog" Control="Next" Event="NewDialog" Value="ConfigPathDialog" Order="4">PASSWORD_COMPARE = "1"</Publish>
+      
       <Publish Dialog="ConfigPathDialog" Control="Back" Event="NewDialog" Value="ServiceDetailsDialog" Order="1"></Publish>
       <Publish Dialog="ConfigPathDialog" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="1"></Publish>
       <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="ConfigPathDialog" Order="1"></Publish>
@@ -141,7 +149,7 @@
 
 
 
-    <Feature Id="AutoSync" Title="Lithnet Miiserver AutoSync" Level="1">
+    <Feature Id="AutoSync" Title="Lithnet AutoSync" Level="1">
       <ComponentGroupRef Id="Binaries" />
       <ComponentGroupRef Id="Examples" />
       <ComponentGroupRef Id="Editor" />

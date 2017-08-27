@@ -1,16 +1,16 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Timers;
-using Lithnet.Logging;
 using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync
 {
     [DataContract(Name = "scheduled-trigger")]
     [Description(TypeDescription)]
-    public class ScheduledExecutionTrigger : IMAExecutionTrigger
+    public class ScheduledExecutionTrigger : MAExecutionTrigger
     {
         private const string TypeDescription = "Scheduled trigger";
 
@@ -47,24 +47,21 @@ namespace Lithnet.Miiserver.AutoSync
                 triggerTime = triggerTime.Add(this.Interval);
             }
 
-            Logger.WriteLine("Scheduling event for " + triggerTime, LogLevel.Debug);
+            Trace.WriteLine("Scheduling event for " + triggerTime);
             this.RemainingMilliseconds = (triggerTime - now).TotalMilliseconds;
         }
 
-        private void checkTimer_Elapsed(object sender, ElapsedEventArgs e)
+        private void CheckTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            ExecutionTriggerEventHandler registeredHandlers = this.TriggerExecution;
-
-            registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(this.RunProfileName));
-
+            this.Fire(this.RunProfileName);
             this.Start();
         }
 
-        public void Start()
+        public override void Start()
         {
             if (this.RunProfileName == null)
             {
-                Logger.WriteLine("Ignoring scheduled trigger with no run profile name");
+                this.LogError("Ignoring scheduled trigger with no run profile name");
                 return;
             }
 
@@ -75,11 +72,11 @@ namespace Lithnet.Miiserver.AutoSync
                 AutoReset = false
             };
 
-            this.checkTimer.Elapsed += this.checkTimer_Elapsed;
+            this.checkTimer.Elapsed += this.CheckTimer_Elapsed;
             this.checkTimer.Start();
         }
 
-        public void Stop()
+        public override void Stop()
         {
             if (this.checkTimer == null)
             {
@@ -92,26 +89,23 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public string DisplayName => $"{this.Type}: {this.Description}";
+        public override string DisplayName => $"{this.Type}: {this.Description}";
 
-        public string Type => TypeDescription;
+        public override string Type => TypeDescription;
 
-        public string Description => $"{this.RunProfileName} every {this.Interval} start from {this.StartDateTime}";
-
-        public event ExecutionTriggerEventHandler TriggerExecution;
+        public override string Description => $"{this.RunProfileName} every {this.Interval} start from {this.StartDateTime}";
 
         public override string ToString()
         {
             return $"{this.DisplayName}";
         }
 
-
         public static bool CanCreateForMA(ManagementAgent ma)
         {
             return true;
         }
 
-        public  ScheduledExecutionTrigger (ManagementAgent ma)
+        public ScheduledExecutionTrigger(ManagementAgent ma)
         {
             this.RunProfileName = ma.RunProfiles?.Select(u => u.Key).FirstOrDefault();
             this.Interval = new TimeSpan(24, 0, 0);

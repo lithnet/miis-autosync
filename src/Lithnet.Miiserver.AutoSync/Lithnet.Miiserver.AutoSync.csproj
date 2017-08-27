@@ -73,6 +73,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
     <Reference Include="System.DirectoryServices.Protocols" />
     <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -100,6 +101,7 @@
     <Compile Include="Enums\ControlState.cs" />
     <Compile Include="Enums\ExecutorState.cs" />
     <Compile Include="Enums\RunMode.cs" />
+    <Compile Include="EventArgs\TriggerMessageEventArgs.cs" />
     <Compile Include="EventArgs\MAStatusChangedEventArgs.cs" />
     <Compile Include="EventService\EventClient.cs" />
     <Compile Include="EventService\EventServiceConfiguration.cs" />
@@ -132,6 +134,7 @@
     <Compile Include="MAInterface\MAConfigDiscovery.cs" />
     <Compile Include="MAInterface\MAConfigParameters.cs" />
     <Compile Include="Enums\MARunProfileType.cs" />
+    <Compile Include="Triggers\MAExecutionTrigger.cs" />
     <Compile Include="Triggers\PowerShellExecutionTrigger.cs" />
     <Compile Include="Triggers\ScheduledExecutionTrigger.cs" />
     <Compile Include="Triggers\IntervalExecutionTrigger.cs" />
@@ -228,10 +231,10 @@ foreach (var item in filesToCleanup)
     <Error Condition="!Exists('..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets'))" />
     <Error Condition="!Exists('..\packages\Costura.Fody.1.6.2\build\dotnet\Costura.Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Costura.Fody.1.6.2\build\dotnet\Costura.Fody.targets'))" />
   </Target>
-  <Import Project="..\packages\Costura.Fody.1.6.2\build\dotnet\Costura.Fody.targets" Condition="Exists('..\packages\Costura.Fody.1.6.2\build\dotnet\Costura.Fody.targets')" />
   <PropertyGroup>
     <PostBuildEvent>"C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe" sign /sha1 5ce168989b1359309dddee460c10e96fa60fa78b /t http://time.certum.pl /v $(TargetFileName)</PostBuildEvent>
   </PropertyGroup>
+  <Import Project="..\packages\Costura.Fody.1.6.2\build\dotnet\Costura.Fody.targets" Condition="Exists('..\packages\Costura.Fody.1.6.2\build\dotnet\Costura.Fody.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

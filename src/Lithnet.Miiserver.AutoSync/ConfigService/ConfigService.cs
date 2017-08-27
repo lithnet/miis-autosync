@@ -110,21 +110,6 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public void Reload()
-        {
-            try
-            {
-                Trace.WriteLine($"Calling {nameof(this.Reload)} as {Environment.UserName}");
-                Global.ThrowOnSyncEngineNotRunning();
-                Program.Reload();
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteException(ex);
-                throw;
-            }
-        }
-
         public bool IsPendingRestart()
         {
             try
@@ -213,6 +198,17 @@ namespace Lithnet.Miiserver.AutoSync
         {
             Global.ThrowOnSyncEngineNotRunning();
             Program.RestartChangedExecutors();
+        }
+
+        public void SetAutoStartState(bool autoStart)
+        {
+            Logger.WriteLine($"Setting auto start to {autoStart}");
+            RegistrySettings.AutoStartEnabled = autoStart;
+        }
+
+        public bool GetAutoStartState()
+        {
+            return RegistrySettings.AutoStartEnabled;
         }
     }
 }

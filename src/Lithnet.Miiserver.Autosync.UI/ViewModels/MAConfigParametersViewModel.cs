@@ -88,6 +88,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
 
             this.Model.Version++;
+            Trace.WriteLine($"{this.ManagementAgentName} config version change from {this.originalVersion} to {this.Model.Version}");
+
             this.RaisePropertyChanged(nameof(this.Version));
         }
 

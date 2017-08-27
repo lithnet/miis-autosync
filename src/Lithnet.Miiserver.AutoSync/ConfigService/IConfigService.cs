@@ -20,9 +20,6 @@ namespace Lithnet.Miiserver.AutoSync
         void PutConfigAndReloadChanged(ConfigFile config);
 
         [OperationContract]
-        void Reload();
-
-        [OperationContract]
         bool IsPendingRestart();
 
         [OperationContract(IsOneWay = true)]
@@ -48,5 +45,11 @@ namespace Lithnet.Miiserver.AutoSync
 
         [OperationContract]
         void RestartChangedExecutors();
+        
+        [OperationContract]
+        void SetAutoStartState(bool autoStart);
+
+        [OperationContract]
+        bool GetAutoStartState();
     }
 }

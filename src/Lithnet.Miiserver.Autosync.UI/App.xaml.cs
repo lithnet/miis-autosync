@@ -23,7 +23,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
         {
             AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
 
-            ServiceController sc = new ServiceController("miisautosync");
+            ServiceController sc = new ServiceController("autosync");
 
 #if DEBUG
             if (Debugger.IsAttached)
@@ -54,7 +54,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
                 Environment.Exit(1);
             }
 
-            sc = new ServiceController("miisautosync");
+            sc = new ServiceController("autosync");
             if (sc.Status != ServiceControllerStatus.Running)
             {
                 MessageBox.Show("The AutoSync service is not running. Please start the service and try again.",
@@ -96,16 +96,46 @@ namespace Lithnet.Miiserver.AutoSync.UI
             }
         }
 
+        private bool hasThrown;
+
+        private object lockObject = new object();
+
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            Logger.WriteLine("Unhandled exception in application");
-            Logger.WriteLine(e.ExceptionObject?.ToString());
-            MessageBox.Show(
-                $"An unexpected error occurred and the editor will terminate\n\n {((Exception)e.ExceptionObject)?.Message}",
-                "Error",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
-            Environment.Exit(1);
+            lock (this.lockObject)
+            {
+                if (this.hasThrown)
+                {
+                    return;
+                }
+
+                this.hasThrown = true;
+
+                try
+                {
+                    ServiceController sc = new ServiceController("autosync");
+                    if (sc.Status != ServiceControllerStatus.Running)
+                    {
+                        MessageBox.Show("The AutoSync service is not running. Please start the service and try again.",
+                            "Lithnet AutoSync",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Stop);
+                        Environment.Exit(1);
+                    }
+                }
+                catch (Exception)
+                {
+                }
+
+                Logger.WriteLine("Unhandled exception in application");
+                Logger.WriteLine(e.ExceptionObject?.ToString());
+                MessageBox.Show(
+                    $"An unexpected error occurred and the editor will terminate\n\n {((Exception)e.ExceptionObject)?.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                Environment.Exit(1);
+            }
         }
 
         internal static BitmapImage GetImageResource(string name)

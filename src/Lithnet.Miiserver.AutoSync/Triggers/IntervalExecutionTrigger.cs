@@ -1,20 +1,20 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Timers;
-using Lithnet.Logging;
 using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync
 {
     [DataContract(Name = "interval-trigger")]
     [Description(TypeDescription)]
-    public class IntervalExecutionTrigger : IMAExecutionTrigger
+    public class IntervalExecutionTrigger : MAExecutionTrigger
     {
         private const string TypeDescription = "Timed execution";
-            
-            private Timer checkTimer;
+
+        private Timer checkTimer;
 
         [DataMember(Name = "interval")]
         public TimeSpan Interval { get; set; }
@@ -24,19 +24,18 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void CheckTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            ExecutionTriggerEventHandler registeredHandlers = this.TriggerExecution;
-            registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(this.RunProfileName));
+            this.Fire(this.RunProfileName);
         }
 
-        public void Start()
+        public override void Start()
         {
             if (this.RunProfileName == null)
             {
-                Logger.WriteLine("Ignoring interval trigger with no run profile name");
+                this.LogError("Ignoring interval trigger with no run profile name");
                 return;
             }
 
-            Logger.WriteLine("Starting interval timer for {0} at {1}", LogLevel.Debug, this.RunProfileName, this.Interval);
+            Trace.WriteLine($"Starting interval timer for {this.RunProfileName} at {this.Interval}");
 
             this.checkTimer = new Timer
             {
@@ -48,7 +47,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.checkTimer.Start();
         }
 
-        public void Stop()
+        public override void Stop()
         {
             if (this.checkTimer == null)
             {
@@ -61,18 +60,16 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public string DisplayName => $"{this.Type} - {this.Description}";
+        public override string DisplayName => $"{this.Type} - {this.Description}";
 
-        public string Type => TypeDescription;
+        public override string Type => TypeDescription;
 
-        public string Description => $"{this.RunProfileName} every {this.Interval}";
+        public override string Description => $"{this.RunProfileName} every {this.Interval}";
 
         public override string ToString()
         {
             return $"{this.DisplayName}";
         }
-
-        public event ExecutionTriggerEventHandler TriggerExecution;
 
         public static bool CanCreateForMA(ManagementAgent ma)
         {

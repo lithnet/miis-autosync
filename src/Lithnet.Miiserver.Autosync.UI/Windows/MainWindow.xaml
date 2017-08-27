@@ -4,11 +4,24 @@
                       xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
                       Title="{Binding Path=DisplayName}"
                       Cursor="{Binding Path=Cursor}"
-                      Icon="/autosync.ico"
+                      Icon="/autosync.ico" 
                       BorderThickness="1"
                       BorderBrush="{DynamicResource AccentColorBrush}"
                       Height="Auto"
                       Width="Auto">
+
+    <Window.InputBindings>
+        <KeyBinding Key="S"
+                    Modifiers="Control"
+                    Command="{Binding Path=Commands.Save}" />
+        <KeyBinding Key="Z"
+                    Modifiers="Control"
+                    Command="{Binding Path=Commands.Revert}" />
+        <KeyBinding Key="X"
+                    Modifiers="Control"
+                    Command="{Binding Path=Commands.Close}" />
+    </Window.InputBindings>
+
 
     <Grid>
 
@@ -41,12 +54,8 @@
                                       Command="{Binding Path=Commands.Export}" />
                             <MenuItem Header="R_estore config..."
                                       Command="{Binding Path=Commands.Import}" />
-                            
-                            
-                            <Separator />
-                            <MenuItem Header="_Restart service"
-                                      Command="{Binding Path=Commands.Reload}" />
-                            
+                           
+                         
                             <Separator/>
                             <MenuItem Header="_Close"
                                       Command="{Binding Path=Commands.Close}" />
@@ -86,13 +95,13 @@
             
         </DockPanel>
 
-        <StatusBar Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Visibility="{Binding StatusBarVisibility}"
+        <!--<StatusBar Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Visibility="{Binding StatusBarVisibility}"
                      Background ="{x:Static SystemColors.InfoBrush}" Foreground="{x:Static SystemColors.ControlTextBrush}" >
             <StatusBar.InputBindings>
                 <MouseBinding Command="{Binding Path=Commands.Reload}" MouseAction="LeftClick" />
             </StatusBar.InputBindings>
             <StatusBarItem Content="The AutoSync service must be restarted for the configuration to take effect. Click here to restart the service" />
-        </StatusBar>
+        </StatusBar>-->
 
         <GridSplitter Grid.Row="2" Grid.Column="1" Width="5" HorizontalAlignment="Stretch" />
 

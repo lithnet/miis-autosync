@@ -3,16 +3,15 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.ServiceModel;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
-using Lithnet.Common.ObjectModel;
 using Lithnet.Common.Presentation;
 using MahApps.Metro.Controls;
 using Microsoft.Win32;
 using System.Linq;
+using PropertyChanged;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
@@ -31,6 +30,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public Cursor Cursor { get; set; }
 
+        [DependsOn(nameof(ConfigFile))]
         public override IEnumerable<ViewModelBase> ChildNodes
         {
             get
@@ -47,7 +47,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             this.AddDependentPropertyNotification("IsDirty", "DisplayName");
 
-            this.Commands.AddItem("Reload", x => this.Reload());
             this.Commands.AddItem("Save", x => this.Save(), x => this.CanSave());
             this.Commands.AddItem("Revert", x => this.Revert(), x => this.CanRevert());
             this.Commands.AddItem("Export", x => this.Export(), x => this.CanExport());
@@ -57,7 +56,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.Commands.AddItem("Import", x => this.Import(), x => this.CanImport());
 
             this.StatusBarVisibility = Visibility.Collapsed;
-            
+
             this.Cursor = Cursors.Arrow;
             Application.Current.MainWindow.Closing += this.MainWindow_Closing;
 
@@ -79,7 +78,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 Trace.WriteLine(ex);
                 MessageBox.Show(
-                    $"Could not contact the AutoSync service. Ensure the Lithnet MIIS AutoSync service is running",
+                    $"Could not contact the AutoSync service. Ensure the Lithnet AutoSync service is running",
                     "Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
@@ -90,6 +89,15 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 MessageBox.Show("You do not have permission to manage the AutoSync service", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Error);
                 Environment.Exit(5);
                 return;
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex);
+                MessageBox.Show(
+                    $"An error occurred communicating with the AutoSync service\r\n\r\n{ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
 
@@ -122,49 +130,11 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             w.ShowDialog();
         }
 
-        private void Reload(bool confirmRestart = true)
-        {
-            this.UpdateFocusedBindings();
-
-            if (this.IsDirty)
-            {
-                if (MessageBox.Show("There are unsaved changes. Are you sure you want to reload the config?", "Unsaved Changes", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
-                {
-                    return;
-                }
-            }
-
-            if (confirmRestart)
-            {
-                if (MessageBox.Show("This will force the AutoSync service to stop and restart with the latest configuration. Are you sure you want to proceed?", "Confirm", MessageBoxButton.OKCancel, MessageBoxImage.Warning) == MessageBoxResult.Cancel)
-                {
-                    return;
-                }
-            }
-
-            try
-            {
-                this.Cursor = Cursors.Wait;
-                ConfigClient c = new ConfigClient();
-                c.InvokeThenClose(x => x.Reload());
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"An error occurred while reloading the service config. Check the service log file for details\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
-                this.Cursor = Cursors.Arrow;
-            }
-
-            this.ResetConfigViewModel();
-        }
-
         private void Revert()
         {
             if (this.IsDirty)
             {
-                if (MessageBox.Show("There are unsaved changes. Do you want to continue?", "Unsaved Changes", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
+                if (MessageBox.Show("This will undo any pending changes and restore the configuration to the last saved state. Are you sure you want to continue?", "Unsaved Changes", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
                 {
                     return;
                 }
@@ -195,7 +165,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 {
                     Trace.WriteLine(ex);
                     MessageBox.Show(
-                        $"Could not contact the AutoSync service. Ensure the Lithnet MIIS AutoSync service is running",
+                        $"Could not contact the AutoSync service. Ensure the Lithnet AutoSync service is running",
                         "Error",
                         MessageBoxButton.OK,
                         MessageBoxImage.Error);
@@ -239,12 +209,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             this.UpdateFocusedBindings();
 
-            if (this.IsDirty)
+            if (!this.ContinueOnUnsavedChanges())
             {
-                if (MessageBox.Show("There are unsaved changes. Do you want to continue?", "Unsaved Changes", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
-                {
-                    return;
-                }
+                return;
             }
 
             OpenFileDialog dialog = new OpenFileDialog();
@@ -311,12 +278,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                     return;
                 }
 
-                this.MarkManagementAgentsAsConfigured();
-
                 this.Cursor = Cursors.Wait;
-                ConfigClient c = new ConfigClient();
-                c.InvokeThenClose(t => t.PutConfig(this.ConfigFile.Model));
-                this.Commit();
+
+                this.CommitConfig();
 
                 this.AskToRestartService();
             }
@@ -329,6 +293,14 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 this.Cursor = Cursors.Arrow;
             }
+        }
+
+        private void CommitConfig()
+        {
+            this.MarkManagementAgentsAsConfigured();
+            ConfigClient c = new ConfigClient();
+            c.InvokeThenClose(t => t.PutConfig(this.ConfigFile.Model));
+            this.Commit();
         }
 
         private void MarkManagementAgentsAsConfigured()
@@ -425,12 +397,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             this.UpdateFocusedBindings();
 
-            if (this.IsDirty && !this.confirmedCloseOnDirtyViewModel)
+            if (!this.ContinueOnUnsavedChanges())
             {
-                if (MessageBox.Show("There are unsaved changes. Are you sure you want to exit?", "Unsaved Changes", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
-                {
-                    e.Cancel = true;
-                }
+                e.Cancel = true;
             }
         }
 
@@ -438,16 +407,45 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             this.UpdateFocusedBindings();
 
-            if (this.IsDirty)
+            if (!this.ContinueOnUnsavedChanges())
             {
-                if (MessageBox.Show("There are unsaved changes. Are you sure you want to exit?", "Unsaved Changes", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
-                {
-                    return;
-                }
+                return;
             }
 
             this.confirmedCloseOnDirtyViewModel = true;
             Application.Current.Shutdown();
+        }
+
+        private bool ContinueOnUnsavedChanges()
+        {
+            if (this.IsDirty && !this.confirmedCloseOnDirtyViewModel)
+            {
+                MessageBoxResult result = MessageBox.Show("Do you want to commit the unsaved changes?", "Unsaved Changes", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
+
+                if (result == MessageBoxResult.Cancel)
+                {
+                    return false;
+                }
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    try
+                    {
+                        this.CommitConfig();
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.WriteLine("An error occurred trying to commit the changes");
+                        Trace.WriteLine(ex);
+                        MessageBox.Show($"An error occurred committing the changes\r\n\r\n{ex.Message}", "Error committing changes", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return false;
+                    }
+
+                    this.AskToRestartService();
+                }
+            }
+
+            return true;
         }
 
         private void UpdateFocusedBindings()

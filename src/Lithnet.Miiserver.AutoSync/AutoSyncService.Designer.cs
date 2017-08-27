@@ -31,7 +31,7 @@
             // 
             // AutoSyncService
             // 
-            this.ServiceName = "miisautosync";
+            this.ServiceName = "autosync";
 
         }
 
