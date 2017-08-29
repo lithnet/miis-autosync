@@ -35,6 +35,16 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
+        public static string GetMessageBody(string maName, string triggerType, string triggerDetails, DateTime errorTime, bool hasTerminated, Exception ex)
+        {
+            StringBuilder builder = new StringBuilder();
+            builder.AppendFormat(MessageBuilder.GetTemplate("TriggerErrorFragment"), maName, triggerType, triggerDetails, errorTime, hasTerminated ? "Yes" : "No", ex);
+            
+            InlineResult result = PreMailer.Net.PreMailer.MoveCssInline(MessageBuilder.GetTemplate("EmailTemplate").Replace("%BODY%", builder.ToString()));
+
+            return result.Html;
+        }
+
         public static string GetMessageBody(RunDetails r)
         {
             StringBuilder builder = new StringBuilder();
@@ -62,6 +72,13 @@ namespace Lithnet.Miiserver.AutoSync
             if (exportErrors != null)
             {
                 builder.AppendLine(exportErrors);
+            }
+
+            string syncErrors = MessageBuilder.BuildSyncErrorDetails(r.StepDetails);
+
+            if (syncErrors != null)
+            {
+                builder.AppendLine(syncErrors);
             }
 
 
@@ -198,6 +215,30 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
+        private static string BuildSyncErrorDetails(IReadOnlyList<StepDetails> details)
+        {
+            StringBuilder b = new StringBuilder();
+
+            foreach (StepDetails d in details)
+            {
+                string result = BuildSyncErrorDetails(d);
+
+                if (result != null)
+                {
+                    b.AppendLine(result);
+                }
+            }
+
+            if (b.Length == 0)
+            {
+                return null;
+            }
+            else
+            {
+                return b.ToString();
+            }
+        }
+
         private static string BuildStagingErrorDetails(StepDetails d)
         {
             if (d.MADiscoveryErrors.Count == 0)
@@ -290,7 +331,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             StringBuilder errorsBuilder = new StringBuilder();
 
-            errorsBuilder.AppendLine("<h3>Synchronization errors</h3>");
+            errorsBuilder.AppendLine("<h3>Inbound synchronization errors</h3>");
 
             foreach (ImportError error in errors)
             {
@@ -301,13 +342,8 @@ namespace Lithnet.Miiserver.AutoSync
                 errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Date occurred", error.DateOccurred);
                 errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Retry count", error.RetryCount);
 
-                if (error.ExtensionErrorInfo != null)
-                {
-                    errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Extension name", error.ExtensionErrorInfo.ExtensionName);
-                    errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Context", error.ExtensionErrorInfo.ExtensionContext);
-                    errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Call site", error.ExtensionErrorInfo.ExtensionCallSite);
-                    errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Stack trace", error.ExtensionErrorInfo.CallStack);
-                }
+                MessageBuilder.BuildErrorExtensionInfo(error.ExtensionErrorInfo, errorBuilder);
+                MessageBuilder.BuildRulesErrorInfo(error.RulesErrorInfo, errorBuilder);
 
                 errorsBuilder.AppendLine(string.Format(MessageBuilder.GetTemplate("ErrorTableFragment"), errorBuilder));
                 errorsBuilder.AppendLine("<br/>");
@@ -403,6 +439,82 @@ namespace Lithnet.Miiserver.AutoSync
             }
 
             return builder.ToString();
+        }
+
+        private static string BuildSyncErrorDetails(StepDetails d)
+        {
+            if (d.MVRetryErrors == null || d.MVRetryErrors.Count == 0)
+            {
+                return null;
+            }
+
+            IEnumerable<MVRetryError> errors;
+            int remainingErrors = 0;
+
+            if (Program.ActiveConfig.Settings.MailMaxErrors <= 0 || d.MVRetryErrors.Count <= Program.ActiveConfig.Settings.MailMaxErrors)
+            {
+                errors = d.MVRetryErrors;
+            }
+            else
+            {
+                errors = d.MVRetryErrors.Take(Program.ActiveConfig.Settings.MailMaxErrors);
+                remainingErrors = d.MVRetryErrors.Count - Program.ActiveConfig.Settings.MailMaxErrors;
+            }
+
+            StringBuilder errorsBuilder = new StringBuilder();
+
+            errorsBuilder.AppendLine("<h3>Outbound synchronization errors</h3>");
+
+            foreach (MVRetryError error in errors)
+            {
+                StringBuilder errorBuilder = new StringBuilder();
+
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Object", error.DisplayName ?? error.MVID);
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Step", error.AlgorithmStep?.Value);
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Error type", error.ErrorType);
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Date occurred", error.DateOccurred);
+
+                MessageBuilder.BuildErrorExtensionInfo(error.ExtensionErrorInfo, errorBuilder);
+                MessageBuilder.BuildRulesErrorInfo(error.RulesErrorInfo, errorBuilder);
+
+                errorsBuilder.AppendLine(string.Format(MessageBuilder.GetTemplate("ErrorTableFragment"), errorBuilder));
+                errorsBuilder.AppendLine("<br/>");
+            }
+
+            if (remainingErrors > 0)
+            {
+                errorsBuilder.Append($"There are {remainingErrors} more errors that are not shown in this report<br/>");
+            }
+
+            return errorsBuilder.ToString();
+        }
+
+        private static void BuildRulesErrorInfo(RulesErrorInfoContext c, StringBuilder errorBuilder)
+        {
+            if (c != null)
+            {
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "CS Object ID", c.CSObjectID);
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "DN", c.DN);
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "MA Name", c.MAName);
+
+                if (c.AttributeFlow != null)
+                {
+                    errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Context", c.AttributeFlow.ContextID);
+                    errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Destination attribute", c.AttributeFlow.DestinationAttribute);
+                    errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Flow rule", c.AttributeFlow.FlowRule);
+                }
+            }
+        }
+
+        private static void BuildErrorExtensionInfo(ExtensionErrorInfo error, StringBuilder errorBuilder)
+        {
+            if (error != null)
+            {
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Extension name", error.ExtensionName);
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Context", error.ExtensionContext);
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Call site", error.ExtensionCallSite);
+                errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Call stack", error.CallStack);
+            }
         }
     }
 }

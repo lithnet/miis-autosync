@@ -27,8 +27,10 @@ namespace Lithnet.Miiserver.AutoSync
             this.Fire(this.RunProfileName);
         }
 
-        public override void Start()
+        public override void Start(string managementAgentName)
         {
+            this.ManagementAgentName = managementAgentName;
+
             if (this.RunProfileName == null)
             {
                 this.LogError("Ignoring interval trigger with no run profile name");

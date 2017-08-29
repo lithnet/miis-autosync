@@ -36,11 +36,13 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "interval")]
         public TimeSpan Interval { get; set; }
 
-        public override void Start()
+        public override void Start(string managementAgentName)
         {
+            this.ManagementAgentName = managementAgentName;
+
             if (!System.IO.File.Exists(this.ScriptPath))
             {
-                this.LogError($"Could not start PowerShell trigger as the script '{this.ScriptPath}' could not be found");
+                this.LogError($"Could not start PowerShell trigger for MA {managementAgentName} as the script '{this.ScriptPath}' could not be found");
                 return;
             }
 
@@ -91,26 +93,19 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                     catch (Exception ex)
                     {
-                        string message;
+                        bool shouldTerminate = this.ExceptionBehaviour == ExecutionErrorBehaviour.Terminate;
 
-                        if (this.ExceptionBehaviour == ExecutionErrorBehaviour.Terminate)
-                        {
-                            message = $"The PowerShell execution trigger '{this.DisplayName}' encountered an error and has been terminated";
-                        }
-                        else
-                        {
-                            message = $"The PowerShell execution trigger '{this.DisplayName}' encountered an error";
-                        }
-
-                        this.LogError(message, ex);
+                        this.LogError($"The PowerShell execution trigger '{this.DisplayName}' encountered an error", ex);
 
                         if (MessageSender.CanSendMail())
                         {
-                            MessageSender.SendMessage(message, ex.ToString());
+                            string messageContent = MessageBuilder.GetMessageBody(this.ManagementAgentName, this.Type, this.Description, DateTime.Now, shouldTerminate, ex);
+                            MessageSender.SendMessage($"{this.ManagementAgentName}: {this.Type} trigger error", messageContent);
                         }
 
-                        if (this.ExceptionBehaviour == ExecutionErrorBehaviour.Terminate)
+                        if (shouldTerminate)
                         {
+                            this.Log("The PowerShell trigger has been terminated as specified by config");
                             break;
                         }
                         else
@@ -152,7 +147,8 @@ namespace Lithnet.Miiserver.AutoSync
 
                 if (MessageSender.CanSendMail())
                 {
-                    MessageSender.SendMessage($"The PowerShell execution trigger '{this.DisplayName}' encountered an error and has been terminated", ex.ToString());
+                    string messageContent = MessageBuilder.GetMessageBody(this.ManagementAgentName, this.Type, this.Description, DateTime.Now, true, ex);
+                    MessageSender.SendMessage($"{this.ManagementAgentName}: {this.Type} trigger error", messageContent);
                 }
             }
         }

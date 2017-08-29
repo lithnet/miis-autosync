@@ -119,6 +119,13 @@ namespace Lithnet.Miiserver.AutoSync
             catch (Exception ex)
             {
                 this.LogError("Could not start the listener", ex);
+
+                if (MessageSender.CanSendMail())
+                {
+                    string messageContent = MessageBuilder.GetMessageBody(this.ManagementAgentName, this.Type, this.Description, DateTime.Now, true, ex);
+                    MessageSender.SendMessage($"{this.ManagementAgentName}: {this.Type} trigger error", messageContent);
+                }
+
                 throw;
             }
         }
@@ -213,16 +220,30 @@ namespace Lithnet.Miiserver.AutoSync
                 else
                 {
                     this.LogError("The AD change listener encountered an unexpected error", ex);
+
+                    if (MessageSender.CanSendMail())
+                    {
+                        string messageContent = MessageBuilder.GetMessageBody(this.ManagementAgentName, this.Type, this.Description, DateTime.Now, false, ex);
+                        MessageSender.SendMessage($"{this.ManagementAgentName}: {this.Type} trigger error", messageContent);
+                    }
                 }
             }
             catch (Exception ex)
             {
                 this.LogError("The AD change listener encountered an unexpected error", ex);
+
+                if (MessageSender.CanSendMail())
+                {
+                    string messageContent = MessageBuilder.GetMessageBody(this.ManagementAgentName, this.Type, this.Description, DateTime.Now, false, ex);
+                    MessageSender.SendMessage($"{this.ManagementAgentName}: {this.Type} trigger error", messageContent);
+                }
             }
         }
 
-        public override void Start()
+        public override void Start(string managementAgentName)
         {
+            this.ManagementAgentName = managementAgentName;
+
             if (this.Disabled)
             {
                 this.Log("AD/LDS change listener disabled");

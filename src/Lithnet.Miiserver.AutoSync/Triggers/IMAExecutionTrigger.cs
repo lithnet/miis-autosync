@@ -20,7 +20,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         event TriggerMessageEventHandler Error;
         
-        void Start();
+        void Start(string managementAgentName);
 
         void Stop();
     }

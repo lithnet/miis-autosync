@@ -64,11 +64,19 @@ namespace Lithnet.Miiserver.AutoSync
             catch (Exception ex)
             {
                 this.LogError("Change detection failed", ex);
+
+                if (MessageSender.CanSendMail())
+                {
+                    string messageContent = MessageBuilder.GetMessageBody(this.ManagementAgentName, this.Type, this.Description, DateTime.Now, false, ex);
+                    MessageSender.SendMessage($"{this.ManagementAgentName}: {this.Type} trigger error", messageContent);
+                }
             }
         }
-        
-        public override void Start()
+
+        public override void Start(string managementAgentName)
         {
+            this.ManagementAgentName = managementAgentName;
+
             this.checkTimer = new Timer
             {
                 AutoReset = true,

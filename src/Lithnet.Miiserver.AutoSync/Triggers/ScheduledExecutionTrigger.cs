@@ -54,17 +54,24 @@ namespace Lithnet.Miiserver.AutoSync
         private void CheckTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             this.Fire(this.RunProfileName);
-            this.Start();
+            this.ResetTimer();
         }
 
-        public override void Start()
+        public override void Start(string managementAgentName)
         {
+            this.ManagementAgentName = managementAgentName;
+
             if (this.RunProfileName == null)
             {
                 this.LogError("Ignoring scheduled trigger with no run profile name");
                 return;
             }
 
+            this.ResetTimer();
+        }
+
+        private void ResetTimer()
+        {
             this.SetRemainingMilliseconds();
             this.checkTimer = new Timer
             {

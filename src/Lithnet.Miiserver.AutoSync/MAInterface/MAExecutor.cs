@@ -251,7 +251,7 @@ namespace Lithnet.Miiserver.AutoSync
                     t.Message += this.NotifierTriggerMessage;
                     t.Error += this.NotifierTriggerError;
                     t.TriggerFired += this.NotifierTriggerFired;
-                    t.Start();
+                    t.Start(this.ManagementAgentName);
                 }
                 catch (Exception ex)
                 {
