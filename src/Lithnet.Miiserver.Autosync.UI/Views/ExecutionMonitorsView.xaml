@@ -56,7 +56,10 @@
 
                 <ListView.Resources>
                     <DataTemplate x:Key="StatusColumnTemplate">
-                        <Image Source="{Binding Path=StatusIcon}" />
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{Binding Path=StatusIcon}" Height="16" Width="16" />
+                            <Image Source="{Binding Path=LockIcon}" Height="16" Width="16" />
+                        </StackPanel>
                     </DataTemplate>
 
                     <DataTemplate x:Key="LastRunStatusTemplate">
@@ -89,7 +92,7 @@
                 </ListView.ItemContainerStyle>
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn CellTemplate="{StaticResource StatusColumnTemplate}"/>
+                        <GridViewColumn CellTemplate="{StaticResource StatusColumnTemplate}" Width="40"/>
                         <GridViewColumn Header="Management Agent" DisplayMemberBinding="{Binding ManagementAgentName}"/>
                         <GridViewColumn Header="State" DisplayMemberBinding="{Binding DisplayState}"/>
                         <GridViewColumn Header="Status" DisplayMemberBinding="{Binding Message}" Width="250"/>

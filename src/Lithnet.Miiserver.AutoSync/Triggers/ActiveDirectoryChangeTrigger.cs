@@ -136,11 +136,17 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 if (this.stopped)
                 {
-                    this.connection.EndSendRequest(result);
+                    this.connection?.EndSendRequest(result);
                     return;
                 }
 
-                PartialResultsCollection resultsCollection = this.connection.GetPartialResults(result);
+                PartialResultsCollection resultsCollection = this.connection?.GetPartialResults(result);
+
+                if (resultsCollection == null)
+                {
+                    Trace.WriteLine("Results collection was empty");
+                    return;
+                }
 
                 if (DateTime.Now < this.nextTriggerAfter)
                 {

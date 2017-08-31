@@ -49,6 +49,12 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember]
         public string Detail { get; set; }
 
+        [DataMember]
+        public bool HasSyncLock { get; internal set; }
+
+        [DataMember]
+        public bool HasExclusiveLock { get; internal set; }
+
         public static bool IsControlState(ExecutorState state)
         {
             return state == ExecutorState.Disabled ||

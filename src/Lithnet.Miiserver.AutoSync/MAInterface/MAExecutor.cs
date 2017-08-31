@@ -64,7 +64,12 @@ namespace Lithnet.Miiserver.AutoSync
 
         public string ManagementAgentName
         {
-            get => this.ma?.Name; 
+            get => this.ma?.Name;
+        }
+
+        public Guid ManagementAgentID
+        {
+            get => this.ma?.ID ?? Guid.Empty;
         }
 
         public string Message
@@ -92,6 +97,34 @@ namespace Lithnet.Miiserver.AutoSync
                 }
             }
         }
+
+
+        public bool HasSyncLock
+        {
+            get => this.InternalStatus.HasSyncLock;
+            private set
+            {
+                if (this.InternalStatus.HasSyncLock != value)
+                {
+                    this.InternalStatus.HasSyncLock = value;
+                    this.RaiseStateChange();
+                }
+            }
+        }
+
+        public bool HasExclusiveLock
+        {
+            get => this.InternalStatus.HasExclusiveLock;
+            private set
+            {
+                if (this.InternalStatus.HasExclusiveLock != value)
+                {
+                    this.InternalStatus.HasExclusiveLock = value;
+                    this.RaiseStateChange();
+                }
+            }
+        }
+
 
         public ControlState ControlState
         {
@@ -140,7 +173,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.ma = ma;
             this.InternalStatus = new MAStatus() { MAName = this.ma.Name };
             this.ControlState = ControlState.Stopped;
-            
+
             this.ExecutionTriggers = new List<IMAExecutionTrigger>();
             this.localOperationLock = new ManualResetEvent(true);
             this.serviceControlLock = new ManualResetEvent(true);
@@ -269,7 +302,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void NotifierTriggerError(object sender, TriggerMessageEventArgs e)
         {
-            IMAExecutionTrigger t = (IMAExecutionTrigger) sender;
+            IMAExecutionTrigger t = (IMAExecutionTrigger)sender;
             this.Log($"{t.DisplayName}: ERROR: {e.Message}\n{e.Details}");
         }
 
@@ -442,65 +475,13 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void Execute(ExecutionParameters e)
         {
-            bool tookGlobalLock = false;
-
             try
             {
                 this.token.ThrowIfCancellationRequested();
-                this.UpdateExecutionStatus(ExecutorState.Waiting, "Waiting for exclusive operations to complete", e.RunProfileName);
-
-                this.Wait(MAExecutor.GlobalExclusiveOperationLock, nameof(MAExecutor.GlobalExclusiveOperationLock));
-
-                this.Message = "Asking controller for execution permission";
-
-                if (!this.controller.ShouldExecute(e.RunProfileName))
-                {
-                    this.Log($"Controller indicated that run profile {e.RunProfileName} should not be executed");
-                    return;
-                }
-
-                this.WaitOnUnmanagedRun();
 
                 this.ExecutionState = ExecutorState.Waiting;
                 this.ExecutingRunProfile = e.RunProfileName;
                 this.token.ThrowIfCancellationRequested();
-
-                if (e.Exclusive)
-                {
-                    this.Message = "Waiting for exclusive operation lock";
-                    this.Log($"Entering exclusive mode for {e.RunProfileName}");
-
-                    // Signal all executors to wait before running their next job
-                    this.TakeLock(MAExecutor.GlobalExclusiveOperationLock, nameof(MAExecutor.GlobalExclusiveOperationLock));
-                    tookGlobalLock = true;
-
-                    this.Log("Waiting for all MAs to complete");
-                    // Wait for all  MAs to finish their current job
-                    this.Wait(MAExecutor.AllMaLocalOperationLocks.ToArray(), nameof(MAExecutor.AllMaLocalOperationLocks));
-                }
-
-                // If another operation in this executor is already running, then wait for it to finish before taking the lock for ourselves
-                this.Message = "Waiting for lock on management agent";
-                this.WaitAndTakeLock(this.localOperationLock, nameof(this.localOperationLock));
-
-                // Grab the staggered execution lock, and hold for x seconds
-                // This ensures that no MA can start within x seconds of another MA
-                // to avoid deadlock conditions
-                this.Message = "Waiting for MA start";
-                bool tookStaggerLock = false;
-                try
-                {
-                    this.WaitAndTakeLock(MAExecutor.GlobalStaggeredExecutionLock, nameof(MAExecutor.GlobalStaggeredExecutionLock));
-                    tookStaggerLock = true;
-                    this.Wait(RegistrySettings.ExecutionStaggerInterval, nameof(RegistrySettings.ExecutionStaggerInterval));
-                }
-                finally
-                {
-                    if (tookStaggerLock)
-                    {
-                        this.ReleaseLock(MAExecutor.GlobalStaggeredExecutionLock, nameof(MAExecutor.GlobalStaggeredExecutionLock));
-                    }
-                }
 
                 if (this.ma.RunProfiles[e.RunProfileName].RunSteps.Any(t => t.IsImportStep))
                 {
@@ -592,15 +573,6 @@ namespace Lithnet.Miiserver.AutoSync
             finally
             {
                 this.UpdateExecutionStatus(ExecutorState.Idle, null, null);
-
-                // Reset the local lock so the next operation can run
-                this.ReleaseLock(this.localOperationLock, nameof(this.localOperationLock));
-
-                if (tookGlobalLock)
-                {
-                    // Reset the global lock so pending operations can run
-                    this.ReleaseLock(MAExecutor.GlobalExclusiveOperationLock, nameof(MAExecutor.GlobalExclusiveOperationLock));
-                }
             }
         }
 
@@ -622,20 +594,20 @@ namespace Lithnet.Miiserver.AutoSync
 
                 if (this.ma.RunProfiles[this.ma.ExecutingRunProfileName].RunSteps.Any(t => t.IsSyncStep))
                 {
-                    this.Log("Getting exclusive sync lock for unmanaged run");
-                    bool takenLock = false;
+                    this.Log("Getting sync lock for unmanaged run");
 
                     try
                     {
                         this.WaitAndTakeLock(MAExecutor.GlobalSynchronizationStepLock, nameof(MAExecutor.GlobalSynchronizationStepLock));
-                        takenLock = true;
+                        this.HasSyncLock = true;
                         this.ma.Wait(this.token);
                     }
                     finally
                     {
-                        if (takenLock)
+                        if (this.HasSyncLock)
                         {
                             this.ReleaseLock(MAExecutor.GlobalSynchronizationStepLock, nameof(MAExecutor.GlobalSynchronizationStepLock));
+                            this.HasSyncLock = false;
                         }
                     }
                 }
@@ -870,28 +842,14 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void Init()
         {
-            if (!this.ma.IsIdle())
+            try
             {
-                try
-                {
-                    this.UpdateExecutionStatus(ExecutorState.Running, "Unmanaged run in progress", this.ma.ExecutingRunProfileName);
-                    this.Log("Waiting for sync engine to finish current run profile before initializing executor");
-                    this.TakeLock(this.localOperationLock, nameof(this.localOperationLock));
-                    this.ma.Wait(this.token);
-                    this.ExecutionState = ExecutorState.Processing;
-                    RunDetails r = this.ma.GetLastRun();
-                    this.RunProfileExecutionComplete?.Invoke(this, r.RunProfileName, r.LastStepStatus);
-                }
-                catch (Exception ex)
-                {
-                    Logger.WriteLine("An error occurred in an unmanaged run");
-                    Logger.WriteException(ex);
-                }
-                finally
-                {
-                    this.ReleaseLock(this.localOperationLock, nameof(this.localOperationLock));
-                    this.UpdateExecutionStatus(ExecutorState.Idle, null, null);
-                }
+                this.WaitOnUnmanagedRun();
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine("An error occurred in an unmanaged run");
+                Logger.WriteException(ex);
             }
 
             this.token.ThrowIfCancellationRequested();
@@ -918,44 +876,101 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     this.token.ThrowIfCancellationRequested();
 
-                    try
+                    this.UpdateExecutionStatus(ExecutorState.Waiting, "Staging run", action.RunProfileName, this.GetQueueItemNames(false));
+
+                    this.Message = "Asking controller for execution permission";
+
+                    if (!this.controller.ShouldExecute(action.RunProfileName))
                     {
-                        this.UpdateExecutionStatus(ExecutorState.Waiting, "Staging run", action.RunProfileName, this.GetQueueItemNames(false));
-
-                        this.SetExclusiveMode(action);
-
-                        if (this.IsSyncStepOrFimMADeltaImport(action.RunProfileName))
-                        {
-                            this.Message = "Waiting for synchronization lock";
-                            bool tookLock = false;
-
-                            try
-                            {
-                                this.WaitAndTakeLock(MAExecutor.GlobalSynchronizationStepLock, nameof(MAExecutor.GlobalSynchronizationStepLock));
-                                tookLock = true;
-                                this.Execute(action);
-                            }
-                            finally
-                            {
-                                if (tookLock)
-                                {
-                                    this.ReleaseLock(MAExecutor.GlobalSynchronizationStepLock, nameof(MAExecutor.GlobalSynchronizationStepLock));
-                                }
-                            }
-                        }
-                        else
-                        {
-                            this.Execute(action);
-                        }
+                        this.Log($"Controller indicated that run profile {action.RunProfileName} should not be executed");
+                        continue;
                     }
-                    finally
-                    {
-                        this.UpdateExecutionStatus(ExecutorState.Idle, null, null);
-                    }
+
+                    this.SetExclusiveMode(action);
+                    this.TakeLocksAndExecute(action);
                 }
             }
             catch (OperationCanceledException)
             {
+            }
+        }
+
+        private void TakeLocksAndExecute(ExecutionParameters action)
+        {
+            try
+            {
+                this.WaitOnUnmanagedRun();
+
+                this.UpdateExecutionStatus(ExecutorState.Waiting, "Waiting for lock holder to finish", action.RunProfileName);
+                this.Wait(MAExecutor.GlobalExclusiveOperationLock, nameof(MAExecutor.GlobalExclusiveOperationLock));
+
+                if (action.Exclusive)
+                {
+                    this.Message = "Waiting to take lock";
+                    this.Log($"Entering exclusive mode for {action.RunProfileName}");
+
+                    // Signal all executors to wait before running their next job
+                    this.WaitAndTakeLock(MAExecutor.GlobalExclusiveOperationLock, nameof(MAExecutor.GlobalExclusiveOperationLock));
+                    this.HasExclusiveLock = true;
+
+                    this.Message = "Waiting for other MAs to finish";
+                    this.Log("Waiting for all MAs to complete");
+                    // Wait for all  MAs to finish their current job
+                    this.Wait(MAExecutor.AllMaLocalOperationLocks.ToArray(), nameof(MAExecutor.AllMaLocalOperationLocks));
+                }
+
+                if (this.IsSyncStepOrFimMADeltaImport(action.RunProfileName))
+                {
+                    this.Message = "Waiting to take lock";
+                    this.Log("Waiting to take sync lock");
+                    this.WaitAndTakeLock(MAExecutor.GlobalSynchronizationStepLock, nameof(MAExecutor.GlobalSynchronizationStepLock));
+                    this.HasSyncLock = true;
+                }
+
+                // If another operation in this executor is already running, then wait for it to finish before taking the lock for ourselves
+                this.Message = "Waiting for lock on management agent";
+                this.WaitAndTakeLock(this.localOperationLock, nameof(this.localOperationLock));
+
+                // Grab the staggered execution lock, and hold for x seconds
+                // This ensures that no MA can start within x seconds of another MA
+                // to avoid deadlock conditions
+                this.Message = "Preparing to start management agent";
+                bool tookStaggerLock = false;
+                try
+                {
+                    this.WaitAndTakeLock(MAExecutor.GlobalStaggeredExecutionLock, nameof(MAExecutor.GlobalStaggeredExecutionLock));
+                    tookStaggerLock = true;
+                    this.Wait(RegistrySettings.ExecutionStaggerInterval, nameof(RegistrySettings.ExecutionStaggerInterval));
+                }
+                finally
+                {
+                    if (tookStaggerLock)
+                    {
+                        this.ReleaseLock(MAExecutor.GlobalStaggeredExecutionLock, nameof(MAExecutor.GlobalStaggeredExecutionLock));
+                    }
+                }
+
+                this.Execute(action);
+            }
+            finally
+            {
+                this.UpdateExecutionStatus(ExecutorState.Idle, null, null);
+
+                // Reset the local lock so the next operation can run
+                this.ReleaseLock(this.localOperationLock, nameof(this.localOperationLock));
+
+                if (this.HasSyncLock)
+                {
+                    this.ReleaseLock(MAExecutor.GlobalSynchronizationStepLock, nameof(MAExecutor.GlobalSynchronizationStepLock));
+                    this.HasSyncLock = false;
+                }
+
+                if (this.HasExclusiveLock)
+                {
+                    // Reset the global lock so pending operations can run
+                    this.ReleaseLock(MAExecutor.GlobalExclusiveOperationLock, nameof(MAExecutor.GlobalExclusiveOperationLock));
+                    this.HasExclusiveLock = false;
+                }
             }
         }
 
@@ -1002,6 +1017,7 @@ namespace Lithnet.Miiserver.AutoSync
             try
             {
                 this.Trace("Checking for unmanaged changes");
+
                 // If another operation in this executor is already running, then wait for it to finish
                 this.WaitAndTakeLock(this.localOperationLock, nameof(this.localOperationLock));
 

@@ -28,6 +28,11 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
+        public MAConfigParameters GetItemOrDefault(Guid maid)
+        {
+            return this.FirstOrDefault(t => t.ManagementAgentID == maid);
+        }
+
         protected override string GetKeyForItem(MAConfigParameters item)
         {
             return item.ManagementAgentName;

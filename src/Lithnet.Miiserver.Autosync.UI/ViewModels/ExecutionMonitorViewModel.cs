@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Linq;
 using System.ServiceModel;
 using System.Windows;
 using System.Windows.Media.Imaging;
-using System.Windows.Threading;
 using Lithnet.Common.Presentation;
 using PropertyChanged;
 
@@ -90,6 +87,23 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public ObservableCollection<RunProfileResultViewModel> RunHistory { get; private set; }
 
+        [AlsoNotifyFor(nameof(LockIcon))]
+        public bool HasLock { get; private set; }
+
+        public BitmapImage LockIcon
+        {
+            get
+            {
+                if (this.HasLock)
+                {
+                    return App.GetImageResource("Lock.ico");
+                }
+                else
+                {
+                    return null;
+                }
+            }
+        }
 
         public void MAStatusChanged(MAStatus status)
         {
@@ -98,6 +112,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.ExecutionQueue = status.ExecutionQueue;
             this.DisplayState = status.DisplayState;
             this.ControlState = status.ControlState;
+            this.HasLock = status.HasExclusiveLock | status.HasSyncLock;
+
             this.Disabled = this.ControlState == ControlState.Disabled;
             this.AddDetailMessage(status.Detail);
         }
@@ -221,6 +237,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.client.InnerChannel.Faulted += this.InnerChannel_Faulted;
 
             MAStatus status = this.client.GetFullUpdate(this.ManagementAgentName);
+            this.faultedCount = 0;
             if (status != null)
             {
                 this.MAStatusChanged(status);
@@ -230,6 +247,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             Trace.WriteLine($"Closing faulted event channel for {this.ManagementAgentName}");
             this.client.Abort();
+            this.faultedCount++;
         }
 
         private void InnerChannel_Closed(object sender, EventArgs e)
@@ -238,12 +256,18 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.CleanupAndRestartClient();
         }
 
+        private int faultedCount;
+
         private void CleanupAndRestartClient()
         {
+            if (this.faultedCount > 5)
+            {
+                throw new ApplicationException($"An unrecoverable error occurred trying to reestablish the monitor channel for {this.ManagementAgentName}");
+            }
+
             this.client.InnerChannel.Closed -= this.InnerChannel_Closed;
             this.client.InnerChannel.Faulted -= this.InnerChannel_Faulted;
             this.SubscribeToStateChanges();
         }
-
     }
 }

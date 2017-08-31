@@ -178,6 +178,11 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 return Program.GetMAState(managementAgentName);
             }
+            catch (NoSuchManagementAgentException)
+            {
+                Logger.WriteLine($"The client requested a state update for a management agent that doesn't exist {managementAgentName}");
+                return null;
+            }
             catch (Exception ex)
             {
                 Logger.WriteLine($"An error occurred while getting the client a full state update for {managementAgentName}");

@@ -296,6 +296,9 @@
     <Resource Include="Resources\circle-red.ico" />
     <Resource Include="Resources\circle-yellow.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Lock.ico" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets" Condition="Exists('..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
