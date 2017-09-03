@@ -1,20 +1,23 @@
-﻿function Get-RunProfileToExecute 
+﻿$global:lastRowVersion = 0
+
+function Get-RunProfileToExecute 
 {
-	$table = Invoke-SQL "localhost" "lithnet.acma" "SELECT TOP 1 rowversion FROM DBO.MA_OBJECTS_DELTA";
+    $table = Invoke-SQL "localhost" "lithnet.acma" "SELECT TOP 1 cast(rowversion AS BIGINT) AS RV FROM DBO.MA_OBJECTS_DELTA where rowversion >= $global:lastRowVersion order by rowversion asc";
 
-	if ($table.Rows.Count -gt 0)
-	{
-        $thisRowVersion = [System.Convert]::ToBase64String($table.Rows[0].rowversion);
-
-        if($lastRowVersion -ne $thisRowVersion)
+    if ($table.Rows.Count -gt 0)
+    {
+        $rv = $table.Rows[0].RV
+        
+        if($global:lastRowVersion -ne $rv)
         {
-            $lastRowVersion = $thisRowVersion;
-			$p = New-Object Lithnet.Miiserver.Autosync.ExecutionParameters;
-			$p.RunProfileType = "DeltaImport";
-			$p.Exclusive = $false;
-    		write-output $p
+            $global:lastRowVersion = $rv;
+
+            $p = New-Object Lithnet.Miiserver.Autosync.ExecutionParameters;
+            $p.RunProfileName = "DI";
+            $p.Exclusive = $false;
+            write-output $p
         }
-	}
+    }
 }
 
 function Invoke-SQL {
@@ -39,5 +42,3 @@ function Invoke-SQL {
     $connection.Close()
     $dataSet.Tables
 }
-
-$lastRowVersion = "";

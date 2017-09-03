@@ -81,7 +81,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string value = RegistrySettings.ParametersKey.GetValue("ServiceAdminGroup") as string;
+                string value = RegistrySettings.ParametersKey.GetValue("ServiceAdminsGroup") as string;
 
                 if (value != null)
                 {

@@ -637,6 +637,13 @@ namespace Lithnet.Miiserver.AutoSync
         {
             this.TrySendMail(r);
             this.controller.ExecutionComplete(r);
+
+            if (this.controller.HasStoppedMA)
+            {
+                this.Stop();
+                return;
+            }
+
             this.QueueFollowupActions(r);
         }
 

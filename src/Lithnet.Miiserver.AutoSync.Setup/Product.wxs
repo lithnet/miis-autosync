@@ -89,12 +89,12 @@
     <Property Id="APPLOGDIR" Secure="yes">
       <RegistrySearch Id="e7c30a80b48c48a3853e0ad02792c90a"
                       Root="HKLM"
-                      Key="Software\Lithnet\AutoSync"
+                      Key="System\CurrentControlSet\Services\[SERVICE_NAME]\Parameters"
                       Name="LogPath"
                       Type="raw"
                       Win64="yes" />
     </Property>
-
+    
     <Condition Message="This application requires the Forefront Identity Manager 2010 R2 4.1.3441 or later to be installed">
       <![CDATA[Installed OR SYNCVERSION]]>
     </Condition>

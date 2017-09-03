@@ -12,7 +12,7 @@ namespace Lithnet.Miiserver.AutoSync
     [Description(TypeDescription)]
     public class IntervalExecutionTrigger : MAExecutionTrigger
     {
-        private const string TypeDescription = "Timed execution";
+        private const string TypeDescription = "Repeating interval";
 
         private Timer checkTimer;
 
@@ -22,9 +22,12 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "run-profile-name")]
         public string RunProfileName { get; set; }
 
+        [DataMember(Name = "exclusive")]
+        public bool Exclusive { get; set; }
+
         private void CheckTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            this.Fire(this.RunProfileName);
+            this.Fire(this.RunProfileName, this.Exclusive);
         }
 
         public override void Start(string managementAgentName)

@@ -157,13 +157,10 @@
     <None Include="Examples\Trigger-ACMA-WeeklyFS.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Examples\Config-ACMA.ps1">
+    <None Include="Examples\Controller-ACMA.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Examples\Trigger-ACMA-NightlyFI.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Examples\Config-ADMA.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Examples\Trigger-LdapMA-PersistentSearch.ps1">

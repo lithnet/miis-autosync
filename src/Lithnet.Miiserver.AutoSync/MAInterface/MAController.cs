@@ -12,7 +12,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private PowerShell powershell;
 
-        private bool hasStoppedMA;
+        internal bool HasStoppedMA;
 
         public string ScriptPath { get; set; }
 
@@ -65,7 +65,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public bool ShouldExecute(string runProfileName)
         {
-            if (this.hasStoppedMA)
+            if (this.HasStoppedMA)
             {
                 return false;
             }
@@ -97,7 +97,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 if (ex.InnerException is UnexpectedChangeException)
                 {
-                    this.hasStoppedMA = true;
+                    this.HasStoppedMA = true;
                     throw ex.InnerException;
                 }
                 else
@@ -109,7 +109,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (UnexpectedChangeException)
             {
-                this.hasStoppedMA = true;
+                this.HasStoppedMA = true;
                 throw;
             }
             catch (Exception ex)
@@ -142,7 +142,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 if (ex.InnerException is UnexpectedChangeException)
                 {
-                    this.hasStoppedMA = true;
+                    this.HasStoppedMA = true;
                     throw ex.InnerException;
                 }
                 else
@@ -153,7 +153,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (UnexpectedChangeException)
             {
-                this.hasStoppedMA = true;
+                this.HasStoppedMA = true;
                 throw;
             }
             catch (Exception ex)

@@ -16,6 +16,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition/>
                     <RowDefinition/>
+                    <RowDefinition/>
                 </Grid.RowDefinitions>
                 
                 <Label Grid.Row="0" 
@@ -37,6 +38,9 @@
                     Value="{Binding Interval}" 
                     MinimumTimeSpan="00:00:05" >
                 </ui:TimeSpanControl>
+                
+                <CheckBox Grid.Row="2" Grid.Column="1" Margin="10 0 0 5" Content="Run profile must be executed exclusively" IsChecked="{Binding Path=Exclusive}"/>
+                
             </Grid>
         </UserControl>
     </DataTemplate>

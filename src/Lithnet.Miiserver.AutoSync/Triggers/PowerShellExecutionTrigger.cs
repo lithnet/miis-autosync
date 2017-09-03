@@ -192,7 +192,7 @@ namespace Lithnet.Miiserver.AutoSync
         public PowerShellExecutionTrigger(ManagementAgent ma)
         {
             this.ExceptionBehaviour = ExecutionErrorBehaviour.Terminate;
-            this.Interval = new TimeSpan(0, 0, 5);
+            this.Interval = new TimeSpan(0, 0, 30);
         }
 
         public override string ToString()

@@ -18,11 +18,18 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.config = config;
             this.AddIsDirtyProperty(nameof(this.RunProfileName));
             this.AddIsDirtyProperty(nameof(this.Interval));
+            this.AddIsDirtyProperty(nameof(this.Exclusive));
         }
 
         public string Type => this.Model.Type;
 
         public string Description => this.Model.Description;
+
+        public bool Exclusive
+        {
+            get => this.typedModel.Exclusive;
+            set => this.typedModel.Exclusive = value;
+        }
 
         [AlsoNotifyFor("Description")]
         public string RunProfileName

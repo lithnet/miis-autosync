@@ -7,15 +7,16 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
     public class ActiveDirectoryChangeTriggerViewModel : MAExecutionTriggerViewModel
     {
+        private static char[] separators = new char[] { ',', ';' };
+
         private ActiveDirectoryChangeTrigger typedModel;
 
         private const string PlaceholderPassword = "{5A4A203E-EBB9-4D47-A3D4-CD6055C6B4FF}";
 
         public ActiveDirectoryChangeTriggerViewModel(ActiveDirectoryChangeTrigger model)
-            :base (model)
+            : base(model)
         {
             this.typedModel = model;
-            this.ObjectClasses = new ObservableCollection<string>(this.typedModel.ObjectClasses);
             this.AddIsDirtyProperty(nameof(this.MinimumIntervalBetweenEvents));
             this.AddIsDirtyProperty(nameof(this.LastLogonTimestampOffset));
             this.AddIsDirtyProperty(nameof(this.BaseDN));
@@ -112,6 +113,30 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public string Name => this.Model.DisplayName;
 
-        public ObservableCollection<string> ObjectClasses { get; set; }
+        public string ObjectClasses
+        {
+            get
+            {
+                if (this.typedModel.ObjectClasses?.Length > 0)
+                {
+                    return string.Join(";", this.typedModel.ObjectClasses);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    this.typedModel.ObjectClasses = null;
+                }
+                else
+                {
+                    this.typedModel.ObjectClasses = value.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+                }
+            }
+        }
     }
 }

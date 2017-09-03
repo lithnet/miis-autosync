@@ -20,7 +20,7 @@
                         Start="auto"
                         Arguments="/service"
                         Type="ownProcess"
-                        Description="Automatically operates the FIM/MIM synchronization service"
+                        Description="Automatically operates the MIM synchronization service"
                         Vital="yes"
                         Interactive="no">
           <ServiceDependency Id="FIMSynchronizationService" />
@@ -45,7 +45,7 @@
           <util:PermissionEx User="[SERVICE_USERNAME]" GenericAll="yes" />
         </RegistryValue>
         <RegistryValue Root="HKLM" Key="System\CurrentControlSet\Services\[SERVICE_NAME]\Parameters" Name="ServiceAdminsGroup" Type="string" Value="[SERVICE_ADMINS_GROUP]" />
-        <RegistryValue Root="HKLM" Key="System\CurrentControlSet\Services\[SERVICE_NAME]\Parameters" Name="ConfigFile" Type="string" Value="[APPROOTDIR]\config.xml" />
+        <RegistryValue Root="HKLM" Key="System\CurrentControlSet\Services\[SERVICE_NAME]\Parameters" Name="ConfigFile" Type="string" Value="[APPROOTDIR]config.xml" />
 
       </Component>
 
@@ -71,6 +71,9 @@
     </DirectoryRef>
       
     <DirectoryRef Id="EXAMPLESDIR">
+      <Component Id="cmp79377E0B69324BCD859E2FA2F55EE748" Guid="*" Win64="yes">
+        <File Id="fil438B1DA271984619A5D3A6B455447DD4" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Examples\Controller-ACMA.ps1" />
+      </Component>
       <Component Id="cmp9dd1e29218a449c986cd9bc051352eb0" Guid="*" Win64="yes">
         <File Id="fildf31df98d2494fda8671bee4394fb457" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Examples\Trigger-ACMA-CheckPendingImports.ps1" />
       </Component>
@@ -89,6 +92,7 @@
     </DirectoryRef>
 
     <ComponentGroup Id="Examples">
+      <ComponentRef Id="cmp79377E0B69324BCD859E2FA2F55EE748"/>
       <ComponentRef Id="cmp9dd1e29218a449c986cd9bc051352eb0"/>
       <ComponentRef Id="cmp07273887e0564fbb9656af18b9d08aff"/>
       <ComponentRef Id="cmp7019fe445dcb4e44b69f13a1ebf8cdd6"/>

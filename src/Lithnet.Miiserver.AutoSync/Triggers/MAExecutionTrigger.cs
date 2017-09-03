@@ -37,6 +37,13 @@ namespace Lithnet.Miiserver.AutoSync
             registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(runProfileName));
         }
 
+        protected void Fire(string runProfileName, bool exclusive)
+        {
+            ExecutionTriggerEventHandler registeredHandlers = this.TriggerFired;
+
+            registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(runProfileName, exclusive));
+        }
+
         protected void Fire(MARunProfileType type)
         {
             ExecutionTriggerEventHandler registeredHandlers = this.TriggerFired;

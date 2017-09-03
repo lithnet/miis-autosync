@@ -21,6 +21,11 @@ namespace Lithnet.Miiserver.AutoSync
             this.Parameters = new ExecutionParameters(runProfileName);
         }
 
+        public ExecutionTriggerEventArgs(string runProfileName, bool exclusive)
+        {
+            this.Parameters = new ExecutionParameters(runProfileName, exclusive);
+        }
+
         public ExecutionTriggerEventArgs(MARunProfileType runProfileType)
         {
             this.Parameters = new ExecutionParameters(runProfileType);

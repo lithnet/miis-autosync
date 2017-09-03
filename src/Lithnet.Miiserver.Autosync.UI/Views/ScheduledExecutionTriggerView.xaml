@@ -18,6 +18,7 @@
                     <RowDefinition/>
                     <RowDefinition/>
                     <RowDefinition/>
+                    <RowDefinition/>
                 </Grid.RowDefinitions>
 
                 <Label Grid.Row="0" 
@@ -47,6 +48,9 @@
                     SelectedDate="{Binding StartDateTime, Mode=TwoWay}" 
                     Culture="{Binding Culture}"
                     Margin="10 0 0 5" />
+
+                <CheckBox Grid.Row="3" Grid.Column="1" Margin="10 0 0 5" Content="Run profile must be executed exclusively" IsChecked="{Binding Path=Exclusive}"/>
+
             </Grid>
         </UserControl>
     </DataTemplate>

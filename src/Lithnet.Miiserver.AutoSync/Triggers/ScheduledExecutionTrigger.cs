@@ -12,7 +12,7 @@ namespace Lithnet.Miiserver.AutoSync
     [Description(TypeDescription)]
     public class ScheduledExecutionTrigger : MAExecutionTrigger
     {
-        private const string TypeDescription = "Scheduled trigger";
+        private const string TypeDescription = "Scheduled interval";
 
         private Timer checkTimer;
 
@@ -24,6 +24,9 @@ namespace Lithnet.Miiserver.AutoSync
 
         [DataMember(Name = "run-profile-name")]
         public string RunProfileName { get; set; }
+
+        [DataMember(Name = "exclusive")]
+        public bool Exclusive { get; set; }
 
         private double RemainingMilliseconds { get; set; }
 
@@ -53,7 +56,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void CheckTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            this.Fire(this.RunProfileName);
+            this.Fire(this.RunProfileName, this.Exclusive);
             this.ResetTimer();
         }
 
@@ -100,7 +103,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public override string Type => TypeDescription;
 
-        public override string Description => $"{this.RunProfileName} every {this.Interval} start from {this.StartDateTime}";
+        public override string Description => $"{this.RunProfileName} every {this.Interval} starting from {this.StartDateTime}";
 
         public override string ToString()
         {

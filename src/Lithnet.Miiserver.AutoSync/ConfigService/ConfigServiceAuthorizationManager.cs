@@ -45,9 +45,23 @@ namespace Lithnet.Miiserver.AutoSync
                     return true;
                 }
 
-                IPrincipal wp = new WindowsPrincipal(operationContext.ServiceSecurityContext.WindowsIdentity);
+                WindowsPrincipal wp = new WindowsPrincipal(operationContext.ServiceSecurityContext.WindowsIdentity);
 
-                return wp.IsInRole(RegistrySettings.AdminGroup);
+                bool result = wp.IsInRole(RegistrySettings.AdminGroup);
+
+                Trace.WriteLine($"User {wp.Identity.Name} is in service admin group {RegistrySettings.AdminGroup}: {result}");
+
+                if (!result)
+                {
+                    Trace.WriteLine("User is a member of these groups");
+                    WindowsIdentity identity = wp.Identity as WindowsIdentity;
+                    foreach (IdentityReference group in identity.Groups)
+                    {
+                        Trace.WriteLine(group.Value);
+                    }
+                }
+
+                return result;
 
                 //using (WindowsImpersonationContext i = operationContext.ServiceSecurityContext.WindowsIdentity.Impersonate())
                 //{

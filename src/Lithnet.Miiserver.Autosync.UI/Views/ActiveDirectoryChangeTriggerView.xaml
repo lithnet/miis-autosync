@@ -16,6 +16,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition/>
                     <RowDefinition />
+                    <RowDefinition />
                     <RowDefinition Height="5"/>
                     <RowDefinition/>
                     <RowDefinition/>
@@ -41,11 +42,18 @@
                          Margin="10 0 0 5"
                          Text="{Binding BaseDN}" />
 
-
-                <TextBlock Grid.Row="3" 
+                <TextBlock Grid.Row="2" 
+                           Grid.Column="0" 
+                           Text="Object classes"/>
+                <TextBox Grid.Row="2" 
+                         Grid.Column="1" 
+                         Margin="10 0 0 5"
+                         Text="{Binding ObjectClasses}" />
+                
+                <TextBlock Grid.Row="4" 
                            Grid.Column="0"
                            Text="Credentials"/>
-                <StackPanel Grid.Row="3" 
+                <StackPanel Grid.Row="4" 
                             Grid.Column="1">
                     <RadioButton Content="Use service account credentials" 
                                  IsChecked="{Binding UseServiceAccountCredentials}" 
@@ -55,43 +63,43 @@
                                  Margin="10 0 0 5"/>
                 </StackPanel>
 
-                <TextBlock Grid.Row="4" 
+                <TextBlock Grid.Row="5" 
                            Grid.Column="0" 
                            Text="User name"/>
-                <TextBox Grid.Row="4" 
+                <TextBox Grid.Row="5" 
                          Grid.Column="1" 
                          Margin="10 0 0 5"
                          Text="{Binding Username}"
                          IsEnabled="{Binding UseExplicitCredentials}" />
 
-                <TextBlock Grid.Row="5" 
+                <TextBlock Grid.Row="6" 
                            Grid.Column="0" 
                            Text="Password"/>
-                <PasswordBox Grid.Row="5" 
+                <PasswordBox Grid.Row="6" 
                              Grid.Column="1" 
                              Margin="10 0 0 5" 
                              PasswordChar="*" 
                              ui:PasswordBoxBindingHelper.Password="{Binding Password}" 
                              IsEnabled="{Binding UseExplicitCredentials}" />
 
-                <TextBlock Grid.Row="7"
+                <TextBlock Grid.Row="8" Margin="0 10 0 0"
                            Grid.Column="0" 
                            Text="Minimum amount of time to wait in between executions" 
                            TextWrapping="WrapWithOverflow"/>
-                <ui:TimeSpanControl Grid.Row="7"
+                <ui:TimeSpanControl Grid.Row="8"
                                     Grid.Column="1" 
-                                    Margin="10 0 0 5"
+                                    Margin="10 10 0 5"
                                     Value="{Binding MinimumIntervalBetweenEvents}" 
                                     MinimumTimeSpan="00:00:00"/>
 
-                <TextBlock Grid.Row="8" 
+                <TextBlock Grid.Row="9" Margin ="0 10 0 0"
                            Grid.Column="0" 
                            Text="Ignore changes where the last logon timestamp attributes have been modified within the following time period" 
                            TextWrapping="WrapWithOverflow"/>
                 <ui:TimeSpanControl VerticalAlignment="Top" 
-                                    Grid.Row="8"
+                                    Grid.Row="9"
                                     Grid.Column="1"
-                                    Margin="10 0 0 5"
+                                    Margin="10 10 0 5"
                                     Value="{Binding LastLogonTimestampOffset}" 
                                     MinimumTimeSpan="00:00:00" />
             </Grid>
