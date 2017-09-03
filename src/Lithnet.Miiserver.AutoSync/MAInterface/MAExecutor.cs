@@ -1091,7 +1091,12 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        private void AddPendingActionIfNotQueued(ExecutionParameters p, string source, bool runNext = false)
+        internal void AddPendingActionIfNotQueued(string runProfileName, string source)
+        {
+            this.AddPendingActionIfNotQueued(new ExecutionParameters(runProfileName), source);
+        }
+
+        internal void AddPendingActionIfNotQueued(ExecutionParameters p, string source, bool runNext = false)
         {
             try
             {

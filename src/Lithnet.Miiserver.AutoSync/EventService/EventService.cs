@@ -176,7 +176,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                return Program.GetMAState(managementAgentName);
+                return Program.Engine?.GetMAState(managementAgentName);
             }
             catch (NoSuchManagementAgentException)
             {
@@ -192,3 +192,4 @@ namespace Lithnet.Miiserver.AutoSync
         }
     }
 }
+

@@ -49,17 +49,17 @@ namespace Lithnet.Miiserver.AutoSync
 
                 bool result = wp.IsInRole(RegistrySettings.AdminGroup);
 
-                Trace.WriteLine($"User {wp.Identity.Name} is in service admin group {RegistrySettings.AdminGroup}: {result}");
+                //Trace.WriteLine($"User {wp.Identity.Name} is in service admin group {RegistrySettings.AdminGroup}: {result}");
 
-                if (!result)
-                {
-                    Trace.WriteLine("User is a member of these groups");
-                    WindowsIdentity identity = wp.Identity as WindowsIdentity;
-                    foreach (IdentityReference group in identity.Groups)
-                    {
-                        Trace.WriteLine(group.Value);
-                    }
-                }
+                //if (!result)
+                //{
+                //    Trace.WriteLine("User is a member of these groups");
+                //    WindowsIdentity identity = wp.Identity as WindowsIdentity;
+                //    foreach (IdentityReference group in identity.Groups)
+                //    {
+                //        Trace.WriteLine(group.Value);
+                //    }
+                //}
 
                 return result;
 

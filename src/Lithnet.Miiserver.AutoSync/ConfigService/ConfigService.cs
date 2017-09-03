@@ -101,7 +101,7 @@ namespace Lithnet.Miiserver.AutoSync
                 ProtectedString.EncryptOnWrite = true;
                 ConfigFile.Save(config, RegistrySettings.ConfigurationFile);
                 Program.ActiveConfig = config;
-                Program.RestartChangedExecutors();
+                Program.Engine?.RestartChangedExecutors();
             }
             catch (Exception ex)
             {
@@ -128,7 +128,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                Program.StopExecutor(managementAgentName);
+                Program.Engine?.Stop(managementAgentName);
             }
             catch (Exception ex)
             {
@@ -142,7 +142,7 @@ namespace Lithnet.Miiserver.AutoSync
             try
             {
                 Global.ThrowOnSyncEngineNotRunning();
-                Program.StartExecutor(managementAgentName);
+                Program.Engine?.Start(managementAgentName);
             }
             catch (Exception ex)
             {
@@ -155,7 +155,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                Program.StopExecutors();
+                Program.Engine?.Stop();
             }
             catch (Exception ex)
             {
@@ -169,7 +169,7 @@ namespace Lithnet.Miiserver.AutoSync
             try
             {
                 Global.ThrowOnSyncEngineNotRunning();
-                Program.StartExecutors();
+                Program.Engine?.Start();
             }
             catch (Exception ex)
             {
@@ -180,7 +180,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public ExecutorState GetEngineState()
         {
-            return Program.GetEngineState();
+            return Program.Engine?.State ?? ExecutorState.Stopped;
         }
 
         public IList<string> GetManagementAgentNames()
@@ -189,15 +189,35 @@ namespace Lithnet.Miiserver.AutoSync
             return ManagementAgent.GetManagementAgents().Select(t => t.Name).ToList();
         }
 
+        public IList<string> GetManagementAgentRunProfileNames(string managementAgentName)
+        {
+            try
+            {
+                ManagementAgent ma = ManagementAgent.GetManagementAgent(managementAgentName);
+                return ma.RunProfiles.Keys.ToList();
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteLine("A request to get the run profile names failed");
+                Logger.WriteException(ex);
+                return null;
+            }
+        }
+
+        public void AddToExecutionQueue(string managementAgentName, string runProfileName)
+        {
+            Program.Engine?.AddToExecutionQueue(managementAgentName, runProfileName);
+        }
+
         public IList<string> GetManagementAgentsPendingRestart()
         {
-            return Program.GetManagementAgentsPendingRestart();
+            return Program.Engine?.GetManagementAgentsPendingRestart();
         }
 
         public void RestartChangedExecutors()
         {
             Global.ThrowOnSyncEngineNotRunning();
-            Program.RestartChangedExecutors();
+            Program.Engine?.RestartChangedExecutors();
         }
 
         public void SetAutoStartState(bool autoStart)

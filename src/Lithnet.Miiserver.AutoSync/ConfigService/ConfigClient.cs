@@ -69,6 +69,16 @@ namespace Lithnet.Miiserver.AutoSync
             return this.Channel.GetManagementAgentNames();
         }
 
+        public IList<string> GetManagementAgentRunProfileNames(string managementAgentName)
+        {
+            return this.Channel.GetManagementAgentRunProfileNames(managementAgentName);
+        }
+
+        public void AddToExecutionQueue(string managementAgentName, string runProfileName)
+        {
+            this.Channel.AddToExecutionQueue(managementAgentName, runProfileName);
+        }
+
         public IList<string> GetManagementAgentsPendingRestart()
         {
             return this.Channel.GetManagementAgentsPendingRestart();

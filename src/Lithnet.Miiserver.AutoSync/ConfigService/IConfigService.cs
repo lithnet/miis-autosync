@@ -41,6 +41,12 @@ namespace Lithnet.Miiserver.AutoSync
         IList<string> GetManagementAgentNames();
 
         [OperationContract]
+        IList<string> GetManagementAgentRunProfileNames(string managementAgentName);
+
+        [OperationContract]
+        void AddToExecutionQueue(string managementAgentName, string runProfileName);
+
+        [OperationContract]
         IList<string> GetManagementAgentsPendingRestart();
 
         [OperationContract]

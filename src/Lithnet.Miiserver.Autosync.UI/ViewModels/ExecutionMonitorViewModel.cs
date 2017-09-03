@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.ServiceModel;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using Lithnet.Common.Presentation;
 using PropertyChanged;
@@ -16,13 +18,14 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         public ExecutionMonitorViewModel(string maName)
             : base(maName)
         {
-            this.Commands.Add("Start", new DelegateCommand(t => this.Start(), u => this.CanStart()));
-            this.Commands.Add("Stop", new DelegateCommand(t => this.Stop(), u => this.CanStop()));
             this.ManagementAgentName = maName;
             this.DetailMessages = new ObservableCollection<string>();
             this.RunHistory = new ObservableCollection<RunProfileResultViewModel>();
             this.SubscribeToStateChanges();
+            this.PopulateMenuItems();
         }
+
+        public ObservableCollection<MenuItemViewModelBase> MenuItems { get; set; }
 
         public BitmapImage StatusIcon
         {
@@ -119,7 +122,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         }
 
         public new BitmapImage DisplayIcon => this.lastRunResult?.DisplayIcon;
-        
+
         public void RunProfileExecutionComplete(string runProfileName, string result)
         {
             this.AddRunProfileHistory(runProfileName, result);
@@ -189,6 +192,72 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             });
         }
 
+        private void PopulateMenuItems()
+        {
+            this.MenuItems = new ObservableCollection<MenuItemViewModelBase>();
+
+            this.MenuItems.Add(new MenuItemViewModel()
+            {
+                Header = "Start",
+                Icon = App.GetImageResource("Run.ico"),
+                Command = new DelegateCommand(t => this.Start(), t => this.CanStart()),
+            });
+
+            this.MenuItems.Add(new MenuItemViewModel()
+            {
+                Header = "Stop",
+                Icon = App.GetImageResource("Stop.ico"),
+                Command = new DelegateCommand(t => this.Stop(), t => this.CanStop()),
+            });
+
+            try
+            {
+                MenuItemViewModel addrp = new MenuItemViewModel()
+                {
+                    Header = "Add run profile to execution queue",
+                    Command = new DelegateCommand(t => { }, t => this.CanAddToExecutionQueue())
+                };
+
+                ConfigClient c = new ConfigClient();
+                foreach (string rp in c.GetManagementAgentRunProfileNames(this.ManagementAgentName))
+                {
+                    addrp.MenuItems.Add(new MenuItemViewModel()
+                    {
+                        Header = rp,
+                        Command = new DelegateCommand(t => this.AddToExecutionQueue(rp)),
+                    });
+                }
+
+                if (addrp.MenuItems.Count > 0)
+                {
+                    this.MenuItems.Add(new SeparatorViewModel());
+                    this.MenuItems.Add(addrp);
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("Error getting the run profile list");
+                Trace.WriteLine(ex.ToString());
+            }
+
+
+
+        }
+
+        private void AddToExecutionQueue(string runProfileName)
+        {
+            try
+            {
+                ConfigClient c = new ConfigClient();
+                c.AddToExecutionQueue(this.ManagementAgentName, runProfileName);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Could not add the run profile to the execution queue\r\n\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Trace.WriteLine("Could not add the run profile to the execution queue");
+                Trace.WriteLine(ex.ToString());
+            }
+        }
 
         private void Stop()
         {
@@ -202,6 +271,11 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 Trace.WriteLine(ex);
                 MessageBox.Show($"Could not stop the management agent\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private bool CanAddToExecutionQueue()
+        {
+            return this.ControlState == ControlState.Running;
         }
 
         private bool CanStop()

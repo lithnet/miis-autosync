@@ -4,6 +4,7 @@
                      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
                      xmlns:viewModels="clr-namespace:Lithnet.Miiserver.AutoSync.UI.ViewModels"
                      xmlns:cm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+                     xmlns:local="clr-namespace:Lithnet.Common.Presentation;assembly=Lithnet.Common.Presentation"
                      mc:Ignorable="d" >
 
     <DataTemplate DataType="{x:Type viewModels:ExecutionMonitorsViewModel}">
@@ -69,8 +70,81 @@
                         </StackPanel>
                     </DataTemplate>
 
-                    <ContextMenu x:Key="ItemContextMenu">
-                        <MenuItem Header="Start" 
+                    <ContextMenu x:Key="ItemContextMenu" ItemsSource="{Binding Path=MenuItems}" UsesItemContainerTemplate="True">
+                        <ContextMenu.Resources>
+                            <ResourceDictionary>
+                                <ItemContainerTemplate DataType="{x:Type local:MenuItemViewModel }">
+                                    <MenuItem Header="{Binding Path=Header}" Command="{Binding Path=Command}" ItemsSource="{Binding Path=MenuItems}" UsesItemContainerTemplate="True">
+                                        <MenuItem.Icon>
+                                            <Image Source="{Binding Path=Icon}" Height="16" Width="16"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                </ItemContainerTemplate>
+                                <ItemContainerTemplate DataType="{x:Type local:SeparatorViewModel}">
+                                    <Separator >
+                                        <Separator.Style>
+                                            <Style TargetType="{x:Type Separator}" BasedOn="{StaticResource ResourceKey={x:Static MenuItem.SeparatorStyleKey}}"/>
+                                        </Separator.Style>
+                                    </Separator>
+                                </ItemContainerTemplate>
+                            </ResourceDictionary>
+                        </ContextMenu.Resources>
+                    </ContextMenu>
+
+                    <!--<ContextMenu x:Key="ItemContextMenu" ItemsSource="{Binding MenuItems}">
+                        <ContextMenu.ItemContainerStyle>
+                            <Style TargetType="MenuItem">
+                                <Setter Property="Command" Value="{Binding Path=Command}" />
+                            </Style>
+                        </ContextMenu.ItemContainerStyle>
+                        <ContextMenu.Resources>
+                            <HierarchicalDataTemplate DataType="{x:Type local:MenuItemViewModel}" ItemsSource="{Binding Path=MenuItems}">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                    <Image Source="{Binding Path=Icon}" Height="16" Width="16"/>
+                                    <TextBlock Text="{Binding Path=Header}"/>
+                                </StackPanel>
+                            </HierarchicalDataTemplate>
+                        </ContextMenu.Resources>
+                        -->
+                    <!--<ContextMenu.ItemContainerStyle>
+                            <Style TargetType="MenuItem">
+                                <Setter Property="Command" Value="{Binding Command}" />
+                                -->
+                    <!--<Setter Property="Icon">
+                                    <Setter.Value >
+                                        <Image Source="{Binding Path=Icon}" Height="16px" Width="16px"/>
+                                    </Setter.Value>
+                                </Setter>-->
+                    <!--
+                                <Setter Property="Icon" Value="{DynamicResource IconResource}"/>
+                                <Setter Property="Header" Value="{Binding Header}" />
+                                <Setter Property="ItemsSource" Value="{Binding MenuItems}"/>
+                            </Style>
+
+                        </ContextMenu.ItemContainerStyle>
+                        <ContextMenu.ItemTemplate>
+                            <DataTemplate>
+                            </DataTemplate>
+                        </ContextMenu.ItemTemplate>-->
+                    <!--<ContextMenu.Resources>
+                            <HierarchicalDataTemplate DataType="{x:Type local:MenuItemViewModel}" ItemsSource="{Binding Path=MenuItems}">
+                                <MenuItem Header="{Binding Path=Header}" Command="{Binding Path=Command}" >
+                                    <MenuItem.Icon>
+                                        <Image Source="{Binding Path=Icon}" Height="16" Width="16"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                            </HierarchicalDataTemplate>
+                            </ContextMenu.Resources>-->
+                    <!--<ContextMenu.ItemContainerStyle>
+                                <Style TargetType="{x:Type MenuItem}">
+                                    <Setter Property="MenuItem.Command" Value="{Binding Path=Command}" />
+                                    <Setter Property="Icon" Value="{Binding Path=Icon}" />
+                                    <Setter Property="Header" Value="{Binding Path=Header}" />
+                                </Style>
+                            </ContextMenu.ItemContainerStyle>-->
+
+
+                    <!--<MenuItem Header="Start" 
                                   Command="{Binding Commands.Start}"  >
                             <MenuItem.Icon>
                                 <Image Source="/Resources/Run.ico" Height="16" Width="16"/>
@@ -82,7 +156,13 @@
                                 <Image Source="/Resources/Stop.ico" Height="16" Width="16"/>
                             </MenuItem.Icon>
                         </MenuItem>
-                    </ContextMenu>
+                        <Separator/>
+                        <MenuItem Header="Add to execution queue">
+
+                        </MenuItem>-->
+                    <!--
+
+                    </ContextMenu>-->
                 </ListView.Resources>
                 <ListView.ItemContainerStyle>
                     <Style TargetType="{x:Type ListViewItem}">
@@ -153,4 +233,6 @@
         </Grid>
     </DataTemplate>
 </ResourceDictionary>
+ 
+ 
  

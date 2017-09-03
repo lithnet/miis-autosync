@@ -135,6 +135,17 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
+        public void AddToExecutionQueue(string managementAgentName, string runProfileName)
+        {
+            MAExecutor e = this.GetExecutorOrThrow(managementAgentName);
+            if (e.ControlState != ControlState.Running)
+            {
+                return;
+            }
+
+            e.AddPendingActionIfNotQueued(runProfileName, "Manual entry");
+        }
+
         public void Start(string managementAgentName)
         {
             MAConfigParameters c = Program.ActiveConfig.ManagementAgents.GetItemOrDefault(managementAgentName);

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.ServiceProcess;
 using Lithnet.Miiserver.Client;
@@ -16,7 +15,7 @@ namespace Lithnet.Miiserver.AutoSync
     {
         private static ConfigFile activeConfig;
 
-        private static ExecutionEngine engine;
+        internal static ExecutionEngine Engine { get; set; }
 
         private static Timer runHistoryCleanupTimer;
 
@@ -79,7 +78,7 @@ namespace Lithnet.Miiserver.AutoSync
             Environment.Exit(1);
         }
 
-        public static void StartConfigServiceHost()
+        private static void StartConfigServiceHost()
         {
             if (Program.configServiceHost == null || Program.configServiceHost.State != CommunicationState.Opened)
             {
@@ -174,7 +173,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public static void Stop()
+        internal static void Stop()
         {
             try
             {
@@ -213,7 +212,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public static void LoadConfiguration()
+        private static void LoadConfiguration()
         {
             string path = RegistrySettings.ConfigurationFile;
 
@@ -230,13 +229,13 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public static void CreateExecutionEngineInstance()
+        private static void CreateExecutionEngineInstance()
         {
             Logger.WriteLine("Creating execution engine");
 
             try
             {
-                Program.engine = new ExecutionEngine();
+                Program.Engine = new ExecutionEngine();
             }
             catch (Exception ex)
             {
@@ -245,13 +244,13 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public static void StartExecutionEngineInstance()
+        private static void StartExecutionEngineInstance()
         {
             Logger.WriteLine("Starting execution engine");
 
             if (RegistrySettings.AutoStartEnabled)
             {
-                Program.engine.Start();
+                Program.Engine.Start();
             }
             else
             {
@@ -262,76 +261,18 @@ namespace Lithnet.Miiserver.AutoSync
         private static void ShutdownExecutionEngineInstance()
         {
             Logger.WriteLine("Stopping execution engine");
-            Program.engine?.Stop();
-            Program.engine?.ShutdownService();
-            Program.engine = null;
+            Program.Engine?.Stop();
+            Program.Engine?.ShutdownService();
+            Program.Engine = null;
         }
 
-        private static void RestartExecutionEngine()
+#if DEBUG
+        public static void SetupOutOfBandInstance()
         {
-            Logger.WriteLine("Restarting execution engine");
-
-            Program.ShutdownExecutionEngineInstance();
+            Program.LoadConfiguration();
+            Program.StartConfigServiceHost();
             Program.CreateExecutionEngineInstance();
         }
-
-        internal static IList<MAStatus> GetMAState()
-        {
-            return engine?.GetMAState();
-        }
-
-        internal static MAStatus GetMAState(string maName)
-        {
-            return engine?.GetMAState(maName);
-        }
-
-
-        internal static void StopExecutors()
-        {
-            engine?.Stop();
-        }
-
-        internal static void StartExecutors()
-        {
-            engine?.Start();
-        }
-
-        internal static ExecutorState GetEngineState()
-        {
-            return engine?.State ?? ExecutorState.Stopped;
-        }
-
-        public static IList<string> GetManagementAgentsPendingRestart()
-        {
-            return engine?.GetManagementAgentsPendingRestart();
-        }
-
-        internal static void RestartChangedExecutors()
-        {
-            engine?.RestartChangedExecutors();
-        }
-
-        internal static void RestartManagementAgents(params string[] managementAgentNames)
-        {
-            foreach (string ma in managementAgentNames)
-            {
-                engine?.Stop(ma);
-            }
-
-            foreach (string ma in managementAgentNames)
-            {
-                engine?.Start(ma);
-            }
-        }
-
-        internal static void StopExecutor(string managementAgentName)
-        {
-            engine?.Stop(managementAgentName);
-        }
-
-        internal static void StartExecutor(string managementAgentName)
-        {
-            engine?.Start(managementAgentName);
-        }
+#endif
     }
 }

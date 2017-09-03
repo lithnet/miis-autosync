@@ -33,10 +33,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
                     // Must be started off the UI-thread
                     Task.Run(() =>
                     {
-                        Program.LoadConfiguration();
-                        Program.StartConfigServiceHost();
-                        Program.CreateExecutionEngineInstance();
-
+                        Program.SetupOutOfBandInstance();
                     }).Wait();
                 }
 
