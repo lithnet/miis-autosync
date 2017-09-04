@@ -926,7 +926,7 @@ namespace Lithnet.Miiserver.AutoSync
                     this.Wait(MAExecutor.AllMaLocalOperationLocks.ToArray(), nameof(MAExecutor.AllMaLocalOperationLocks));
                 }
 
-                if (this.IsSyncStepOrFimMADeltaImport(action.RunProfileName))
+                if (this.StepRequiresSyncLock(action.RunProfileName))
                 {
                     this.Message = "Waiting to take lock";
                     this.Log("Waiting to take sync lock");
@@ -996,7 +996,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        private bool IsSyncStepOrFimMADeltaImport(string runProfileName)
+        private bool StepRequiresSyncLock(string runProfileName)
         {
             if (this.IsSyncStep(runProfileName))
             {
@@ -1008,6 +1008,14 @@ namespace Lithnet.Miiserver.AutoSync
                 if (this.ma.RunProfiles[runProfileName].RunSteps.Any(t => t.Type == RunStepType.DeltaImport))
                 {
                     return true;
+                }
+
+                if (this.ma.RunProfiles[runProfileName].RunSteps.Any(t => t.Type == RunStepType.Export))
+                {
+                    if (RegistrySettings.GetSyncLockForFimMAExport)
+                    {
+                        return true;
+                    }
                 }
             }
 

@@ -13,7 +13,6 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static RegistryKey serviceKey;
 
-
         private static HashSet<string> retryCodes;
 
         public static RegistryKey ParametersKey
@@ -48,12 +47,21 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                int? value = RegistrySettings.ParametersKey.GetValue("AutoStartEnabled", 1) as int?;
+                int? value = RegistrySettings.ParametersKey.GetValue(nameof(AutoStartEnabled), 1) as int?;
                 return value.HasValue && value.Value != 0;
             }
             set
             {
                 RegistrySettings.ParametersKey.SetValue(nameof(AutoStartEnabled), value ? 1 : 0, RegistryValueKind.DWord);
+            }
+        }
+
+        public static bool GetSyncLockForFimMAExport
+        {
+            get
+            {
+                int? value = RegistrySettings.ParametersKey.GetValue(nameof(GetSyncLockForFimMAExport), 0) as int?;
+                return value.HasValue && value.Value != 0;
             }
         }
 
