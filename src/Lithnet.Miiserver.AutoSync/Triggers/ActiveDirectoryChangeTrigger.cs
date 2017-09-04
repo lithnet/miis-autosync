@@ -162,6 +162,12 @@ namespace Lithnet.Miiserver.AutoSync
 
                     foreach (SearchResultEntry r in resultsCollection.OfType<SearchResultEntry>())
                     {
+                        if (r.Attributes == null || !r.Attributes.Contains(ActiveDirectoryChangeTrigger.ObjectClassAttribute))
+                        {
+                            Trace.WriteLine($"Skipping entry {r.DistinguishedName} because the object class list was empty");
+                            continue;
+                        }
+
                         IList<string> objectClasses = r.Attributes[ActiveDirectoryChangeTrigger.ObjectClassAttribute].GetValues(typeof(string)).OfType<string>().ToList();
 
                         if (!this.ObjectClasses.Intersect(objectClasses, StringComparer.OrdinalIgnoreCase).Any())
