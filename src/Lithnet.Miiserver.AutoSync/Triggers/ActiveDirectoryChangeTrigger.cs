@@ -24,6 +24,8 @@ namespace Lithnet.Miiserver.AutoSync
         private const string BadPasswordAttribute = "badPasswordTime";
         private const string ObjectClassAttribute = "objectClass";
 
+        private object lockObject = new object();
+
         private DateTime nextTriggerAfter;
 
         /// <summary>
@@ -132,98 +134,111 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void Notify(IAsyncResult result)
         {
-            try
+            lock (this.lockObject)
             {
-                if (this.stopped)
+                try
                 {
-                    this.connection?.EndSendRequest(result);
-                    return;
-                }
-
-                PartialResultsCollection resultsCollection = this.connection?.GetPartialResults(result);
-
-                if (resultsCollection == null)
-                {
-                    Trace.WriteLine("Results collection was empty");
-                    return;
-                }
-
-                if (DateTime.Now < this.nextTriggerAfter)
-                {
-                    Trace.WriteLine("Discarding AD/LDS change because next trigger time has not been reached");
-                    return;
-                }
-
-                DateTime lastLogonOldestDate = DateTime.UtcNow.Subtract(this.LastLogonTimestampOffset);
-
-                foreach (SearchResultEntry r in resultsCollection.OfType<SearchResultEntry>())
-                {
-                    IList<string> objectClasses = r.Attributes[ActiveDirectoryChangeTrigger.ObjectClassAttribute].GetValues(typeof(string)).OfType<string>().ToList();
-
-                    if (!this.ObjectClasses.Intersect(objectClasses, StringComparer.OrdinalIgnoreCase).Any())
+                    if (this.stopped)
                     {
-                        continue;
+                        this.connection?.EndSendRequest(result);
+                        return;
                     }
 
-                    if (objectClasses.Contains("computer", StringComparer.OrdinalIgnoreCase) && !this.ObjectClasses.Contains("computer", StringComparer.OrdinalIgnoreCase))
+                    PartialResultsCollection resultsCollection = this.connection?.GetPartialResults(result);
+
+                    if (resultsCollection == null)
                     {
-                        continue;
+                        Trace.WriteLine("Results collection was empty");
+                        return;
                     }
 
-                    DateTime date1 = DateTime.MinValue;
-
-                    if (r.Attributes.Contains(ActiveDirectoryChangeTrigger.LastLogonAttributeName))
+                    if (DateTime.Now < this.nextTriggerAfter)
                     {
-                        string ts = r.Attributes[ActiveDirectoryChangeTrigger.LastLogonAttributeName][0] as string;
-                        date1 = DateTime.FromFileTimeUtc(Convert.ToInt64(ts));
+                        Trace.WriteLine("Discarding AD/LDS change because next trigger time has not been reached");
+                        return;
+                    }
 
-                        if (date1 > lastLogonOldestDate)
+                    DateTime lastLogonOldestDate = DateTime.UtcNow.Subtract(this.LastLogonTimestampOffset);
+
+                    foreach (SearchResultEntry r in resultsCollection.OfType<SearchResultEntry>())
+                    {
+                        IList<string> objectClasses = r.Attributes[ActiveDirectoryChangeTrigger.ObjectClassAttribute].GetValues(typeof(string)).OfType<string>().ToList();
+
+                        if (!this.ObjectClasses.Intersect(objectClasses, StringComparer.OrdinalIgnoreCase).Any())
                         {
                             continue;
                         }
-                    }
 
-                    DateTime date2 = DateTime.MinValue;
-
-                    if (r.Attributes.Contains(ActiveDirectoryChangeTrigger.LastLogonTimeStampAttributeName))
-                    {
-                        string ts = r.Attributes[ActiveDirectoryChangeTrigger.LastLogonTimeStampAttributeName][0] as string;
-                        date2 = DateTime.FromFileTimeUtc(Convert.ToInt64(ts));
-
-                        if (date2 > lastLogonOldestDate)
+                        if (objectClasses.Contains("computer", StringComparer.OrdinalIgnoreCase) && !this.ObjectClasses.Contains("computer", StringComparer.OrdinalIgnoreCase))
                         {
                             continue;
                         }
-                    }
 
-                    DateTime date3 = DateTime.MinValue;
+                        DateTime date1 = DateTime.MinValue;
 
-                    if (r.Attributes.Contains(ActiveDirectoryChangeTrigger.BadPasswordAttribute))
-                    {
-                        string ts = r.Attributes[ActiveDirectoryChangeTrigger.BadPasswordAttribute][0] as string;
-                        date3 = DateTime.FromFileTimeUtc(Convert.ToInt64(ts));
-
-                        if (date3 > lastLogonOldestDate)
+                        if (r.Attributes.Contains(ActiveDirectoryChangeTrigger.LastLogonAttributeName))
                         {
-                            continue;
+                            string ts = r.Attributes[ActiveDirectoryChangeTrigger.LastLogonAttributeName][0] as string;
+                            date1 = DateTime.FromFileTimeUtc(Convert.ToInt64(ts));
+
+                            if (date1 > lastLogonOldestDate)
+                            {
+                                continue;
+                            }
                         }
+
+                        DateTime date2 = DateTime.MinValue;
+
+                        if (r.Attributes.Contains(ActiveDirectoryChangeTrigger.LastLogonTimeStampAttributeName))
+                        {
+                            string ts = r.Attributes[ActiveDirectoryChangeTrigger.LastLogonTimeStampAttributeName][0] as string;
+                            date2 = DateTime.FromFileTimeUtc(Convert.ToInt64(ts));
+
+                            if (date2 > lastLogonOldestDate)
+                            {
+                                continue;
+                            }
+                        }
+
+                        DateTime date3 = DateTime.MinValue;
+
+                        if (r.Attributes.Contains(ActiveDirectoryChangeTrigger.BadPasswordAttribute))
+                        {
+                            string ts = r.Attributes[ActiveDirectoryChangeTrigger.BadPasswordAttribute][0] as string;
+                            date3 = DateTime.FromFileTimeUtc(Convert.ToInt64(ts));
+
+                            if (date3 > lastLogonOldestDate)
+                            {
+                                continue;
+                            }
+                        }
+
+                        this.Log($"AD/LDS change detected on {r.DistinguishedName}");
+                        Trace.WriteLine($"LL: {date1.ToLocalTime()}");
+                        Trace.WriteLine($"TS: {date2.ToLocalTime()}");
+                        Trace.WriteLine($"BP: {date3.ToLocalTime()}");
+
+                        this.Fire();
                     }
-
-                    this.Log($"AD/LDS change detected on {r.DistinguishedName}");
-                    Trace.WriteLine($"LL: {date1.ToLocalTime()}");
-                    Trace.WriteLine($"TS: {date2.ToLocalTime()}");
-                    Trace.WriteLine($"BP: {date3.ToLocalTime()}");
-
-                    this.Fire();
                 }
-            }
-            catch (LdapException ex)
-            {
-                if (ex.ErrorCode == 85)
+                catch (LdapException ex)
                 {
-                    this.SetupListener();
+                    if (ex.ErrorCode == 85)
+                    {
+                        this.SetupListener();
+                    }
+                    else
+                    {
+                        this.LogError("The AD change listener encountered an unexpected error", ex);
+
+                        if (MessageSender.CanSendMail())
+                        {
+                            string messageContent = MessageBuilder.GetMessageBody(this.ManagementAgentName, this.Type, this.Description, DateTime.Now, false, ex);
+                            MessageSender.SendMessage($"{this.ManagementAgentName}: {this.Type} trigger error", messageContent);
+                        }
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
                     this.LogError("The AD change listener encountered an unexpected error", ex);
 
@@ -232,16 +247,6 @@ namespace Lithnet.Miiserver.AutoSync
                         string messageContent = MessageBuilder.GetMessageBody(this.ManagementAgentName, this.Type, this.Description, DateTime.Now, false, ex);
                         MessageSender.SendMessage($"{this.ManagementAgentName}: {this.Type} trigger error", messageContent);
                     }
-                }
-            }
-            catch (Exception ex)
-            {
-                this.LogError("The AD change listener encountered an unexpected error", ex);
-
-                if (MessageSender.CanSendMail())
-                {
-                    string messageContent = MessageBuilder.GetMessageBody(this.ManagementAgentName, this.Type, this.Description, DateTime.Now, false, ex);
-                    MessageSender.SendMessage($"{this.ManagementAgentName}: {this.Type} trigger error", messageContent);
                 }
             }
         }
