@@ -37,7 +37,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        
+
         <DockPanel Grid.Row="0"
                    Grid.ColumnSpan="4">
             <Menu DockPanel.Dock="Top">
@@ -48,14 +48,14 @@
                                       Command="{Binding Path=Commands.Save}" />
                             <MenuItem Header="_Undo pending changes"
                                       Command="{Binding Path=Commands.Revert}" />
-                            
+
                             <Separator />
                             <MenuItem Header="_Backup config..."
                                       Command="{Binding Path=Commands.Export}" />
                             <MenuItem Header="R_estore config..."
                                       Command="{Binding Path=Commands.Import}" />
-                           
-                         
+
+
                             <Separator/>
                             <MenuItem Header="_Close"
                                       Command="{Binding Path=Commands.Close}" />
@@ -92,7 +92,7 @@
                     </MenuItem.ItemContainerStyle>
                 </MenuItem>
             </Menu>
-            
+
         </DockPanel>
 
         <!--<StatusBar Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Visibility="{Binding StatusBarVisibility}"
@@ -123,12 +123,13 @@
                 </ResourceDictionary>
             </TreeView.Resources>
         </TreeView>
-        <ContentControl Grid.Row="2"  Grid.Column="2" Content="{Binding Path=SelectedItem, ElementName=TreeViewMain}" Grid.ColumnSpan="2">
-            <ContentControl.Resources>
-                <ResourceDictionary Source="/ResourceDictionaries/ItemViewDictionary.xaml"/>
-            </ContentControl.Resources>
-        </ContentControl>
-
+        <ScrollViewer  HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.Row="2"  Grid.Column="2" Grid.ColumnSpan="2">
+            <ContentControl Content="{Binding Path=SelectedItem, ElementName=TreeViewMain}" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType={x:Type ScrollContentPresenter}}}" >
+                <ContentControl.Resources>
+                    <ResourceDictionary Source="/ResourceDictionaries/ItemViewDictionary.xaml"/>
+                </ContentControl.Resources>
+            </ContentControl>
+        </ScrollViewer>
     </Grid>
 </controls:MetroWindow>
 
