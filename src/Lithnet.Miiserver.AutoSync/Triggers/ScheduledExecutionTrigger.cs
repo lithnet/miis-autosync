@@ -120,6 +120,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.RunProfileName = ma.RunProfiles?.Select(u => u.Key).FirstOrDefault();
             this.Interval = new TimeSpan(24, 0, 0);
             this.StartDateTime = DateTime.Now;
+            this.StartDateTime = this.StartDateTime.AddSeconds(-this.StartDateTime.Second);
         }
     }
 }
