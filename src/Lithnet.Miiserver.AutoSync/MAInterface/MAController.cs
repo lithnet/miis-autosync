@@ -16,9 +16,9 @@ namespace Lithnet.Miiserver.AutoSync
 
         public string ScriptPath { get; set; }
 
-        private bool supportsShouldExecute;
+        internal bool SupportsShouldExecute { get; private set; }
 
-        private bool supportsExecutionComplete;
+        internal bool SupportsExecutionComplete { get; private set; }
 
         public MAController(MAConfigParameters config)
         {
@@ -48,16 +48,16 @@ namespace Lithnet.Miiserver.AutoSync
             if (this.powershell.Runspace.SessionStateProxy.InvokeCommand.GetCommand("ShouldExecute", CommandTypes.All) != null)
             {
                 Logger.WriteLine("{0}: Registering ShouldExecute handler", this.config.ManagementAgentName);
-                this.supportsShouldExecute = true;
+                this.SupportsShouldExecute = true;
             }
 
             if (this.powershell.Runspace.SessionStateProxy.InvokeCommand.GetCommand("ExecutionComplete", CommandTypes.All) != null)
             {
                 Logger.WriteLine("{0}: Registering ExecutionComplete handler", this.config.ManagementAgentName);
-                this.supportsExecutionComplete = true;
+                this.SupportsExecutionComplete = true;
             }
 
-            if (!(this.supportsExecutionComplete || this.supportsShouldExecute))
+            if (!(this.SupportsExecutionComplete || this.SupportsShouldExecute))
             {
                 Logger.WriteLine("{0}: Controller script does not implement ShouldExecute or ExecutionComplete: {1}", this.config.ManagementAgentName, this.ScriptPath);
             }
@@ -70,7 +70,7 @@ namespace Lithnet.Miiserver.AutoSync
                 return false;
             }
 
-            if (this.powershell == null || !this.supportsShouldExecute)
+            if (this.powershell == null || !this.SupportsShouldExecute)
             {
                 return true;
             }
@@ -124,7 +124,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void ExecutionComplete(RunDetails d)
         {
-            if (this.powershell == null || !this.supportsExecutionComplete)
+            if (this.powershell == null || !this.SupportsExecutionComplete)
             {
                 return;
             }

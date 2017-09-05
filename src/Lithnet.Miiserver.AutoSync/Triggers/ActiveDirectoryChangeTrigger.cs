@@ -24,7 +24,7 @@ namespace Lithnet.Miiserver.AutoSync
         private const string BadPasswordAttribute = "badPasswordTime";
         private const string ObjectClassAttribute = "objectClass";
 
-        private object lockObject = new object();
+        private object lockObject;
 
         private DateTime nextTriggerAfter;
 
@@ -39,6 +39,11 @@ namespace Lithnet.Miiserver.AutoSync
         private bool stopped;
 
         private IAsyncResult request;
+
+        public ActiveDirectoryChangeTrigger()
+        {
+            this.Initialize();
+        }
 
         [DataMember(Name = "base-dn")]
         public string BaseDN { get; set; }
@@ -377,6 +382,17 @@ namespace Lithnet.Miiserver.AutoSync
             this.LastLogonTimestampOffset = new TimeSpan(0, 5, 0);
             this.MinimumIntervalBetweenEvents = new TimeSpan(0, 1, 0);
             this.UseExplicitCredentials = false;
+        }
+
+        private void Initialize()
+        {
+            this.lockObject = new object();
+        }
+
+        [OnDeserializing]
+        private void OnDeserializing(StreamingContext context)
+        {
+            this.Initialize();
         }
     }
 }

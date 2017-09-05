@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Management.Automation;
 using System.Threading.Tasks;
 using System.Threading;
@@ -157,13 +158,20 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
+                Trace.WriteLine($"{this.DisplayName}: Stopping");
+
                 this.cancellationToken?.Cancel();
                 this.powershell?.Stop();
 
                 if (this.internalTask != null && !this.internalTask.IsCompleted)
                 {
-                    this.internalTask.Wait(TimeSpan.FromSeconds(10));
+                    if (!this.internalTask.Wait(TimeSpan.FromSeconds(10)))
+                    {
+                        this.Log($"Internal task did not stop");
+                    }
                 }
+
+                Trace.WriteLine($"{this.DisplayName}: Stopped");
             }
             catch (AggregateException e)
             {

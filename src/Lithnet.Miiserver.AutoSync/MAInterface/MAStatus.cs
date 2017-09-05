@@ -55,17 +55,6 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember]
         public bool HasExclusiveLock { get; internal set; }
 
-        public static bool IsControlState(ExecutorState state)
-        {
-            return state == ExecutorState.Disabled ||
-                   state == ExecutorState.Paused ||
-                   state == ExecutorState.Pausing ||
-                   state == ExecutorState.Resuming ||
-                   state == ExecutorState.Starting ||
-                   state == ExecutorState.Stopped ||
-                   state == ExecutorState.Stopping;
-        }
-
         public void Clear()
         {
             this.ExecutingRunProfile = null;

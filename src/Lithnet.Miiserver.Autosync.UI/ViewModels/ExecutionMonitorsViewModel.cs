@@ -30,7 +30,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             : base(items, ExecutionMonitorsViewModel.ViewModelResolver)
         {
             this.Commands.AddItem("StartEngine", x => this.StartEngine(), x => this.CanStartEngine());
-            this.Commands.AddItem("StopEngine", x => this.StopEngine(), x => this.CanStopEngine());
+            this.Commands.AddItem("StopEngine", x => this.StopEngine(false), x => this.CanStopEngine());
+            this.Commands.AddItem("StopEngineAndCancelRuns", x => this.StopEngine(true), x => this.CanStopEngine());
 
             this.DisplayIcon = App.GetImageResource("Monitor.ico");
 
@@ -65,12 +66,12 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             return this.ViewModels.Any(t => t.ControlState == ControlState.Stopped);
         }
 
-        private void StopEngine()
+        private void StopEngine(bool cancelRuns)
         {
             try
             {
                 ConfigClient c = new ConfigClient();
-                c.InvokeThenClose(x => x.StopAll());
+                c.InvokeThenClose(x => x.StopAll(cancelRuns));
             }
             catch (Exception ex)
             {

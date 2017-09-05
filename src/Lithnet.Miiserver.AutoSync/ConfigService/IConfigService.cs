@@ -23,19 +23,22 @@ namespace Lithnet.Miiserver.AutoSync
         bool IsPendingRestart();
 
         [OperationContract(IsOneWay = true)]
-        void Stop(string managementAgentName);
+        void Stop(string managementAgentName, bool cancelRun);
 
         [OperationContract(IsOneWay = true)]
         void Start(string managementAgentName);
 
         [OperationContract(IsOneWay = true)]
-        void StopAll();
+        void StopAll(bool cancelRuns);
 
         [OperationContract(IsOneWay = true)]
         void StartAll();
+        
+        [OperationContract(IsOneWay = true)]
+        void CancelRun(string managementAgentName);
 
         [OperationContract]
-        ExecutorState GetEngineState();
+        ControlState GetEngineState();
 
         [OperationContract]
         IList<string> GetManagementAgentNames();

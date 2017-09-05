@@ -261,7 +261,7 @@ namespace Lithnet.Miiserver.AutoSync
         private static void ShutdownExecutionEngineInstance()
         {
             Logger.WriteLine("Stopping execution engine");
-            Program.Engine?.Stop();
+            Program.Engine?.Stop(false);
             Program.Engine?.ShutdownService();
             Program.Engine = null;
         }

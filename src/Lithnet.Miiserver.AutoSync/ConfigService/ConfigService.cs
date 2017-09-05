@@ -31,7 +31,6 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     s.Description.Behaviors.Add(ConfigServiceConfiguration.ServiceDebugBehavior);
                     Trace.WriteLine("Added service debug behavior");
-
                 }
                 else
                 {
@@ -124,11 +123,16 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public void Stop(string managementAgentName)
+        public void CancelRun(string managementAgentName)
+        {
+            Program.Engine?.CancelRun(managementAgentName);
+        }
+
+        public void Stop(string managementAgentName, bool cancelRun)
         {
             try
             {
-                Program.Engine?.Stop(managementAgentName);
+                Program.Engine?.Stop(managementAgentName, cancelRun);
             }
             catch (Exception ex)
             {
@@ -151,11 +155,11 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public void StopAll()
+        public void StopAll(bool cancelRuns)
         {
             try
             {
-                Program.Engine?.Stop();
+                Program.Engine?.Stop(cancelRuns);
             }
             catch (Exception ex)
             {
@@ -178,9 +182,9 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public ExecutorState GetEngineState()
+        public ControlState GetEngineState()
         {
-            return Program.Engine?.State ?? ExecutorState.Stopped;
+            return Program.Engine?.State ?? ControlState.Stopped;
         }
 
         public IList<string> GetManagementAgentNames()

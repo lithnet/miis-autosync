@@ -40,9 +40,14 @@ namespace Lithnet.Miiserver.AutoSync
             return this.Channel.IsPendingRestart();
         }
 
-        public void Stop(string managementAgentName)
+        public void Stop(string managementAgentName, bool cancelRun)
         {
-            this.Channel.Stop(managementAgentName);
+            this.Channel.Stop(managementAgentName, cancelRun);
+        }
+
+        public void CancelRun(string managementAgentName)
+        {
+            this.Channel.CancelRun(managementAgentName);
         }
 
         public void Start(string managementAgentName)
@@ -50,9 +55,9 @@ namespace Lithnet.Miiserver.AutoSync
             this.Channel.Start(managementAgentName);
         }
 
-        public void StopAll()
+        public void StopAll(bool cancelRuns)
         {
-            this.Channel.StopAll();
+            this.Channel.StopAll(cancelRuns);
         }
 
         public void StartAll()
@@ -60,7 +65,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.Channel.StartAll();
         }
 
-        public ExecutorState GetEngineState()
+        public ControlState GetEngineState()
         {
             return this.Channel.GetEngineState();
         }

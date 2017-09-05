@@ -243,7 +243,9 @@
                             <Label
                                 Grid.Row="0"
                                 Grid.Column="0"
-                                Content="Execution mode"/>
+                                Content="Execution mode"
+                                Margin="0 10 10 0"
+                                />
                             
                             <StackPanel Grid.Row="0"
                                         Grid.Column="1"

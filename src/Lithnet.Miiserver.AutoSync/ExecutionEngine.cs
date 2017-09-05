@@ -21,7 +21,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private CancellationTokenSource cancellationToken;
 
-        public ExecutorState State { get; set; }
+        public ControlState State { get; set; }
 
         public ExecutionEngine()
         {
@@ -35,19 +35,19 @@ namespace Lithnet.Miiserver.AutoSync
         {
             lock (ExecutionEngine.ServiceControlLock)
             {
-                this.State = ExecutorState.Starting;
+                this.State = ControlState.Starting;
                 this.StartMAExecutors();
-                this.State = ExecutorState.Running;
+                this.State = ControlState.Running;
             }
         }
 
-        public void Stop()
+        public void Stop(bool cancelRuns)
         {
             lock (ExecutionEngine.ServiceControlLock)
             {
-                this.State = ExecutorState.Stopping;
-                this.StopMAExecutors();
-                this.State = ExecutorState.Stopped;
+                this.State = ControlState.Stopping;
+                this.StopMAExecutors(cancelRuns);
+                this.State = ControlState.Stopped;
             }
         }
 
@@ -56,7 +56,7 @@ namespace Lithnet.Miiserver.AutoSync
             foreach (string item in this.GetManagementAgentsPendingRestart())
             {
                 Logger.WriteLine($"Restarting executor '{item}' with new configuration");
-                this.Stop(item);
+                this.Stop(item, false);
                 this.Start(item);
             }
         }
@@ -124,14 +124,23 @@ namespace Lithnet.Miiserver.AutoSync
 
             this.service = null;
         }
-
-        public void Stop(string managementAgentName)
+        public void CancelRun(string managementAgentName)
         {
             MAExecutor e = this.GetExecutorOrThrow(managementAgentName);
 
             lock (e)
             {
-                e.Stop();
+                e.CancelRun();
+            }
+        }
+
+        public void Stop(string managementAgentName, bool cancelRun)
+        {
+            MAExecutor e = this.GetExecutorOrThrow(managementAgentName);
+
+            lock (e)
+            {
+                e.Stop(cancelRun);
             }
         }
 
@@ -241,6 +250,11 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void StopMAExecutors()
         {
+            this.StopMAExecutors(false);
+        }
+
+        private void StopMAExecutors(bool cancelRun)
+        {
             if (this.maExecutors == null)
             {
                 return;
@@ -258,7 +272,7 @@ namespace Lithnet.Miiserver.AutoSync
                     {
                         lock (e)
                         {
-                            e.Stop();
+                            e.Stop(cancelRun);
                         }
                     }
                     catch (OperationCanceledException)
@@ -269,7 +283,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             Logger.WriteLine("Waiting for executors to stop");
 
-            if (!Task.WaitAll(stopTasks.ToArray(), 90000))
+            if (!Task.WaitAll(stopTasks.ToArray(), 10000))
             {
                 Logger.WriteLine("Timeout waiting for executors to stop");
                 throw new TimeoutException();
@@ -279,7 +293,7 @@ namespace Lithnet.Miiserver.AutoSync
                 Logger.WriteLine("Executors stopped successfully");
             }
 
-            this.State = ExecutorState.Stopped;
+            this.State = ControlState.Stopped;
         }
 
         private MAExecutor GetExecutorOrThrow(string managementAgentName)

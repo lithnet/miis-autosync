@@ -86,20 +86,30 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public ControlState ControlState { get; private set; }
 
+        public ExecutorState ExecutionState { get; private set; }
+
         public ObservableCollection<string> DetailMessages { get; private set; }
 
         public ObservableCollection<RunProfileResultViewModel> RunHistory { get; private set; }
 
         [AlsoNotifyFor(nameof(LockIcon))]
-        public bool HasLock { get; private set; }
+        public bool HasExclusiveLock { get; private set; }
+
+
+        [AlsoNotifyFor(nameof(LockIcon))]
+        public bool HasSyncLock { get; private set; }
 
         public BitmapImage LockIcon
         {
             get
             {
-                if (this.HasLock)
+                if (this.HasExclusiveLock)
                 {
                     return App.GetImageResource("Lock.ico");
+                }
+                else if (this.HasSyncLock)
+                {
+                    return App.GetImageResource("sLock.ico");
                 }
                 else
                 {
@@ -108,6 +118,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
         }
 
+
         public void MAStatusChanged(MAStatus status)
         {
             this.Message = status.Message;
@@ -115,7 +126,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.ExecutionQueue = status.ExecutionQueue;
             this.DisplayState = status.DisplayState;
             this.ControlState = status.ControlState;
-            this.HasLock = status.HasExclusiveLock | status.HasSyncLock;
+            this.ExecutionState = status.ExecutionState;
+            this.HasExclusiveLock = status.HasExclusiveLock;
+            this.HasSyncLock = status.HasSyncLock;
 
             this.Disabled = this.ControlState == ControlState.Disabled;
             this.AddDetailMessage(status.Detail);
@@ -207,7 +220,21 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 Header = "Stop",
                 Icon = App.GetImageResource("Stop.ico"),
-                Command = new DelegateCommand(t => this.Stop(), t => this.CanStop()),
+                Command = new DelegateCommand(t => this.Stop(false), t => this.CanStop()),
+            });
+
+            this.MenuItems.Add(new MenuItemViewModel()
+            {
+                Header = "Stop and cancel run",
+                Icon = App.GetImageResource("Stop.ico"),
+                Command = new DelegateCommand(t => this.Stop(true), t => this.CanStop() && this.CanCancelRun()),
+            });
+
+            this.MenuItems.Add(new MenuItemViewModel()
+            {
+                Header = "Cancel run",
+                Icon = App.GetImageResource("Cancel.ico"),
+                Command = new DelegateCommand(t => this.CancelRun(), t => this.CanCancelRun()),
             });
 
             try
@@ -259,12 +286,12 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
         }
 
-        private void Stop()
+        private void Stop(bool cancelRun)
         {
             try
             {
                 ConfigClient c = new ConfigClient();
-                c.InvokeThenClose(x => x.Stop(this.ManagementAgentName));
+                c.InvokeThenClose(x => x.Stop(this.ManagementAgentName, cancelRun));
             }
             catch (Exception ex)
             {
@@ -281,6 +308,25 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         private bool CanStop()
         {
             return this.ControlState == ControlState.Running;
+        }
+
+        private bool CanCancelRun()
+        {
+            return this.ExecutionState != ExecutorState.Idle;
+        }
+
+        private void CancelRun()
+        {
+            try
+            {
+                ConfigClient c = new ConfigClient();
+                c.InvokeThenClose(x => x.CancelRun(this.ManagementAgentName));
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex);
+                MessageBox.Show($"Could not cancel the management agent\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void Start()

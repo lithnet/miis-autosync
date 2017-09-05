@@ -17,25 +17,6 @@ namespace Lithnet.Miiserver.AutoSync
         [EnumMember]
         Processing = 3,
 
-        [EnumMember]
-        Stopped = 4,
 
-        [EnumMember]
-        Disabled = 5,
-
-        [EnumMember]
-        Stopping = 6,
-
-        [EnumMember]
-        Starting = 7,
-
-        [EnumMember]
-        Paused = 8,
-
-        [EnumMember]
-        Pausing = 9,
-
-        [EnumMember]
-        Resuming = 10,
     }
 }
