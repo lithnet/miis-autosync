@@ -123,13 +123,16 @@
                 </ResourceDictionary>
             </TreeView.Resources>
         </TreeView>
-        <ScrollViewer  HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.Row="2"  Grid.Column="2" Grid.ColumnSpan="2">
-            <ContentControl Content="{Binding Path=SelectedItem, ElementName=TreeViewMain}" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType={x:Type ScrollContentPresenter}}}" >
+        <!--<ScrollViewer  HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.Row="2"  Grid.Column="2" Grid.ColumnSpan="2">-->
+        <ContentControl Content="{Binding Path=SelectedItem, ElementName=TreeViewMain}" 
+                            Grid.Row="2"  Grid.Column="2" Grid.ColumnSpan="2"> 
+            <!--Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType={x:Type ScrollContentPresenter}}}" 
+                            Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType={x:Type ScrollContentPresenter}}}" >-->
                 <ContentControl.Resources>
                     <ResourceDictionary Source="/ResourceDictionaries/ItemViewDictionary.xaml"/>
                 </ContentControl.Resources>
             </ContentControl>
-        </ScrollViewer>
+        <!--</ScrollViewer>-->
     </Grid>
 </controls:MetroWindow>
 

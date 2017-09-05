@@ -11,9 +11,26 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
     public class RunProfileResultViewModel : ViewModelBase
     {
-        public string RunProfileName { get; set; }
+        private RunProfileExecutionCompleteEventArgs e;
 
-        public string Result { get; set; }
+        public RunProfileResultViewModel(RunProfileExecutionCompleteEventArgs e)
+        {
+            this.e = e;
+        }
+
+        public string FormattedEndDate => this.EndDate?.ToString("g");
+
+        public string FormattedStartDate => this.StartDate?.ToString("g");
+
+        public DateTime? EndDate => this.e.EndDate;
+
+        public DateTime? StartDate => this.e.StartDate;
+
+        public int RunNumber => this.e.RunNumber;
+
+        public string RunProfileName => this.e.RunProfileName;
+        
+        public string Result => this.e.Result;
 
         [DependsOn(nameof(Result))]
         public new BitmapImage DisplayIcon

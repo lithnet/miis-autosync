@@ -53,7 +53,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         internal delegate void MAStateChangedEventHandler(MAStatus status);
 
-        internal delegate void RunProfileExecutionCompleteEventHandler(string runProfileName, string runProfileResult);
+        internal delegate void RunProfileExecutionCompleteEventHandler(RunProfileExecutionCompleteEventArgs e);
 
         internal static void NotifySubscribersOnStatusChange(MAStatus status)
         {
@@ -71,13 +71,13 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        internal static void NotifySubscribersOnRunProfileExecutionComplete(string managementAgentName, string runProfileName, string runProfileResult)
+        internal static void NotifySubscribersOnRunProfileExecutionComplete(string managementAgentName, RunProfileExecutionCompleteEventArgs e)
         {
             if (EventService.executionCompleteEventHandlers.ContainsKey(managementAgentName))
             {
                 try
                 {
-                    EventService.executionCompleteEventHandlers[managementAgentName]?.Invoke(runProfileName, runProfileResult);
+                    EventService.executionCompleteEventHandlers[managementAgentName]?.Invoke(e);
                 }
                 catch (Exception ex)
                 {

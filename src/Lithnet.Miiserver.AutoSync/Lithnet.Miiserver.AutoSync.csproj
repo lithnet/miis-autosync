@@ -101,6 +101,7 @@
     <Compile Include="Enums\ControlState.cs" />
     <Compile Include="Enums\ExecutorState.cs" />
     <Compile Include="Enums\RunMode.cs" />
+    <Compile Include="EventArgs\RunProfileExecutionCompleteEventArgs.cs" />
     <Compile Include="EventArgs\TriggerMessageEventArgs.cs" />
     <Compile Include="EventArgs\MAStatusChangedEventArgs.cs" />
     <Compile Include="EventService\EventClient.cs" />

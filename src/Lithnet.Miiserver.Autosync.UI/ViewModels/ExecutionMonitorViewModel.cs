@@ -136,9 +136,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public new BitmapImage DisplayIcon => this.lastRunResult?.DisplayIcon;
 
-        public void RunProfileExecutionComplete(string runProfileName, string result)
+        public void RunProfileExecutionComplete(RunProfileExecutionCompleteEventArgs e)
         {
-            this.AddRunProfileHistory(runProfileName, result);
+            this.AddRunProfileHistory(e);
         }
 
         private string lastDetail;
@@ -174,18 +174,14 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private RunProfileResultViewModel lastRunResult;
 
-        private void AddRunProfileHistory(string runProfileName, string runProfileResult)
+        private void AddRunProfileHistory(RunProfileExecutionCompleteEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(runProfileName))
+            if (string.IsNullOrWhiteSpace(e.RunProfileName))
             {
                 return;
             }
 
-            RunProfileResultViewModel t = new RunProfileResultViewModel
-            {
-                RunProfileName = runProfileName,
-                Result = runProfileResult
-            };
+            RunProfileResultViewModel t = new RunProfileResultViewModel(e);
 
             this.lastRunResult = t;
             this.LastRunProfileName = t.RunProfileName;

@@ -207,9 +207,9 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        private void X_RunProfileExecutionComplete(object sender, string runProfileName, string result)
+        private void X_RunProfileExecutionComplete(object sender, RunProfileExecutionCompleteEventArgs e)
         {
-            EventService.NotifySubscribersOnRunProfileExecutionComplete(((MAExecutor)sender).ManagementAgentName, runProfileName, result);
+            EventService.NotifySubscribersOnRunProfileExecutionComplete(((MAExecutor)sender).ManagementAgentName, e);
         }
 
         private void X_StateChanged(object sender, MAStatusChangedEventArgs e)

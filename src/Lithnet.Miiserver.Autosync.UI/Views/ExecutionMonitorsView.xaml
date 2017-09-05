@@ -123,7 +123,7 @@
 
             <Grid Grid.Row="3" >
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="320"/>
+                    <ColumnDefinition Width="465"/>
                     <ColumnDefinition Width="5"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
@@ -154,8 +154,9 @@
                     <ListView.View>
                         <GridView>
                             <GridViewColumn CellTemplate="{StaticResource ImageTemplate}"/>
-                            <GridViewColumn Header="Run profile" DisplayMemberBinding="{Binding RunProfileName}"/>
-                            <GridViewColumn Header="Result" DisplayMemberBinding="{Binding Result}" Width="200"/>
+                            <GridViewColumn Header="Date" DisplayMemberBinding="{Binding Path=FormattedEndDate}"/>
+                            <GridViewColumn Header="Run profile" DisplayMemberBinding="{Binding Path=RunProfileName}"/>
+                            <GridViewColumn Header="Result" DisplayMemberBinding="{Binding Path=Result}" Width="200"/>
                         </GridView>
                     </ListView.View>
                 </ListView>

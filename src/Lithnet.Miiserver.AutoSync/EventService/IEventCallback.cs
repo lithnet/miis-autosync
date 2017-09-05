@@ -13,6 +13,6 @@ namespace Lithnet.Miiserver.AutoSync
         void MAStatusChanged(MAStatus status);
 
         [OperationContract(IsOneWay = true)]
-        void RunProfileExecutionComplete(string runProfileName, string result);
+        void RunProfileExecutionComplete(RunProfileExecutionCompleteEventArgs e);
     }
 }

@@ -21,7 +21,7 @@ namespace Lithnet.Miiserver.AutoSync
         public delegate void SyncCompleteEventHandler(object sender, SyncCompleteEventArgs e);
         public static event SyncCompleteEventHandler SyncComplete;
 
-        public delegate void RunProfileExecutionCompleteEventHandler(object sender, string runProfileName, string result);
+        public delegate void RunProfileExecutionCompleteEventHandler(object sender, RunProfileExecutionCompleteEventArgs e);
         public event RunProfileExecutionCompleteEventHandler RunProfileExecutionComplete;
 
         public delegate void StateChangedEventHandler(object sender, MAStatusChangedEventArgs e);
@@ -509,6 +509,7 @@ namespace Lithnet.Miiserver.AutoSync
                 }
 
                 int count = 0;
+                RunDetails r = null;
 
                 while (count <= RegistrySettings.RetryCount || RegistrySettings.RetryCount < 0)
                 {
@@ -539,14 +540,20 @@ namespace Lithnet.Miiserver.AutoSync
                         this.Log($"{e.RunProfileName} returned {result}");
                         this.UpdateExecutionStatus(ExecutorState.Processing, "Evaluating run results");
                     }
-
-                    this.RunProfileExecutionComplete?.Invoke(this, e.RunProfileName, result);
-
+                    
                     if (ts.IsCancellationRequested)
                     {
                         this.Log($"The run profile {e.RunProfileName} was canceled");
                         return;
                     }
+
+                    this.Wait(RegistrySettings.PostRunInterval, nameof(RegistrySettings.PostRunInterval), ts);
+
+                    this.Trace("Getting run results");
+                    r = this.ma.GetLastRun();
+                    this.Trace("Got run results");
+
+                    this.RunProfileExecutionComplete?.Invoke(this, new RunProfileExecutionCompleteEventArgs(this.ManagementAgentName, r.RunProfileName, r.LastStepStatus, r.RunNumber, r.StartTime, r.EndTime));
 
                     if (RegistrySettings.RetryCodes.Contains(result))
                     {
@@ -572,12 +579,8 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                 }
 
-                this.Wait(RegistrySettings.PostRunInterval, nameof(RegistrySettings.PostRunInterval), ts);
-
-                this.Trace("Getting run results");
-                using (RunDetails r = this.ma.GetLastRun())
+                if (r != null)
                 {
-                    this.Trace("Got run results");
                     this.PerformPostRunActions(r);
                 }
             }
@@ -664,7 +667,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 using (RunDetails ur = this.ma.GetLastRun())
                 {
-                    this.RunProfileExecutionComplete?.Invoke(this, ur.RunProfileName, ur.LastStepStatus);
+                    this.RunProfileExecutionComplete?.Invoke(this, new RunProfileExecutionCompleteEventArgs(this.ManagementAgentName, ur.RunProfileName, ur.LastStepStatus, ur.RunNumber, ur.StartTime, ur.EndTime));
                     this.PerformPostRunActions(ur);
                 }
             }
