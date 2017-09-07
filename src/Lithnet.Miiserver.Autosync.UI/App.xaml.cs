@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using Lithnet.Logging;
 using Lithnet.Miiserver.Client;
 
@@ -22,6 +23,8 @@ namespace Lithnet.Miiserver.AutoSync.UI
         public App()
         {
             AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
+            TaskScheduler.UnobservedTaskException += this.TaskScheduler_UnobservedTaskException;
+            Application.Current.DispatcherUnhandledException += this.Dispatcher_UnhandledException; // WPF app
 
             ServiceController sc = new ServiceController("autosync");
 
@@ -97,7 +100,24 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
         private object lockObject = new object();
 
+      
+
+        private void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+        {
+            this.HandleException(e.Exception);
+        }
+
+        private void Dispatcher_UnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+        {
+            this.HandleException(e.Exception);
+        }
+
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            this.HandleException((Exception)e.ExceptionObject);
+        }
+
+        private void HandleException(Exception e)
         {
             lock (this.lockObject)
             {
@@ -125,9 +145,9 @@ namespace Lithnet.Miiserver.AutoSync.UI
                 }
 
                 Logger.WriteLine("Unhandled exception in application");
-                Logger.WriteLine(e.ExceptionObject?.ToString());
+                Logger.WriteLine(e.ToString());
                 MessageBox.Show(
-                    $"An unexpected error occurred and the editor will terminate\n\n {((Exception)e.ExceptionObject)?.Message}",
+                    $"An unexpected error occurred and the editor will terminate\n\n {e.Message}",
                     "Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);

@@ -7,6 +7,7 @@ using System.IO;
 using System.Timers;
 using System.ServiceModel;
 using System.Threading;
+using System.Threading.Tasks;
 using Timer = System.Timers.Timer;
 
 namespace Lithnet.Miiserver.AutoSync
@@ -39,7 +40,8 @@ namespace Lithnet.Miiserver.AutoSync
         public static void Main(string[] args)
         {
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-
+            TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
+            
             bool runService = args != null && args.Contains("/service");
             Logger.LogPath = RegistrySettings.LogPath;
 
@@ -69,6 +71,13 @@ namespace Lithnet.Miiserver.AutoSync
                 Start();
                 Thread.Sleep(Timeout.Infinite);
             }
+        }
+
+        private static void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+        {
+            Logger.WriteLine("A task exception was not observed");
+            Logger.WriteException(e.Exception);
+            e.SetObserved();
         }
 
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)

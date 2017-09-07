@@ -16,7 +16,7 @@ namespace Lithnet.Miiserver.AutoSync
         protected static ManualResetEvent GlobalStaggeredExecutionLock;
         protected static ManualResetEvent GlobalExclusiveOperationLock;
         protected static ManualResetEvent GlobalSynchronizationStepLock;
-        protected static ConcurrentBag<WaitHandle> AllMaLocalOperationLocks;
+        protected static ConcurrentDictionary<Guid, WaitHandle> AllMaLocalOperationLocks;
 
         public delegate void SyncCompleteEventHandler(object sender, SyncCompleteEventArgs e);
         public static event SyncCompleteEventHandler SyncComplete;
@@ -153,7 +153,7 @@ namespace Lithnet.Miiserver.AutoSync
             MAExecutor.GlobalSynchronizationStepLock = new ManualResetEvent(true);
             MAExecutor.GlobalStaggeredExecutionLock = new ManualResetEvent(true);
             MAExecutor.GlobalExclusiveOperationLock = new ManualResetEvent(true);
-            MAExecutor.AllMaLocalOperationLocks = new ConcurrentBag<WaitHandle>();
+            MAExecutor.AllMaLocalOperationLocks = new ConcurrentDictionary<Guid, WaitHandle>();
         }
 
         public MAExecutor(ManagementAgent ma)
@@ -165,10 +165,10 @@ namespace Lithnet.Miiserver.AutoSync
             this.ExecutionTriggers = new List<IMAExecutionTrigger>();
             this.localOperationLock = new ManualResetEvent(true);
             this.serviceControlLock = new ManualResetEvent(true);
-            MAExecutor.AllMaLocalOperationLocks.Add(this.localOperationLock);
+            MAExecutor.AllMaLocalOperationLocks.TryAdd(this.ma.ID, this.localOperationLock);
             MAExecutor.SyncComplete += this.MAExecutor_SyncComplete;
         }
-
+  
         internal void RaiseStateChange()
         {
             this.StateChanged?.Invoke(this, new MAStatusChangedEventArgs(this.InternalStatus, this.ma.Name));
@@ -1022,7 +1022,7 @@ namespace Lithnet.Miiserver.AutoSync
                     this.Message = "Waiting for other MAs to finish";
                     this.Log("Waiting for all MAs to complete");
                     // Wait for all  MAs to finish their current job
-                    this.Wait(MAExecutor.AllMaLocalOperationLocks.ToArray(), nameof(MAExecutor.AllMaLocalOperationLocks), this.jobCancellationTokenSource);
+                    this.Wait(MAExecutor.AllMaLocalOperationLocks.Values.ToArray(), nameof(MAExecutor.AllMaLocalOperationLocks), this.jobCancellationTokenSource);
                 }
 
                 if (this.StepRequiresSyncLock(action.RunProfileName))

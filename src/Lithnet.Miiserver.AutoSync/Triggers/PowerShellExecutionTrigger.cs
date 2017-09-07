@@ -77,7 +77,8 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     this.cancellationToken.Token.ThrowIfCancellationRequested();
 
-                    this.powershell.Commands.Clear();
+                    this.powershell.ResetState();
+
                     this.powershell.AddCommand("Get-RunProfileToExecute");
 
                     Collection<PSObject> results;
@@ -114,7 +115,7 @@ namespace Lithnet.Miiserver.AutoSync
                             continue;
                         }
                     }
-
+                  
                     foreach (PSObject result in results)
                     {
                         string runProfileName = result.BaseObject as string;

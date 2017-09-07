@@ -75,7 +75,7 @@ namespace Lithnet.Miiserver.AutoSync
                 return true;
             }
 
-            this.powershell.Commands.Clear();
+            this.powershell.ResetState();
             this.powershell.AddCommand("ShouldExecute");
             this.powershell.AddArgument(runProfileName);
 
@@ -129,7 +129,7 @@ namespace Lithnet.Miiserver.AutoSync
                 return;
             }
 
-            this.powershell.Commands.Clear();
+            this.powershell.ResetState();
             this.powershell.AddCommand("ExecutionComplete");
             this.powershell.AddArgument(d);
 

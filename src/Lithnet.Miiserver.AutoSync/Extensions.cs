@@ -13,6 +13,17 @@ namespace Lithnet.Miiserver.AutoSync
 {
     public static class Extensions
     {
+        public static void ResetState(this PowerShell powershell)
+        {
+            powershell.Streams.Error.Clear();
+            powershell.Streams.Warning.Clear();
+            powershell.Streams.Verbose.Clear();
+            powershell.Streams.Progress.Clear();
+            powershell.Streams.Debug.Clear();
+            powershell.Streams.Information.Clear();
+            powershell.Commands.Clear();
+        }
+
         public static void ThrowOnPipelineError(this PowerShell powershell)
         {
             if (!powershell.HadErrors)
@@ -23,7 +34,7 @@ namespace Lithnet.Miiserver.AutoSync
             Logger.WriteLine("The PowerShell script encountered an error");
 
             StringBuilder b = new StringBuilder();
-
+            
             foreach (ErrorRecord error in powershell.Streams.Error)
             {
                 if (error.ErrorDetails != null)
