@@ -7,7 +7,6 @@ using System.Linq;
 using System.Windows;
 using Lithnet.Common.Presentation;
 using Lithnet.Miiserver.AutoSync.UI.Windows;
-using Lithnet.Miiserver.Client;
 using Microsoft.Win32;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
@@ -148,7 +147,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public string ScheduledImportRunProfileToolTip => "Called automatically by AutoSync when the 'Schedule an import if it has been longer than x minutes since the last import' operation option has been specified";
 
-
         public int Version => this.Model.Version;
 
         public string FullSyncRunProfileName
@@ -229,17 +227,13 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private IEnumerable<string> GetRunProfileNames(bool includeMultiStep)
         {
-            yield return "(none)";
+            List<string> items = new List<string>();
+            items.Add("(none)");
 
-            if (this.Model?.ManagementAgent?.RunProfiles == null)
-            {
-                yield break;
-            }
+            ConfigClient c = new ConfigClient();
+            c.InvokeThenClose(u => items.AddRange(c.GetManagementAgentRunProfileNames(this.ManagementAgentName, false)));
 
-            foreach (KeyValuePair<string, RunConfiguration> i in this.Model.ManagementAgent.RunProfiles.Where(t => includeMultiStep || t.Value.RunSteps.Count == 1))
-            {
-                yield return i.Key;
-            }
+            return items;
         }
 
         public MAExecutionTriggersViewModel Triggers { get; private set; }
@@ -260,7 +254,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             try
             {
                 AddTriggerWindow window = new AddTriggerWindow { DataContext = this };
-                this.GetAllowedTypesForMa(this.Model.ManagementAgent);
+                this.GetAllowedTypesForMa();
                 this.SelectedTrigger = this.AllowedTriggers?.FirstOrDefault();
 
                 if (window.ShowDialog() == true)
@@ -270,7 +264,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                         return;
                     }
 
-                    IMAExecutionTrigger instance = (IMAExecutionTrigger)Activator.CreateInstance(this.SelectedTrigger, this.Model.ManagementAgent);
+                    ConfigClient c = new ConfigClient();
+                    IMAExecutionTrigger instance = c.InvokeThenClose(t => t.CreateTriggerForManagementAgent(this.SelectedTrigger.FullName, this.ManagementAgentName));
                     this.Triggers.Add(instance, true);
                     this.Triggers.Find(instance).IsDirtySet += this.MAConfigParametersViewModel_IsDirtySet;
                 }
@@ -290,7 +285,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 {
                     if (!this.IsMissing)
                     {
-                        this.GetAllowedTypesForMa(this.Model.ManagementAgent);
+                        this.GetAllowedTypesForMa();
                     }
                 }
 
@@ -300,39 +295,28 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public Type SelectedTrigger { get; set; }
 
-        private void GetAllowedTypesForMa(ManagementAgent ma)
+        private void GetAllowedTypesForMa()
         {
             this.allowedTypes = new List<Type>();
 
-            if (ActiveDirectoryChangeTrigger.CanCreateForMA(ma))
+            ConfigClient c = new ConfigClient();
+            IList<string> allowedTypeNames = c.InvokeThenClose(t => t.GetAllowedTriggerTypesForMA(this.ManagementAgentName));
+
+            foreach (Type mytype in typeof(IMAExecutionTrigger).Assembly.GetTypes()
+                .Where(mytype => mytype.GetInterfaces().Contains(typeof(IMAExecutionTrigger))))
             {
-                if (!this.Triggers.Any(t => t is ActiveDirectoryChangeTriggerViewModel))
+                if (allowedTypeNames.Contains(mytype.FullName))
                 {
-                    this.allowedTypes.Add(typeof(ActiveDirectoryChangeTrigger));
+                    if (MAExecutionTrigger.SingleInstanceTriggers.Contains(mytype))
+                    {
+                        if (this.Triggers.Any(t => t.Model.GetType() == mytype))
+                        {
+                            continue;
+                        }
+                    }
+
+                    this.allowedTypes.Add(mytype);
                 }
-            }
-
-            if (FimServicePendingImportTrigger.CanCreateForMA(ma))
-            {
-                if (!this.Triggers.Any(t => t is FimServicePendingImportTriggerViewModel))
-                {
-                    this.allowedTypes.Add(typeof(FimServicePendingImportTrigger));
-                }
-            }
-
-            if (IntervalExecutionTrigger.CanCreateForMA(ma))
-            {
-                this.allowedTypes.Add(typeof(IntervalExecutionTrigger));
-            }
-
-            if (PowerShellExecutionTrigger.CanCreateForMA(ma))
-            {
-                this.allowedTypes.Add(typeof(PowerShellExecutionTrigger));
-            }
-
-            if (ScheduledExecutionTrigger.CanCreateForMA(ma))
-            {
-                this.allowedTypes.Add(typeof(ScheduledExecutionTrigger));
             }
         }
 
@@ -415,7 +399,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                     openFileDialog.InitialDirectory = Path.GetDirectoryName(this.MAControllerPath) ?? Environment.CurrentDirectory;
                     openFileDialog.FileName = Path.GetFileName(this.MAControllerPath) ?? "*.ps1";
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Trace.WriteLine(ex);
                 }

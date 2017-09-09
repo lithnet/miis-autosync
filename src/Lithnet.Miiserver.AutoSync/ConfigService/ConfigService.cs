@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Lithnet.Logging;
 using System.Diagnostics;
+using System.Reflection;
 using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync
@@ -197,19 +198,64 @@ namespace Lithnet.Miiserver.AutoSync
             return ManagementAgent.GetManagementAgents().Select(t => t.Name).ToList();
         }
 
-        public IList<string> GetManagementAgentRunProfileNames(string managementAgentName)
+        public IList<string> GetManagementAgentRunProfileNames(string managementAgentName, bool includeMultiStep)
         {
+            List<string> items = new List<string>();
+
             try
             {
                 ManagementAgent ma = ManagementAgent.GetManagementAgent(managementAgentName);
-                return ma.RunProfiles.Keys.ToList();
+
+                foreach (KeyValuePair<string, RunConfiguration> i in ma.RunProfiles.Where(t => includeMultiStep || t.Value.RunSteps.Count == 1))
+                {
+                    items.Add(i.Key);
+                }
             }
             catch (Exception ex)
             {
                 Logger.WriteLine("A request to get the run profile names failed");
                 Logger.WriteException(ex);
-                return null;
             }
+
+            return items;
+        }
+
+        public IList<string> GetAllowedTriggerTypesForMA(string managementAgentName)
+        {
+            List<string> allowedTypes = new List<string>();
+
+            ManagementAgent ma = ManagementAgent.GetManagementAgent(managementAgentName);
+
+            foreach (Type t in Assembly.GetExecutingAssembly().GetTypes()
+                .Where(mytype => mytype.GetInterfaces().Contains(typeof(IMAExecutionTrigger))))
+            {
+                MethodInfo i = t.GetMethod("CanCreateForMA");
+
+                if (i != null)
+                {
+                    if ((bool)i.Invoke(null, new object[] { ma }))
+                    {
+                        allowedTypes.Add(t.FullName);
+                    }
+                }
+            }
+
+            return allowedTypes;
+        }
+
+        public IMAExecutionTrigger CreateTriggerForManagementAgent(string type, string managementAgentName)
+        {
+            ManagementAgent ma = ManagementAgent.GetManagementAgent(managementAgentName);
+            Type t = Type.GetType(type);
+
+            if (t == null)
+            {
+                throw new InvalidOperationException($"Could not create trigger for management agent {managementAgentName} because the type {type} was unknown");
+            }
+
+            IMAExecutionTrigger instance = (IMAExecutionTrigger)Activator.CreateInstance(t, ma);
+
+            return instance;
         }
 
         public void AddToExecutionQueue(string managementAgentName, string runProfileName)

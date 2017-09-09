@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using Lithnet.Miiserver.Client;
-using System.Text;
 using Lithnet.Logging;
 
 namespace Lithnet.Miiserver.AutoSync
@@ -15,8 +14,6 @@ namespace Lithnet.Miiserver.AutoSync
     [KnownType(typeof(ScheduledExecutionTrigger))]
     public class MAConfigParameters
     {
-        private ManagementAgent ma;
-
         [DataMember(Name = "id")]
         public Guid ManagementAgentID { get; set; }
 
@@ -39,7 +36,9 @@ namespace Lithnet.Miiserver.AutoSync
 
                 if (id.HasValue)
                 {
-                    this.ManagementAgent = ManagementAgent.GetManagementAgent(id.Value);
+                     var ma = ManagementAgent.GetManagementAgent(id.Value);
+                    this.ManagementAgentName = ma.Name;
+                    this.ManagementAgentID = ma.ID;
                     return;
                 }
             }
@@ -54,16 +53,16 @@ namespace Lithnet.Miiserver.AutoSync
             this.IsMissing = true;
         }
 
-        public ManagementAgent ManagementAgent
-        {
-            get => this.ma;
-            private set
-            {
-                this.ma = value;
-                this.ManagementAgentID = this.ma?.ID ?? Guid.Empty;
-                this.ManagementAgentName = this.ma?.Name;
-            }
-        }
+        //public ManagementAgent ManagementAgent
+        //{
+        //    get => this.ma;
+        //    private set
+        //    {
+        //        this.ma = value;
+        //        this.ManagementAgentID = this.ma?.ID ?? Guid.Empty;
+        //        this.ManagementAgentName = this.ma?.Name;
+        //    }
+        //}
 
         [DataMember(Name = "run-profile-confirming-import")]
         public string ConfirmingImportRunProfileName { get; set; }
@@ -98,9 +97,10 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "auto-import-interval")]
         public int AutoImportIntervalMinutes { get; set; }
 
-        public MAConfigParameters(ManagementAgent ma)
+        public MAConfigParameters(string managementAgentName, Guid managementAgentID)
         {
-            this.ManagementAgent = ma;
+            this.ManagementAgentName = managementAgentName;
+            this.ManagementAgentID = managementAgentID;
             this.Triggers = new List<IMAExecutionTrigger>();
         }
 

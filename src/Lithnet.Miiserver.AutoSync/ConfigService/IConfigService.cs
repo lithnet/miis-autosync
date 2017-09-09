@@ -7,6 +7,11 @@ using System.Threading.Tasks;
 
 namespace Lithnet.Miiserver.AutoSync
 {
+    [ServiceKnownType(typeof(ScheduledExecutionTrigger))]
+    [ServiceKnownType(typeof(ActiveDirectoryChangeTrigger))]
+    [ServiceKnownType(typeof(FimServicePendingImportTrigger))]
+    [ServiceKnownType(typeof(IntervalExecutionTrigger))]
+    [ServiceKnownType(typeof(PowerShellExecutionTrigger))]
     [ServiceContract(Namespace = "http://lithnet.local/autosync/config")]
     public interface IConfigService
     {
@@ -44,7 +49,13 @@ namespace Lithnet.Miiserver.AutoSync
         IList<string> GetManagementAgentNames();
 
         [OperationContract]
-        IList<string> GetManagementAgentRunProfileNames(string managementAgentName);
+        IList<string> GetManagementAgentRunProfileNames(string managementAgentName, bool includeMultiStep);
+
+        [OperationContract]
+        IList<string> GetAllowedTriggerTypesForMA(string managementAgentName);
+
+        [OperationContract]
+        IMAExecutionTrigger CreateTriggerForManagementAgent(string type, string managementAgentName);
 
         [OperationContract]
         void AddToExecutionQueue(string managementAgentName, string runProfileName);

@@ -74,9 +74,19 @@ namespace Lithnet.Miiserver.AutoSync
             return this.Channel.GetManagementAgentNames();
         }
 
-        public IList<string> GetManagementAgentRunProfileNames(string managementAgentName)
+        public IList<string> GetManagementAgentRunProfileNames(string managementAgentName, bool includeMultiStep)
         {
-            return this.Channel.GetManagementAgentRunProfileNames(managementAgentName);
+            return this.Channel.GetManagementAgentRunProfileNames(managementAgentName, includeMultiStep);
+        }
+
+        public IList<string> GetAllowedTriggerTypesForMA(string managementAgentName)
+        {
+            return this.Channel.GetAllowedTriggerTypesForMA(managementAgentName);
+        }
+
+        public IMAExecutionTrigger CreateTriggerForManagementAgent(string type, string managementAgentName)
+        {
+            return this.Channel.CreateTriggerForManagementAgent(type, managementAgentName);
         }
 
         public void AddToExecutionQueue(string managementAgentName, string runProfileName)

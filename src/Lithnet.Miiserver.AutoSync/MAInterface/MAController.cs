@@ -114,7 +114,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteLine("{0}: ShouldExecute handler threw an exception", this.config.ManagementAgent);
+                Logger.WriteLine("{0}: ShouldExecute handler threw an exception", this.config.ManagementAgentName);
                 Logger.WriteException(ex);
                 return false;
             }

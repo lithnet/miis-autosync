@@ -250,14 +250,17 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 };
 
                 ConfigClient c = new ConfigClient();
-                foreach (string rp in c.GetManagementAgentRunProfileNames(this.ManagementAgentName))
+                c.InvokeThenClose(u =>
                 {
-                    addrp.MenuItems.Add(new MenuItemViewModel()
+                    foreach (string rp in c.GetManagementAgentRunProfileNames(this.ManagementAgentName, true))
                     {
-                        Header = rp,
-                        Command = new DelegateCommand(t => this.AddToExecutionQueue(rp)),
-                    });
-                }
+                        addrp.MenuItems.Add(new MenuItemViewModel()
+                        {
+                            Header = rp,
+                            Command = new DelegateCommand(t => this.AddToExecutionQueue(rp)),
+                        });
+                    }
+                });
 
                 if (addrp.MenuItems.Count > 0)
                 {

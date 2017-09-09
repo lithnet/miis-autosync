@@ -1,16 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync
 {
-    public static class MAConfigDiscovery
+    internal static class MAConfigDiscovery
     {
-        internal static void DoAutoRunProfileDiscovery(MAConfigParameters config)
+        internal static void DoAutoRunProfileDiscovery(MAConfigParameters config, ManagementAgent ma)
         {
-            Trace.WriteLine("{config.ManagementAgentName}: Performing run profile auto-discovery");
-            ManagementAgent ma = config.ManagementAgent;
+            Trace.WriteLine($"{config.ManagementAgentName}: Performing run profile auto-discovery");
 
             bool match = false;
 
@@ -94,10 +94,8 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        internal static void AddDefaultTriggers(MAConfigParameters config)
+        internal static void AddDefaultTriggers(MAConfigParameters config, ManagementAgent ma)
         {
-            ManagementAgent ma = config.ManagementAgent;
-
             switch (ma.Category)
             {
                 case "FIM":

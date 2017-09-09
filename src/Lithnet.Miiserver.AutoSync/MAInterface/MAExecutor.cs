@@ -191,7 +191,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             if (!this.ma.Name.Equals(config.ManagementAgentName, StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException($"Configuration was provided for the management agent {config.ManagementAgent.Name} for an executor configured for {this.ma.Name}");
+                throw new InvalidOperationException($"Configuration was provided for the management agent {config.ManagementAgentName} for an executor configured for {this.ma.Name}");
             }
 
             this.Configuration = config;

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.Serialization;
 
@@ -12,6 +13,8 @@ namespace Lithnet.Miiserver.AutoSync
     [KnownType(typeof(ScheduledExecutionTrigger))]
     public abstract class MAExecutionTrigger : IMAExecutionTrigger
     {
+        public static IList<Type> SingleInstanceTriggers = new List<Type>() {typeof(ActiveDirectoryChangeTrigger), typeof(FimServicePendingImportTrigger)};
+        
         public abstract string DisplayName { get; }
 
         public abstract string Type { get; }
