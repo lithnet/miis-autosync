@@ -99,6 +99,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         [AlsoNotifyFor(nameof(LockIcon))]
         public bool HasSyncLock { get; private set; }
 
+        [AlsoNotifyFor(nameof(LockIcon))]
+        public bool HasForeignLock { get; private set; }
+
         public BitmapImage LockIcon
         {
             get
@@ -110,6 +113,10 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 else if (this.HasSyncLock)
                 {
                     return App.GetImageResource("sLock.ico");
+                }
+                else if (this.HasForeignLock)
+                {
+                    return App.GetImageResource("fLock.ico");
                 }
                 else
                 {
@@ -129,6 +136,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.ExecutionState = status.ExecutionState;
             this.HasExclusiveLock = status.HasExclusiveLock;
             this.HasSyncLock = status.HasSyncLock;
+            this.HasForeignLock = status.HasForeignLock;
 
             this.Disabled = this.ControlState == ControlState.Disabled;
             this.AddDetailMessage(status.Detail);

@@ -16,7 +16,7 @@ namespace Lithnet.Miiserver.AutoSync
         protected static ManualResetEvent GlobalStaggeredExecutionLock;
         protected static ManualResetEvent GlobalExclusiveOperationLock;
         protected static ManualResetEvent GlobalSynchronizationStepLock;
-        protected static ConcurrentDictionary<Guid, WaitHandle> AllMaLocalOperationLocks;
+        protected static ConcurrentDictionary<Guid, ManualResetEvent> AllMaLocalOperationLocks;
 
         public delegate void SyncCompleteEventHandler(object sender, SyncCompleteEventArgs e);
         public static event SyncCompleteEventHandler SyncComplete;
@@ -109,6 +109,19 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
+        public bool HasForeignLock
+        {
+            get => this.InternalStatus.HasForeignLock;
+            private set
+            {
+                if (this.InternalStatus.HasForeignLock != value)
+                {
+                    this.InternalStatus.HasForeignLock = value;
+                    this.RaiseStateChange();
+                }
+            }
+        }
+
         public bool HasExclusiveLock
         {
             get => this.InternalStatus.HasExclusiveLock;
@@ -153,7 +166,7 @@ namespace Lithnet.Miiserver.AutoSync
             MAExecutor.GlobalSynchronizationStepLock = new ManualResetEvent(true);
             MAExecutor.GlobalStaggeredExecutionLock = new ManualResetEvent(true);
             MAExecutor.GlobalExclusiveOperationLock = new ManualResetEvent(true);
-            MAExecutor.AllMaLocalOperationLocks = new ConcurrentDictionary<Guid, WaitHandle>();
+            MAExecutor.AllMaLocalOperationLocks = new ConcurrentDictionary<Guid, ManualResetEvent>();
         }
 
         public MAExecutor(ManagementAgent ma)
@@ -1001,6 +1014,8 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void TakeLocksAndExecute(ExecutionParameters action)
         {
+            ConcurrentBag<ManualResetEvent> otherLocks = new ConcurrentBag<ManualResetEvent>();
+
             try
             {
                 this.WaitOnUnmanagedRun();
@@ -1009,7 +1024,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 this.UpdateExecutionStatus(ExecutorState.Waiting, "Waiting for lock holder to finish", action.RunProfileName);
                 this.Wait(MAExecutor.GlobalExclusiveOperationLock, nameof(MAExecutor.GlobalExclusiveOperationLock), this.jobCancellationTokenSource);
-
+                
                 if (action.Exclusive)
                 {
                     this.Message = "Waiting to take lock";
@@ -1022,7 +1037,7 @@ namespace Lithnet.Miiserver.AutoSync
                     this.Message = "Waiting for other MAs to finish";
                     this.Log("Waiting for all MAs to complete");
                     // Wait for all  MAs to finish their current job
-                    this.Wait(MAExecutor.AllMaLocalOperationLocks.Values.ToArray(), nameof(MAExecutor.AllMaLocalOperationLocks), this.jobCancellationTokenSource);
+                    this.Wait(MAExecutor.AllMaLocalOperationLocks.Values.ToArray<WaitHandle>(), nameof(MAExecutor.AllMaLocalOperationLocks), this.jobCancellationTokenSource);
                 }
 
                 if (this.StepRequiresSyncLock(action.RunProfileName))
@@ -1034,8 +1049,44 @@ namespace Lithnet.Miiserver.AutoSync
                 }
 
                 // If another operation in this executor is already running, then wait for it to finish before taking the lock for ourselves
-                this.Message = "Waiting for lock on management agent";
+                this.Message = "Waiting to take lock";
                 this.WaitAndTakeLock(this.localOperationLock, nameof(this.localOperationLock), this.jobCancellationTokenSource);
+
+                if (this.Configuration.LockManagementAgents != null)
+                {
+                    List<Task> tasks = new List<Task>();
+
+                    foreach (string managementAgent in this.Configuration.LockManagementAgents)
+                    {
+                        Guid? id = Global.FindManagementAgent(managementAgent, Guid.Empty);
+
+                        if (id == null)
+                        {
+                            this.Log($"Cannot take lock for management agent {managementAgent} as the management agent cannot be found");
+                            continue;
+                        }
+
+                        if (id == this.ManagementAgentID)
+                        {
+                            this.Trace("Not going to wait on own lock!");
+                            continue;
+                        }
+
+                        tasks.Add(Task.Run(() =>
+                        {
+                            ManualResetEvent h = MAExecutor.AllMaLocalOperationLocks[id.Value];
+                            this.WaitAndTakeLock(h, $"localOperationLock for {managementAgent}", this.jobCancellationTokenSource);
+                            otherLocks.Add(h);
+                            this.HasForeignLock = true;
+                        }, this.jobCancellationTokenSource.Token));
+                    }
+
+                    if (tasks.Any())
+                    {
+                        this.Message = $"Waiting to take locks";
+                        Task.WaitAll(tasks.ToArray(), this.jobCancellationTokenSource.Token);
+                    }
+                }
 
                 // Grab the staggered execution lock, and hold for x seconds
                 // This ensures that no MA can start within x seconds of another MA
@@ -1079,6 +1130,16 @@ namespace Lithnet.Miiserver.AutoSync
                     // Reset the global lock so pending operations can run
                     this.ReleaseLock(MAExecutor.GlobalExclusiveOperationLock, nameof(MAExecutor.GlobalExclusiveOperationLock));
                     this.HasExclusiveLock = false;
+                }
+
+                if (otherLocks.Any())
+                {
+                    foreach (ManualResetEvent e in otherLocks)
+                    {
+                        this.ReleaseLock(e, "foreign localOperationLock");
+                    }
+
+                    this.HasForeignLock = false;
                 }
             }
         }
@@ -1370,40 +1431,6 @@ namespace Lithnet.Miiserver.AutoSync
 
             return Program.ActiveConfig.Settings.MailIgnoreReturnCodes == null ||
                 !Program.ActiveConfig.Settings.MailIgnoreReturnCodes.Contains(r.LastStepStatus, StringComparer.OrdinalIgnoreCase);
-        }
-
-        public override string ToString()
-        {
-            StringBuilder builder = new StringBuilder();
-
-            builder.AppendLine("--- Configuration ---");
-            builder.AppendLine(this.Configuration.ToString());
-
-            if (this.importCheckTimer?.Interval > 0 || this.Configuration.AutoImportScheduling != AutoImportScheduling.Disabled)
-            {
-                builder.AppendLine("--- Schedules ---");
-
-                if (this.importCheckTimer?.Interval > 0)
-                {
-                    builder.AppendLine($"Maximum allowed interval between imports: {new TimeSpan(0, 0, 0, 0, (int)this.importCheckTimer.Interval)}");
-                }
-
-                if (this.Configuration.AutoImportScheduling != AutoImportScheduling.Disabled && this.Configuration.AutoImportIntervalMinutes > 0)
-                {
-                    builder.AppendLine($"Scheduled import interval: {new TimeSpan(0, this.Configuration.AutoImportIntervalMinutes, 0)}");
-                }
-            }
-
-            builder.AppendLine();
-
-            builder.AppendLine("--- Triggers ---");
-
-            foreach (IMAExecutionTrigger trigger in this.ExecutionTriggers)
-            {
-                builder.AppendLine(trigger.ToString());
-            }
-
-            return builder.ToString();
         }
     }
 }

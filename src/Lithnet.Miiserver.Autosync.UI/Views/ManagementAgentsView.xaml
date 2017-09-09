@@ -3,10 +3,11 @@
                      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
                      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
                      xmlns:viewModels="clr-namespace:Lithnet.Miiserver.AutoSync.UI.ViewModels"
+                     xmlns:ui="clr-namespace:Lithnet.Miiserver.AutoSync.UI"
                      mc:Ignorable="d" >
 
-    <DataTemplate DataType="{x:Type viewModels:ManagementAgentsViewModel}">
-        <DockPanel LastChildFill="True">
+    <DataTemplate DataType="{x:Type viewModels:ManagementAgentsViewModel}" >
+        <DockPanel LastChildFill="True" ui:OnlineHelpProvider.HelpTopic="Management-agent-configuration">
             <Grid DockPanel.Dock="Bottom">
                 <Grid.RowDefinitions>
                     <RowDefinition />

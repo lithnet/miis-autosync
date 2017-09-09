@@ -13,8 +13,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
     {
         private const string PlaceholderPassword = "{5A4A203E-EBB9-4D47-A3D4-CD6055C6B4FF}";
 
-        private static char[] separators = new char[] {',', ';'};
-
         public SettingsViewModel(Settings model)
             : base(model)
         {
@@ -27,7 +25,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
             if (this.Model.MailIgnoreReturnCodes == null)
             {
-                this.Model.MailIgnoreReturnCodes = new HashSet<string>() {"success", "completed-no-objects"};
+                this.Model.MailIgnoreReturnCodes = new HashSet<string>() { "success", "completed-no-objects" };
             }
 
             this.AddIsDirtyProperty(nameof(this.RunHistoryClear));
@@ -154,28 +152,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public string MailTo
         {
-            get
-            {
-                if (this.Model.MailTo?.Count > 0)
-                {
-                    return string.Join(";", this.Model.MailTo);
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            set
-            {
-                if (string.IsNullOrWhiteSpace(value))
-                {
-                    this.Model.MailTo = new HashSet<string>();
-                }
-                else
-                {
-                    this.Model.MailTo = new HashSet<string>(value.Split(separators, StringSplitOptions.RemoveEmptyEntries));
-                }
-            }
+            get => App.ToDelimitedString(this.Model.MailTo);
+            set => App.FromDelimitedString(value);
         }
 
         public string MailFrom
@@ -204,28 +182,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public string MailIgnoreReturnCodes
         {
-            get
-            {
-                if (this.Model.MailIgnoreReturnCodes?.Count > 0)
-                {
-                    return string.Join(";", this.Model.MailIgnoreReturnCodes);
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            set
-            {
-                if (string.IsNullOrWhiteSpace(value))
-                {
-                    this.Model.MailIgnoreReturnCodes = new HashSet<string>();
-                }
-                else
-                {
-                    this.Model.MailIgnoreReturnCodes = new HashSet<string>(value.Split(separators, StringSplitOptions.RemoveEmptyEntries));
-                }
-            }
+            get => App.ToDelimitedString(this.Model.MailIgnoreReturnCodes);
+            set => this.Model.MailIgnoreReturnCodes = App.FromDelimitedString(value);
         }
 
         [AlsoNotifyFor(nameof(IsRunModeSupported), nameof(IsRunModeExclusive), nameof(IsRunModeUnsupported))]

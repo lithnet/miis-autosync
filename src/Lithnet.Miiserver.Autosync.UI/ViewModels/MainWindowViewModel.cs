@@ -18,7 +18,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
     internal class MainWindowViewModel : ViewModelBase
     {
-        private const string HelpUrl = "https://bit.ly/autosync-help";
 
         private bool confirmedCloseOnDirtyViewModel;
 
@@ -116,11 +115,10 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                Process.Start(MainWindowViewModel.HelpUrl);
+                Process.Start(App.HelpBaseUrl);
             }
             catch
             {
-                MessageBox.Show(MainWindowViewModel.HelpUrl);
             }
         }
 

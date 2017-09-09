@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows;
-using System.Windows.Media.Imaging;
 using Lithnet.Common.Presentation;
 using Lithnet.Miiserver.AutoSync.UI.Windows;
 using Lithnet.Miiserver.Client;
@@ -46,6 +45,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.AddIsDirtyProperty(nameof(this.ScheduleImports));
             this.AddIsDirtyProperty(nameof(this.AutoImportScheduling));
             this.AddIsDirtyProperty(nameof(this.Triggers));
+            this.AddIsDirtyProperty(nameof(this.LockManagementAgents));
             this.AddIsDirtyProperty(nameof(this.Disabled));
 
             this.IsDirtySet += this.MAConfigParametersViewModel_IsDirtySet;
@@ -146,10 +146,10 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             set => this.Model.ScheduledImportRunProfileName = value == App.NullPlaceholder ? null : value;
         }
 
-        public int Version
-        {
-            get => this.Model.Version;
-        }
+        public string ScheduledImportRunProfileToolTip => "Called automatically by AutoSync when the 'Schedule an import if it has been longer than x minutes since the last import' operation option has been specified";
+
+
+        public int Version => this.Model.Version;
 
         public string FullSyncRunProfileName
         {
@@ -157,11 +157,15 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             set => this.Model.FullSyncRunProfileName = value == App.NullPlaceholder ? null : value;
         }
 
+        public string FullSyncRunProfileToolTip => "Not called by AutoSync automatically. Only called by custom PowerShell script triggers";
+
         public string FullImportRunProfileName
         {
             get => this.Model.FullImportRunProfileName ?? App.NullPlaceholder;
             set => this.Model.FullImportRunProfileName = value == App.NullPlaceholder ? null : value;
         }
+
+        public string FullImportRunProfileToolTip => "Not called by AutoSync automatically. Only called by custom PowerShell script triggers";
 
         public string ExportRunProfileName
         {
@@ -169,11 +173,15 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             set => this.Model.ExportRunProfileName = value == App.NullPlaceholder ? null : value;
         }
 
+        public string ExportRunProfileToolTip => "Called automatically by AutoSync when staged exports are detected on a management agent";
+
         public string DeltaSyncRunProfileName
         {
             get => this.Model.DeltaSyncRunProfileName ?? App.NullPlaceholder;
             set => this.Model.DeltaSyncRunProfileName = value == App.NullPlaceholder ? null : value;
         }
+
+        public string DeltaSyncRunProfileToolTip => "Called automatically by AutoSync after an import operation has been performed";
 
         public string DeltaImportRunProfileName
         {
@@ -181,11 +189,15 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             set => this.Model.DeltaImportRunProfileName = value == App.NullPlaceholder ? null : value;
         }
 
+        public string DeltaImportRunProfileToolTip => "Called by certain triggers when changes have been detected in a connected system. If the management agent doesn't support delta imports, specify a full import profile";
+
         public string ConfirmingImportRunProfileName
         {
             get => this.Model.ConfirmingImportRunProfileName ?? App.NullPlaceholder;
             set => this.Model.ConfirmingImportRunProfileName = value == App.NullPlaceholder ? null : value;
         }
+
+        public string ConfirmingImportRunProfileToolTip => "Called automatically by AutoSync after an export has been performed";
 
         public bool Disabled
         {
@@ -211,25 +223,32 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             set => this.Model.AutoImportScheduling = value;
         }
 
-        public IEnumerable<string> RunProfileNames
+        public IEnumerable<string> RunProfileNames => this.GetRunProfileNames(true);
+
+        public IEnumerable<string> SingleStepRunProfileNames => this.GetRunProfileNames(false);
+
+        private IEnumerable<string> GetRunProfileNames(bool includeMultiStep)
         {
-            get
+            yield return "(none)";
+
+            if (this.Model?.ManagementAgent?.RunProfiles == null)
             {
-                yield return "(none)";
+                yield break;
+            }
 
-                if (this.Model?.ManagementAgent?.RunProfiles == null)
-                {
-                    yield break;
-                }
-
-                foreach (var i in this.Model.ManagementAgent.RunProfiles)
-                {
-                    yield return i.Key;
-                }
+            foreach (KeyValuePair<string, RunConfiguration> i in this.Model.ManagementAgent.RunProfiles.Where(t => includeMultiStep || t.Value.RunSteps.Count == 1))
+            {
+                yield return i.Key;
             }
         }
 
         public MAExecutionTriggersViewModel Triggers { get; private set; }
+
+        public string LockManagementAgents
+        {
+            get => App.ToDelimitedString(this.Model.LockManagementAgents);
+            set => this.Model.LockManagementAgents = App.FromDelimitedString(value);
+        }
 
         private bool CanAddTrigger()
         {
@@ -240,8 +259,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                AddTriggerWindow window = new AddTriggerWindow();
-                window.DataContext = this;
+                AddTriggerWindow window = new AddTriggerWindow { DataContext = this };
                 this.GetAllowedTypesForMa(this.Model.ManagementAgent);
                 this.SelectedTrigger = this.AllowedTriggers?.FirstOrDefault();
 
@@ -339,11 +357,13 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void New()
         {
-            SaveFileDialog dialog = new SaveFileDialog();
-            dialog.AddExtension = true;
-            dialog.DefaultExt = "ps1";
-            dialog.OverwritePrompt = true;
-            dialog.Filter = "PowerShell script|*.ps1";
+            SaveFileDialog dialog = new SaveFileDialog
+            {
+                AddExtension = true,
+                DefaultExt = "ps1",
+                OverwritePrompt = true,
+                Filter = "PowerShell script|*.ps1"
+            };
 
             if (dialog.ShowDialog() != true)
             {
@@ -392,11 +412,12 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 try
                 {
-                    openFileDialog.InitialDirectory = Path.GetDirectoryName(this.MAControllerPath);
-                    openFileDialog.FileName = Path.GetFileName(this.MAControllerPath);
+                    openFileDialog.InitialDirectory = Path.GetDirectoryName(this.MAControllerPath) ?? Environment.CurrentDirectory;
+                    openFileDialog.FileName = Path.GetFileName(this.MAControllerPath) ?? "*.ps1";
                 }
-                catch
+                catch(Exception ex)
                 {
+                    Trace.WriteLine(ex);
                 }
             }
             else

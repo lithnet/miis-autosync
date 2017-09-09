@@ -13,7 +13,7 @@
             <StackPanel>
 
                 <TabControl Margin="0 10 0 0" >
-                    <TabItem Header="Run History" >
+                    <TabItem Header="Run History" ui:OnlineHelpProvider.HelpTopic="Run-history-settings">
                         <Grid Margin="25 10 0 0">
                             <Grid.RowDefinitions>
                                 <RowDefinition  />
@@ -72,7 +72,7 @@
                         </Grid>
                     </TabItem>
 
-                    <TabItem Header="Mail">
+                    <TabItem Header="Mail" ui:OnlineHelpProvider.HelpTopic="Mail-settings">
                         <Grid Margin="25 10 0 0">
                             <Grid.RowDefinitions>
                                 <RowDefinition  />
@@ -227,7 +227,7 @@
                         </Grid>
                     </TabItem>
 
-                    <TabItem Header="Advanced">
+                    <TabItem Header="Advanced" ui:OnlineHelpProvider.HelpTopic="Advanced-settings">
                         <Grid  Margin="25 10 0 0">
                             <Grid.RowDefinitions>
                                 <RowDefinition  />

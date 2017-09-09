@@ -6,8 +6,8 @@
                      xmlns:viewModels="clr-namespace:Lithnet.Miiserver.AutoSync.UI.ViewModels"
                      mc:Ignorable="d" >
 
-    <DataTemplate DataType="{x:Type viewModels:IntervalExecutionTriggerViewModel}">
-        <UserControl>
+    <DataTemplate DataType="{x:Type viewModels:IntervalExecutionTriggerViewModel}" >
+        <UserControl ui:OnlineHelpProvider.HelpTopic="Repeating-interval-trigger">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>

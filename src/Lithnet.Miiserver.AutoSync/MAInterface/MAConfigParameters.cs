@@ -35,35 +35,19 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                if (this.ManagementAgentID != Guid.Empty)
+                Guid? id = Global.FindManagementAgent(this.ManagementAgentName, this.ManagementAgentID);
+
+                if (id.HasValue)
                 {
-                    this.ManagementAgent = ManagementAgent.GetManagementAgent(this.ManagementAgentID);
-                    this.IsMissing = false;
+                    this.ManagementAgent = ManagementAgent.GetManagementAgent(id.Value);
                     return;
                 }
             }
             catch (Exception ex)
             {
-                Logger.WriteLine($"Exception loading management agent by ID {this.ManagementAgentID}");
+                Logger.WriteLine($"Exception finding management agent {this.ManagementAgentID}/{this.ManagementAgentName}");
                 Logger.WriteException(ex);
             }
-
-            try
-            {
-                if (!string.IsNullOrEmpty(this.ManagementAgentName))
-                {
-                    Logger.WriteLine($"Attempting to load by name: {this.ManagementAgentName}");
-                    this.ManagementAgent = ManagementAgent.GetManagementAgent(this.ManagementAgentName);
-                    this.IsMissing = false;
-                    return;
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteLine($"Exception loading management agent by name {this.ManagementAgentName}");
-                Logger.WriteException(ex);
-            }
-
 
             Logger.WriteLine($"Management agent could not be found. Name: '{this.ManagementAgentName}'. ID: '{this.ManagementAgentID}'");
 
@@ -122,6 +106,9 @@ namespace Lithnet.Miiserver.AutoSync
 
         [DataMember(Name = "triggers")]
         public List<IMAExecutionTrigger> Triggers { get; private set; }
+        
+        [DataMember(Name = "lock-managementagents")]
+        public HashSet<string> LockManagementAgents { get; set; }
 
         internal bool CanExport => this.ExportRunProfileName != null;
 
@@ -161,29 +148,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public override string ToString()
         {
-            StringBuilder builder = new StringBuilder();
-
-            if (this.Disabled)
-            {
-                builder.AppendLine($"Disabled: {this.Disabled}");
-                return builder.ToString();
-            }
-
-            builder.AppendLine($"{nameof(this.ConfirmingImportRunProfileName)}: {this.ConfirmingImportRunProfileName}");
-            builder.AppendLine($"{nameof(this.DeltaImportRunProfileName)}: {this.DeltaImportRunProfileName}");
-            builder.AppendLine($"{nameof(this.FullImportRunProfileName)}: {this.FullImportRunProfileName}");
-            builder.AppendLine($"{nameof(this.DeltaSyncRunProfileName)}: {this.DeltaSyncRunProfileName}");
-            builder.AppendLine($"{nameof(this.FullSyncRunProfileName)}: {this.FullSyncRunProfileName}");
-            builder.AppendLine($"{nameof(this.ExportRunProfileName)}: {this.ExportRunProfileName}");
-            builder.AppendLine($"{nameof(this.ScheduledImportRunProfileName)}: {this.ScheduledImportRunProfileName}");
-            builder.AppendLine($"{nameof(this.AutoImportScheduling)}: {this.AutoImportScheduling}");
-            builder.AppendLine($"{nameof(this.AutoImportIntervalMinutes)}: {this.AutoImportIntervalMinutes}");
-            builder.AppendLine("--- Capabilities ---");
-            builder.AppendLine($"{nameof(this.CanExport)}: {this.CanExport}");
-            builder.AppendLine($"{nameof(this.CanImport)}: {this.CanImport}");
-            builder.AppendLine($"{nameof(this.CanAutoRun)}: {this.CanAutoRun}");
-
-            return builder.ToString();
+            return this.ManagementAgentName ?? this.ManagementAgentID.ToString();
         }
     }
 }

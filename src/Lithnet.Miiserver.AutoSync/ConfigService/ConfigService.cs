@@ -161,6 +161,10 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 Program.Engine?.Stop(cancelRuns);
             }
+            catch (TimeoutException ex)
+            {
+                Logger.WriteException(ex);
+            }
             catch (Exception ex)
             {
                 Logger.WriteException(ex);

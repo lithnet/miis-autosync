@@ -54,8 +54,8 @@
     <Reference Include="Lithnet.Logging, Version=1.0.5774.20685, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Lithnet.Logging.1.0.5774.20685\lib\net40\Lithnet.Logging.dll</HintPath>
     </Reference>
-    <Reference Include="Lithnet.Miiserver.Client, Version=1.0.6450.37102, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Lithnet.Miiserver.Client.1.0.6450.37102\lib\net45\Lithnet.Miiserver.Client.dll</HintPath>
+    <Reference Include="Lithnet.Miiserver.Client, Version=1.0.6461.17022, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Lithnet.Miiserver.Client.1.0.6461.17022\lib\net45\Lithnet.Miiserver.Client.dll</HintPath>
     </Reference>
     <Reference Include="MahApps.Metro, Version=1.5.0.23, Culture=neutral, PublicKeyToken=f4fb5a3c4d1e5b4f, processorArchitecture=MSIL">
       <HintPath>..\packages\MahApps.Metro.1.5.0\lib\net45\MahApps.Metro.dll</HintPath>
@@ -99,6 +99,7 @@
       <DependentUpon>TreeViewItemControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Converters\SortedListConverter.cs" />
+    <Compile Include="OnlineHelpProvider.cs" />
     <Compile Include="PasswordBoxBindingHelper.cs" />
     <Compile Include="Controls\TimeSpanControl.xaml.cs">
       <DependentUpon>TimeSpanControl.xaml</DependentUpon>
@@ -300,7 +301,7 @@
     <Resource Include="Resources\Lock.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\XLock.ico" />
+    <Resource Include="Resources\fLock.ico" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\sLock.ico" />

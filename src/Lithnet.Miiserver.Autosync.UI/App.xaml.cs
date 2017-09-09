@@ -1,15 +1,13 @@
-﻿using System;
+﻿using Lithnet.Logging;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using System.Reflection;
 using System.ServiceModel;
 using System.ServiceProcess;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using Lithnet.Logging;
-using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync.UI
 {
@@ -18,7 +16,11 @@ namespace Lithnet.Miiserver.AutoSync.UI
     /// </summary>
     public partial class App : Application
     {
+        internal const string HelpBaseUrl = "https://github.com/lithnet/miis-autosync/wiki/";
+
         internal const string NullPlaceholder = "(none)";
+
+        internal static char[] Separators = new char[] { ',', ';' };
 
         public App()
         {
@@ -100,7 +102,35 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
         private object lockObject = new object();
 
-      
+        internal static string ToDelimitedString(IEnumerable<string> items)
+        {
+            if (items != null)
+            {
+                string result = string.Join(";", items);
+                return result == string.Empty ? null : result;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        internal static HashSet<string> FromDelimitedString(string s)
+        {
+            if (s == null)
+            {
+                return null;
+            }
+
+            HashSet<string> items = new HashSet<string>();
+
+            foreach (string i in s.Split(App.Separators, StringSplitOptions.RemoveEmptyEntries))
+            {
+                items.Add(i.Trim());
+            }
+
+            return items;
+        }
 
         private void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {

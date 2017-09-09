@@ -8,8 +8,8 @@
                      xmlns:autoSync="clr-namespace:Lithnet.Miiserver.AutoSync;assembly=Lithnet.Miiserver.AutoSync"
                      mc:Ignorable="d" >
 
-    <DataTemplate DataType="{x:Type viewModels:PowerShellExecutionTriggerViewModel}">
-        <UserControl>
+    <DataTemplate DataType="{x:Type viewModels:PowerShellExecutionTriggerViewModel}" >
+        <UserControl ui:OnlineHelpProvider.HelpTopic="Powershell-script-trigger">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2*"/>
