@@ -16,12 +16,12 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             get
             {
-                ConfigClient c = new ConfigClient();
+                ConfigClient c = ConfigClient.GetDefaultClient();
                 return c.InvokeThenClose(x => x.GetAutoStartState());
             }
             set
             {
-                ConfigClient c = new ConfigClient();
+                ConfigClient c = ConfigClient.GetDefaultClient();
                 c.InvokeThenClose(x => x.SetAutoStartState(value));
             }
         }
@@ -51,7 +51,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                ConfigClient c = new ConfigClient();
+                ConfigClient c = ConfigClient.GetDefaultClient();
                 c.InvokeThenClose(x => x.StartAll());
             }
             catch (Exception ex)
@@ -70,7 +70,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                ConfigClient c = new ConfigClient();
+                ConfigClient c = ConfigClient.GetDefaultClient();
                 c.InvokeThenClose(x => x.StopAll(cancelRuns));
             }
             catch (Exception ex)

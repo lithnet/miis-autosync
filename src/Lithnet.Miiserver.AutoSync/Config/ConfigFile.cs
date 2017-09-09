@@ -26,7 +26,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.Settings = new Settings();
         }
 
-        public void ValidateManagementAgents()
+        internal void ValidateManagementAgents()
         {
             foreach (MAConfigParameters config in this.ManagementAgents)
             {
@@ -35,8 +35,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             this.AddMissingManagementAgents();
         }
-
-        public static ConfigFile Load(string file)
+        internal static ConfigFile Load(string file)
         {
             ConfigFile f = Serializer.Read<ConfigFile>(file);
             f.ValidateManagementAgents();
@@ -48,6 +47,8 @@ namespace Lithnet.Miiserver.AutoSync
         {
             Serializer.Save(filename, config);
         }
+
+        
 
         private void AddMissingManagementAgents()
         {

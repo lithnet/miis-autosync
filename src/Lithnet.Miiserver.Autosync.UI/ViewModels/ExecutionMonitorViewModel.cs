@@ -249,7 +249,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                     Command = new DelegateCommand(t => { }, t => this.CanAddToExecutionQueue())
                 };
 
-                ConfigClient c = new ConfigClient();
+                ConfigClient c = ConfigClient.GetDefaultClient();
                 c.InvokeThenClose(u =>
                 {
                     foreach (string rp in c.GetManagementAgentRunProfileNames(this.ManagementAgentName, true))
@@ -282,7 +282,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                ConfigClient c = new ConfigClient();
+                ConfigClient c = ConfigClient.GetDefaultClient();
                 c.AddToExecutionQueue(this.ManagementAgentName, runProfileName);
             }
             catch (Exception ex)
@@ -297,7 +297,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                ConfigClient c = new ConfigClient();
+                ConfigClient c = ConfigClient.GetDefaultClient();
                 c.InvokeThenClose(x => x.Stop(this.ManagementAgentName, cancelRun));
             }
             catch (Exception ex)
@@ -326,7 +326,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                ConfigClient c = new ConfigClient();
+                ConfigClient c = ConfigClient.GetDefaultClient();
                 c.InvokeThenClose(x => x.CancelRun(this.ManagementAgentName));
             }
             catch (Exception ex)
@@ -340,7 +340,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                ConfigClient c = new ConfigClient();
+                ConfigClient c = ConfigClient.GetDefaultClient();
                 c.InvokeThenClose(x => x.Start(this.ManagementAgentName));
             }
             catch (Exception ex)
@@ -358,7 +358,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         private void SubscribeToStateChanges()
         {
             InstanceContext i = new InstanceContext(this);
-            this.client = new EventClient(i);
+            this.client = EventClient.GetDefaultClient(i);
             this.client.Register(this.ManagementAgentName);
             this.client.InnerChannel.Closed += this.InnerChannel_Closed;
             this.client.InnerChannel.Faulted += this.InnerChannel_Faulted;

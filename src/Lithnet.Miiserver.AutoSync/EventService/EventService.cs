@@ -5,17 +5,28 @@ using System.ServiceModel;
 using System.ServiceModel.Description;
 using Lithnet.Logging;
 using System.Diagnostics;
+using System.ServiceModel.Channels;
 
 namespace Lithnet.Miiserver.AutoSync
 {
     public class EventService : IEventService
     {
-        public static ServiceHost CreateInstance()
+        public static ServiceHost CreateNetNamedPipeInstance()
+        {
+            return EventService.CreateInstance(EventServiceConfiguration.NetNamedPipeBinding, EventServiceConfiguration.NamedPipeUri);
+        }
+
+        public static ServiceHost CreateNetTcpInstance()
+        {
+            return EventService.CreateInstance(EventServiceConfiguration.NetTcpBinding, EventServiceConfiguration.CreateServerBindingUri());
+        }
+
+        private static ServiceHost CreateInstance(Binding binding, string uri)
         {
             try
             {
                 ServiceHost s = new ServiceHost(typeof(EventService));
-                s.AddServiceEndpoint(typeof(IEventService), EventServiceConfiguration.NetNamedPipeBinding, EventServiceConfiguration.NamedPipeUri);
+                s.AddServiceEndpoint(typeof(IEventService), binding, uri);
                 if (s.Description.Behaviors.Find<ServiceMetadataBehavior>() == null)
                 {
                     s.Description.Behaviors.Add(EventServiceConfiguration.ServiceMetadataDisabledBehavior);

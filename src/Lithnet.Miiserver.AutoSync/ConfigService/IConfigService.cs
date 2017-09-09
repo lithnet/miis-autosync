@@ -71,5 +71,8 @@ namespace Lithnet.Miiserver.AutoSync
 
         [OperationContract]
         bool GetAutoStartState();
+
+        [OperationContract]
+        ConfigFile ValidateConfig(ConfigFile config);
     }
 }

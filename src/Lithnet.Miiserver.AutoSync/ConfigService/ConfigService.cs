@@ -1,26 +1,34 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
 using System.ServiceModel.Description;
-using System.Text;
-using System.Threading.Tasks;
 using Lithnet.Logging;
 using System.Diagnostics;
 using System.Reflection;
+using System.ServiceModel.Channels;
 using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync
 {
     public class ConfigService : IConfigService
     {
-        public static ServiceHost CreateInstance()
+        public static ServiceHost CreateNetNamedPipeInstance()
+        {
+            return ConfigService.CreateInstance(ConfigServiceConfiguration.NetNamedPipeBinding, ConfigServiceConfiguration.NamedPipeUri);
+        }
+
+        public static ServiceHost CreateNetTcpInstance()
+        {
+            return ConfigService.CreateInstance(ConfigServiceConfiguration.NetTcpBinding, ConfigServiceConfiguration.CreateServerBindingUri());
+        }
+
+        private static ServiceHost CreateInstance(Binding binding, string uri)
         {
             try
             {
                 ServiceHost s = new ServiceHost(typeof(ConfigService));
-                s.AddServiceEndpoint(typeof(IConfigService), ConfigServiceConfiguration.NetNamedPipeBinding, ConfigServiceConfiguration.NamedPipeUri);
+                s.AddServiceEndpoint(typeof(IConfigService), binding, uri);
                 if (s.Description.Behaviors.Find<ServiceMetadataBehavior>() == null)
                 {
                     s.Description.Behaviors.Add(ConfigServiceConfiguration.ServiceMetadataDisabledBehavior);
@@ -60,6 +68,23 @@ namespace Lithnet.Miiserver.AutoSync
                 Global.ThrowOnSyncEngineNotRunning();
                 ProtectedString.EncryptOnWrite = false;
                 return Program.ActiveConfig;
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteException(ex);
+                throw;
+            }
+        }
+
+        public ConfigFile ValidateConfig(ConfigFile config)
+        {
+            try
+            {
+                Trace.WriteLine($"Calling {nameof(this.ValidateConfig)} as {Environment.UserName}");
+                Global.ThrowOnSyncEngineNotRunning();
+                ProtectedString.EncryptOnWrite = false;
+                config.ValidateManagementAgents();
+                return config;
             }
             catch (Exception ex)
             {

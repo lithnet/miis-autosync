@@ -28,54 +28,54 @@ namespace Lithnet.Miiserver.AutoSync.UI
             TaskScheduler.UnobservedTaskException += this.TaskScheduler_UnobservedTaskException;
             Application.Current.DispatcherUnhandledException += this.Dispatcher_UnhandledException; // WPF app
 
-            ServiceController sc = new ServiceController("autosync");
+//            ServiceController sc = new ServiceController("autosync");
 
-#if DEBUG
-            if (Debugger.IsAttached)
-            {
-                if (sc.Status == ServiceControllerStatus.Stopped)
-                {
-                    // Must be started off the UI-thread
-                    Task.Run(() =>
-                    {
-                        Program.SetupOutOfBandInstance();
-                    }).Wait();
-                }
+//#if DEBUG
+//            if (Debugger.IsAttached)
+//            {
+//                if (sc.Status == ServiceControllerStatus.Stopped)
+//                {
+//                    // Must be started off the UI-thread
+//                    Task.Run(() =>
+//                    {
+//                        Program.SetupOutOfBandInstance();
+//                    }).Wait();
+//                }
 
-                return;
-            }
-#endif
+//                return;
+//            }
+//#endif
 
-            sc = new ServiceController("fimsynchronizationservice");
-            if (sc.Status != ServiceControllerStatus.Running)
-            {
-                MessageBox.Show("The MIM Synchronization service is not running. Please start the service and try again.",
-                    "Lithnet AutoSync",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Stop);
-                Environment.Exit(1);
-            }
+//            sc = new ServiceController("fimsynchronizationservice");
+//            if (sc.Status != ServiceControllerStatus.Running)
+//            {
+//                MessageBox.Show("The MIM Synchronization service is not running. Please start the service and try again.",
+//                    "Lithnet AutoSync",
+//                    MessageBoxButton.OK,
+//                    MessageBoxImage.Stop);
+//                Environment.Exit(1);
+//            }
 
-            sc = new ServiceController("autosync");
-            if (sc.Status != ServiceControllerStatus.Running)
-            {
-                MessageBox.Show("The AutoSync service is not running. Please start the service and try again.",
-                    "Lithnet AutoSync",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Stop);
-                Environment.Exit(1);
-            }
+//            sc = new ServiceController("autosync");
+//            if (sc.Status != ServiceControllerStatus.Running)
+//            {
+//                MessageBox.Show("The AutoSync service is not running. Please start the service and try again.",
+//                    "Lithnet AutoSync",
+//                    MessageBoxButton.OK,
+//                    MessageBoxImage.Stop);
+//                Environment.Exit(1);
+//            }
 
             try
             {
-                ConfigClient c = new ConfigClient();
+                ConfigClient c = ConfigClient.GetDefaultClient();
                 c.Open();
             }
             catch (EndpointNotFoundException ex)
             {
                 Trace.WriteLine(ex);
                 MessageBox.Show(
-                    $"Could not contact the AutoSync service. Ensure the Lithnet MIIS AutoSync service is running",
+                    $"Could not contact the AutoSync service. Ensure the Lithnet AutoSync service is running",
                     "Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);

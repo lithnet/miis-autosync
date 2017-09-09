@@ -24,7 +24,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 IPrincipal wp = new WindowsPrincipal(operationContext.ServiceSecurityContext.WindowsIdentity);
 
-                return wp.IsInRole(RegistrySettings.AdminGroup);
+                return wp.IsInRole(RegistrySettings.ServiceAdminsGroup);
             }
             catch (Exception ex)
             {

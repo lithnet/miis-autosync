@@ -68,7 +68,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                ConfigClient c = new ConfigClient();
+                ConfigClient c = ConfigClient.GetDefaultClient();
                 IList<string> maNames = new List<string>();
                 c.InvokeThenClose(x => maNames = x.GetManagementAgentNames());
                 this.ExecutionMonitor = new ExecutionMonitorsViewModel(maNames);
@@ -154,46 +154,19 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
                 ConfigFile file = null;
 
-                try
-                {
-                    ConfigClient c = new ConfigClient();
-                    c.InvokeThenClose(x => file = x.GetConfig());
-                }
-                catch (EndpointNotFoundException ex)
-                {
-                    Trace.WriteLine(ex);
-                    MessageBox.Show(
-                        $"Could not contact the AutoSync service. Ensure the Lithnet AutoSync service is running",
-                        "Error",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
-                    Environment.Exit(1);
-                    return;
-                }
-                catch (System.ServiceModel.Security.SecurityAccessDeniedException)
-                {
-                    MessageBox.Show("You do not have permission to manage the AutoSync service", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Error);
-                    Environment.Exit(5);
-                    return;
-                }
-                catch (Exception ex)
-                {
-                    Trace.WriteLine(ex);
-                    MessageBox.Show(
-                        $"An error occurred communicating with the AutoSync service\n\n{ex.Message}",
-                        "Error",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
-                    return;
-                }
+
+                ConfigClient c = ConfigClient.GetDefaultClient();
+                c.InvokeThenClose(x => file = x.GetConfig());
 
                 if (file == null)
                 {
-                    file = new AutoSync.ConfigFile();
+                    this.ConfigFile = null;
                 }
-
-                this.ConfigFile = new ConfigFileViewModel(file);
-                this.ConfigFile.ManagementAgents.IsExpanded = true;
+                else
+                {
+                    this.ConfigFile = new ConfigFileViewModel(file);
+                    this.ConfigFile.ManagementAgents.IsExpanded = true;
+                }
 
                 this.IsDirty = false;
             }
@@ -229,10 +202,10 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 return;
             }
 
-            AutoSync.ConfigFile f;
+            ConfigFile f;
             try
             {
-                f = AutoSync.ConfigFile.Load(dialog.FileName);
+                f = Serializer.Read<ConfigFile>(dialog.FileName);
             }
             catch (Exception ex)
             {
@@ -244,7 +217,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             try
             {
                 this.Cursor = Cursors.Wait;
-                ConfigClient c = new ConfigClient();
+                ConfigClient c = ConfigClient.GetDefaultClient();
+                f = c.ValidateConfig(f);
                 c.InvokeThenClose(x => x.PutConfig(f));
                 this.AskToRestartService();
             }
@@ -296,7 +270,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         private void CommitConfig()
         {
             this.MarkManagementAgentsAsConfigured();
-            ConfigClient c = new ConfigClient();
+            ConfigClient c = ConfigClient.GetDefaultClient();
             c.InvokeThenClose(t => t.PutConfig(this.ConfigFile.Model));
             this.Commit();
         }
@@ -332,7 +306,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void AskToRestartService()
         {
-            ConfigClient c = new ConfigClient();
+            ConfigClient c = ConfigClient.GetDefaultClient();
             List<string> pendingRestartItems = c.GetManagementAgentsPendingRestart()?.ToList();
 
             if (pendingRestartItems != null && pendingRestartItems.Count > 0)

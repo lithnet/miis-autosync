@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.ServiceModel;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Lithnet.Logging;
@@ -15,8 +13,10 @@ namespace Lithnet.Miiserver.AutoSync
     {
         private Dictionary<string, MAExecutor> maExecutors;
 
-        private ServiceHost service;
+        private ServiceHost npService;
 
+        private ServiceHost tcpService;
+        
         internal static object ServiceControlLock = new object();
 
         private CancellationTokenSource cancellationToken;
@@ -25,8 +25,14 @@ namespace Lithnet.Miiserver.AutoSync
 
         public ExecutionEngine()
         {
-            this.service = EventService.CreateInstance();
-            Logger.WriteLine("Initialized event service host");
+            this.npService = EventService.CreateNetNamedPipeInstance();
+            Logger.WriteLine("Initialized event service host pipe");
+
+            if (RegistrySettings.NetTcpServerEnabled)
+            {
+                this.tcpService = EventService.CreateNetTcpInstance();
+                Logger.WriteLine("Initialized event service host tcp");
+            }
 
             this.InitializeMAExecutors();
         }
@@ -108,11 +114,19 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                if (this.service != null)
+                if (this.npService != null)
                 {
-                    if (this.service.State != CommunicationState.Closed)
+                    if (this.npService.State != CommunicationState.Closed)
                     {
-                        this.service.Close();
+                        this.npService.Close();
+                    }
+                }
+
+                if (this.tcpService != null)
+                {
+                    if (this.tcpService.State != CommunicationState.Closed)
+                    {
+                        this.tcpService.Close();
                     }
                 }
             }
@@ -122,7 +136,8 @@ namespace Lithnet.Miiserver.AutoSync
                 Logger.WriteException(ex);
             }
 
-            this.service = null;
+            this.npService = null;
+            this.tcpService = null;
         }
         public void CancelRun(string managementAgentName)
         {

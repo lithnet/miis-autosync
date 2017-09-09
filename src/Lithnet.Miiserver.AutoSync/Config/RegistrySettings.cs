@@ -13,8 +13,23 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static RegistryKey serviceKey;
 
+        private static RegistryKey userSettingsKey;
+        
         private static HashSet<string> retryCodes;
 
+        public static RegistryKey UserSettingsKey
+        {
+            get
+            {
+                if (RegistrySettings.userSettingsKey == null)
+                {
+                    RegistrySettings.userSettingsKey = Registry.CurrentUser.CreateSubKey("Software\\Lithnet\\AutoSync");
+                }
+
+                return RegistrySettings.userSettingsKey;
+            }
+        }
+        
         public static RegistryKey ParametersKey
         {
             get
@@ -69,7 +84,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string logPath = RegistrySettings.ParametersKey.GetValue("LogPath") as string;
+                string logPath = RegistrySettings.ParametersKey.GetValue(nameof(LogPath)) as string;
 
                 if (logPath != null)
                 {
@@ -85,11 +100,11 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public static string AdminGroup
+        public static string ServiceAdminsGroup
         {
             get
             {
-                string value = RegistrySettings.ParametersKey.GetValue("ServiceAdminsGroup") as string;
+                string value = RegistrySettings.ParametersKey.GetValue(nameof(ServiceAdminsGroup)) as string;
 
                 if (value != null)
                 {
@@ -99,6 +114,57 @@ namespace Lithnet.Miiserver.AutoSync
                 return "FimSyncAdmins";
             }
         }
+
+        public static bool NetTcpServerEnabled
+        {
+            get
+            {
+                int? value = RegistrySettings.ParametersKey.GetValue(nameof(NetTcpServerEnabled), 0) as int?;
+                return value.HasValue && value.Value != 0;
+            }
+        }
+
+        public static string NetTcpBindAddress
+        {
+            get
+            {
+                return (string)RegistrySettings.ParametersKey.GetValue(nameof(NetTcpBindAddress), "0.0.0.0");
+            }
+        }
+
+        public static string NetTcpBindPort
+        {
+            get
+            {
+                return (string)RegistrySettings.ParametersKey.GetValue(nameof(NetTcpBindPort), "54338");
+            }
+        }
+
+
+        public static string AutoSyncServerHost
+        {
+            get
+            {
+                return (string)RegistrySettings.UserSettingsKey.GetValue(nameof(AutoSyncServerHost), "localhost");
+            }
+        }
+
+        public static string AutoSyncServerPort
+        {
+            get
+            {
+                return (string)RegistrySettings.UserSettingsKey.GetValue(nameof(AutoSyncServerPort), "54338");
+            }
+        }
+
+        public static string AutoSyncServerIdentity
+        {
+            get
+            {
+                return (string)RegistrySettings.UserSettingsKey.GetValue(nameof(AutoSyncServerIdentity), "autosync/{0}");
+            }
+        }
+
 
         public static string ConfigurationFile
         {
@@ -119,7 +185,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = RegistrySettings.ParametersKey.GetValue("RetryCount") as string;
+                string s = RegistrySettings.ParametersKey.GetValue(nameof(RetryCount)) as string;
 
                 int value;
 
@@ -135,7 +201,7 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     retryCodes = new HashSet<string>();
 
-                    string[] values = RegistrySettings.ParametersKey.GetValue("RetryCodes") as string[];
+                    string[] values = RegistrySettings.ParametersKey.GetValue(nameof(RetryCodes)) as string[];
 
                     if (values != null && values.Length > 0)
                     {
@@ -161,7 +227,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = RegistrySettings.ParametersKey.GetValue("RetrySleepInterval") as string;
+                string s = RegistrySettings.ParametersKey.GetValue(nameof(RetrySleepInterval)) as string;
 
                 int seconds;
 
@@ -180,7 +246,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = RegistrySettings.ParametersKey.GetValue("ExecutionStaggerInterval") as string;
+                string s = RegistrySettings.ParametersKey.GetValue(nameof(ExecutionStaggerInterval)) as string;
 
                 int seconds;
 
@@ -202,7 +268,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = RegistrySettings.ParametersKey.GetValue("PostRunInterval") as string;
+                string s = RegistrySettings.ParametersKey.GetValue(nameof(PostRunInterval)) as string;
 
                 int seconds;
 
@@ -221,7 +287,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = RegistrySettings.ParametersKey.GetValue("UnmanagedChangesCheckInterval") as string;
+                string s = RegistrySettings.ParametersKey.GetValue(nameof(UnmanagedChangesCheckInterval)) as string;
 
                 int seconds;
 
@@ -240,7 +306,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = RegistrySettings.ParametersKey.GetValue("RunHistoryTimerInterval") as string;
+                string s = RegistrySettings.ParametersKey.GetValue(nameof(RunHistoryTimerInterval)) as string;
 
                 int seconds;
 

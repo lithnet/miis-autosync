@@ -47,7 +47,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 WindowsPrincipal wp = new WindowsPrincipal(operationContext.ServiceSecurityContext.WindowsIdentity);
 
-                bool result = wp.IsInRole(RegistrySettings.AdminGroup);
+                bool result = wp.IsInRole(RegistrySettings.ServiceAdminsGroup);
 
                 //Trace.WriteLine($"User {wp.Identity.Name} is in service admin group {RegistrySettings.AdminGroup}: {result}");
 

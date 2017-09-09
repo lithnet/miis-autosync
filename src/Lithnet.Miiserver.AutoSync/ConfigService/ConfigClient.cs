@@ -1,18 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.ServiceModel;
-using System.Runtime.Serialization;
 using System.ServiceModel.Channels;
-using System.ServiceModel.Description;
 
 namespace Lithnet.Miiserver.AutoSync
 {
     public class ConfigClient : ClientBase<IConfigService>, IConfigService
     {
-        public ConfigClient()
-            : base(ConfigServiceConfiguration.NetNamedPipeBinding, ConfigServiceConfiguration.NetNamedPipeEndpointAddress)
+        protected ConfigClient(Binding binding, EndpointAddress endpoint)
+            : base(binding, endpoint)
         {
         }
 
@@ -20,7 +16,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             ProtectedString.EncryptOnWrite = false;
             ConfigFile x = this.Channel.GetConfig();
-            x.ValidateManagementAgents();
+            //x.ValidateManagementAgents();
             return x;
         }
 
@@ -112,6 +108,33 @@ namespace Lithnet.Miiserver.AutoSync
         public bool GetAutoStartState()
         {
             return this.Channel.GetAutoStartState();
+        }
+
+        public ConfigFile ValidateConfig(ConfigFile config)
+        {
+            return this.Channel.ValidateConfig(config);
+        }
+        
+        public static ConfigClient GetDefaultClient()
+        {
+            if (string.Equals(RegistrySettings.AutoSyncServerHost, "localhost", StringComparison.OrdinalIgnoreCase))
+            {
+                return ConfigClient.GetNamedPipesClient();
+            }
+            else
+            {
+                return ConfigClient.GetNetTcpClient();
+            }
+        }
+
+        public static ConfigClient GetNamedPipesClient()
+        {
+            return new ConfigClient(ConfigServiceConfiguration.NetNamedPipeBinding, ConfigServiceConfiguration.NetNamedPipeEndpointAddress);
+        }
+
+        public static ConfigClient GetNetTcpClient()
+        {
+            return new ConfigClient(ConfigServiceConfiguration.NetTcpBinding, ConfigServiceConfiguration.CreateClientTcpEndPointAddress());
         }
     }
 }

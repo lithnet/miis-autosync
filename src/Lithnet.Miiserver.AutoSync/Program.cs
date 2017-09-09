@@ -20,7 +20,9 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static Timer runHistoryCleanupTimer;
 
-        private static ServiceHost configServiceHost;
+        private static ServiceHost npConfigServiceHost;
+
+        private static ServiceHost tcpConfigServiceHost;
 
         internal static ConfigFile ActiveConfig
         {
@@ -89,10 +91,16 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static void StartConfigServiceHost()
         {
-            if (Program.configServiceHost == null || Program.configServiceHost.State != CommunicationState.Opened)
+            if (Program.npConfigServiceHost == null || Program.npConfigServiceHost.State != CommunicationState.Opened)
             {
-                Program.configServiceHost = ConfigService.CreateInstance();
-                Logger.WriteLine("Initialized service host");
+                Program.npConfigServiceHost = ConfigService.CreateNetNamedPipeInstance();
+                Logger.WriteLine("Initialized service host pipe");
+
+                if (RegistrySettings.NetTcpServerEnabled)
+                {
+                    Program.tcpConfigServiceHost = ConfigService.CreateNetTcpInstance();
+                    Logger.WriteLine("Initialized service host tcp");
+                }
             }
         }
 
@@ -188,9 +196,14 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 Program.StopRunHistoryCleanupTimer();
 
-                if (configServiceHost != null && configServiceHost.State == CommunicationState.Opened)
+                if (Program.npConfigServiceHost != null && Program.npConfigServiceHost.State == CommunicationState.Opened)
                 {
-                    configServiceHost.Close();
+                    Program.npConfigServiceHost.Close();
+                }
+
+                if (Program.tcpConfigServiceHost != null && Program.tcpConfigServiceHost.State == CommunicationState.Opened)
+                {
+                    Program.tcpConfigServiceHost.Close();
                 }
 
                 try
