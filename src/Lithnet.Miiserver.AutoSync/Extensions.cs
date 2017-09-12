@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Management.Automation;
@@ -6,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
+using System.Threading;
 using Lithnet.Logging;
 using Lithnet.Miiserver.Client;
 
@@ -34,7 +36,7 @@ namespace Lithnet.Miiserver.AutoSync
             Logger.WriteLine("The PowerShell script encountered an error");
 
             StringBuilder b = new StringBuilder();
-            
+
             foreach (ErrorRecord error in powershell.Streams.Error)
             {
                 if (error.ErrorDetails != null)
@@ -170,16 +172,22 @@ namespace Lithnet.Miiserver.AutoSync
                             client.Abort();
                         }
                     }
-                    catch (CommunicationException)
+                    catch (CommunicationException ex)
                     {
+                        Debug.WriteLine("Invocation communication exception");
+                        Debug.WriteLine(ex);
                         client.Abort();
                     }
-                    catch (TimeoutException)
+                    catch (TimeoutException ex)
                     {
+                        Debug.WriteLine("Invocation timeout");
+                        Debug.WriteLine(ex);
                         client.Abort();
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        Debug.WriteLine("Invocation exception");
+                        Debug.WriteLine(ex);
                         client.Abort();
                         throw;
                     }
@@ -187,6 +195,14 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
+
+        public static void SetThreadName(this Thread thread, string name)
+        {
+            if (thread.Name == null)
+            {
+                thread.Name = name;
+            }
+        }
 
         public static void InvokeThenClose<TChannel>(this TChannel client, Action<TChannel> function) where TChannel : ICommunicationObject
         {
@@ -209,16 +225,22 @@ namespace Lithnet.Miiserver.AutoSync
                             client.Abort();
                         }
                     }
-                    catch (CommunicationException)
+                    catch (CommunicationException ex)
                     {
+                        Debug.WriteLine("Invocation communication exception");
+                        Debug.WriteLine(ex);
                         client.Abort();
                     }
-                    catch (TimeoutException)
+                    catch (TimeoutException ex)
                     {
+                        Debug.WriteLine("Invocation timeout");
+                        Debug.WriteLine(ex);
                         client.Abort();
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        Debug.WriteLine("Invocation exception");
+                        Debug.WriteLine(ex);
                         client.Abort();
                         throw;
                     }

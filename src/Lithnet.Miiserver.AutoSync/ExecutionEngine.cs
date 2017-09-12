@@ -287,6 +287,7 @@ namespace Lithnet.Miiserver.AutoSync
                     {
                         lock (e)
                         {
+                            Thread.CurrentThread.SetThreadName($"Stop executor {e.ManagementAgentName}");
                             e.Stop(cancelRun);
                         }
                     }

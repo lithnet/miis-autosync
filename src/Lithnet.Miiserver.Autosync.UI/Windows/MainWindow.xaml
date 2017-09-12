@@ -5,7 +5,7 @@
                       xmlns:ui="clr-namespace:Lithnet.Miiserver.AutoSync.UI"
                       Title="{Binding Path=DisplayName}"
                       Cursor="{Binding Path=Cursor}"
-                      Icon="/autosync.ico" 
+                      Icon="/autosync.ico"  IconScalingMode ="NoScaleSmallerFrame"
                       BorderThickness="1"
                       BorderBrush="{DynamicResource AccentColorBrush}"
                       Height="Auto"

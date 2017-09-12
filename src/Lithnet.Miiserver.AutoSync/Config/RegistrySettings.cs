@@ -13,22 +13,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static RegistryKey serviceKey;
 
-        private static RegistryKey userSettingsKey;
-        
         private static HashSet<string> retryCodes;
-
-        public static RegistryKey UserSettingsKey
-        {
-            get
-            {
-                if (RegistrySettings.userSettingsKey == null)
-                {
-                    RegistrySettings.userSettingsKey = Registry.CurrentUser.CreateSubKey("Software\\Lithnet\\AutoSync");
-                }
-
-                return RegistrySettings.userSettingsKey;
-            }
-        }
         
         public static RegistryKey ParametersKey
         {
@@ -128,7 +113,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                return (string)RegistrySettings.ParametersKey.GetValue(nameof(NetTcpBindAddress), "0.0.0.0");
+                return (string)RegistrySettings.ParametersKey.GetValue(nameof(NetTcpBindAddress), Environment.MachineName);
             }
         }
 
@@ -139,33 +124,7 @@ namespace Lithnet.Miiserver.AutoSync
                 return (string)RegistrySettings.ParametersKey.GetValue(nameof(NetTcpBindPort), "54338");
             }
         }
-
-
-        public static string AutoSyncServerHost
-        {
-            get
-            {
-                return (string)RegistrySettings.UserSettingsKey.GetValue(nameof(AutoSyncServerHost), "localhost");
-            }
-        }
-
-        public static string AutoSyncServerPort
-        {
-            get
-            {
-                return (string)RegistrySettings.UserSettingsKey.GetValue(nameof(AutoSyncServerPort), "54338");
-            }
-        }
-
-        public static string AutoSyncServerIdentity
-        {
-            get
-            {
-                return (string)RegistrySettings.UserSettingsKey.GetValue(nameof(AutoSyncServerIdentity), "autosync/{0}");
-            }
-        }
-
-
+        
         public static string ConfigurationFile
         {
             get

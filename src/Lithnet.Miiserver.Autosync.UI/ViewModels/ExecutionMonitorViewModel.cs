@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.ServiceModel;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -27,6 +28,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public ObservableCollection<MenuItemViewModelBase> MenuItems { get; set; }
 
+        public bool IsConnected { get; set; }
+
         public BitmapImage StatusIcon
         {
             get
@@ -37,7 +40,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                         return App.GetImageResource("Stop.png");
 
                     case "Idle":
-                        return App.GetImageResource("Clock1.png");
+                       return App.GetImageResource("dot-medium.png");
 
                     case "Paused":
                         return App.GetImageResource("Pause.png");
@@ -249,7 +252,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                     Command = new DelegateCommand(t => { }, t => this.CanAddToExecutionQueue())
                 };
 
-                ConfigClient c = ConfigClient.GetDefaultClient();
+                ConfigClient c = App.GetDefaultConfigClient();
                 c.InvokeThenClose(u =>
                 {
                     foreach (string rp in c.GetManagementAgentRunProfileNames(this.ManagementAgentName, true))
@@ -273,17 +276,19 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 Trace.WriteLine("Error getting the run profile list");
                 Trace.WriteLine(ex.ToString());
             }
-
-
-
         }
 
         private void AddToExecutionQueue(string runProfileName)
         {
             try
             {
-                ConfigClient c = ConfigClient.GetDefaultClient();
+                ConfigClient c = App.GetDefaultConfigClient();
                 c.AddToExecutionQueue(this.ManagementAgentName, runProfileName);
+            }
+            catch (EndpointNotFoundException ex)
+            {
+                Trace.WriteLine(ex.ToString());
+                MessageBox.Show($"Could not contact the AutoSync service", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             catch (Exception ex)
             {
@@ -297,7 +302,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                ConfigClient c = ConfigClient.GetDefaultClient();
+                ConfigClient c = App.GetDefaultConfigClient();
                 c.InvokeThenClose(x => x.Stop(this.ManagementAgentName, cancelRun));
             }
             catch (Exception ex)
@@ -326,7 +331,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                ConfigClient c = ConfigClient.GetDefaultClient();
+                ConfigClient c = App.GetDefaultConfigClient();
                 c.InvokeThenClose(x => x.CancelRun(this.ManagementAgentName));
             }
             catch (Exception ex)
@@ -340,7 +345,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                ConfigClient c = ConfigClient.GetDefaultClient();
+                ConfigClient c = App.GetDefaultConfigClient();
                 c.InvokeThenClose(x => x.Start(this.ManagementAgentName));
             }
             catch (Exception ex)
@@ -357,30 +362,76 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void SubscribeToStateChanges()
         {
+            Trace.WriteLine($"Attempting to open event channel for {this.ManagementAgentName}");
             InstanceContext i = new InstanceContext(this);
-            this.client = EventClient.GetDefaultClient(i);
-            this.client.Register(this.ManagementAgentName);
+            this.IsConnected = false;
+
+            while (!this.IsConnected)
+            {
+                try
+                {
+                    this.DisplayState = "Disconnected";
+                    this.client = App.GetDefaultEventClient(i);
+                    this.client.Open();
+                    this.client.Register(this.ManagementAgentName);
+                    this.IsConnected = true;
+                    this.faultedCount = 0;
+                }
+                catch (TimeoutException)
+                {
+                    this.client.Abort();
+                    Trace.WriteLine("Timeout connecting to server");
+                    Thread.Sleep(UserSettings.ReconnectInterval);
+                }
+                catch (Exception ex)
+                {
+                    this.client.Abort();
+                    Trace.WriteLine("Error connecting to server");
+                    Trace.WriteLine(ex);
+                    Thread.Sleep(UserSettings.ReconnectInterval);
+                }
+            }
+
+            Trace.WriteLine($"Registered event channel for {this.ManagementAgentName}");
+
             this.client.InnerChannel.Closed += this.InnerChannel_Closed;
             this.client.InnerChannel.Faulted += this.InnerChannel_Faulted;
 
+            Debug.WriteLine($"Requesting full update from {this.ManagementAgentName}");
             MAStatus status = this.client.GetFullUpdate(this.ManagementAgentName);
-            this.faultedCount = 0;
+            Debug.WriteLine($"Got full update from {this.ManagementAgentName}");
+
             if (status != null)
             {
                 this.MAStatusChanged(status);
             }
         }
+
         private void InnerChannel_Faulted(object sender, EventArgs e)
         {
             Trace.WriteLine($"Closing faulted event channel for {this.ManagementAgentName}");
-            this.client.Abort();
             this.faultedCount++;
+            try
+            {
+                this.client.Abort();
+            }
+            catch
+            {
+            }
         }
 
         private void InnerChannel_Closed(object sender, EventArgs e)
         {
             Trace.WriteLine($"Closing event channel for {this.ManagementAgentName}");
-            this.CleanupAndRestartClient();
+            this.IsConnected = false;
+            this.DisplayState = "Disconnected";
+            this.client.InnerChannel.Closed -= this.InnerChannel_Closed;
+            this.client.InnerChannel.Faulted -= this.InnerChannel_Faulted;
+
+            if (this.faultedCount > 0)
+            {
+                this.CleanupAndRestartClient();
+            }
         }
 
         private int faultedCount;
@@ -392,8 +443,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 throw new ApplicationException($"An unrecoverable error occurred trying to reestablish the monitor channel for {this.ManagementAgentName}");
             }
 
-            this.client.InnerChannel.Closed -= this.InnerChannel_Closed;
-            this.client.InnerChannel.Faulted -= this.InnerChannel_Faulted;
             this.SubscribeToStateChanges();
         }
     }

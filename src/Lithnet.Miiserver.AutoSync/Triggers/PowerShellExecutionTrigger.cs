@@ -63,6 +63,8 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
+                Thread.CurrentThread.SetThreadName($"{this.DisplayName} on {this.ManagementAgentName}");
+
                 this.powershell = PowerShell.Create();
                 this.powershell.AddScript(System.IO.File.ReadAllText(this.ScriptPath));
                 this.powershell.Invoke();

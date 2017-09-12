@@ -103,6 +103,7 @@
       <DependentUpon>TimeSpanControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Converters\TypeDescriptionConverter.cs" />
+    <Compile Include="UserSettings.cs" />
     <Compile Include="ViewModels\ActiveDirectoryChangeTriggerViewModel.cs" />
     <Compile Include="ViewModels\ExecutionMonitorViewModel.cs" />
     <Compile Include="ViewModels\ExecutionMonitorsViewModel.cs" />
@@ -303,6 +304,15 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\sLock.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\dot-medium.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\autosync-256.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <SplashScreen Include="Resources\splashscreen.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets" Condition="Exists('..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets')" />

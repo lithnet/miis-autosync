@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.ServiceModel;
 using System.Windows;
 using Lithnet.Miiserver.AutoSync;
 using Lithnet.Common.Presentation;
@@ -16,13 +17,35 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             get
             {
-                ConfigClient c = ConfigClient.GetDefaultClient();
-                return c.InvokeThenClose(x => x.GetAutoStartState());
+                try
+                {
+                    ConfigClient c = App.GetDefaultConfigClient();
+                    return c.InvokeThenClose(x => x.GetAutoStartState());
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine("Cannot get auto start state");
+                    Trace.WriteLine(ex.ToString());
+                    return false;
+                }
             }
             set
             {
-                ConfigClient c = ConfigClient.GetDefaultClient();
-                c.InvokeThenClose(x => x.SetAutoStartState(value));
+                try
+                {
+                    ConfigClient c = App.GetDefaultConfigClient();
+                    c.InvokeThenClose(x => x.SetAutoStartState(value));
+                }
+                catch (EndpointNotFoundException ex)
+                {
+                    Trace.WriteLine(ex.ToString());
+                    MessageBox.Show($"Could not contact the AutoSync service", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine("Cannot set auto start state");
+                    Trace.WriteLine(ex.ToString());
+                }
             }
         }
 
@@ -51,8 +74,13 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                ConfigClient c = ConfigClient.GetDefaultClient();
+                ConfigClient c = App.GetDefaultConfigClient();
                 c.InvokeThenClose(x => x.StartAll());
+            }
+            catch (EndpointNotFoundException ex)
+            {
+                Trace.WriteLine(ex.ToString());
+                MessageBox.Show($"Could not contact the AutoSync service", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             catch (Exception ex)
             {
@@ -70,8 +98,13 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                ConfigClient c = ConfigClient.GetDefaultClient();
+                ConfigClient c = App.GetDefaultConfigClient();
                 c.InvokeThenClose(x => x.StopAll(cancelRuns));
+            }
+            catch (EndpointNotFoundException ex)
+            {
+                Trace.WriteLine(ex.ToString());
+                MessageBox.Show($"Could not contact the AutoSync service", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             catch (Exception ex)
             {

@@ -11,6 +11,7 @@ using Lithnet.Common.Presentation;
 using MahApps.Metro.Controls;
 using Microsoft.Win32;
 using System.Linq;
+using System.Threading.Tasks;
 using PropertyChanged;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
@@ -60,43 +61,30 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             Application.Current.MainWindow.Closing += this.MainWindow_Closing;
 
             ViewModelBase.ViewModelIsDirtySet += this.ViewModelBase_ViewModelIsDirtySet;
-
             this.SetupExecutionMonitors();
         }
 
         private void SetupExecutionMonitors()
         {
+            IList<string> maNames = new List<string>();
             try
             {
-                ConfigClient c = ConfigClient.GetDefaultClient();
-                IList<string> maNames = new List<string>();
+                ConfigClient c = App.GetDefaultConfigClient();
+                Debug.WriteLine("Getting management agent names");
                 c.InvokeThenClose(x => maNames = x.GetManagementAgentNames());
+                Debug.WriteLine("Got management agent names");
                 this.ExecutionMonitor = new ExecutionMonitorsViewModel(maNames);
             }
             catch (EndpointNotFoundException ex)
             {
-                Trace.WriteLine(ex);
-                MessageBox.Show(
-                    $"Could not contact the AutoSync service. Ensure the Lithnet AutoSync service is running",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-                return;
-            }
-            catch (System.ServiceModel.Security.SecurityAccessDeniedException)
-            {
-                MessageBox.Show("You do not have permission to manage the AutoSync service", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Error);
-                Environment.Exit(5);
-                return;
+                Trace.WriteLine(ex.ToString());
+                MessageBox.Show($"Could not contact the AutoSync service. The execution monitor could not be set up.", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(ex);
-                MessageBox.Show(
-                    $"An error occurred communicating with the AutoSync service\r\n\r\n{ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                Trace.WriteLine("Could not setup execution monitors");
+                Trace.WriteLine(ex.ToString());
+                MessageBox.Show($"Could not setup the execution monitor\n\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -155,7 +143,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 ConfigFile file = null;
 
 
-                ConfigClient c = ConfigClient.GetDefaultClient();
+                ConfigClient c = App.GetDefaultConfigClient();
                 c.InvokeThenClose(x => file = x.GetConfig());
 
                 if (file == null)
@@ -169,6 +157,19 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 }
 
                 this.IsDirty = false;
+            }
+            catch (EndpointNotFoundException ex)
+            {
+                Trace.WriteLine(ex.ToString());
+                MessageBox.Show($"Could not contact the AutoSync service", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
+                this.ConfigFile = null;
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("Exception refreshing view");
+                Trace.WriteLine(ex.ToString());
+                MessageBox.Show($"Could not reload the configuration from the server\n\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                this.ConfigFile = null;
             }
             finally
             {
@@ -217,7 +218,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             try
             {
                 this.Cursor = Cursors.Wait;
-                ConfigClient c = ConfigClient.GetDefaultClient();
+                ConfigClient c = App.GetDefaultConfigClient();
                 f = c.ValidateConfig(f);
                 c.InvokeThenClose(x => x.PutConfig(f));
                 this.AskToRestartService();
@@ -269,10 +270,24 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void CommitConfig()
         {
-            this.MarkManagementAgentsAsConfigured();
-            ConfigClient c = ConfigClient.GetDefaultClient();
-            c.InvokeThenClose(t => t.PutConfig(this.ConfigFile.Model));
-            this.Commit();
+            try
+            {
+                this.MarkManagementAgentsAsConfigured();
+                ConfigClient c = App.GetDefaultConfigClient();
+                c.InvokeThenClose(t => t.PutConfig(this.ConfigFile.Model));
+                this.Commit();
+            }
+            catch (EndpointNotFoundException ex)
+            {
+                Trace.WriteLine(ex.ToString());
+                MessageBox.Show($"Could not contact the AutoSync service. The save operation could not be completed", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
+                this.ConfigFile = null;
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex);
+                MessageBox.Show($"Could not commit the configuration\n\n{ex.Message}", "Save operation", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void MarkManagementAgentsAsConfigured()
@@ -306,17 +321,41 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void AskToRestartService()
         {
-            ConfigClient c = ConfigClient.GetDefaultClient();
-            List<string> pendingRestartItems = c.GetManagementAgentsPendingRestart()?.ToList();
-
-            if (pendingRestartItems != null && pendingRestartItems.Count > 0)
+            try
             {
-                string pendingRestartItemList = string.Join("\r\n", pendingRestartItems);
+                ConfigClient c = App.GetDefaultConfigClient();
+                List<string> pendingRestartItems = c.GetManagementAgentsPendingRestart()?.ToList();
 
-                if (MessageBox.Show($"The configuration for the following management agents have changed\r\n\r\n{pendingRestartItemList}\r\n\r\nDo you want to restart them now?", "Restart management agents", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                if (pendingRestartItems != null && pendingRestartItems.Count > 0)
                 {
-                    c.InvokeThenClose(t => t.RestartChangedExecutors());
+                    string pendingRestartItemList = string.Join("\r\n", pendingRestartItems);
+
+                    if (MessageBox.Show($"The configuration for the following management agents have changed\r\n\r\n{pendingRestartItemList}\r\n\r\nDo you want to restart them now?", "Restart management agents", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                    {
+                        try
+                        {
+                            c.InvokeThenClose(t => t.RestartChangedExecutors());
+                        }
+                        catch (Exception ex)
+                        {
+                            Trace.WriteLine("Error restarting executors");
+                            Trace.WriteLine(ex.ToString());
+                            MessageBox.Show($"Could not restart the management agents\n\n{ex.Message}", "Restart management agents", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                    }
                 }
+            }
+            catch (EndpointNotFoundException ex)
+            {
+                Trace.WriteLine(ex.ToString());
+                MessageBox.Show($"Could not contact the AutoSync service", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
+                this.ConfigFile = null;
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("Error determining executors to restart");
+                Trace.WriteLine(ex.ToString());
+                MessageBox.Show($"Could not determine if any management agents required a restart\n\n{ex.Message}", "Restart management agents", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

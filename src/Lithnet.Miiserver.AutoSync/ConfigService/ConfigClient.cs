@@ -115,26 +115,14 @@ namespace Lithnet.Miiserver.AutoSync
             return this.Channel.ValidateConfig(config);
         }
         
-        public static ConfigClient GetDefaultClient()
-        {
-            if (string.Equals(RegistrySettings.AutoSyncServerHost, "localhost", StringComparison.OrdinalIgnoreCase))
-            {
-                return ConfigClient.GetNamedPipesClient();
-            }
-            else
-            {
-                return ConfigClient.GetNetTcpClient();
-            }
-        }
-
         public static ConfigClient GetNamedPipesClient()
         {
             return new ConfigClient(ConfigServiceConfiguration.NetNamedPipeBinding, ConfigServiceConfiguration.NetNamedPipeEndpointAddress);
         }
 
-        public static ConfigClient GetNetTcpClient()
+        public static ConfigClient GetNetTcpClient(string hostname, string port, string expectedServerIdentityFormat)
         {
-            return new ConfigClient(ConfigServiceConfiguration.NetTcpBinding, ConfigServiceConfiguration.CreateClientTcpEndPointAddress());
+            return new ConfigClient(ConfigServiceConfiguration.NetTcpBinding, ConfigServiceConfiguration.CreateTcpEndPointAddress(hostname, port, expectedServerIdentityFormat));
         }
     }
 }

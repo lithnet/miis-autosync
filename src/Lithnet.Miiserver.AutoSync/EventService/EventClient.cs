@@ -26,26 +26,14 @@ namespace Lithnet.Miiserver.AutoSync
             return this.Channel.GetFullUpdate(managementAgentName);
         }
 
-        public static EventClient GetDefaultClient(InstanceContext ctx)
-        {
-            if (string.Equals(RegistrySettings.AutoSyncServerHost, "localhost", StringComparison.OrdinalIgnoreCase))
-            {
-                return EventClient.GetNamedPipesClient(ctx);
-            }
-            else
-            {
-                return EventClient.GetNetTcpClient(ctx);
-            }
-        }
-
         public static EventClient GetNamedPipesClient(InstanceContext ctx)
         {
             return new EventClient(ctx, EventServiceConfiguration.NetNamedPipeBinding, EventServiceConfiguration.NetNamedPipeEndpointAddress);
         }
 
-        public static EventClient GetNetTcpClient(InstanceContext ctx)
+        public static EventClient GetNetTcpClient(InstanceContext ctx, string hostname, string port, string expectedServerIdentityFormat)
         {
-            return new EventClient(ctx, EventServiceConfiguration.NetTcpBinding, EventServiceConfiguration.CreateClientTcpEndPointAddress());
+            return new EventClient(ctx, EventServiceConfiguration.NetTcpBinding, EventServiceConfiguration.CreateTcpEndPointAddress(hostname, port, expectedServerIdentityFormat));
         }
     }
 }

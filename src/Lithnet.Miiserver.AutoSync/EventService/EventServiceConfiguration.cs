@@ -40,7 +40,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                int timeout = System.Diagnostics.Debugger.IsAttached ? 60 : 60;
+                int timeout = 10;
 
                 NetNamedPipeBinding binding = new NetNamedPipeBinding();
                 binding.MaxReceivedMessageSize = int.MaxValue;
@@ -61,7 +61,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                int timeout = System.Diagnostics.Debugger.IsAttached ? 900 : 100;
+                int timeout = 10;
 
                 NetTcpBinding binding = new NetTcpBinding();
                 binding.MaxReceivedMessageSize = int.MaxValue;
@@ -69,12 +69,13 @@ namespace Lithnet.Miiserver.AutoSync
                 binding.ReaderQuotas.MaxBytesPerRead = int.MaxValue;
                 binding.CloseTimeout = TimeSpan.FromSeconds(timeout);
                 binding.OpenTimeout = TimeSpan.FromSeconds(timeout);
-                binding.ReceiveTimeout = TimeSpan.FromSeconds(timeout);
-                binding.SendTimeout = TimeSpan.FromSeconds(timeout);
+                binding.ReceiveTimeout = TimeSpan.MaxValue;
+                binding.SendTimeout = TimeSpan.MaxValue;
                 binding.TransactionFlow = false;
                 binding.Security.Mode = SecurityMode.Message;
                 binding.Security.Transport.ProtectionLevel = System.Net.Security.ProtectionLevel.EncryptAndSign;
-
+                binding.ReliableSession.Ordered = false;
+                binding.ReliableSession.Enabled = false;
                 return binding;
             }
         }
@@ -87,22 +88,16 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public static EndpointAddress CreateClientTcpEndPointAddress()
-        {
-            return EventServiceConfiguration.CreateTcpEndPointAddress(RegistrySettings.AutoSyncServerHost, RegistrySettings.AutoSyncServerPort);
-        }
-
         public static string CreateServerBindingUri()
         {
             return EventServiceConfiguration.CreateTcpUri(RegistrySettings.NetTcpBindAddress, RegistrySettings.NetTcpBindPort);
         }
-
-
-        public static EndpointAddress CreateTcpEndPointAddress(string hostname, string port)
+        
+        public static EndpointAddress CreateTcpEndPointAddress(string hostname, string port, string expectedServerIdentityFormat)
         {
             EndpointIdentity i;
 
-            string expectedServerIdentity = string.Format(RegistrySettings.AutoSyncServerIdentity, hostname);
+            string expectedServerIdentity = string.Format(expectedServerIdentityFormat, hostname);
 
             if (expectedServerIdentity.Contains("@"))
             {

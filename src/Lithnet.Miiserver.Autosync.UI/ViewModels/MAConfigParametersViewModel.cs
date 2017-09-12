@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.ServiceModel;
 using System.Windows;
 using Lithnet.Common.Presentation;
 using Lithnet.Miiserver.AutoSync.UI.Windows;
@@ -230,8 +231,16 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             List<string> items = new List<string>();
             items.Add("(none)");
 
-            ConfigClient c = ConfigClient.GetDefaultClient();
-            c.InvokeThenClose(u => items.AddRange(c.GetManagementAgentRunProfileNames(this.ManagementAgentName, includeMultiStep)));
+            try
+            {
+                ConfigClient c = App.GetDefaultConfigClient();
+                c.InvokeThenClose(u => items.AddRange(c.GetManagementAgentRunProfileNames(this.ManagementAgentName, includeMultiStep)));
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("Unable to enumerate run profiles");
+                Trace.WriteLine(ex.ToString());
+            }
 
             return items;
         }
@@ -264,7 +273,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                         return;
                     }
 
-                    ConfigClient c = ConfigClient.GetDefaultClient();
+                    ConfigClient c = App.GetDefaultConfigClient();
                     IMAExecutionTrigger instance = c.InvokeThenClose(t => t.CreateTriggerForManagementAgent(this.SelectedTrigger.FullName, this.ManagementAgentName));
                     this.Triggers.Add(instance, true);
                     this.Triggers.Find(instance).IsDirtySet += this.MAConfigParametersViewModel_IsDirtySet;
@@ -272,7 +281,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"An unexpected error occurred.\n{ex.Message}", "Unable to create trigger");
+                MessageBox.Show($"Unable to create the trigger\n{ex.Message}", "Unable to create trigger");
                 Trace.WriteLine(ex);
             }
         }
@@ -298,9 +307,19 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         private void GetAllowedTypesForMa()
         {
             this.allowedTypes = new List<Type>();
+            IList<string> allowedTypeNames = null;
 
-            ConfigClient c = ConfigClient.GetDefaultClient();
-            IList<string> allowedTypeNames = c.InvokeThenClose(t => t.GetAllowedTriggerTypesForMA(this.ManagementAgentName));
+            try
+            {
+                ConfigClient c = App.GetDefaultConfigClient();
+                allowedTypeNames = c.InvokeThenClose(t => t.GetAllowedTriggerTypesForMA(this.ManagementAgentName));
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("Unable to get allowed triggers");
+                Trace.WriteLine(ex.ToString());
+                return;
+            }
 
             foreach (Type mytype in typeof(IMAExecutionTrigger).Assembly.GetTypes()
                 .Where(mytype => mytype.GetInterfaces().Contains(typeof(IMAExecutionTrigger))))

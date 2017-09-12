@@ -26,50 +26,32 @@ namespace Lithnet.Miiserver.AutoSync.UI
         {
             AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
             TaskScheduler.UnobservedTaskException += this.TaskScheduler_UnobservedTaskException;
-            Application.Current.DispatcherUnhandledException += this.Dispatcher_UnhandledException; // WPF app
+            Application.Current.DispatcherUnhandledException += this.Dispatcher_UnhandledException; 
 
-//            ServiceController sc = new ServiceController("autosync");
+#if DEBUG
+            if (Debugger.IsAttached)
+            {
+                ServiceController sc = new ServiceController("autosync");
 
-//#if DEBUG
-//            if (Debugger.IsAttached)
-//            {
-//                if (sc.Status == ServiceControllerStatus.Stopped)
-//                {
-//                    // Must be started off the UI-thread
-//                    Task.Run(() =>
-//                    {
-//                        Program.SetupOutOfBandInstance();
-//                    }).Wait();
-//                }
+                if (sc.Status == ServiceControllerStatus.Stopped)
+                {
+                    // Must be started off the UI-thread
+                    Task.Run(() =>
+                    {
+                        Program.SetupOutOfBandInstance();
+                    }).Wait();
+                }
 
-//                return;
-//            }
-//#endif
-
-//            sc = new ServiceController("fimsynchronizationservice");
-//            if (sc.Status != ServiceControllerStatus.Running)
-//            {
-//                MessageBox.Show("The MIM Synchronization service is not running. Please start the service and try again.",
-//                    "Lithnet AutoSync",
-//                    MessageBoxButton.OK,
-//                    MessageBoxImage.Stop);
-//                Environment.Exit(1);
-//            }
-
-//            sc = new ServiceController("autosync");
-//            if (sc.Status != ServiceControllerStatus.Running)
-//            {
-//                MessageBox.Show("The AutoSync service is not running. Please start the service and try again.",
-//                    "Lithnet AutoSync",
-//                    MessageBoxButton.OK,
-//                    MessageBoxImage.Stop);
-//                Environment.Exit(1);
-//            }
+                return;
+            }
+#endif
 
             try
             {
-                ConfigClient c = ConfigClient.GetDefaultClient();
+                ConfigClient c = App.GetDefaultConfigClient();
+                Trace.WriteLine($"Attempting to connect to the AutoSync service at {c.Endpoint.Address}");
                 c.Open();
+                Trace.WriteLine($"Connected to the AutoSync service");
             }
             catch (EndpointNotFoundException ex)
             {
@@ -81,8 +63,25 @@ namespace Lithnet.Miiserver.AutoSync.UI
                     MessageBoxImage.Error);
                 Environment.Exit(1);
             }
-            catch (System.ServiceModel.Security.SecurityAccessDeniedException)
+            catch (System.TimeoutException ex)
             {
+                Trace.WriteLine(ex);
+                MessageBox.Show(
+                    $"Could not contact the AutoSync service. Ensure the Lithnet AutoSync service is running",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                Environment.Exit(1);
+            }
+            catch (System.ServiceModel.Security.SecurityNegotiationException ex)
+            {
+                Trace.WriteLine(ex);
+                MessageBox.Show($"There was an error trying to establish a secure session with the AutoSync server\n\n{ex.Message}", "Security error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Environment.Exit(5);
+            }
+            catch (System.ServiceModel.Security.SecurityAccessDeniedException ex)
+            {
+                Trace.WriteLine(ex);
                 MessageBox.Show("You do not have permission to manage the AutoSync service", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Error);
                 Environment.Exit(5);
             }
@@ -158,21 +157,21 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
                 this.hasThrown = true;
 
-                try
-                {
-                    ServiceController sc = new ServiceController("autosync");
-                    if (sc.Status != ServiceControllerStatus.Running)
-                    {
-                        MessageBox.Show("The AutoSync service is not running. Please start the service and try again.",
-                            "Lithnet AutoSync",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Stop);
-                        Environment.Exit(1);
-                    }
-                }
-                catch (Exception)
-                {
-                }
+                //try
+                //{
+                //    ServiceController sc = new ServiceController("autosync");
+                //    if (sc.Status != ServiceControllerStatus.Running)
+                //    {
+                //        MessageBox.Show("The AutoSync service is not running. Please start the service and try again.",
+                //            "Lithnet AutoSync",
+                //            MessageBoxButton.OK,
+                //            MessageBoxImage.Stop);
+                //        Environment.Exit(1);
+                //    }
+                //}
+                //catch (Exception)
+                //{
+                //}
 
                 Logger.WriteLine("Unhandled exception in application");
                 Logger.WriteLine(e.ToString());
@@ -182,6 +181,31 @@ namespace Lithnet.Miiserver.AutoSync.UI
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
                 Environment.Exit(1);
+            }
+        }
+
+
+        internal static EventClient GetDefaultEventClient(InstanceContext ctx)
+        {
+            if (string.Equals(UserSettings.AutoSyncServerHost, "localhost", StringComparison.OrdinalIgnoreCase))
+            {
+                return EventClient.GetNamedPipesClient(ctx);
+            }
+            else
+            {
+                return EventClient.GetNetTcpClient(ctx, UserSettings.AutoSyncServerHost, UserSettings.AutoSyncServerPort, UserSettings.AutoSyncServerIdentity);
+            }
+        }
+
+        public static ConfigClient GetDefaultConfigClient()
+        {
+            if (string.Equals(UserSettings.AutoSyncServerHost, "localhost", StringComparison.OrdinalIgnoreCase))
+            {
+                return ConfigClient.GetNamedPipesClient();
+            }
+            else
+            {
+                return ConfigClient.GetNetTcpClient(UserSettings.AutoSyncServerHost, UserSettings.AutoSyncServerPort, UserSettings.AutoSyncServerIdentity);
             }
         }
 
