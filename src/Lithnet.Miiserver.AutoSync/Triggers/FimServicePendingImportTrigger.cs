@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Runtime.Serialization;
+using System.Security.Principal;
 using System.Timers;
 using System.Xml;
 using Lithnet.ResourceManagement.Client;
@@ -121,8 +122,16 @@ namespace Lithnet.Miiserver.AutoSync
 
             if (user == null)
             {
-                Trace.WriteLine($"Person {accountName} was not found");
-                throw new ResourceNotFoundException($"The user {accountName} could not be found");
+                Trace.WriteLine($"Person {accountName} was not found. Creating");
+                user = c.CreateResource("Person");
+                SecurityIdentifier sid = (SecurityIdentifier)new NTAccount(accountName).Translate(typeof(SecurityIdentifier));
+                user.SetValue("AccountName", split[1]);
+                user.SetValue("Domain", split[0]);
+
+                byte[] sidBytes = new byte[sid.BinaryLength];
+                sid.GetBinaryForm(sidBytes, 0);
+                user.SetValue("ObjectSID", sidBytes);
+                user.Save();
             }
 
             ResourceObject set = c.GetResourceByKey("Set", "DisplayName", setName);

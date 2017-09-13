@@ -114,7 +114,12 @@ namespace Lithnet.Miiserver.AutoSync
         {
             return this.Channel.ValidateConfig(config);
         }
-        
+
+        public string GetAutoSyncServiceAccountName()
+        {
+            return this.Channel.GetAutoSyncServiceAccountName();
+        }
+
         public static ConfigClient GetNamedPipesClient()
         {
             return new ConfigClient(ConfigServiceConfiguration.NetNamedPipeBinding, ConfigServiceConfiguration.NetNamedPipeEndpointAddress);

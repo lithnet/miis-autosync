@@ -74,8 +74,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                     creds = new NetworkCredential(this.Username, this.Password);
                 }
 
-                RegistryKey key = Registry.LocalMachine.OpenSubKey("System\\CurrentControlSet\\Services\\autosync", false);
-                string svcAccount = (string)key.GetValue("ObjectName", null);
+                ConfigClient c = App.GetDefaultConfigClient();
+                string svcAccount = c.InvokeThenClose(t => t.GetAutoSyncServiceAccountName());
 
                 FimServicePendingImportTrigger.CreateMpr(this.MimServiceHost, creds, svcAccount, this.SetName, this.MprName);
                 MessageBox.Show("The set and MPR were created successfully", "Lithnet AutoSync", MessageBoxButton.OK, MessageBoxImage.Information);

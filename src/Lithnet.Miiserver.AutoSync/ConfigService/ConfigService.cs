@@ -93,6 +93,11 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
+        public string GetAutoSyncServiceAccountName()
+        {
+            return RegistrySettings.ServiceAccount;
+        }
+
         public void PutConfig(ConfigFile config)
         {
             try
