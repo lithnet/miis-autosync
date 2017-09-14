@@ -1,4 +1,4 @@
-# ![Icon](https://github.com/lithnet/miis-autosync/wiki/images/change-sync.png) Lithnet AutoSync for Microsoft Identity Manager
+# ![Icon](https://github.com/lithnet/miis-autosync/wiki/images/autosync-logo-sm.png)
 
 The Lithnet FIM/MIM AutoSync Service is a windows service that runs along side of the FIM/MIM Synchronization service, and automatically executes management agent run profiles.
 
