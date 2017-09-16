@@ -1,6 +1,6 @@
-# ![Icon](https://github.com/lithnet/miis-autosync/wiki/images/change-sync.png) Lithnet AutoSync for Microsoft Identity Manager
+# ![Icon](https://github.com/lithnet/miis-autosync/wiki/images/autosync-logo-sm.png)
 
-The Lithnet FIM/MIM AutoSync Service is a windows service that runs along side of the FIM/MIM Synchronization service, and automatically executes management agent run profiles.
+Lithnet AutoSync is a windows service that runs along side of the FIM/MIM Synchronization service, and automatically executes management agent run profiles.
 
 ### Product Overview
 #### What it does 
@@ -14,7 +14,7 @@ AutoSync provides several out-of-box solutions for triggering import operations.
 
 The most powerful mechanism provided is the PowerShell trigger. Administrators can use PowerShell to write their own custom triggers that may, for example, detect if there are pending changes in a system, and trigger an import operation.
 
-See the wiki topic on triggers for more information
+See the wiki topic on [triggers](https://github.com/lithnet/miis-autosync/wiki/Triggers) for more information
 
 #### Synchronization profiles
 The FIM/MIM Synchronziation engine allows only a single synchronization run profile to be executed at any one time. AutoSync ensures that only one synchronization can run at a time by queing requests and executing them in sequence.
