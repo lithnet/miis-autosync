@@ -3,29 +3,20 @@
                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-                      xmlns:local="clr-namespace:Lithnet.Miiserver.AutoSync.UI.Windows"
                       xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls" WindowStartupLocation="CenterOwner"
                       mc:Ignorable="d" ShowCloseButton="False" ShowMinButton="False" ShowMaxRestoreButton="False" ShowInTaskbar="False"
                       ShowIconOnTitleBar="False" ShowSystemMenuOnRightClick="False" BorderThickness="1" BorderBrush="{DynamicResource AccentColorBrush}"
-                      Title="About" Height="201.847" Width="394.195">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition/>
-            <RowDefinition/>
-            <RowDefinition/>
-        </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition/>
-        </Grid.ColumnDefinitions>
-        <Image   Grid.Row="0" Grid.Column="0" Width="75" Source="/Lithnet.Miiserver.AutoSync.Editor;component/autosync.ico"/>
-        <TextBlock Grid.Row="0" Grid.Column="1" Margin="20" Text="Lithnet AutoSync for Microsoft Identity Manager"></TextBlock>
-        <TextBlock Grid.Row="1" Grid.Column="1" Margin="20" Text="Version" Name="TxVersion"></TextBlock>
+                      Title="About" Width="648" Height="270">
+    <Window.Background>
+        <ImageBrush ImageSource="/resources/splashscreen.png"></ImageBrush>
+    </Window.Background>
+    <DockPanel>
+        <TextBlock  VerticalAlignment="Bottom" Margin="5" Text="Version" Name="TxVersion"></TextBlock>
 
 
-        <StackPanel Grid.ColumnSpan="2" Grid.Column="0" Grid.Row="2" HorizontalAlignment="Center" Orientation="Horizontal" VerticalAlignment="Bottom">
-            <Button Content="OK" Margin="10" Width="50" IsDefault="True" Click="Button_Click"/>
+        <StackPanel DockPanel.Dock="Bottom"  HorizontalAlignment="Center" Orientation="Vertical" VerticalAlignment="Bottom">
+            <Button Content="OK" Margin="5" Width="50" IsDefault="True" Click="Button_Click"/>
         </StackPanel>
-
-    </Grid>
+    </DockPanel>
+  
 </controls:MetroWindow>

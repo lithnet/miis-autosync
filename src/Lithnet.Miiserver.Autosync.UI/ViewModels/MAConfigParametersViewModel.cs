@@ -9,6 +9,7 @@ using System.Windows;
 using Lithnet.Common.Presentation;
 using Lithnet.Miiserver.AutoSync.UI.Windows;
 using Microsoft.Win32;
+using PropertyChanged;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
@@ -91,8 +92,11 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             Trace.WriteLine($"{this.ManagementAgentName} config version change from {this.originalVersion} to {this.Model.Version}");
 
             this.RaisePropertyChanged(nameof(this.Version));
+            this.RaisePropertyChanged(nameof(this.IsNew));
+            this.RaisePropertyChanged(nameof(this.DisplayName));
         }
 
+        [DependsOn(nameof(IsMissing), nameof(IsNew), nameof(Disabled), nameof(Version))]
         public string DisplayName
         {
             get
@@ -109,8 +113,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 {
                     name += " (unconfigured)";
                 }
-
-                if (this.Disabled)
+                else if (this.Disabled)
                 {
                     name += " (disabled)";
                 }
@@ -127,11 +130,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public bool IsMissing => this.Model.IsMissing;
 
-        public bool IsNew
-        {
-            get => this.Model.IsNew;
-            set => this.Model.IsNew = value;
-        }
+        public bool IsNew => this.Version == 0;
 
         public string MAControllerPath
         {
@@ -148,6 +147,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public string ScheduledImportRunProfileToolTip => "Called automatically by AutoSync when the 'Schedule an import if it has been longer than x minutes since the last import' operation option has been specified";
 
+        [AlsoNotifyFor(nameof(IsNew))]
         public int Version => this.Model.Version;
 
         public string FullSyncRunProfileName

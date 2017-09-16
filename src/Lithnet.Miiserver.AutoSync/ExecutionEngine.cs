@@ -26,12 +26,12 @@ namespace Lithnet.Miiserver.AutoSync
         public ExecutionEngine()
         {
             this.npService = EventService.CreateNetNamedPipeInstance();
-            Logger.WriteLine("Initialized event service host pipe");
+            Logger.WriteLine("Initialized named pipe event service host");
 
             if (RegistrySettings.NetTcpServerEnabled)
             {
                 this.tcpService = EventService.CreateNetTcpInstance();
-                Logger.WriteLine("Initialized event service host tcp");
+                Logger.WriteLine("Initialized TCP event service host");
             }
 
             this.InitializeMAExecutors();
@@ -263,11 +263,6 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        private void StopMAExecutors()
-        {
-            this.StopMAExecutors(false);
-        }
-
         private void StopMAExecutors(bool cancelRun)
         {
             if (this.maExecutors == null)
@@ -294,6 +289,11 @@ namespace Lithnet.Miiserver.AutoSync
                     catch (OperationCanceledException)
                     {
                     }
+                    catch (Exception ex)
+                    {
+                        Logger.WriteLine($"The executor for {e.ManagementAgentName} throw an error while stopping");
+                        Logger.WriteException(ex);
+                    }
                 }));
             }
 
@@ -302,7 +302,6 @@ namespace Lithnet.Miiserver.AutoSync
             if (!Task.WaitAll(stopTasks.ToArray(), 10000))
             {
                 Logger.WriteLine("Timeout waiting for executors to stop");
-                throw new TimeoutException();
             }
             else
             {

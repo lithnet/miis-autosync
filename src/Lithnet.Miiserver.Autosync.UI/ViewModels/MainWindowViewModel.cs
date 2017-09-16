@@ -155,7 +155,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                     this.ConfigFile = new ConfigFileViewModel(file);
                     this.ConfigFile.ManagementAgents.IsExpanded = true;
                 }
-
+                
                 this.IsDirty = false;
             }
             catch (EndpointNotFoundException ex)
@@ -272,7 +272,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                this.MarkManagementAgentsAsConfigured();
                 ConfigClient c = App.GetDefaultConfigClient();
                 c.InvokeThenClose(t => t.PutConfig(this.ConfigFile.Model));
                 this.Commit();
@@ -287,14 +286,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 Trace.WriteLine(ex);
                 MessageBox.Show($"Could not commit the configuration\n\n{ex.Message}", "Save operation", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void MarkManagementAgentsAsConfigured()
-        {
-            foreach (MAConfigParametersViewModel p in this.ConfigFile.ManagementAgents)
-            {
-                p.IsNew = false;
             }
         }
 
@@ -388,7 +379,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 {
                     this.Cursor = Cursors.Wait;
                     ProtectedString.EncryptOnWrite = false;
-                    this.MarkManagementAgentsAsConfigured();
                     AutoSync.ConfigFile.Save(this.ConfigFile.Model, dialog.FileName);
                     this.IsDirty = false;
                 }

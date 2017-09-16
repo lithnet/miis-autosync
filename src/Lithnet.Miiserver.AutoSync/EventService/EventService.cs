@@ -74,6 +74,9 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     EventService.statusChangedEventHandlers[status.MAName]?.Invoke(status);
                 }
+                catch (System.ServiceModel.CommunicationObjectAbortedException)
+                {
+                }
                 catch (Exception ex)
                 {
                     Logger.WriteLine("Error notifying client");
@@ -178,6 +181,7 @@ namespace Lithnet.Miiserver.AutoSync
                 ICommunicationObject commObj = subscriber as ICommunicationObject;
                 if (commObj != null)
                 {
+                    commObj.Faulted -= this.CommObj_Faulted;
                     commObj.Closed -= this.CommObj_Closed;
                 }
             }

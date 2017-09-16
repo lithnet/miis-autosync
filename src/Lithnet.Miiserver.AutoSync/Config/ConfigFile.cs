@@ -68,7 +68,6 @@ namespace Lithnet.Miiserver.AutoSync
                 if (!found)
                 {
                     MAConfigParameters p = new MAConfigParameters(ma.Name, ma.ID);
-                    p.IsNew = true;
                     p.Disabled = true;
                     p.AutoImportIntervalMinutes = 60;
                     MAConfigDiscovery.DoAutoRunProfileDiscovery(p, ma);

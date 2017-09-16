@@ -6,6 +6,7 @@ using System.ServiceModel;
 using System.ServiceProcess;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
@@ -56,6 +57,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
             catch (EndpointNotFoundException ex)
             {
                 Trace.WriteLine(ex);
+                this.ShowDummyWindow();
                 MessageBox.Show(
                     $"Could not contact the AutoSync service. Ensure the Lithnet AutoSync service is running",
                     "Error",
@@ -66,6 +68,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
             catch (System.TimeoutException ex)
             {
                 Trace.WriteLine(ex);
+                this.ShowDummyWindow();
                 MessageBox.Show(
                     $"Could not contact the AutoSync service. Ensure the Lithnet AutoSync service is running",
                     "Error",
@@ -76,18 +79,21 @@ namespace Lithnet.Miiserver.AutoSync.UI
             catch (System.ServiceModel.Security.SecurityNegotiationException ex)
             {
                 Trace.WriteLine(ex);
+                this.ShowDummyWindow();
                 MessageBox.Show($"There was an error trying to establish a secure session with the AutoSync server\n\n{ex.Message}", "Security error", MessageBoxButton.OK, MessageBoxImage.Error);
                 Environment.Exit(5);
             }
             catch (System.ServiceModel.Security.SecurityAccessDeniedException ex)
             {
                 Trace.WriteLine(ex);
+                this.ShowDummyWindow();
                 MessageBox.Show("You do not have permission to manage the AutoSync service", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Error);
                 Environment.Exit(5);
             }
             catch (Exception ex)
             {
                 Trace.WriteLine(ex);
+                this.ShowDummyWindow();
                 MessageBox.Show(
                     $"An unexpected error occurred communicating with the AutoSync service. Restart the AutoSync service and try again",
                     "Error",
@@ -95,6 +101,12 @@ namespace Lithnet.Miiserver.AutoSync.UI
                     MessageBoxImage.Error);
                 Environment.Exit(1);
             }
+        }
+
+        private void ShowDummyWindow()
+        {
+            Window t = new Window() {AllowsTransparency = true, ShowInTaskbar = false, WindowStyle = WindowStyle.None, Background = Brushes.Transparent};
+            t.Show();
         }
 
         private bool hasThrown;

@@ -175,7 +175,7 @@ namespace Lithnet.Miiserver.AutoSync
             MAExecutor.AllMaLocalOperationLocks.TryAdd(this.ma.ID, this.localOperationLock);
             MAExecutor.SyncComplete += this.MAExecutor_SyncComplete;
         }
-  
+
         internal void RaiseStateChange()
         {
             Task.Run(() =>
@@ -189,7 +189,7 @@ namespace Lithnet.Miiserver.AutoSync
                     Logger.WriteLine("Unable to relay state change");
                     Logger.WriteException(ex);
                 }
-            }, this.executorCancellationTokenSource.Token);
+            }); // Using the global cancellation token here prevents the final state messages being received (see issue #80)
         }
 
         private void Setup(MAConfigParameters config)
@@ -547,7 +547,7 @@ namespace Lithnet.Miiserver.AutoSync
                         this.Log($"{e.RunProfileName} returned {result}");
                         this.UpdateExecutionStatus(ExecutorState.Processing, "Evaluating run results");
                     }
-                    
+
                     if (ts.IsCancellationRequested)
                     {
                         this.Log($"The run profile {e.RunProfileName} was canceled");
@@ -561,7 +561,7 @@ namespace Lithnet.Miiserver.AutoSync
                     this.Trace("Got run results");
 
                     this.RaiseRunProfileComplete(r.RunProfileName, r.LastStepStatus, r.RunNumber, r.StartTime, r.EndTime);
-                    
+
                     if (RegistrySettings.RetryCodes.Contains(result))
                     {
                         this.Trace($"Operation is retryable. {count} attempt{count.Pluralize()} made");
@@ -641,7 +641,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 this.Trace("Unmanaged run in progress");
                 this.WaitAndTakeLock(this.localOperationLock, nameof(this.localOperationLock), linkedToken);
-                
+
                 this.Log($"Waiting on unmanaged run {this.ma.ExecutingRunProfileName} to finish");
 
                 if (this.ma.RunProfiles[this.ma.ExecutingRunProfileName].RunSteps.Any(t => t.IsSyncStep))
@@ -735,7 +735,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             this.executorCancellationTokenSource = new CancellationTokenSource();
 
-            if (config.IsNew || config.IsMissing || config.Disabled)
+            if (config.Version == 0 || config.IsMissing || config.Disabled)
             {
                 Logger.WriteLine($"Ignoring start request as management agent {config.ManagementAgentName} is disabled or unconfigured");
                 this.ControlState = ControlState.Disabled;
@@ -1018,7 +1018,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 this.UpdateExecutionStatus(ExecutorState.Waiting, "Waiting for lock holder to finish", action.RunProfileName);
                 this.Wait(MAExecutor.GlobalExclusiveOperationLock, nameof(MAExecutor.GlobalExclusiveOperationLock), this.jobCancellationTokenSource);
-                
+
                 if (action.Exclusive)
                 {
                     this.Message = "Waiting to take lock";
@@ -1324,6 +1324,8 @@ namespace Lithnet.Miiserver.AutoSync
 
                 this.Log($"Current queue: {this.GetQueueItemNames()}");
             }
+            catch(OperationCanceledException)
+            { }
             catch (Exception ex)
             {
                 this.Log($"An unexpected error occurred while adding the pending action {p?.RunProfileName}. The event has been discarded");

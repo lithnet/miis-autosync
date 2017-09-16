@@ -22,13 +22,10 @@ namespace Lithnet.Miiserver.AutoSync
 
         public bool IsMissing { get; set; }
 
-        [DataMember(Name = "unconfigured", EmitDefaultValue = false)]
-        public bool IsNew { get; set; }
-
         [DataMember(Name = "version")]
         public int Version { get; set; }
 
-        public void ResolveManagementAgent()
+        internal void ResolveManagementAgent()
         {
             try
             {
@@ -52,17 +49,6 @@ namespace Lithnet.Miiserver.AutoSync
 
             this.IsMissing = true;
         }
-
-        //public ManagementAgent ManagementAgent
-        //{
-        //    get => this.ma;
-        //    private set
-        //    {
-        //        this.ma = value;
-        //        this.ManagementAgentID = this.ma?.ID ?? Guid.Empty;
-        //        this.ManagementAgentName = this.ma?.Name;
-        //    }
-        //}
 
         [DataMember(Name = "run-profile-confirming-import")]
         public string ConfirmingImportRunProfileName { get; set; }
