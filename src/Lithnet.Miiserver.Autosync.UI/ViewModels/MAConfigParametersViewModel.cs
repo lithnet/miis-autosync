@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.ServiceModel;
 using System.Windows;
 using Lithnet.Common.Presentation;
 using Lithnet.Miiserver.AutoSync.UI.Windows;
@@ -18,6 +18,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         private List<Type> allowedTypes;
 
         private int originalVersion;
+
 
         public MAConfigParametersViewModel(MAConfigParameters model)
             : base(model)
@@ -48,6 +49,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.AddIsDirtyProperty(nameof(this.Triggers));
             this.AddIsDirtyProperty(nameof(this.LockManagementAgents));
             this.AddIsDirtyProperty(nameof(this.Disabled));
+            this.AddIsDirtyProperty(nameof(this.IsDeleted));
 
             this.IsDirtySet += this.MAConfigParametersViewModel_IsDirtySet;
 
@@ -59,6 +61,42 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
 
             this.DisplayIcon = App.GetImageResource("Settings.ico");
+
+            this.PopulateMenuItems();
+        }
+
+        private void PopulateMenuItems()
+        {
+            if (this.IsMissing)
+            {
+                this.MenuItems = new ObservableCollection<MenuItemViewModelBase>();
+
+                this.MenuItems.Add(new MenuItemViewModel()
+                {
+                    Header = "Remove missing management agent...",
+                    Icon = App.GetImageResource("Cancel.ico"),
+                    Command = new DelegateCommand(t => this.Remove(), t => this.CanRemove()),
+                });
+            }
+        }
+
+        private bool CanRemove()
+        {
+            return this.IsMissing;
+        }
+
+        private void Remove()
+        {
+            MessageBoxResult result = MessageBox.Show("This will permanently remove all the configuration for this management agent. Are you sure you want to continue?",
+                "Confirm removal of configuration",
+                MessageBoxButton.OKCancel, 
+                MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.OK)
+            {
+                ((ManagementAgentsViewModel) this.Parent).Remove(this);
+                this.IsDeleted = true;
+            }
         }
 
         private void MAConfigParametersViewModel_IsDirtySet(object sender, PropertyChangedEventArgs e)
@@ -96,6 +134,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.RaisePropertyChanged(nameof(this.DisplayName));
         }
 
+        public bool IsDeleted { get; set; }
+
         [DependsOn(nameof(IsMissing), nameof(IsNew), nameof(Disabled), nameof(Version))]
         public string DisplayName
         {
@@ -122,9 +162,13 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
         }
 
+        public ObservableCollection<MenuItemViewModelBase> MenuItems { get; set; }
+
         public bool IsEnabled => !this.IsMissing && !this.Disabled;
 
         public string ManagementAgentName => this.Model.ManagementAgentName ?? "Unknown MA";
+
+        public Guid ManagementAgentID => this.Model.ManagementAgentID;
 
         public string SortName => $"{this.Disabled}{this.ManagementAgentName}";
 
@@ -231,10 +275,15 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             List<string> items = new List<string>();
             items.Add("(none)");
 
+            if (this.IsMissing)
+            {
+                return items;
+            }
+
             try
             {
                 ConfigClient c = App.GetDefaultConfigClient();
-                c.InvokeThenClose(u => items.AddRange(c.GetManagementAgentRunProfileNames(this.ManagementAgentName, includeMultiStep)));
+                c.InvokeThenClose(u => items.AddRange(c.GetManagementAgentRunProfileNames(this.ManagementAgentID, includeMultiStep)));
             }
             catch (Exception ex)
             {
@@ -274,7 +323,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                     }
 
                     ConfigClient c = App.GetDefaultConfigClient();
-                    IMAExecutionTrigger instance = c.InvokeThenClose(t => t.CreateTriggerForManagementAgent(this.SelectedTrigger.FullName, this.ManagementAgentName));
+                    IMAExecutionTrigger instance = c.InvokeThenClose(t => t.CreateTriggerForManagementAgent(this.SelectedTrigger.FullName, this.ManagementAgentID));
                     this.Triggers.Add(instance, true);
                     this.Triggers.Find(instance).IsDirtySet += this.MAConfigParametersViewModel_IsDirtySet;
                 }
@@ -312,7 +361,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             try
             {
                 ConfigClient c = App.GetDefaultConfigClient();
-                allowedTypeNames = c.InvokeThenClose(t => t.GetAllowedTriggerTypesForMA(this.ManagementAgentName));
+                allowedTypeNames = c.InvokeThenClose(t => t.GetAllowedTriggerTypesForMA(this.ManagementAgentID));
             }
             catch (Exception ex)
             {

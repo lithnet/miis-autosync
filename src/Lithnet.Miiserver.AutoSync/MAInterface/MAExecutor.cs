@@ -167,7 +167,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             this.executorCancellationTokenSource = new CancellationTokenSource();
             this.ma = ma;
-            this.InternalStatus = new MAStatus() { MAName = this.ma.Name };
+            this.InternalStatus = new MAStatus() { ManagementAgentName = this.ma.Name , ManagementAgentID = this.ma.ID };
             this.ControlState = ControlState.Stopped;
             this.ExecutionTriggers = new List<IMAExecutionTrigger>();
             this.localOperationLock = new ManualResetEvent(true);

@@ -96,7 +96,6 @@
     <Compile Include="Controls\TreeViewItemControl.xaml.cs">
       <DependentUpon>TreeViewItemControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Converters\SortedListConverter.cs" />
     <Compile Include="OnlineHelpProvider.cs" />
     <Compile Include="PasswordBoxBindingHelper.cs" />
     <Compile Include="Controls\TimeSpanControl.xaml.cs">

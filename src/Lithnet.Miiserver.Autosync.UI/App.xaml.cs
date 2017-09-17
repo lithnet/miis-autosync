@@ -169,22 +169,6 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
                 this.hasThrown = true;
 
-                //try
-                //{
-                //    ServiceController sc = new ServiceController("autosync");
-                //    if (sc.Status != ServiceControllerStatus.Running)
-                //    {
-                //        MessageBox.Show("The AutoSync service is not running. Please start the service and try again.",
-                //            "Lithnet AutoSync",
-                //            MessageBoxButton.OK,
-                //            MessageBoxImage.Stop);
-                //        Environment.Exit(1);
-                //    }
-                //}
-                //catch (Exception)
-                //{
-                //}
-
                 Logger.WriteLine("Unhandled exception in application");
                 Logger.WriteLine(e.ToString());
                 MessageBox.Show(
@@ -195,8 +179,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
                 Environment.Exit(1);
             }
         }
-
-
+        
         internal static EventClient GetDefaultEventClient(InstanceContext ctx)
         {
             if (string.Equals(UserSettings.AutoSyncServerHost, "localhost", StringComparison.OrdinalIgnoreCase))

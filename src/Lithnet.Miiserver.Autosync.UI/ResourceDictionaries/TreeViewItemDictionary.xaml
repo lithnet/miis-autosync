@@ -2,9 +2,28 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:viewModels="clr-namespace:Lithnet.Miiserver.AutoSync.UI.ViewModels"
                     xmlns:controls="clr-namespace:Lithnet.Miiserver.AutoSync.UI.Controls"
-                    xmlns:converters="clr-namespace:Lithnet.Miiserver.AutoSync.UI.Converters">
+                    xmlns:local="clr-namespace:Lithnet.Common.Presentation;assembly=Lithnet.Common.Presentation">
 
-    <converters:SortedListConverter x:Key="ListConverter" />
+    <ContextMenu x:Key="ItemContextMenu" ItemsSource="{Binding Path=MenuItems}" UsesItemContainerTemplate="True">
+        <ContextMenu.Resources>
+            <ResourceDictionary>
+                <ItemContainerTemplate DataType="{x:Type local:MenuItemViewModel }">
+                    <MenuItem Header="{Binding Path=Header}" Command="{Binding Path=Command}" ItemsSource="{Binding Path=MenuItems}" UsesItemContainerTemplate="True">
+                        <MenuItem.Icon>
+                            <Image Source="{Binding Path=Icon}" Height="16" Width="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                </ItemContainerTemplate>
+                <ItemContainerTemplate DataType="{x:Type local:SeparatorViewModel}">
+                    <Separator >
+                        <Separator.Style>
+                            <Style TargetType="{x:Type Separator}" BasedOn="{StaticResource ResourceKey={x:Static MenuItem.SeparatorStyleKey}}"/>
+                        </Separator.Style>
+                    </Separator>
+                </ItemContainerTemplate>
+            </ResourceDictionary>
+        </ContextMenu.Resources>
+    </ContextMenu>
 
     <HierarchicalDataTemplate DataType="{x:Type viewModels:ConfigFileViewModel}"
                               ItemsSource="{Binding Path=ChildNodes}">
@@ -12,7 +31,7 @@
     </HierarchicalDataTemplate>
 
     <HierarchicalDataTemplate DataType="{x:Type viewModels:ManagementAgentsViewModel}" 
-                              ItemsSource="{Binding Converter={StaticResource ListConverter}, ConverterParameter=SortName}">
+                              ItemsSource="{Binding Path=SortedItems.View}">
         <controls:TreeViewItemControl/>
     </HierarchicalDataTemplate>
 
@@ -21,16 +40,17 @@
         <controls:TreeViewItemControl x:Name="Item"/>
 
         <HierarchicalDataTemplate.Triggers>
-
+            
             <DataTrigger Binding="{Binding Path=IsNew}" Value="true">
                 <Setter TargetName="Item" Property="FontStyle" Value="Italic"/>
             </DataTrigger>
 
             <DataTrigger Binding="{Binding Path=IsMissing}" Value="true">
                 <Setter TargetName="Item" Property="Foreground" Value="DarkRed"/>
+                <Setter TargetName="Item" Property="FontStyle" Value="Italic"/>
+                <Setter TargetName="Item" Property="ContextMenu" Value="{StaticResource ItemContextMenu}" />
             </DataTrigger>
         </HierarchicalDataTemplate.Triggers>
-
     </HierarchicalDataTemplate>
 
     <HierarchicalDataTemplate DataType="{x:Type viewModels:SettingsViewModel}"

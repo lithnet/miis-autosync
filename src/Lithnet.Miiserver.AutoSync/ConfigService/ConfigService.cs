@@ -107,7 +107,7 @@ namespace Lithnet.Miiserver.AutoSync
                 ConfigFile.Save(config, RegistrySettings.ConfigurationFile);
                 Program.ActiveConfig = config;
 
-                IList<string> items = this.GetManagementAgentsPendingRestart();
+                IList<Guid> items = this.GetManagementAgentsPendingRestart();
 
                 if (items != null && items.Count > 0)
                 {
@@ -154,16 +154,16 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public void CancelRun(string managementAgentName)
+        public void CancelRun(Guid managementAgentID)
         {
-            Program.Engine?.CancelRun(managementAgentName);
+            Program.Engine?.CancelRun(managementAgentID);
         }
 
-        public void Stop(string managementAgentName, bool cancelRun)
+        public void Stop(Guid managementAgentID, bool cancelRun)
         {
             try
             {
-                Program.Engine?.Stop(managementAgentName, cancelRun);
+                Program.Engine?.Stop(managementAgentID, cancelRun);
             }
             catch (Exception ex)
             {
@@ -172,12 +172,12 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public void Start(string managementAgentName)
+        public void Start(Guid managementAgentID)
         {
             try
             {
                 Global.ThrowOnSyncEngineNotRunning();
-                Program.Engine?.Start(managementAgentName);
+                Program.Engine?.Start(managementAgentID);
             }
             catch (Exception ex)
             {
@@ -225,16 +225,28 @@ namespace Lithnet.Miiserver.AutoSync
         public IList<string> GetManagementAgentNames()
         {
             Global.ThrowOnSyncEngineNotRunning();
-            return ManagementAgent.GetManagementAgents().Select(t => t.Name).ToList();
+            return Global.MANameIDMapping.Values.ToList();
         }
 
-        public IList<string> GetManagementAgentRunProfileNames(string managementAgentName, bool includeMultiStep)
+        public IList<Guid> GetManagementAgentIDs()
+        {
+            Global.ThrowOnSyncEngineNotRunning();
+            return Global.MANameIDMapping.Keys.ToList();
+        }
+
+        public IDictionary<Guid, string> GetManagementAgentNameIDs()
+        {
+            Global.ThrowOnSyncEngineNotRunning();
+            return Global.MANameIDMapping;
+        }
+
+        public IList<string> GetManagementAgentRunProfileNames(Guid managementAgentID, bool includeMultiStep)
         {
             List<string> items = new List<string>();
 
             try
             {
-                ManagementAgent ma = ManagementAgent.GetManagementAgent(managementAgentName);
+                ManagementAgent ma = ManagementAgent.GetManagementAgent(managementAgentID);
 
                 foreach (KeyValuePair<string, RunConfiguration> i in ma.RunProfiles.Where(t => includeMultiStep || t.Value.RunSteps.Count == 1))
                 {
@@ -250,11 +262,11 @@ namespace Lithnet.Miiserver.AutoSync
             return items;
         }
 
-        public IList<string> GetAllowedTriggerTypesForMA(string managementAgentName)
+        public IList<string> GetAllowedTriggerTypesForMA(Guid managementAgentID)
         {
             List<string> allowedTypes = new List<string>();
 
-            ManagementAgent ma = ManagementAgent.GetManagementAgent(managementAgentName);
+            ManagementAgent ma = ManagementAgent.GetManagementAgent(managementAgentID);
 
             foreach (Type t in Assembly.GetExecutingAssembly().GetTypes()
                 .Where(mytype => mytype.GetInterfaces().Contains(typeof(IMAExecutionTrigger))))
@@ -273,14 +285,14 @@ namespace Lithnet.Miiserver.AutoSync
             return allowedTypes;
         }
 
-        public IMAExecutionTrigger CreateTriggerForManagementAgent(string type, string managementAgentName)
+        public IMAExecutionTrigger CreateTriggerForManagementAgent(string type, Guid managementAgentID)
         {
-            ManagementAgent ma = ManagementAgent.GetManagementAgent(managementAgentName);
+            ManagementAgent ma = ManagementAgent.GetManagementAgent(managementAgentID);
             Type t = Type.GetType(type);
 
             if (t == null)
             {
-                throw new InvalidOperationException($"Could not create trigger for management agent {managementAgentName} because the type {type} was unknown");
+                throw new InvalidOperationException($"Could not create trigger for management agent {ma.Name} because the type {type} was unknown");
             }
 
             IMAExecutionTrigger instance = (IMAExecutionTrigger)Activator.CreateInstance(t, ma);
@@ -288,12 +300,12 @@ namespace Lithnet.Miiserver.AutoSync
             return instance;
         }
 
-        public void AddToExecutionQueue(string managementAgentName, string runProfileName)
+        public void AddToExecutionQueue(Guid managementAgentID, string runProfileName)
         {
-            Program.Engine?.AddToExecutionQueue(managementAgentName, runProfileName);
+            Program.Engine?.AddToExecutionQueue(managementAgentID, runProfileName);
         }
 
-        public IList<string> GetManagementAgentsPendingRestart()
+        public IList<Guid> GetManagementAgentsPendingRestart()
         {
             return Program.Engine?.GetManagementAgentsPendingRestart();
         }

@@ -5,26 +5,28 @@ using System.Diagnostics;
 using System.ServiceModel;
 using System.Threading;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using Lithnet.Common.Presentation;
 using PropertyChanged;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
-    public class ExecutionMonitorViewModel : ViewModelBase<string>, IEventCallBack
+    public class ExecutionMonitorViewModel : ViewModelBase<object>, IEventCallBack
     {
         private EventClient client;
 
-        public ExecutionMonitorViewModel(string maName)
-            : base(maName)
+        public ExecutionMonitorViewModel(KeyValuePair<Guid, string> ma)
+            : base(ma)
         {
-            this.ManagementAgentName = maName;
+            this.ManagementAgentID = ma.Key;
+            this.ManagementAgentName = ma.Value;
             this.DetailMessages = new ObservableCollection<string>();
             this.RunHistory = new ObservableCollection<RunProfileResultViewModel>();
             this.SubscribeToStateChanges();
             this.PopulateMenuItems();
         }
+
+        private Guid ManagementAgentID { get; set; }
 
         public ObservableCollection<MenuItemViewModelBase> MenuItems { get; set; }
 
@@ -255,7 +257,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 ConfigClient c = App.GetDefaultConfigClient();
                 c.InvokeThenClose(u =>
                 {
-                    foreach (string rp in c.GetManagementAgentRunProfileNames(this.ManagementAgentName, true))
+                    foreach (string rp in c.GetManagementAgentRunProfileNames(this.ManagementAgentID, true))
                     {
                         addrp.MenuItems.Add(new MenuItemViewModel()
                         {
@@ -283,7 +285,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             try
             {
                 ConfigClient c = App.GetDefaultConfigClient();
-                c.AddToExecutionQueue(this.ManagementAgentName, runProfileName);
+                c.AddToExecutionQueue(this.ManagementAgentID, runProfileName);
             }
             catch (EndpointNotFoundException ex)
             {
@@ -303,7 +305,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             try
             {
                 ConfigClient c = App.GetDefaultConfigClient();
-                c.InvokeThenClose(x => x.Stop(this.ManagementAgentName, cancelRun));
+                c.InvokeThenClose(x => x.Stop(this.ManagementAgentID, cancelRun));
             }
             catch (Exception ex)
             {
@@ -332,7 +334,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             try
             {
                 ConfigClient c = App.GetDefaultConfigClient();
-                c.InvokeThenClose(x => x.CancelRun(this.ManagementAgentName));
+                c.InvokeThenClose(x => x.CancelRun(this.ManagementAgentID));
             }
             catch (Exception ex)
             {
@@ -346,7 +348,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             try
             {
                 ConfigClient c = App.GetDefaultConfigClient();
-                c.InvokeThenClose(x => x.Start(this.ManagementAgentName));
+                c.InvokeThenClose(x => x.Start(this.ManagementAgentID));
             }
             catch (Exception ex)
             {
@@ -362,7 +364,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void SubscribeToStateChanges()
         {
-            Trace.WriteLine($"Attempting to open event channel for {this.ManagementAgentName}");
+            Trace.WriteLine($"Attempting to open event channel for {this.ManagementAgentName}/{this.ManagementAgentID}");
             InstanceContext i = new InstanceContext(this);
             this.IsConnected = false;
 
@@ -373,7 +375,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                     this.DisplayState = "Disconnected";
                     this.client = App.GetDefaultEventClient(i);
                     this.client.Open();
-                    this.client.Register(this.ManagementAgentName);
+                    this.client.Register(this.ManagementAgentID);
                     this.IsConnected = true;
                     this.faultedCount = 0;
                 }
@@ -392,14 +394,14 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 }
             }
 
-            Trace.WriteLine($"Registered event channel for {this.ManagementAgentName}");
+            Trace.WriteLine($"Registered event channel for {this.ManagementAgentName}/{this.ManagementAgentID}");
 
             this.client.InnerChannel.Closed += this.InnerChannel_Closed;
             this.client.InnerChannel.Faulted += this.InnerChannel_Faulted;
 
-            Debug.WriteLine($"Requesting full update from {this.ManagementAgentName}");
-            MAStatus status = this.client.GetFullUpdate(this.ManagementAgentName);
-            Debug.WriteLine($"Got full update from {this.ManagementAgentName}");
+            Debug.WriteLine($"Requesting full update for {this.ManagementAgentName}/{this.ManagementAgentID}");
+            MAStatus status = this.client.GetFullUpdate(this.ManagementAgentID);
+            Debug.WriteLine($"Got full update from {this.ManagementAgentName}/{this.ManagementAgentID}");
 
             if (status != null)
             {
@@ -409,7 +411,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void InnerChannel_Faulted(object sender, EventArgs e)
         {
-            Trace.WriteLine($"Closing faulted event channel for {this.ManagementAgentName}");
+            Trace.WriteLine($"Closing faulted event channel on client side for {this.ManagementAgentName}/{this.ManagementAgentID}");
             this.faultedCount++;
             try
             {
@@ -422,7 +424,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void InnerChannel_Closed(object sender, EventArgs e)
         {
-            Trace.WriteLine($"Closing event channel for {this.ManagementAgentName}");
+            Trace.WriteLine($"Closing event channel on client side for {this.ManagementAgentName}/{this.ManagementAgentID}");
             this.IsConnected = false;
             this.DisplayState = "Disconnected";
             this.client.InnerChannel.Closed -= this.InnerChannel_Closed;

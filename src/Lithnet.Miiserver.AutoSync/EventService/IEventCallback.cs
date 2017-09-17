@@ -9,7 +9,7 @@ namespace Lithnet.Miiserver.AutoSync
 {
     public interface IEventCallBack
     {
-        [OperationContract (IsOneWay = true)]
+        [OperationContract(IsOneWay = true)]
         void MAStatusChanged(MAStatus status);
 
         [OperationContract(IsOneWay = true)]

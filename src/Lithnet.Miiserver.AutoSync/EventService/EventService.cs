@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
 using System.ServiceModel.Description;
@@ -58,9 +59,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        private static ConcurrentDictionary<string, MAStateChangedEventHandler> statusChangedEventHandlers;
-
-        private static ConcurrentDictionary<string, RunProfileExecutionCompleteEventHandler> executionCompleteEventHandlers;
+        private static ConcurrentDictionary<Guid, SynchronizedCollection<IEventCallBack>> subscribers;
 
         internal delegate void MAStateChangedEventHandler(MAStatus status);
 
@@ -68,78 +67,81 @@ namespace Lithnet.Miiserver.AutoSync
 
         internal static void NotifySubscribersOnStatusChange(MAStatus status)
         {
-            if (EventService.statusChangedEventHandlers.ContainsKey(status.MAName))
+            if (EventService.subscribers.ContainsKey(status.ManagementAgentID))
             {
-                try
+                foreach (IEventCallBack i in EventService.subscribers[status.ManagementAgentID].ToArray())
                 {
-                    EventService.statusChangedEventHandlers[status.MAName]?.Invoke(status);
-                }
-                catch (System.ServiceModel.CommunicationObjectAbortedException)
-                {
-                }
-                catch (Exception ex)
-                {
-                    Logger.WriteLine("Error notifying client");
-                    Logger.WriteException(ex);
+                    try
+                    {
+                        i.MAStatusChanged(status);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.WriteLine("Error notifying client. Client will be deregistered");
+                        Logger.WriteException(ex);
+                        EventService.DeregisterCallbackChannel(i);
+                    }
                 }
             }
         }
 
-        internal static void NotifySubscribersOnRunProfileExecutionComplete(string managementAgentName, RunProfileExecutionCompleteEventArgs e)
+        internal static void NotifySubscribersOnRunProfileExecutionComplete(Guid managementAgentID, RunProfileExecutionCompleteEventArgs e)
         {
-            if (EventService.executionCompleteEventHandlers.ContainsKey(managementAgentName))
+            if (EventService.subscribers.ContainsKey(managementAgentID))
             {
-                try
+                foreach (IEventCallBack i in EventService.subscribers[managementAgentID].ToArray())
                 {
-                    EventService.executionCompleteEventHandlers[managementAgentName]?.Invoke(e);
-                }
-                catch (Exception ex)
-                {
-                    Logger.WriteLine("Error notifying client");
-                    Logger.WriteException(ex);
+                    try
+                    {
+                        i.RunProfileExecutionComplete(e);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.WriteLine("Error notifying client. Client will be deregistered");
+                        Logger.WriteException(ex);
+                        EventService.DeregisterCallbackChannel(i);
+                    }
                 }
             }
         }
-
 
         static EventService()
         {
-            EventService.statusChangedEventHandlers = new ConcurrentDictionary<string, MAStateChangedEventHandler>(StringComparer.OrdinalIgnoreCase);
-            EventService.executionCompleteEventHandlers = new ConcurrentDictionary<string, RunProfileExecutionCompleteEventHandler>(StringComparer.OrdinalIgnoreCase);
+            EventService.subscribers = new ConcurrentDictionary<Guid, SynchronizedCollection<IEventCallBack>>();
         }
 
-        public void Register(string managementAgentName)
+        public void Register(Guid managementAgentID)
         {
             try
             {
+                string name = Global.GetManagementAgentName(managementAgentID);
+
+                if (name == null)
+                {
+                    throw new NoSuchManagementAgentException();
+                }
+
                 IEventCallBack subscriber = OperationContext.Current.GetCallbackChannel<IEventCallBack>();
 
-                if (!EventService.statusChangedEventHandlers.ContainsKey(managementAgentName))
+                if (!EventService.subscribers.ContainsKey(managementAgentID))
                 {
-                    EventService.statusChangedEventHandlers.TryAdd(managementAgentName, null);
+                    EventService.subscribers.TryAdd(managementAgentID, new SynchronizedCollection<IEventCallBack>());
                 }
 
-                EventService.statusChangedEventHandlers[managementAgentName] += subscriber.MAStatusChanged;
-
-
-                if (!EventService.executionCompleteEventHandlers.ContainsKey(managementAgentName))
+                if (!EventService.subscribers[managementAgentID].Contains(subscriber))
                 {
-                    EventService.executionCompleteEventHandlers.TryAdd(managementAgentName, null);
+                    EventService.subscribers[managementAgentID].Add(subscriber);
                 }
-
-                EventService.executionCompleteEventHandlers[managementAgentName] += subscriber.RunProfileExecutionComplete;
-
 
                 // ReSharper disable once SuspiciousTypeConversion.Global
                 ICommunicationObject commObj = subscriber as ICommunicationObject;
                 if (commObj != null)
                 {
-                    commObj.Faulted += this.CommObj_Faulted;
-                    commObj.Closed += this.CommObj_Closed;
+                    commObj.Faulted += EventService.CommObj_Faulted;
+                    commObj.Closed += EventService.CommObj_Closed;
                 }
 
-                Trace.WriteLine($"Registered callback channel for {managementAgentName}");
-
+                Trace.WriteLine($"Registered callback channel for {name}/{managementAgentID}");
             }
             catch (Exception ex)
             {
@@ -149,58 +151,53 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        private void CommObj_Closed(object sender, EventArgs e)
+        private static void CommObj_Closed(object sender, EventArgs e)
         {
-            this.DeregisterCallbackChannel(sender);
+            EventService.DeregisterCallbackChannel(sender);
             Trace.WriteLine("Deregistered closed callback channel");
         }
 
-        private void CommObj_Faulted(object sender, EventArgs e)
+        private static void CommObj_Faulted(object sender, EventArgs e)
         {
-            this.DeregisterCallbackChannel(sender);
+            EventService.DeregisterCallbackChannel(sender);
             Trace.WriteLine("Deregistered faulted callback channel");
         }
 
-        private void DeregisterCallbackChannel(object sender)
+        private static void DeregisterCallbackChannel(object sender)
         {
             IEventCallBack subscriber = sender as IEventCallBack;
 
             if (subscriber != null)
             {
-                foreach (string ma in EventService.statusChangedEventHandlers.Keys.ToArray())
+                foreach (SynchronizedCollection<IEventCallBack> callbacks in EventService.subscribers.Values.ToArray())
                 {
-                    EventService.statusChangedEventHandlers[ma] -= subscriber.MAStatusChanged;
-                }
-
-                foreach (string ma in EventService.executionCompleteEventHandlers.Keys.ToArray())
-                {
-                    EventService.executionCompleteEventHandlers[ma] -= subscriber.RunProfileExecutionComplete;
+                    callbacks.Remove(subscriber);
                 }
 
                 // ReSharper disable once SuspiciousTypeConversion.Global
                 ICommunicationObject commObj = subscriber as ICommunicationObject;
                 if (commObj != null)
                 {
-                    commObj.Faulted -= this.CommObj_Faulted;
-                    commObj.Closed -= this.CommObj_Closed;
+                    commObj.Faulted -= EventService.CommObj_Faulted;
+                    commObj.Closed -= EventService.CommObj_Closed;
                 }
             }
         }
 
-        public MAStatus GetFullUpdate(string managementAgentName)
+        public MAStatus GetFullUpdate(Guid managementAgentID)
         {
             try
             {
-                return Program.Engine?.GetMAState(managementAgentName);
+                return Program.Engine?.GetMAState(managementAgentID);
             }
             catch (NoSuchManagementAgentException)
             {
-                Logger.WriteLine($"The client requested a state update for a management agent that doesn't exist {managementAgentName}");
+                Logger.WriteLine($"The client requested a state update for a management agent that doesn't exist {managementAgentID}");
                 return null;
             }
             catch (Exception ex)
             {
-                Logger.WriteLine($"An error occurred while getting the client a full state update for {managementAgentName}");
+                Logger.WriteLine($"An error occurred while getting the client a full state update for {managementAgentID}");
                 Logger.WriteException(ex);
                 throw;
             }

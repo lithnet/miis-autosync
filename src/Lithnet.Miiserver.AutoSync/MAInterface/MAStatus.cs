@@ -11,7 +11,10 @@ namespace Lithnet.Miiserver.AutoSync
     public class MAStatus
     {
         [DataMember]
-        public string MAName { get; set; }
+        public Guid ManagementAgentID { get; set; }
+
+        [DataMember]
+        public string ManagementAgentName { get; set; }
 
         [DataMember]
         public string ExecutingRunProfile { get; set; }

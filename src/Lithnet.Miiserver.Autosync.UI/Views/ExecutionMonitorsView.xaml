@@ -8,7 +8,7 @@
                      mc:Ignorable="d" >
 
     <DataTemplate DataType="{x:Type viewModels:ExecutionMonitorsViewModel}">
-        <Grid Margin="5">
+        <Grid>
             <Grid.Resources>
                 <CollectionViewSource x:Key="SortedItems" Source="{Binding}">
                     <CollectionViewSource.SortDescriptions>
@@ -23,7 +23,6 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-
 
             <ToolBarTray Grid.Row="0">
                 <ToolBar Height="36">

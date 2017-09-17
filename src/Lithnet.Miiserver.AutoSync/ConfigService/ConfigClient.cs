@@ -36,19 +36,19 @@ namespace Lithnet.Miiserver.AutoSync
             return this.Channel.IsPendingRestart();
         }
 
-        public void Stop(string managementAgentName, bool cancelRun)
+        public void Stop(Guid managementAgentID, bool cancelRun)
         {
-            this.Channel.Stop(managementAgentName, cancelRun);
+            this.Channel.Stop(managementAgentID, cancelRun);
         }
 
-        public void CancelRun(string managementAgentName)
+        public void CancelRun(Guid managementAgentID)
         {
-            this.Channel.CancelRun(managementAgentName);
+            this.Channel.CancelRun(managementAgentID);
         }
 
-        public void Start(string managementAgentName)
+        public void Start(Guid managementAgentID)
         {
-            this.Channel.Start(managementAgentName);
+            this.Channel.Start(managementAgentID);
         }
 
         public void StopAll(bool cancelRuns)
@@ -65,32 +65,43 @@ namespace Lithnet.Miiserver.AutoSync
         {
             return this.Channel.GetEngineState();
         }
+
         public IList<string> GetManagementAgentNames()
         {
             return this.Channel.GetManagementAgentNames();
         }
 
-        public IList<string> GetManagementAgentRunProfileNames(string managementAgentName, bool includeMultiStep)
+        public IList<Guid> GetManagementAgentIDs()
         {
-            return this.Channel.GetManagementAgentRunProfileNames(managementAgentName, includeMultiStep);
+            return this.Channel.GetManagementAgentIDs();
         }
 
-        public IList<string> GetAllowedTriggerTypesForMA(string managementAgentName)
+        public IDictionary<Guid, string> GetManagementAgentNameIDs()
         {
-            return this.Channel.GetAllowedTriggerTypesForMA(managementAgentName);
+            return this.Channel.GetManagementAgentNameIDs();
         }
 
-        public IMAExecutionTrigger CreateTriggerForManagementAgent(string type, string managementAgentName)
+        public IList<string> GetManagementAgentRunProfileNames(Guid managementAgentID, bool includeMultiStep)
         {
-            return this.Channel.CreateTriggerForManagementAgent(type, managementAgentName);
+            return this.Channel.GetManagementAgentRunProfileNames(managementAgentID, includeMultiStep);
         }
 
-        public void AddToExecutionQueue(string managementAgentName, string runProfileName)
+        public IList<string> GetAllowedTriggerTypesForMA(Guid managementAgentID)
         {
-            this.Channel.AddToExecutionQueue(managementAgentName, runProfileName);
+            return this.Channel.GetAllowedTriggerTypesForMA(managementAgentID);
         }
 
-        public IList<string> GetManagementAgentsPendingRestart()
+        public IMAExecutionTrigger CreateTriggerForManagementAgent(string type, Guid managementAgentID)
+        {
+            return this.Channel.CreateTriggerForManagementAgent(type, managementAgentID);
+        }
+
+        public void AddToExecutionQueue(Guid managementAgentID, string runProfileName)
+        {
+            this.Channel.AddToExecutionQueue(managementAgentID, runProfileName);
+        }
+
+        public IList<Guid> GetManagementAgentsPendingRestart()
         {
             return this.Channel.GetManagementAgentsPendingRestart();
         }

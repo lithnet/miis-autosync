@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Reflection;
 using System.IO;
+using System.Linq;
 using System.ServiceProcess;
 using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync
 {
-    public static class Global
+    internal static class Global
     {
         private static Random random = new Random();
 
@@ -60,12 +62,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public static Guid? FindManagementAgent(string name, Guid id)
         {
-            if (Global.maNametoIDMapping == null)
-            {
-                Global.maNametoIDMapping = ManagementAgent.GetManagementAgentNameAndIDPairs();
-            }
-
-            foreach (KeyValuePair<Guid, string> k in Global.maNametoIDMapping)
+            foreach (KeyValuePair<Guid, string> k in Global.MANameIDMapping)
             {
                 if (id == k.Key)
                 {
@@ -79,6 +76,45 @@ namespace Lithnet.Miiserver.AutoSync
             }
 
             return null;
+        }
+
+        public static string GetManagementAgentName(Guid id)
+        {
+            if (Global.MANameIDMapping.ContainsKey(id))
+            {
+                return Global.MANameIDMapping[id];
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public static Guid? GetManagementAgentID(string name)
+        {
+            foreach (KeyValuePair<Guid, string> kvp in Global.MANameIDMapping)
+            {
+                if (string.Equals(kvp.Value, name, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    return kvp.Key;
+                }
+            }
+
+            return null;
+        }
+
+
+        public static Dictionary<Guid, string> MANameIDMapping
+        {
+            get
+            {
+                if (Global.maNametoIDMapping == null)
+                {
+                    Global.maNametoIDMapping = ManagementAgent.GetManagementAgentNameAndIDPairs();
+                }
+
+                return Global.maNametoIDMapping;
+            }
         }
 
         public static void ThrowOnSyncEngineNotRunning()

@@ -3,6 +3,7 @@
                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                       xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
                       xmlns:ui="clr-namespace:Lithnet.Miiserver.AutoSync.UI"
+                      xmlns:local="clr-namespace:Lithnet.Common.Presentation;assembly=Lithnet.Common.Presentation"
                       Title="{Binding Path=DisplayName}"
                       Cursor="{Binding Path=Cursor}"
                       Icon="/autosync.ico"  IconScalingMode ="NoScaleSmallerFrame"
@@ -97,14 +98,6 @@
 
         </DockPanel>
 
-        <!--<StatusBar Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Visibility="{Binding StatusBarVisibility}"
-                     Background ="{x:Static SystemColors.InfoBrush}" Foreground="{x:Static SystemColors.ControlTextBrush}" >
-            <StatusBar.InputBindings>
-                <MouseBinding Command="{Binding Path=Commands.Reload}" MouseAction="LeftClick" />
-            </StatusBar.InputBindings>
-            <StatusBarItem Content="The AutoSync service must be restarted for the configuration to take effect. Click here to restart the service" />
-        </StatusBar>-->
-
         <GridSplitter Grid.Row="2" Grid.Column="1" Width="5" HorizontalAlignment="Stretch" />
 
         <TreeView Grid.Row="2" Grid.Column="0" Name="TreeViewMain" DataContext="{Binding}" BorderThickness="1"
@@ -121,20 +114,17 @@
                 <ResourceDictionary>
                     <ResourceDictionary.MergedDictionaries>
                         <ResourceDictionary Source="/ResourceDictionaries/TreeViewItemDictionary.xaml" />
-                    </ResourceDictionary.MergedDictionaries>
+                       </ResourceDictionary.MergedDictionaries>
                 </ResourceDictionary>
+             
             </TreeView.Resources>
         </TreeView>
-        <!--<ScrollViewer  HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.Row="2"  Grid.Column="2" Grid.ColumnSpan="2">-->
         <ContentControl Content="{Binding Path=SelectedItem, ElementName=TreeViewMain}" 
-                            Grid.Row="2"  Grid.Column="2" Grid.ColumnSpan="2"> 
-            <!--Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType={x:Type ScrollContentPresenter}}}" 
-                            Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType={x:Type ScrollContentPresenter}}}" >-->
-                <ContentControl.Resources>
-                    <ResourceDictionary Source="/ResourceDictionaries/ItemViewDictionary.xaml"/>
-                </ContentControl.Resources>
-            </ContentControl>
-        <!--</ScrollViewer>-->
+                            Grid.Row="2"  Grid.Column="2" Grid.ColumnSpan="2" Margin="10 5 5 5">
+            <ContentControl.Resources>
+                <ResourceDictionary Source="/ResourceDictionaries/ItemViewDictionary.xaml"/>
+            </ContentControl.Resources>
+        </ContentControl>
     </Grid>
 </controls:MetroWindow>
 

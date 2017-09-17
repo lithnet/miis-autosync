@@ -20,6 +20,7 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "name")]
         public string ManagementAgentName { get; set; }
 
+        [DataMember(Name = "is-missing")]
         public bool IsMissing { get; set; }
 
         [DataMember(Name = "version")]
@@ -36,6 +37,7 @@ namespace Lithnet.Miiserver.AutoSync
                      var ma = ManagementAgent.GetManagementAgent(id.Value);
                     this.ManagementAgentName = ma.Name;
                     this.ManagementAgentID = ma.ID;
+                    this.IsMissing = false;
                     return;
                 }
             }

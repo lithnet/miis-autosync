@@ -16,14 +16,14 @@ namespace Lithnet.Miiserver.AutoSync
         {
         }
 
-        public void Register(string managementAgentName)
+        public void Register(Guid managementAgentID)
         {
-            this.Channel.Register(managementAgentName);
+            this.Channel.Register(managementAgentID);
         }
 
-        public MAStatus GetFullUpdate(string managementAgentName)
+        public MAStatus GetFullUpdate(Guid managementAgentID)
         {
-            return this.Channel.GetFullUpdate(managementAgentName);
+            return this.Channel.GetFullUpdate(managementAgentID);
         }
 
         public static EventClient GetNamedPipesClient(InstanceContext ctx)

@@ -9,7 +9,7 @@ using Lithnet.Common.Presentation;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
-    internal class ExecutionMonitorsViewModel : ListViewModel<ExecutionMonitorViewModel, string>
+    internal class ExecutionMonitorsViewModel : ListViewModel<ExecutionMonitorViewModel, object>
     {
         public string DisplayName => "Execution Monitor";
 
@@ -49,7 +49,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
         }
 
-        public ExecutionMonitorsViewModel(IList<string> items)
+        public ExecutionMonitorsViewModel(IList<object> items)
             : base(items, ExecutionMonitorsViewModel.ViewModelResolver)
         {
             this.Commands.AddItem("StartEngine", x => this.StartEngine(), x => this.CanStartEngine());
@@ -65,9 +65,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
         }
 
-        private static ExecutionMonitorViewModel ViewModelResolver(string model)
+        private static ExecutionMonitorViewModel ViewModelResolver(object model)
         {
-            return new ExecutionMonitorViewModel(model);
+            return new ExecutionMonitorViewModel((KeyValuePair<Guid, string>)model);
         }
         
         private void StartEngine()

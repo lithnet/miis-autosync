@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.ServiceModel;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -28,10 +25,10 @@ namespace Lithnet.Miiserver.AutoSync
         bool IsPendingRestart();
 
         [OperationContract(IsOneWay = true)]
-        void Stop(string managementAgentName, bool cancelRun);
+        void Stop(Guid managementAgentID, bool cancelRun);
 
         [OperationContract(IsOneWay = true)]
-        void Start(string managementAgentName);
+        void Start(Guid managementAgentID);
 
         [OperationContract(IsOneWay = true)]
         void StopAll(bool cancelRuns);
@@ -40,28 +37,34 @@ namespace Lithnet.Miiserver.AutoSync
         void StartAll();
         
         [OperationContract(IsOneWay = true)]
-        void CancelRun(string managementAgentName);
+        void CancelRun(Guid managementAgentID);
 
         [OperationContract]
         ControlState GetEngineState();
 
         [OperationContract]
         IList<string> GetManagementAgentNames();
+        
+        [OperationContract]
+        IList<Guid> GetManagementAgentIDs();
 
         [OperationContract]
-        IList<string> GetManagementAgentRunProfileNames(string managementAgentName, bool includeMultiStep);
+        IDictionary<Guid, string> GetManagementAgentNameIDs();
 
         [OperationContract]
-        IList<string> GetAllowedTriggerTypesForMA(string managementAgentName);
+        IList<string> GetManagementAgentRunProfileNames(Guid managementAgentID, bool includeMultiStep);
 
         [OperationContract]
-        IMAExecutionTrigger CreateTriggerForManagementAgent(string type, string managementAgentName);
+        IList<string> GetAllowedTriggerTypesForMA(Guid managementAgentID);
 
         [OperationContract]
-        void AddToExecutionQueue(string managementAgentName, string runProfileName);
+        IMAExecutionTrigger CreateTriggerForManagementAgent(string type, Guid managementAgentID);
 
         [OperationContract]
-        IList<string> GetManagementAgentsPendingRestart();
+        void AddToExecutionQueue(Guid managementAgentID, string runProfileName);
+
+        [OperationContract]
+        IList<Guid> GetManagementAgentsPendingRestart();
 
         [OperationContract]
         void RestartChangedExecutors();

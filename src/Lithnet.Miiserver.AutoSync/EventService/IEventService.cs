@@ -11,9 +11,9 @@ namespace Lithnet.Miiserver.AutoSync
     public interface IEventService
     {
         [OperationContract]
-        void Register(string managementAgentName);
+        void Register(Guid managementAgentID);
 
         [OperationContract()]
-        MAStatus GetFullUpdate(string managementAgentName);
+        MAStatus GetFullUpdate(Guid managementAgentID);
     }
 }

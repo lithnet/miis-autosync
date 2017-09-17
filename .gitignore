@@ -189,3 +189,6 @@ _Pvt_Extensions/
 ModelManifest.xml
 
 [Pp]ackages/
+
+# Visual Studio 2015 cache/options directory
+.vs/
