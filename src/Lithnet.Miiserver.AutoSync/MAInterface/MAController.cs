@@ -167,7 +167,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             this.controllerCancellationTokenSource = new CancellationTokenSource();
             this.ma = ma;
-            this.InternalStatus = new MAStatus() { ManagementAgentName = this.ma.Name , ManagementAgentID = this.ma.ID };
+            this.InternalStatus = new MAStatus() { ManagementAgentName = this.ma.Name, ManagementAgentID = this.ma.ID };
             this.ControlState = ControlState.Stopped;
             this.ExecutionTriggers = new List<IMAExecutionTrigger>();
             this.localOperationLock = new ManualResetEvent(true);
@@ -266,7 +266,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             if (this.importCheckTimer != null)
             {
-                this.Log($"Resetting import timer for {this.importInterval}");
+                this.Trace($"Resetting import timer for {this.importInterval}");
                 this.importCheckTimer.Stop();
                 this.importCheckTimer.Start();
             }
@@ -756,20 +756,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 this.Setup(config);
 
-                try
-                {
-                    Logger.StartThreadLog();
-                    Logger.WriteSeparatorLine('-');
-
-                    this.Log("Starting controller");
-
-                    Logger.WriteRaw($"{this}\n");
-                    Logger.WriteSeparatorLine('-');
-                }
-                finally
-                {
-                    Logger.EndThreadLog();
-                }
+                this.Log($"Starting controller");
 
                 this.internalTask = new Task(() =>
                 {
@@ -1227,8 +1214,15 @@ namespace Lithnet.Miiserver.AutoSync
 
             this.Trace($"Got sync complete message from {e.SendingMAName} for {e.TargetMA}");
 
-            ExecutionParameters p = new ExecutionParameters(this.Configuration.ExportRunProfileName);
-            this.AddPendingActionIfNotQueued(p, "Synchronization on " + e.SendingMAName);
+            if (this.CanExport())
+            {
+                ExecutionParameters p = new ExecutionParameters(this.Configuration.ExportRunProfileName);
+                this.AddPendingActionIfNotQueued(p, "Synchronization on " + e.SendingMAName);
+            }
+            else
+            {
+                this.Trace($"Dropping synchronization complete message from {e.SendingMAName} because MA cannot export");
+            }
         }
 
         private void NotifierTriggerFired(object sender, ExecutionTriggerEventArgs e)
@@ -1324,7 +1318,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 this.Log($"Current queue: {this.GetQueueItemNames()}");
             }
-            catch(OperationCanceledException)
+            catch (OperationCanceledException)
             { }
             catch (Exception ex)
             {

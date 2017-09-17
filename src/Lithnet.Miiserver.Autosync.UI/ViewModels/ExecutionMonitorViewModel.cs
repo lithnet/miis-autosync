@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Diagnostics;
 using System.ServiceModel;
 using System.Threading;
@@ -258,7 +259,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 ConfigClient c = App.GetDefaultConfigClient();
                 c.InvokeThenClose(u =>
                 {
-                    foreach (string rp in c.GetManagementAgentRunProfileNames(this.ManagementAgentID, true))
+                    foreach (string rp in c.GetManagementAgentRunProfileNames(this.ManagementAgentID, true).OrderBy(t => t))
                     {
                         addrp.MenuItems.Add(new MenuItemViewModel()
                         {
