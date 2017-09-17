@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.ServiceModel;
+using System.Threading.Tasks;
 using System.Windows;
-using Lithnet.Miiserver.AutoSync;
 using Lithnet.Common.Presentation;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
@@ -72,21 +72,24 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         
         private void StartEngine()
         {
-            try
+            Task.Run(() =>
             {
-                ConfigClient c = App.GetDefaultConfigClient();
-                c.InvokeThenClose(x => x.StartAll());
-            }
-            catch (EndpointNotFoundException ex)
-            {
-                Trace.WriteLine(ex.ToString());
-                MessageBox.Show($"Could not contact the AutoSync service", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine(ex);
-                MessageBox.Show($"Error starting the management agents\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+                try
+                {
+                    ConfigClient c = App.GetDefaultConfigClient();
+                    c.InvokeThenClose(x => x.StartAll());
+                }
+                catch (EndpointNotFoundException ex)
+                {
+                    Trace.WriteLine(ex.ToString());
+                    MessageBox.Show($"Could not contact the AutoSync service", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(ex);
+                    MessageBox.Show($"Error starting the management agents\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            });
         }
 
         private bool CanStartEngine()
@@ -96,21 +99,24 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void StopEngine(bool cancelRuns)
         {
-            try
+            Task.Run(() =>
             {
-                ConfigClient c = App.GetDefaultConfigClient();
-                c.InvokeThenClose(x => x.StopAll(cancelRuns));
-            }
-            catch (EndpointNotFoundException ex)
-            {
-                Trace.WriteLine(ex.ToString());
-                MessageBox.Show($"Could not contact the AutoSync service", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine(ex);
-                MessageBox.Show($"Error stopping the management agents\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+                try
+                {
+                    ConfigClient c = App.GetDefaultConfigClient();
+                    c.InvokeThenClose(x => x.StopAll(cancelRuns));
+                }
+                catch (EndpointNotFoundException ex)
+                {
+                    Trace.WriteLine(ex.ToString());
+                    MessageBox.Show($"Could not contact the AutoSync service", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(ex);
+                    MessageBox.Show($"Error stopping the management agents\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            });
         }
 
         private bool CanStopEngine()

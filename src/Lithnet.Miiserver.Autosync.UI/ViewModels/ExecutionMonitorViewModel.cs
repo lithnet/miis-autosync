@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.ServiceModel;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using Lithnet.Common.Presentation;
@@ -282,36 +283,42 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void AddToExecutionQueue(string runProfileName)
         {
-            try
+            Task.Run(() =>
             {
-                ConfigClient c = App.GetDefaultConfigClient();
-                c.AddToExecutionQueue(this.ManagementAgentID, runProfileName);
-            }
-            catch (EndpointNotFoundException ex)
-            {
-                Trace.WriteLine(ex.ToString());
-                MessageBox.Show($"Could not contact the AutoSync service", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Could not add the run profile to the execution queue\r\n\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                Trace.WriteLine("Could not add the run profile to the execution queue");
-                Trace.WriteLine(ex.ToString());
-            }
+                try
+                {
+                    ConfigClient c = App.GetDefaultConfigClient();
+                    c.AddToExecutionQueue(this.ManagementAgentID, runProfileName);
+                }
+                catch (EndpointNotFoundException ex)
+                {
+                    Trace.WriteLine(ex.ToString());
+                    MessageBox.Show($"Could not contact the AutoSync service", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Could not add the run profile to the execution queue\r\n\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Trace.WriteLine("Could not add the run profile to the execution queue");
+                    Trace.WriteLine(ex.ToString());
+                }
+            });
         }
 
         private void Stop(bool cancelRun)
         {
-            try
+            Task.Run(() =>
             {
-                ConfigClient c = App.GetDefaultConfigClient();
-                c.InvokeThenClose(x => x.Stop(this.ManagementAgentID, cancelRun));
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine(ex);
-                MessageBox.Show($"Could not stop the management agent\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+                try
+                {
+                    ConfigClient c = App.GetDefaultConfigClient();
+                    c.InvokeThenClose(x => x.Stop(this.ManagementAgentID, cancelRun));
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(ex);
+                    MessageBox.Show($"Could not stop the management agent\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            });
         }
 
         private bool CanAddToExecutionQueue()
@@ -331,30 +338,36 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void CancelRun()
         {
-            try
+            Task.Run(() =>
             {
-                ConfigClient c = App.GetDefaultConfigClient();
-                c.InvokeThenClose(x => x.CancelRun(this.ManagementAgentID));
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine(ex);
-                MessageBox.Show($"Could not cancel the management agent\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+                try
+                {
+                    ConfigClient c = App.GetDefaultConfigClient();
+                    c.InvokeThenClose(x => x.CancelRun(this.ManagementAgentID));
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(ex);
+                    MessageBox.Show($"Could not cancel the management agent\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            });
         }
 
         private void Start()
         {
-            try
+            Task.Run(() =>
             {
-                ConfigClient c = App.GetDefaultConfigClient();
-                c.InvokeThenClose(x => x.Start(this.ManagementAgentID));
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine(ex);
-                MessageBox.Show($"Could not start the management agent\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+                try
+                {
+                    ConfigClient c = App.GetDefaultConfigClient();
+                    c.InvokeThenClose(x => x.Start(this.ManagementAgentID));
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(ex);
+                    MessageBox.Show($"Could not start the management agent\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            });
         }
 
         private bool CanStart()

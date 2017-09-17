@@ -110,7 +110,6 @@
     <Compile Include="EventService\EventService.cs" />
     <Compile Include="EventService\IEventService.cs" />
     <Compile Include="EventService\IEventCallback.cs" />
-    <Compile Include="EventService\RegisteredEventClient.cs" />
     <Compile Include="Exceptions\NoSuchManagementAgentException.cs" />
     <Compile Include="Exceptions\SyncEngineStoppedException.cs" />
     <Compile Include="MAInterface\MAConfigParametersCollection.cs" />
