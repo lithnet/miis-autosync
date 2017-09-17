@@ -21,6 +21,12 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.SubscribeToErrors(this.Settings);
         }
 
+        public int Version
+        {
+            get => this.Model.Version;
+            set => this.Model.Version = value;
+        }
+
         public string DisplayName => "Configuration";
 
         public MAControllerConfigurationCollectionViewModel ManagementAgents { get; private set; }

@@ -94,6 +94,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
 			if (!this.IsDirty)
 			{
+			    this.ConfigFile.Version++;
 				this.IsDirty = true;
 				Trace.WriteLine($"Setting view model state to dirty based on a change of property '{e.PropertyName}' on an object of type '{sender.GetType().Name}'");
 			}
