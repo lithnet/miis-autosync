@@ -4,14 +4,14 @@ using Lithnet.Common.Presentation;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
-    internal class ManagementAgentsViewModel : ListViewModel<MAConfigParametersViewModel, MAConfigParameters>
+    internal class MAControllerConfigurationCollectionViewModel : ListViewModel<MAControllerConfigurationViewModel, MAControllerConfiguration>
     {
-        public string DisplayName => "Management agent configuration";
+        public string DisplayName => "Management agent controllers";
         
         private ConfigFileViewModel config;
 
-        public ManagementAgentsViewModel(MAConfigParametersCollection items, ConfigFileViewModel configFile)
-            : base((IList<MAConfigParameters>)items, ManagementAgentsViewModel.ViewModelResolver)
+        public MAControllerConfigurationCollectionViewModel(MAControllerConfigurationCollection items, ConfigFileViewModel configFile)
+            : base((IList<MAControllerConfiguration>)items, MAControllerConfigurationCollectionViewModel.ViewModelResolver)
         {
             this.config = configFile;
             this.DisplayIcon = App.GetImageResource("SettingsGroup.ico");
@@ -21,9 +21,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.SortedItems.SortDescriptions.Add(new System.ComponentModel.SortDescription("SortName", System.ComponentModel.ListSortDirection.Ascending));
         }
 
-        private static MAConfigParametersViewModel ViewModelResolver(MAConfigParameters model)
+        private static MAControllerConfigurationViewModel ViewModelResolver(MAControllerConfiguration model)
         {
-            return new MAConfigParametersViewModel(model);
+            return new MAControllerConfigurationViewModel(model);
         }
 
         public CollectionViewSource SortedItems { get; }

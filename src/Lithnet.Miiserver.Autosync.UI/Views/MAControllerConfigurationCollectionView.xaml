@@ -6,7 +6,7 @@
                      xmlns:ui="clr-namespace:Lithnet.Miiserver.AutoSync.UI"
                      mc:Ignorable="d" >
 
-    <DataTemplate DataType="{x:Type viewModels:ManagementAgentsViewModel}" >
+    <DataTemplate DataType="{x:Type viewModels:MAControllerConfigurationCollectionViewModel}" >
         <DockPanel LastChildFill="True" ui:OnlineHelpProvider.HelpTopic="Management-agent-configuration">
             <Grid DockPanel.Dock="Bottom">
                 <Grid.RowDefinitions>

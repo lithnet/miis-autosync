@@ -13,14 +13,14 @@ using PropertyChanged;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
-    public class MAConfigParametersViewModel : ViewModelBase<MAConfigParameters>
+    public class MAControllerConfigurationViewModel : ViewModelBase<MAControllerConfiguration>
     {
         private List<Type> allowedTypes;
 
         private int originalVersion;
 
 
-        public MAConfigParametersViewModel(MAConfigParameters model)
+        public MAControllerConfigurationViewModel(MAControllerConfiguration model)
             : base(model)
         {
             this.Triggers = new MAExecutionTriggersViewModel(model.Triggers, this);
@@ -94,7 +94,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
             if (result == MessageBoxResult.OK)
             {
-                ((ManagementAgentsViewModel) this.Parent).Remove(this);
+                ((MAControllerConfigurationCollectionViewModel) this.Parent).Remove(this);
                 this.IsDeleted = true;
             }
         }

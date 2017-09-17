@@ -11,10 +11,10 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             if (model.ManagementAgents == null)
             {
-                model.ManagementAgents = new MAConfigParametersCollection();
+                model.ManagementAgents = new MAControllerConfigurationCollection();
             }
 
-            this.ManagementAgents = new ManagementAgentsViewModel(model.ManagementAgents, this);
+            this.ManagementAgents = new MAControllerConfigurationCollectionViewModel(model.ManagementAgents, this);
             this.Settings = new SettingsViewModel(model.Settings);
 
             this.SubscribeToErrors(this.ManagementAgents);
@@ -23,7 +23,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public string DisplayName => "Configuration";
 
-        public ManagementAgentsViewModel ManagementAgents { get; private set; }
+        public MAControllerConfigurationCollectionViewModel ManagementAgents { get; private set; }
 
         public SettingsViewModel Settings { get; private set; }
 
@@ -33,7 +33,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.Settings.IsDirty = false;
             this.ManagementAgents.IsDirty = false;
 
-            foreach (MAConfigParametersViewModel item in this.ManagementAgents)
+            foreach (MAControllerConfigurationViewModel item in this.ManagementAgents)
             {
                 item.Commit();
             }

@@ -92,7 +92,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public ControlState ControlState { get; private set; }
 
-        public ExecutorState ExecutionState { get; private set; }
+        public ControllerState ExecutionState { get; private set; }
 
         public ObservableCollection<string> DetailMessages { get; private set; }
 
@@ -333,7 +333,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private bool CanCancelRun()
         {
-            return this.ExecutionState != ExecutorState.Idle;
+            return this.ExecutionState != ControllerState.Idle;
         }
 
         private void CancelRun()

@@ -12,7 +12,7 @@ namespace Lithnet.Miiserver.AutoSync
     [KnownType(typeof(IntervalExecutionTrigger))]
     [KnownType(typeof(PowerShellExecutionTrigger))]
     [KnownType(typeof(ScheduledExecutionTrigger))]
-    public class MAConfigParameters
+    public class MAControllerConfiguration
     {
         [DataMember(Name = "id")]
         public Guid ManagementAgentID { get; set; }
@@ -85,7 +85,7 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "auto-import-interval")]
         public int AutoImportIntervalMinutes { get; set; }
 
-        public MAConfigParameters(string managementAgentName, Guid managementAgentID)
+        public MAControllerConfiguration(string managementAgentName, Guid managementAgentID)
         {
             this.ManagementAgentName = managementAgentName;
             this.ManagementAgentID = managementAgentID;

@@ -9,14 +9,14 @@ using System.Threading.Tasks;
 namespace Lithnet.Miiserver.AutoSync
 {
     [CollectionDataContract(Name = "management-agents", ItemName = "management-agent")]
-    public class MAConfigParametersCollection : KeyedCollection<string, MAConfigParameters>
+    public class MAControllerConfigurationCollection : KeyedCollection<string, MAControllerConfiguration>
     {
-        public MAConfigParametersCollection()
+        public MAControllerConfigurationCollection()
             : base(StringComparer.OrdinalIgnoreCase)
         {
         }
 
-        public MAConfigParameters GetItemOrDefault(string name)
+        public MAControllerConfiguration GetItemOrDefault(string name)
         {
             if (this.Contains(name))
             {
@@ -28,12 +28,12 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public MAConfigParameters GetItemOrDefault(Guid maid)
+        public MAControllerConfiguration GetItemOrDefault(Guid maid)
         {
             return this.FirstOrDefault(t => t.ManagementAgentID == maid);
         }
 
-        protected override string GetKeyForItem(MAConfigParameters item)
+        protected override string GetKeyForItem(MAControllerConfiguration item)
         {
             return item.ManagementAgentName;
         }

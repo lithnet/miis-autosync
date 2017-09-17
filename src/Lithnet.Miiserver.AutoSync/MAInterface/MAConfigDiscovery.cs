@@ -8,7 +8,7 @@ namespace Lithnet.Miiserver.AutoSync
 {
     internal static class MAConfigDiscovery
     {
-        internal static void DoAutoRunProfileDiscovery(MAConfigParameters config, ManagementAgent ma)
+        internal static void DoAutoRunProfileDiscovery(MAControllerConfiguration config, ManagementAgent ma)
         {
             Trace.WriteLine($"{config.ManagementAgentName}: Performing run profile auto-discovery");
 
@@ -94,7 +94,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        internal static void AddDefaultTriggers(MAConfigParameters config, ManagementAgent ma)
+        internal static void AddDefaultTriggers(MAControllerConfiguration config, ManagementAgent ma)
         {
             switch (ma.Category)
             {

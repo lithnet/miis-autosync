@@ -30,12 +30,12 @@
         <controls:TreeViewItemControl/>
     </HierarchicalDataTemplate>
 
-    <HierarchicalDataTemplate DataType="{x:Type viewModels:ManagementAgentsViewModel}" 
+    <HierarchicalDataTemplate DataType="{x:Type viewModels:MAControllerConfigurationCollectionViewModel}" 
                               ItemsSource="{Binding Path=SortedItems.View}">
         <controls:TreeViewItemControl/>
     </HierarchicalDataTemplate>
 
-    <HierarchicalDataTemplate DataType="{x:Type viewModels:MAConfigParametersViewModel}"
+    <HierarchicalDataTemplate DataType="{x:Type viewModels:MAControllerConfigurationViewModel}"
                               ItemsSource="{Binding}">
         <controls:TreeViewItemControl x:Name="Item"/>
 

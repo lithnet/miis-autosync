@@ -67,7 +67,7 @@ namespace Lithnet.Miiserver.AutoSync
         IList<Guid> GetManagementAgentsPendingRestart();
 
         [OperationContract]
-        void RestartChangedExecutors();
+        void RestartChangedControllers();
         
         [OperationContract]
         void SetAutoStartState(bool autoStart);

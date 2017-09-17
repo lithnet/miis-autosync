@@ -11,7 +11,7 @@ namespace Lithnet.Miiserver.AutoSync
 {
     internal class ExecutionEngine : MarshalByRefObject
     {
-        private Dictionary<Guid, MAExecutor> maExecutors;
+        private Dictionary<Guid, MAController> controllers;
 
         private ServiceHost npService;
 
@@ -34,7 +34,7 @@ namespace Lithnet.Miiserver.AutoSync
                 Logger.WriteLine("Initialized TCP event service host");
             }
 
-            this.InitializeMAExecutors();
+            this.InitializeMAControllers();
         }
 
         public void Start()
@@ -42,7 +42,7 @@ namespace Lithnet.Miiserver.AutoSync
             lock (ExecutionEngine.ServiceControlLock)
             {
                 this.State = ControlState.Starting;
-                this.StartMAExecutors();
+                this.StartMAControllers();
                 this.State = ControlState.Running;
             }
         }
@@ -52,16 +52,16 @@ namespace Lithnet.Miiserver.AutoSync
             lock (ExecutionEngine.ServiceControlLock)
             {
                 this.State = ControlState.Stopping;
-                this.StopMAExecutors(cancelRuns);
+                this.StopMAControllers(cancelRuns);
                 this.State = ControlState.Stopped;
             }
         }
 
-        public void RestartChangedExecutors()
+        public void RestartChangedControllers()
         {
             foreach (Guid item in this.GetManagementAgentsPendingRestart())
             {
-                Logger.WriteLine($"Restarting executor '{item}' with new configuration");
+                Logger.WriteLine($"Restarting controller '{item}' with new configuration");
                 this.Stop(item, false);
                 this.Start(item);
             }
@@ -71,14 +71,14 @@ namespace Lithnet.Miiserver.AutoSync
         {
             List<Guid> restartItems = new List<Guid>();
 
-            foreach (MAConfigParameters newItem in Program.ActiveConfig.ManagementAgents)
+            foreach (MAControllerConfiguration newItem in Program.ActiveConfig.ManagementAgents)
             {
-                if (!this.maExecutors.ContainsKey(newItem.ManagementAgentID))
+                if (!this.controllers.ContainsKey(newItem.ManagementAgentID))
                 {
                     continue;
                 }
 
-                MAExecutor e = this.maExecutors[newItem.ManagementAgentID];
+                MAController e = this.controllers[newItem.ManagementAgentID];
 
                 if ((e.ControlState == ControlState.Disabled || e.Configuration == null) && newItem.Disabled)
                 {
@@ -142,7 +142,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void CancelRun(Guid managementAgentID)
         {
-            MAExecutor e = this.GetExecutorOrThrow(managementAgentID);
+            MAController e = this.GetContorllerOrThrow(managementAgentID);
 
             lock (e)
             {
@@ -152,7 +152,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void Stop(Guid managementAgentID, bool cancelRun)
         {
-            MAExecutor e = this.GetExecutorOrThrow(managementAgentID);
+            MAController e = this.GetContorllerOrThrow(managementAgentID);
 
             lock (e)
             {
@@ -162,7 +162,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void AddToExecutionQueue(Guid managementAgentID, string runProfileName)
         {
-            MAExecutor e = this.GetExecutorOrThrow(managementAgentID);
+            MAController e = this.GetContorllerOrThrow(managementAgentID);
             if (e.ControlState != ControlState.Running)
             {
                 return;
@@ -173,14 +173,14 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void Start(Guid managementAgentID)
         {
-            MAConfigParameters c = Program.ActiveConfig.ManagementAgents.GetItemOrDefault(managementAgentID);
+            MAControllerConfiguration c = Program.ActiveConfig.ManagementAgents.GetItemOrDefault(managementAgentID);
 
             if (c == null)
             {
                 throw new InvalidOperationException($"There was no active configuration found for the management agent {managementAgentID}");
             }
 
-            MAExecutor e = this.GetExecutorOrThrow(managementAgentID);
+            MAController e = this.GetContorllerOrThrow(managementAgentID);
 
             lock (e)
             {
@@ -193,12 +193,12 @@ namespace Lithnet.Miiserver.AutoSync
         {
             List<MAStatus> states = new List<MAStatus>();
 
-            if (this.maExecutors == null)
+            if (this.controllers == null)
             {
                 return states;
             }
 
-            foreach (MAExecutor x in this.maExecutors.Values)
+            foreach (MAController x in this.controllers.Values)
             {
                 states.Add(x.InternalStatus);
             }
@@ -208,25 +208,25 @@ namespace Lithnet.Miiserver.AutoSync
 
         internal MAStatus GetMAState(Guid managementAgentID)
         {
-            return this.GetExecutorOrThrow(managementAgentID).InternalStatus;
+            return this.GetContorllerOrThrow(managementAgentID).InternalStatus;
         }
 
-        private void InitializeMAExecutors()
+        private void InitializeMAControllers()
         {
-            this.maExecutors = new Dictionary<Guid, MAExecutor>();
+            this.controllers = new Dictionary<Guid, MAController>();
 
             foreach (ManagementAgent ma in ManagementAgent.GetManagementAgents())
             {
-                MAExecutor x = new MAExecutor(ma);
+                MAController x = new MAController(ma);
                 x.StateChanged += this.X_StateChanged;
                 x.RunProfileExecutionComplete += this.X_RunProfileExecutionComplete;
-                this.maExecutors.Add(ma.ID, x);
+                this.controllers.Add(ma.ID, x);
             }
         }
 
         private void X_RunProfileExecutionComplete(object sender, RunProfileExecutionCompleteEventArgs e)
         {
-            EventService.NotifySubscribersOnRunProfileExecutionComplete(((MAExecutor)sender).ManagementAgentID, e);
+            EventService.NotifySubscribersOnRunProfileExecutionComplete(((MAController)sender).ManagementAgentID, e);
         }
 
         private void X_StateChanged(object sender, MAStatusChangedEventArgs e)
@@ -234,11 +234,11 @@ namespace Lithnet.Miiserver.AutoSync
             EventService.NotifySubscribersOnStatusChange(e.Status);
         }
 
-        private void StartMAExecutors()
+        private void StartMAControllers()
         {
             this.cancellationToken = new CancellationTokenSource();
 
-            foreach (MAConfigParameters c in Program.ActiveConfig.ManagementAgents)
+            foreach (MAControllerConfiguration c in Program.ActiveConfig.ManagementAgents)
             {
                 if (c.IsMissing)
                 {
@@ -246,12 +246,12 @@ namespace Lithnet.Miiserver.AutoSync
                     continue;
                 }
 
-                if (this.maExecutors.ContainsKey(c.ManagementAgentID))
+                if (this.controllers.ContainsKey(c.ManagementAgentID))
                 {
                     Trace.WriteLine($"Starting {c.ManagementAgentName}");
                     Task.Run(() =>
                     {
-                        MAExecutor e = this.maExecutors[c.ManagementAgentID];
+                        MAController e = this.controllers[c.ManagementAgentID];
                         lock (e)
                         {
                             e.Start(c);
@@ -260,14 +260,14 @@ namespace Lithnet.Miiserver.AutoSync
                 }
                 else
                 {
-                    Logger.WriteLine($"Cannot start management agent executor '{c.ManagementAgentName}' because the management agent was not found");
+                    Logger.WriteLine($"Cannot start management agent controller '{c.ManagementAgentName}' because the management agent was not found");
                 }
             }
         }
 
-        private void StopMAExecutors(bool cancelRun)
+        private void StopMAControllers(bool cancelRun)
         {
-            if (this.maExecutors == null)
+            if (this.controllers == null)
             {
                 return;
             }
@@ -276,7 +276,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             List<Task> stopTasks = new List<Task>();
 
-            foreach (MAExecutor e in this.maExecutors.Values)
+            foreach (MAController e in this.controllers.Values)
             {
                 stopTasks.Add(Task.Factory.StartNew(() =>
                 {
@@ -284,7 +284,7 @@ namespace Lithnet.Miiserver.AutoSync
                     {
                         lock (e)
                         {
-                            Thread.CurrentThread.SetThreadName($"Stop executor {e.ManagementAgentName}");
+                            Thread.CurrentThread.SetThreadName($"Stop controller {e.ManagementAgentName}");
                             e.Stop(cancelRun);
                         }
                     }
@@ -293,31 +293,31 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                     catch (Exception ex)
                     {
-                        Logger.WriteLine($"The executor for {e.ManagementAgentName} throw an error while stopping");
+                        Logger.WriteLine($"The controller for {e.ManagementAgentName} throw an error while stopping");
                         Logger.WriteException(ex);
                     }
                 }));
             }
 
-            Logger.WriteLine("Waiting for executors to stop");
+            Logger.WriteLine("Waiting for controllers to stop");
 
             if (!Task.WaitAll(stopTasks.ToArray(), 10000))
             {
-                Logger.WriteLine("Timeout waiting for executors to stop");
+                Logger.WriteLine("Timeout waiting for controllers to stop");
             }
             else
             {
-                Logger.WriteLine("Executors stopped successfully");
+                Logger.WriteLine("Controllers stopped successfully");
             }
 
             this.State = ControlState.Stopped;
         }
 
-        private MAExecutor GetExecutorOrThrow(Guid managementAgentID)
+        private MAController GetContorllerOrThrow(Guid managementAgentID)
         {
-            if (this.maExecutors.ContainsKey(managementAgentID))
+            if (this.controllers.ContainsKey(managementAgentID))
             {
-                return this.maExecutors[managementAgentID];
+                return this.controllers[managementAgentID];
             }
             else
             {

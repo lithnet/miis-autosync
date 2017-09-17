@@ -9,9 +9,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
     {
         private IntervalExecutionTrigger typedModel;
 
-        private MAConfigParametersViewModel config;
+        private MAControllerConfigurationViewModel config;
 
-        public IntervalExecutionTriggerViewModel(IntervalExecutionTrigger model, MAConfigParametersViewModel config)
+        public IntervalExecutionTriggerViewModel(IntervalExecutionTrigger model, MAControllerConfigurationViewModel config)
             : base(model)
         {
             this.typedModel = model;

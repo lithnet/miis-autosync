@@ -1,4 +1,4 @@
-﻿# This function is called by the MA executor before a run profile is executed. Return $false to prevent the run profile from being executed
+﻿# This function is called by the MA controller before a run profile is executed. Return $false to prevent the run profile from being executed
 # Returning $true or nothing will allow the run profile to execute
 function ShouldExecute
 {
@@ -8,7 +8,7 @@ function ShouldExecute
 	Write-Object $true;
 }
 
-# This function is called by the MA executor after a run profile is executed. Execution of the MA or the entire service can be halted by throwing an
+# This function is called by the MA controller after a run profile is executed. Execution of the MA or the entire service can be halted by throwing an
 # UnexpectedChangeException
 function ExecutionComplete
 {

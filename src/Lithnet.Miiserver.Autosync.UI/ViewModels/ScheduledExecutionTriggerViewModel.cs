@@ -10,9 +10,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
     {
         private ScheduledExecutionTrigger typedModel;
 
-        private MAConfigParametersViewModel config;
+        private MAControllerConfigurationViewModel config;
 
-        public ScheduledExecutionTriggerViewModel(ScheduledExecutionTrigger model, MAConfigParametersViewModel config)
+        public ScheduledExecutionTriggerViewModel(ScheduledExecutionTrigger model, MAControllerConfigurationViewModel config)
             : base(model)
         {
             this.config = config;

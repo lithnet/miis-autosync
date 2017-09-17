@@ -106,9 +106,9 @@ namespace Lithnet.Miiserver.AutoSync
             return this.Channel.GetManagementAgentsPendingRestart();
         }
 
-        public void RestartChangedExecutors()
+        public void RestartChangedControllers()
         {
-            this.Channel.RestartChangedExecutors();
+            this.Channel.RestartChangedControllers();
         }
 
         public void SetAutoStartState(bool autoStart)

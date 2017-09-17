@@ -1,9 +1,9 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/Views/MAConfigParametersView.xaml" />
+        <ResourceDictionary Source="/Views/MAControllerConfigurationView.xaml" />
         <ResourceDictionary Source="/Views/SettingsView.xaml" />
-        <ResourceDictionary Source="/Views/ManagementAgentsView.xaml" />
+        <ResourceDictionary Source="/Views/MAControllerConfigurationCollectionView.xaml" />
         <ResourceDictionary Source="/Views/ExecutionMonitorsView.xaml" />
         <ResourceDictionary Source="/Views/ConfigFileView.xaml" />
     </ResourceDictionary.MergedDictionaries>

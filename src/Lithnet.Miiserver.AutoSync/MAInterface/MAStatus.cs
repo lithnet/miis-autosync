@@ -44,7 +44,7 @@ namespace Lithnet.Miiserver.AutoSync
         public ControlState ControlState { get; set; }
 
         [DataMember]
-        public ExecutorState ExecutionState { get; set; }
+        public ControllerState ExecutionState { get; set; }
 
         [DataMember]
         public int ActiveVersion { get; set; }

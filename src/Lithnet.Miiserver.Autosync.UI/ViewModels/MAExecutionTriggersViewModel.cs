@@ -6,9 +6,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
     public class MAExecutionTriggersViewModel : ListViewModel<MAExecutionTriggerViewModel, IMAExecutionTrigger>
     {
-        private MAConfigParametersViewModel config;
+        private MAControllerConfigurationViewModel config;
 
-        public MAExecutionTriggersViewModel(IList<IMAExecutionTrigger> items, MAConfigParametersViewModel config)
+        public MAExecutionTriggersViewModel(IList<IMAExecutionTrigger> items, MAControllerConfigurationViewModel config)
         {
             this.config = config;
             this.SetCollectionViewModel(items, this.ViewModelResolver);

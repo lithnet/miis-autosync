@@ -329,11 +329,11 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 					{
 						try
 						{
-							c.InvokeThenClose(t => t.RestartChangedExecutors());
+							c.InvokeThenClose(t => t.RestartChangedControllers());
 						}
 						catch (Exception ex)
 						{
-							Trace.WriteLine("Error restarting executors");
+							Trace.WriteLine("Error restarting controllers");
 							Trace.WriteLine(ex.ToString());
 							MessageBox.Show($"Could not restart the management agents\n\n{ex.Message}", "Restart management agents", MessageBoxButton.OK, MessageBoxImage.Error);
 						}
@@ -348,7 +348,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 			}
 			catch (Exception ex)
 			{
-				Trace.WriteLine("Error determining executors to restart");
+				Trace.WriteLine("Error determining controllers to restart");
 				Trace.WriteLine(ex.ToString());
 				MessageBox.Show($"Could not determine if any management agents required a restart\n\n{ex.Message}", "Restart management agents", MessageBoxButton.OK, MessageBoxImage.Error);
 			}

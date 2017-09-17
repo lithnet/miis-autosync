@@ -99,7 +99,7 @@
     <Compile Include="Enums\ExecutionErrorBehaviour.cs" />
     <Compile Include="Enums\AutoImportScheduling.cs" />
     <Compile Include="Enums\ControlState.cs" />
-    <Compile Include="Enums\ExecutorState.cs" />
+    <Compile Include="Enums\ControllerState.cs" />
     <Compile Include="Enums\RunMode.cs" />
     <Compile Include="EventArgs\RunProfileExecutionCompleteEventArgs.cs" />
     <Compile Include="EventArgs\TriggerMessageEventArgs.cs" />
@@ -112,7 +112,7 @@
     <Compile Include="EventService\IEventCallback.cs" />
     <Compile Include="Exceptions\NoSuchManagementAgentException.cs" />
     <Compile Include="Exceptions\SyncEngineStoppedException.cs" />
-    <Compile Include="MAInterface\MAConfigParametersCollection.cs" />
+    <Compile Include="MAInterface\MAControllerConfigurationCollection.cs" />
     <Compile Include="MAInterface\MAStatus.cs" />
     <Compile Include="ExecutionEngine.cs" />
     <Compile Include="MAInterface\ExecutionParameterCollection.cs" />
@@ -120,7 +120,7 @@
     <Compile Include="Mail\MessageBuilder.cs" />
     <Compile Include="Mail\MessageSender.cs" />
     <Compile Include="PersistentSearch\CallBackEventBridge.cs" />
-    <Compile Include="MAInterface\MAController.cs" />
+    <Compile Include="MAInterface\MAControllerScript.cs" />
     <Compile Include="PersistentSearch\PersistentSearchChangeType.cs" />
     <Compile Include="PersistentSearch\PersistentSearchControl.cs" />
     <Compile Include="PersistentSearch\PersistentSearchOptions.cs" />
@@ -133,7 +133,7 @@
     <Compile Include="Global.cs" />
     <Compile Include="MAInterface\MAExecutionTriggerDiscovery.cs" />
     <Compile Include="MAInterface\MAConfigDiscovery.cs" />
-    <Compile Include="MAInterface\MAConfigParameters.cs" />
+    <Compile Include="MAInterface\MAControllerConfiguration.cs" />
     <Compile Include="Enums\MARunProfileType.cs" />
     <Compile Include="Triggers\MAExecutionTrigger.cs" />
     <Compile Include="Triggers\PowerShellExecutionTrigger.cs" />
@@ -141,7 +141,7 @@
     <Compile Include="Triggers\IntervalExecutionTrigger.cs" />
     <Compile Include="Triggers\FimServicePendingImportTrigger.cs" />
     <Compile Include="Triggers\IMAExecutionTrigger.cs" />
-    <Compile Include="MAInterface\MAExecutor.cs" />
+    <Compile Include="MAInterface\MAController.cs" />
     <Compile Include="AutoSyncService.cs">
       <SubType>Component</SubType>
     </Compile>

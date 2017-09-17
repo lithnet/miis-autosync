@@ -9,7 +9,7 @@ namespace Lithnet.Miiserver.AutoSync
     public class ConfigFile
     {
         [DataMember(Name = "management-agents")]
-        public MAConfigParametersCollection ManagementAgents { get; set; }
+        public MAControllerConfigurationCollection ManagementAgents { get; set; }
 
         [DataMember(Name = "settings")]
         public Settings Settings { get; set; }
@@ -22,13 +22,13 @@ namespace Lithnet.Miiserver.AutoSync
 
         public ConfigFile()
         {
-            this.ManagementAgents = new MAConfigParametersCollection();
+            this.ManagementAgents = new MAControllerConfigurationCollection();
             this.Settings = new Settings();
         }
 
         internal void ValidateManagementAgents()
         {
-            foreach (MAConfigParameters config in this.ManagementAgents)
+            foreach (MAControllerConfiguration config in this.ManagementAgents)
             {
                 config.ResolveManagementAgent();
             }
@@ -56,7 +56,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 bool found = false;
 
-                foreach (MAConfigParameters config in this.ManagementAgents)
+                foreach (MAControllerConfiguration config in this.ManagementAgents)
                 {
                     if (config.ManagementAgentID == ma.ID)
                     {
@@ -67,7 +67,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 if (!found)
                 {
-                    MAConfigParameters p = new MAConfigParameters(ma.Name, ma.ID);
+                    MAControllerConfiguration p = new MAControllerConfiguration(ma.Name, ma.ID);
                     p.Disabled = true;
                     p.AutoImportIntervalMinutes = 60;
                     MAConfigDiscovery.DoAutoRunProfileDiscovery(p, ma);

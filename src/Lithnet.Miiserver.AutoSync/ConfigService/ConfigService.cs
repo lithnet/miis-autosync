@@ -131,7 +131,7 @@ namespace Lithnet.Miiserver.AutoSync
                 ProtectedString.EncryptOnWrite = true;
                 ConfigFile.Save(config, RegistrySettings.ConfigurationFile);
                 Program.ActiveConfig = config;
-                Program.Engine?.RestartChangedExecutors();
+                Program.Engine?.RestartChangedControllers();
             }
             catch (Exception ex)
             {
@@ -310,10 +310,10 @@ namespace Lithnet.Miiserver.AutoSync
             return Program.Engine?.GetManagementAgentsPendingRestart();
         }
 
-        public void RestartChangedExecutors()
+        public void RestartChangedControllers()
         {
             Global.ThrowOnSyncEngineNotRunning();
-            Program.Engine?.RestartChangedExecutors();
+            Program.Engine?.RestartChangedControllers();
         }
 
         public void SetAutoStartState(bool autoStart)

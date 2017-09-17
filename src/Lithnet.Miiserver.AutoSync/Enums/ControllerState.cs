@@ -3,7 +3,7 @@
 namespace Lithnet.Miiserver.AutoSync
 {
     [DataContract]
-    public enum ExecutorState
+    public enum ControllerState
     {
         [EnumMember]
         Idle = 0,
@@ -16,7 +16,5 @@ namespace Lithnet.Miiserver.AutoSync
 
         [EnumMember]
         Processing = 3,
-
-
     }
 }

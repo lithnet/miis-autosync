@@ -114,7 +114,7 @@
     <Compile Include="ViewModels\ConfigFileViewModel.cs" />
     <Compile Include="ViewModels\MAExecutionTriggersViewModel.cs" />
     <Compile Include="ViewModels\ScheduledExecutionTriggerViewModel.cs" />
-    <Compile Include="ViewModels\ManagementAgentsViewModel.cs" />
+    <Compile Include="ViewModels\MAControllerConfigurationCollectionViewModel.cs" />
     <Compile Include="ViewModels\IntervalExecutionTriggerViewModel.cs" />
     <Compile Include="ViewModels\PowerShellExecutionTriggerViewModel.cs" />
     <Page Include="Controls\TreeViewItemControl.xaml">
@@ -133,7 +133,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Views\ManagementAgentsView.xaml">
+    <Page Include="Views\MAControllerConfigurationCollectionView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -161,7 +161,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="ViewModels\MAConfigParametersViewModel.cs" />
+    <Compile Include="ViewModels\MAControllerConfigurationViewModel.cs" />
     <Compile Include="Windows\About.xaml.cs">
       <DependentUpon>About.xaml</DependentUpon>
     </Compile>
@@ -199,7 +199,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Views\MAConfigParametersView.xaml">
+    <Page Include="Views\MAControllerConfigurationView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
