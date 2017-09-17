@@ -114,10 +114,15 @@ namespace Lithnet.Miiserver.AutoSync
                         }
                         else
                         {
+                            if (!this.cancellationToken.IsCancellationRequested)
+                            {
+                                this.cancellationToken.Token.WaitHandle.WaitOne(this.Interval);
+                            }
+
                             continue;
                         }
                     }
-                  
+
                     foreach (PSObject result in results)
                     {
                         string runProfileName = result.BaseObject as string;

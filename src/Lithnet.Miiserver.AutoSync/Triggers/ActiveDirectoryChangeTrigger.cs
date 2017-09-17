@@ -6,7 +6,7 @@ using System.Linq;
 using System.DirectoryServices.Protocols;
 using System.Net;
 using System.Runtime.Serialization;
-using System.Text;
+using System.Threading;
 using System.Xml;
 using Lithnet.Miiserver.Client;
 
@@ -224,7 +224,7 @@ namespace Lithnet.Miiserver.AutoSync
                             }
                         }
 
-                        this.Log($"AD/LDS change detected on {r.DistinguishedName}");
+                        this.Log($"Change detected on {r.DistinguishedName}");
                         Trace.WriteLine($"LL: {date1.ToLocalTime()}");
                         Trace.WriteLine($"TS: {date2.ToLocalTime()}");
                         Trace.WriteLine($"BP: {date3.ToLocalTime()}");
@@ -246,6 +246,7 @@ namespace Lithnet.Miiserver.AutoSync
                         {
                             string messageContent = MessageBuilder.GetMessageBody(this.ManagementAgentName, this.Type, this.Description, DateTime.Now, false, ex);
                             MessageSender.SendMessage($"{this.ManagementAgentName}: {this.Type} trigger error", messageContent);
+                            Thread.Sleep(1000);
                         }
                     }
                 }
@@ -257,6 +258,7 @@ namespace Lithnet.Miiserver.AutoSync
                     {
                         string messageContent = MessageBuilder.GetMessageBody(this.ManagementAgentName, this.Type, this.Description, DateTime.Now, false, ex);
                         MessageSender.SendMessage($"{this.ManagementAgentName}: {this.Type} trigger error", messageContent);
+                        Thread.Sleep(1000);
                     }
                 }
             }
@@ -277,25 +279,7 @@ namespace Lithnet.Miiserver.AutoSync
                 this.MinimumIntervalBetweenEvents = TimeSpan.FromSeconds(60);
             }
 
-
-            StringBuilder b = new StringBuilder();
-            b.AppendLine("Starting AD/LDS change listener");
-
-            b.AppendLine($"Base DN {this.BaseDN}");
-            b.AppendLine($"Host name: {this.HostName}");
-            if (this.HasCredentials)
-            {
-                b.AppendLine($"Credentials: {this.Username}");
-            }
-            else
-            {
-                b.AppendLine($"Credentials: (current user)");
-            }
-
-            b.AppendLine($"Object classes: {string.Join(",", this.ObjectClasses)}");
-            b.AppendLine($"Minimum interval between trigger events: {this.MinimumIntervalBetweenEvents}");
-
-            this.Log(b.ToString());
+            this.Log($"Starting {this.DisplayName}");
 
             this.SetupListener();
         }

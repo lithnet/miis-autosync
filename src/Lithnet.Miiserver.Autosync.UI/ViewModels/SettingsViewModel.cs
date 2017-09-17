@@ -153,7 +153,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         public string MailTo
         {
             get => App.ToDelimitedString(this.Model.MailTo);
-            set => App.FromDelimitedString(value);
+            set => this.Model.MailTo = App.FromDelimitedString(value);
         }
 
         public string MailFrom
@@ -231,8 +231,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 }
             }
         }
-
-
 
         private void SelectPath()
         {

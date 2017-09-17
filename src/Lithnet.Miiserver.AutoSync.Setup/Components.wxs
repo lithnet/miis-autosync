@@ -24,17 +24,15 @@
                         Vital="yes"
                         Interactive="no">
           <ServiceDependency Id="FIMSynchronizationService" />
-          <util:PermissionEx 
+          <util:PermissionEx
             User="[SERVICE_PERMISSION_GROUP]"
             ServicePauseContinue="yes"
             ServiceQueryConfig="yes"
             ServiceQueryStatus="yes"
             ServiceStart="yes"
             ServiceStop="yes" />
-
-        
         </ServiceInstall>
-        
+
         <ServiceControl Id="ServiceControlEvents" Name="[SERVICE_NAME]" Stop="both" Remove="uninstall" Wait="yes" Start="install"/>
         <util:User Id="ServiceUser" Name="[SERVICE_USERNAME]" Password="[SERVICE_PASSWORD]" CreateUser="no" LogonAsService="yes" UpdateIfExists="yes"/>
         <CreateFolder Directory="APPROOTDIR">
@@ -61,15 +59,15 @@
 
     <DirectoryRef Id="ApplicationProgramsFolder">
       <Component Id="cmpF5883C13B9AC434D8CDB1F0271451D48" Guid="59E0AB81B2074937872F4FAA34BC99DE">
-        <Shortcut Id="ApplicationStartMenuShortcut" 
-                  Name="Lithnet AutoSync" 
+        <Shortcut Id="ApplicationStartMenuShortcut"
+                  Name="Lithnet AutoSync"
                   Target="[#fil0D04FCAD13404EE3AB54CC0491E5D533]"
                   WorkingDirectory="APPLICATIONROOTDIRECTORY"/>
         <RemoveFolder Id="ApplicationProgramsFolder" On="uninstall"/>
         <RegistryValue Root="HKCU" Key="Software\[Manufacturer]\[ProductName]" Name="installed" Type="integer" Value="1" KeyPath="yes" />
       </Component>
     </DirectoryRef>
-      
+
     <DirectoryRef Id="EXAMPLESDIR">
       <Component Id="cmp79377E0B69324BCD859E2FA2F55EE748" Guid="*" Win64="yes">
         <File Id="fil438B1DA271984619A5D3A6B455447DD4" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Examples\Controller-ACMA.ps1" />
@@ -107,7 +105,7 @@
       <ComponentRef Id="EventSource"/>
       <ComponentRef Id="cmpb05fc8933594449d9aad05ca620a4331"/>
       <ComponentRef Id="cmpb79b2c604b1748aa9606e987e86aad3a"/>
-    
+
     </ComponentGroup>
   </Fragment>
 </Wix>

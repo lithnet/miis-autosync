@@ -27,8 +27,7 @@
 
     <Property Id="GROUP_FIM_SYNC_ADMINS" Secure="yes"/>
     <Property Id="GROUP_FIM_SYNC_ADMINS_NAME" Secure="yes"/>
-    <Property Id="GROUP_FIM_SYNC_OPERATORS" Secure="yes"/>
-    <Property Id="GROUP_FIM_SYNC_OPERATORS_NAME" Secure="yes"/>
+
     <Property Id="GROUP_ADD_ACTION_FAILED" Secure="yes"/>
 
     <Binary Id="CustomActionBinary" SourceFile="$(var.Lithnet.Miiserver.AutoSync.Setup.CustomActions.TargetDir)\Lithnet.Miiserver.AutoSync.Setup.CustomActions.CA.dll" />

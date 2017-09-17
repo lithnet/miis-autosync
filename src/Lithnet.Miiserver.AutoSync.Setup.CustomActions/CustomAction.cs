@@ -4,6 +4,7 @@ using System.Security.Principal;
 using System.Text;
 using Microsoft.Deployment.WindowsInstaller;
 using System.DirectoryServices.AccountManagement;
+using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
 {
@@ -17,7 +18,7 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
             try
             {
                 session.Log("Attempting to get administrators group SID");
-                sid = Lithnet.Miiserver.Client.SyncServer.GetAdministratorsGroupSid();
+                sid = SyncServer.GetAdministratorsGroupSid();
             }
             catch (Exception ex)
             {
@@ -33,27 +34,6 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
                 session.Log("Got administrators group SID");
                 session["GROUP_FIM_SYNC_ADMINS"] = sid.ToString();
                 session["GROUP_FIM_SYNC_ADMINS_NAME"] = sid.Translate(typeof(NTAccount)).Value;
-            }
-
-            try
-            {
-                session.Log("Attempting to get operators group SID");
-                sid = Lithnet.Miiserver.Client.SyncServer.GetOperatorsGroupSid();
-            }
-            catch (Exception ex)
-            {
-                session.Log(ex.ToString());
-            }
-
-            if (sid == null)
-            {
-                session.Log("Get operators group SID failed");
-            }
-            else
-            {
-                session.Log("Got operators group SID");
-                session["GROUP_FIM_SYNC_OPERATORS"] = sid.ToString();
-                session["GROUP_FIM_SYNC_OPERATORS_NAME"] = sid.Translate(typeof(NTAccount)).Value;
             }
 
             return ActionResult.Success;
@@ -118,54 +98,52 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
         {
             string account = session["SERVICE_USERNAME"];
             string group = session["GROUP_FIM_SYNC_ADMINS"];
+            string groupName = session["GROUP_FIM_SYNC_ADMINS_NAME"];
 
-            try
+            while (true)
             {
-                session.Log($"Attempting to add user {account} to {group}");
-                AddUserToGroup(account, group);
-                session.Log($"Added user {account} to {group}");
-                return ActionResult.Success;
-            }
-            catch (Exception ex)
-            {
-
-                session["GROUP_ADD_ACTION_FAILED"] = "1";
-                session.Log("Could not add user {0} to group {1}", account, group);
-                session.Log(ex.ToString());
-
-                int val = (int)InstallMessage.User | (int)MessageButtons.OKCancel | (int)MessageIcon.Error;
-
-                var result = session.Message((InstallMessage)val, 
-                    new Record($"The installer was unable to add the service account '{account}' to the MIM Sync Admins group. Please add this user manually to the group and press OK to continue, or press Cancel to exit"));
-
-                if (result != MessageResult.OK)
+                try
                 {
-                    return ActionResult.Failure;
-                }
-                else
-                {
+                    session.Log($"Attempting to add user {account} to {group}");
+                    AddUserToGroup(account, group);
+                    session.Log($"Added user {account} to {group}");
                     return ActionResult.Success;
+                }
+                catch (Exception ex)
+                {
+                    session["GROUP_ADD_ACTION_FAILED"] = "1";
+                    session.Log("Could not add user {0} to group {1}", account, group);
+                    session.Log(ex.ToString());
+
+                    const int val = (int) InstallMessage.User | (int) MessageButtons.OKCancel | (int) MessageIcon.Error;
+
+                    MessageResult result = session.Message((InstallMessage) val,
+                        new Record($"Unable to add '{account}' to the group '{groupName}'. Please add this user manually to the group and press OK to continue, or press Cancel to exit.\n{ex.Message}"));
+
+                    if (result != MessageResult.OK)
+                    {
+                        return ActionResult.Failure;
+                    }
                 }
             }
         }
 
         private static void AddUserToGroup(string account, string groupSid)
         { 
-            PrincipalContext context = new PrincipalContext(ContextType.Machine);
             GroupPrincipal group = CustomActions.FindInDomainOrMachineBySid(groupSid) as GroupPrincipal;
 
             bool mustSave = false;
 
             if (group == null)
             {
-                throw new NoMatchingPrincipalException(string.Format("The group {0} could not be found", groupSid));
+                throw new NoMatchingPrincipalException($"The group {groupSid} could not be found");
             }
 
             Principal user = CustomActions.FindInDomainOrMachine(account);
 
             if (user == null)
             {
-                throw new NoMatchingPrincipalException(string.Format("The user {0} could not be found", account));
+                throw new NoMatchingPrincipalException($"The user {account} could not be found");
             }
             
             if (!group.Members.Contains(user))
