@@ -1255,7 +1255,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             this.AddPendingActionIfNotQueued(new ExecutionParameters(runProfileName), source);
         }
-
+        
         internal void AddPendingActionIfNotQueued(ExecutionParameters p, string source, bool runNext = false)
         {
             try
@@ -1337,7 +1337,16 @@ namespace Lithnet.Miiserver.AutoSync
 
             if (includeExecuting && this.ExecutingRunProfile != null)
             {
-                return string.Join(",", this.ExecutingRunProfile + "*", queuedNames);
+                string current = this.ExecutingRunProfile + "*";
+
+                if (string.IsNullOrWhiteSpace(queuedNames))
+                {
+                    return current;
+                }
+                else
+                {
+                    return string.Join(",", current, queuedNames);
+                }
             }
             else
             {

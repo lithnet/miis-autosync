@@ -46,7 +46,7 @@ namespace Lithnet.Miiserver.AutoSync
                 else
                 {
                     xpath = string.Format("/Request[msidmCompletedTime > '{0}']", this.lastCheckDateTime.Value.ToResourceManagementServiceDateFormat(false));
-                    Trace.WriteLine("Searching for changes since {0}", this.lastCheckDateTime.Value.ToResourceManagementServiceDateFormat(false));
+                    Trace.WriteLine($"Searching for changes since {this.lastCheckDateTime.Value.ToResourceManagementServiceDateFormat(false)}");
                 }
 
                 ISearchResultCollection r = c.GetResources(xpath, 1, new[] { "msidmCompletedTime" }, "msidmCompletedTime", false);
