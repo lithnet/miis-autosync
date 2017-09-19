@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.15
+VisualStudioVersion = 15.0.26730.8
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lithnet.Miiserver.AutoSync", "Lithnet.Miiserver.AutoSync\Lithnet.Miiserver.AutoSync.csproj", "{9A7026F9-297E-4D2A-849C-7B0287CD3F9D}"
 EndProject
@@ -81,5 +81,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1E6B20CE-655B-419F-B3A8-087E158B3489}
 	EndGlobalSection
 EndGlobal
