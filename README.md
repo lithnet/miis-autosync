@@ -14,7 +14,7 @@ The most powerful mechanism provided is the PowerShell trigger. Administrators c
 See the wiki topic on [triggers](https://github.com/lithnet/miis-autosync/wiki/Triggers) for more information
 
 #### Synchronization profiles
-AutoSync follows the Microsoft guidelines when it comes to running multiple management agents simultaneously. While import and export operations are allowed to overlap, synchronizations must be run exclusively. See the [advanced settings(https://github.com/lithnet/miis-autosync/wiki/Advanced-settings) topic for more information.
+AutoSync follows the Microsoft guidelines when it comes to running multiple management agents simultaneously. While import and export operations are allowed to overlap, synchronizations must be run exclusively. See the [advanced settings](https://github.com/lithnet/miis-autosync/wiki/Advanced-settings) topic for more information.
 
 ### Guides
 *   [Prequisites](https://github.com/lithnet/miis-autosync/wiki/Prerequisites)
