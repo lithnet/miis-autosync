@@ -136,7 +136,7 @@ namespace Lithnet.Miiserver.AutoSync
             return new ConfigClient(ConfigServiceConfiguration.NetNamedPipeBinding, ConfigServiceConfiguration.NetNamedPipeEndpointAddress);
         }
 
-        public static ConfigClient GetNetTcpClient(string hostname, string port, string expectedServerIdentityFormat)
+        public static ConfigClient GetNetTcpClient(string hostname, int port, string expectedServerIdentityFormat)
         {
             return new ConfigClient(ConfigServiceConfiguration.NetTcpBinding, ConfigServiceConfiguration.CreateTcpEndPointAddress(hostname, port, expectedServerIdentityFormat));
         }

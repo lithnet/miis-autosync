@@ -31,7 +31,7 @@ namespace Lithnet.Miiserver.AutoSync
             return new EventClient(ctx, EventServiceConfiguration.NetNamedPipeBinding, EventServiceConfiguration.NetNamedPipeEndpointAddress);
         }
 
-        public static EventClient GetNetTcpClient(InstanceContext ctx, string hostname, string port, string expectedServerIdentityFormat)
+        public static EventClient GetNetTcpClient(InstanceContext ctx, string hostname, int port, string expectedServerIdentityFormat)
         {
             return new EventClient(ctx, EventServiceConfiguration.NetTcpBinding, EventServiceConfiguration.CreateTcpEndPointAddress(hostname, port, expectedServerIdentityFormat));
         }

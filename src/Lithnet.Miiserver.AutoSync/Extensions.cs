@@ -119,7 +119,6 @@ namespace Lithnet.Miiserver.AutoSync
             return false;
         }
 
-
         public static bool HasStagedImports(this RunDetails d)
         {
             if (d?.StepDetails == null)
@@ -194,7 +193,6 @@ namespace Lithnet.Miiserver.AutoSync
                 }
             }
         }
-
 
         public static void SetThreadName(this Thread thread, string name)
         {

@@ -36,11 +36,11 @@ namespace Lithnet.Miiserver.AutoSync.UI
             }
         }
 
-        public static string AutoSyncServerPort
+        public static int AutoSyncServerPort
         {
             get
             {
-                return (string)UserSettings.UserSettingsKey.GetValue(nameof(AutoSyncServerPort), "54338");
+                return (int)UserSettings.UserSettingsKey.GetValue(nameof(AutoSyncServerPort), 54338);
             }
         }
 

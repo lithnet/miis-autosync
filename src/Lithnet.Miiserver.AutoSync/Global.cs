@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Reflection;
 using System.IO;
 using System.Linq;
+using System.Security.Principal;
 using System.ServiceProcess;
 using Lithnet.Miiserver.Client;
 
@@ -123,6 +124,29 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 throw new SyncEngineStoppedException("The MIM Synchronization service is not running");
             }
+        }
+
+        public static string[] GetNtAccountName(string accountName)
+        {
+            if (accountName.Contains("\\"))
+            {
+                return accountName.Split('\\');
+            }
+
+            if (accountName.Contains("@"))
+            {
+                NTAccount account = new NTAccount(accountName);
+                SecurityIdentifier sid = (SecurityIdentifier)account.Translate(typeof(SecurityIdentifier));
+                string sidString = sid.Value;
+
+                sid = new SecurityIdentifier(sidString);
+
+                account = (NTAccount)sid.Translate(typeof(NTAccount));
+
+                return account.Value.Split('\\');
+            }
+
+            throw new ArgumentException($"The username '{accountName}' was not in a supported format");
         }
     }
 }

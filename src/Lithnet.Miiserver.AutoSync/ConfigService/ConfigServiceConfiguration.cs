@@ -87,7 +87,7 @@ namespace Lithnet.Miiserver.AutoSync
             return ConfigServiceConfiguration.CreateTcpUri(RegistrySettings.NetTcpBindAddress, RegistrySettings.NetTcpBindPort);
         }
 
-        public static EndpointAddress CreateTcpEndPointAddress(string hostname, string port, string expectedServerIdentityFormat)
+        public static EndpointAddress CreateTcpEndPointAddress(string hostname, int port, string expectedServerIdentityFormat)
         {
             EndpointIdentity i;
 
@@ -105,7 +105,7 @@ namespace Lithnet.Miiserver.AutoSync
             return new EndpointAddress(new Uri(ConfigServiceConfiguration.CreateTcpUri(hostname, port)), i);
         }
 
-        public static string CreateTcpUri(string hostname, string port)
+        public static string CreateTcpUri(string hostname, int port)
         {
             return string.Format(ConfigServiceConfiguration.TcpUri, hostname, port);
         }

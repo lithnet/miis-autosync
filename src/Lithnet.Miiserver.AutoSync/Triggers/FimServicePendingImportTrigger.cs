@@ -106,7 +106,7 @@ namespace Lithnet.Miiserver.AutoSync
             ResourceManagementClient c = new ResourceManagementClient(hostname, creds);
 
             Dictionary<string, object> keys = new Dictionary<string, object>();
-            string[] split = accountName.Split('\\');
+            string[] split = Global.GetNtAccountName(accountName);
 
             if (split.Length > 1)
             {
