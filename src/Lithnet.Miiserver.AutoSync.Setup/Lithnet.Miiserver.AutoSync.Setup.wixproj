@@ -105,7 +105,7 @@
     <IntermediateOutputPath>obj\$(Platform)\$(Configuration)\</IntermediateOutputPath>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>"C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe" sign /sha1 0a2431ab8dd8e7e72d4c1e4f25d2b9d9eb0badac /t http://time.certum.pl /v $(TargetFileName)</PostBuildEvent>
+    <PostBuildEvent>if "$(ConfigurationName)"=="Release" ("C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe" sign /sha1 $(CSCERTTHUMBPRINT) /t http://time.certum.pl /v $(TargetFileName) )</PostBuildEvent>
   </PropertyGroup>
   <!--
 	To modify your build process, add your task inside one of the targets below and uncomment it.
