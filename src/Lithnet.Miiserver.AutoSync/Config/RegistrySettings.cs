@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using Microsoft.Win32;
-using System.Text;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -14,7 +13,7 @@ namespace Lithnet.Miiserver.AutoSync
         private static RegistryKey serviceKey;
 
         private static HashSet<string> retryCodes;
-        
+
         public static RegistryKey ParametersKey
         {
             get
@@ -41,7 +40,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public static string ServiceAccount => (string)RegistrySettings.ServiceKey.GetValue("ObjectName", null);
+        public static string ServiceAccount => (string) RegistrySettings.ServiceKey.GetValue("ObjectName", null);
 
         public static bool AutoStartEnabled
         {
@@ -113,18 +112,18 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                return (string)RegistrySettings.ParametersKey.GetValue(nameof(NetTcpBindAddress), Environment.MachineName);
+                return (string) RegistrySettings.ParametersKey.GetValue(nameof(NetTcpBindAddress), Environment.MachineName);
             }
         }
 
-        public static string NetTcpBindPort
+        public static int NetTcpBindPort
         {
             get
             {
-                return (string)RegistrySettings.ParametersKey.GetValue(nameof(NetTcpBindPort), "54338");
+                return (int) RegistrySettings.ParametersKey.GetValue(nameof(NetTcpBindPort), 54338);
             }
         }
-        
+
         public static string ConfigurationFile
         {
             get
@@ -137,18 +136,6 @@ namespace Lithnet.Miiserver.AutoSync
                 }
 
                 return Path.Combine(Global.AssemblyDirectory, "config.xml");
-            }
-        }
-
-        public static int RetryCount
-        {
-            get
-            {
-                string s = RegistrySettings.ParametersKey.GetValue(nameof(RetryCount)) as string;
-
-                int value;
-
-                return int.TryParse(s, out value) ? value : 5;
             }
         }
 
@@ -179,24 +166,27 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        /// <summary>
-        /// The amount of time to sleep after a deadlock event before retrying
-        /// </summary>
+        public static int RetryCount
+        {
+            get
+            {
+                return (int) RegistrySettings.ParametersKey.GetValue(nameof(RetryCount), 5);
+            }
+        }
+
         public static TimeSpan RetrySleepInterval
         {
             get
             {
-                string s = RegistrySettings.ParametersKey.GetValue(nameof(RetrySleepInterval)) as string;
+                int seconds = (int)RegistrySettings.ParametersKey.GetValue(nameof(RetrySleepInterval), 0);
 
-                int seconds;
-
-                if (int.TryParse(s, out seconds))
+                if (seconds > 0)
                 {
-                    return new TimeSpan(0, 0, seconds >= 1 ? seconds : 1);
+                    return new TimeSpan(0, 0, seconds);
                 }
                 else
                 {
-                    return new TimeSpan(0, 0, 5);
+                    return TimeSpan.FromSeconds(5);
                 }
             }
         }
@@ -205,39 +195,32 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = RegistrySettings.ParametersKey.GetValue(nameof(ExecutionStaggerInterval)) as string;
+                int seconds = (int)RegistrySettings.ParametersKey.GetValue(nameof(ExecutionStaggerInterval), 0);
 
-                int seconds;
-
-                if (int.TryParse(s, out seconds))
+                if (seconds > 0)
                 {
-                    return new TimeSpan(0, 0, seconds >= 1 ? seconds : 1);
+                    return new TimeSpan(0, 0, seconds);
                 }
                 else
                 {
-                    return new TimeSpan(0, 0, 2);
+                    return TimeSpan.FromSeconds(2);
                 }
             }
         }
 
-        /// <summary>
-        /// The amount of time after the run profile completes before analysis of the run profile results starts
-        /// </summary>
         public static TimeSpan PostRunInterval
         {
             get
             {
-                string s = RegistrySettings.ParametersKey.GetValue(nameof(PostRunInterval)) as string;
+                int seconds = (int)RegistrySettings.ParametersKey.GetValue(nameof(PostRunInterval), 0);
 
-                int seconds;
-
-                if (int.TryParse(s, out seconds))
+                if (seconds > 0)
                 {
-                    return new TimeSpan(0, 0, seconds >= 1 ? seconds : 1);
+                    return new TimeSpan(0, 0, seconds);
                 }
                 else
                 {
-                    return new TimeSpan(0, 0, 2);
+                    return TimeSpan.FromSeconds(2);
                 }
             }
         }
@@ -246,17 +229,15 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = RegistrySettings.ParametersKey.GetValue(nameof(UnmanagedChangesCheckInterval)) as string;
+                int minutes = (int)RegistrySettings.ParametersKey.GetValue(nameof(UnmanagedChangesCheckInterval), 0);
 
-                int seconds;
-
-                if (int.TryParse(s, out seconds))
+                if (minutes > 0)
                 {
-                    return new TimeSpan(0, 0, seconds > 0 ? seconds : 3600);
+                    return new TimeSpan(0, minutes, 0);
                 }
                 else
                 {
-                    return new TimeSpan(0, 60, 0);
+                    return TimeSpan.FromHours(1);
                 }
             }
         }
@@ -265,20 +246,11 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string s = RegistrySettings.ParametersKey.GetValue(nameof(RunHistoryTimerInterval)) as string;
+                int minutes = (int) RegistrySettings.ParametersKey.GetValue(nameof(RunHistoryTimerInterval), 0);
 
-                int seconds;
-
-                if (int.TryParse(s, out seconds))
+                if (minutes > 0)
                 {
-                    if (seconds > 0)
-                    {
-                        return new TimeSpan(0, 0, seconds);
-                    }
-                    else
-                    {
-                        return TimeSpan.FromHours(8);
-                    }
+                    return new TimeSpan(0, minutes, 0);
                 }
                 else
                 {
@@ -288,4 +260,3 @@ namespace Lithnet.Miiserver.AutoSync
         }
     }
 }
-
