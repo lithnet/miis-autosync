@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
      xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
-  
+
   <Product Id="*"
            Name="Lithnet AutoSync for Microsoft Identity Manager"
            Language="1033"
@@ -23,19 +23,14 @@
 
     <Property Id="SERVICE_PASSWORD" Hidden="yes" Secure="yes"/>
     <Property Id="SERVICE_NAME" Secure="yes" Value="autosync"/>
-    <Property Id="SERVICE_PERMISSION_GROUP" Secure="yes"/>
 
     <Property Id="GROUP_FIM_SYNC_ADMINS" Secure="yes"/>
     <Property Id="GROUP_FIM_SYNC_ADMINS_NAME" Secure="yes"/>
+    <Property Id="GROUP_FIM_SYNC_ADMINS_IS_LOCAL" Secure="yes"/>
 
     <Property Id="GROUP_ADD_ACTION_FAILED" Secure="yes"/>
 
     <Binary Id="CustomActionBinary" SourceFile="$(var.Lithnet.Miiserver.AutoSync.Setup.CustomActions.TargetDir)\Lithnet.Miiserver.AutoSync.Setup.CustomActions.CA.dll" />
-
-    <CustomAction Id="SetServicePermissionGroupProperty"
-                  BinaryKey="CustomActionBinary"
-                  DllEntry="GetAdminGroupName"
-                  Return="check" />
 
     <CustomAction Id="GetFimSyncGroups"
               BinaryKey="CustomActionBinary"
@@ -43,12 +38,33 @@
               Return="check"
               Impersonate="yes"/>
 
-    <CustomAction Id="AddServiceAccountToFimSyncAdmins"
+    <CustomAction Id="AddServiceAccountToFimSyncAdminsAsCaller"
               BinaryKey="CustomActionBinary"
               DllEntry="AddServiceAccountToFimSyncAdmins"
               Return="check"
-              Impersonate="yes"
-      />
+              Execute="deferred"
+              Impersonate="yes"/>
+
+    <CustomAction Id="CA_SetPropertyValueAsSystem"
+                  Property="AddServiceAccountToFimSyncAdminsAsSystem"
+                  Value="GROUP_FIM_SYNC_ADMINS=[GROUP_FIM_SYNC_ADMINS];SERVICE_USERNAME=[SERVICE_USERNAME];GROUP_FIM_SYNC_ADMINS_NAME=[GROUP_FIM_SYNC_ADMINS_NAME]"/>
+
+    <CustomAction Id="CA_SetPropertyValueAsCaller"
+                  Property="AddServiceAccountToFimSyncAdminsAsCaller"
+                  Value="GROUP_FIM_SYNC_ADMINS=[GROUP_FIM_SYNC_ADMINS];SERVICE_USERNAME=[SERVICE_USERNAME];GROUP_FIM_SYNC_ADMINS_NAME=[GROUP_FIM_SYNC_ADMINS_NAME]"/>
+
+    <CustomAction Id="SetIsLocalProperty"
+                  BinaryKey="CustomActionBinary"
+                  DllEntry="SetIsLocalProperty"
+                  Return="ignore"
+                  Impersonate="yes"/>
+
+    <CustomAction Id="AddServiceAccountToFimSyncAdminsAsSystem"
+                  BinaryKey="CustomActionBinary"
+                  DllEntry="AddServiceAccountToFimSyncAdmins"
+                  Return="check"
+                  Execute="deferred"
+                  Impersonate="no"/>
 
     <Property Id="FIMINSTALLDIR" Secure="yes">
       <RegistrySearch Id="FimInstallDirFromRegistry"
@@ -93,7 +109,7 @@
                       Type="raw"
                       Win64="yes" />
     </Property>
-    
+
     <Condition Message="This application requires the Forefront Identity Manager 2010 R2 4.1.3441 or later to be installed">
       <![CDATA[Installed OR SYNCVERSION]]>
     </Condition>
@@ -135,10 +151,10 @@
       <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg">1</Publish>
       <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Property="_BrowseProperty" Value="[WIXUI_INSTALLDIR]" Order="10">1</Publish>
       <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Event="SpawnDialog" Value="BrowseDlg" Order="20">1</Publish>
-      
+
       <Publish Dialog="ServiceDetailsDialog" Control="Back" Event="NewDialog" Value="InstallDirDlg" Order="1"></Publish>
       <Publish Dialog="ServiceDetailsDialog" Control="Next" Event="NewDialog" Value="ConfigPathDialog" Order="4">PASSWORD_COMPARE = "1"</Publish>
-      
+
       <Publish Dialog="ConfigPathDialog" Control="Back" Event="NewDialog" Value="ServiceDetailsDialog" Order="1"></Publish>
       <Publish Dialog="ConfigPathDialog" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="1"></Publish>
       <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="ConfigPathDialog" Order="1"></Publish>
@@ -161,9 +177,14 @@
       <Custom Action="SetServiceAdminsGroupIfBlank" After="CostFinalize">NOT Installed AND NOT SERVICE_ADMINS_GROUP</Custom>
     </InstallUISequence>
     <InstallExecuteSequence>
-      <Custom Action="AddServiceAccountToFimSyncAdmins" After="InstallFiles">NOT Installed</Custom>
-      <!--<Custom Action="SetServicePermissionGroupProperty" After="InstallFiles">NOT Installed</Custom>-->
+      <Custom Action="SetIsLocalProperty" Before="InstallFiles">NOT Installed</Custom>
+     
+      <Custom Action="CA_SetPropertyValueAsSystem" Before="AddServiceAccountToFimSyncAdminsAsSystem">NOT Installed AND GROUP_FIM_SYNC_ADMINS_IS_LOCAL</Custom>
+      <Custom Action="AddServiceAccountToFimSyncAdminsAsSystem" After="InstallFiles">NOT Installed AND GROUP_FIM_SYNC_ADMINS_IS_LOCAL</Custom>
 
+      <Custom Action="CA_SetPropertyValueAsCaller" Before="AddServiceAccountToFimSyncAdminsAsCaller">NOT Installed AND NOT GROUP_FIM_SYNC_ADMINS_IS_LOCAL</Custom>
+      <Custom Action="AddServiceAccountToFimSyncAdminsAsCaller" After="InstallFiles">NOT Installed AND NOT GROUP_FIM_SYNC_ADMINS_IS_LOCAL</Custom>
+    
     </InstallExecuteSequence>
 
   </Product>
