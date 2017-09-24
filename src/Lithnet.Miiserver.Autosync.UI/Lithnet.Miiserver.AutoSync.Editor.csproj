@@ -109,6 +109,7 @@
     <Compile Include="ViewModels\ActiveDirectoryChangeTriggerViewModel.cs" />
     <Compile Include="ViewModels\ExecutionMonitorViewModel.cs" />
     <Compile Include="ViewModels\ExecutionMonitorsViewModel.cs" />
+    <Compile Include="ViewModels\LoggedMessageViewModel.cs" />
     <Compile Include="ViewModels\RunProfileResultViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
     <Compile Include="ViewModels\MAExecutionTriggerViewModel.cs" />

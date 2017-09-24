@@ -22,7 +22,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             this.ManagementAgentID = ma.Key;
             this.ManagementAgentName = ma.Value;
-            this.DetailMessages = new ObservableCollection<string>();
+            this.DetailMessages = new ObservableCollection<LoggedMessageViewModel>();
             this.RunHistory = new ObservableCollection<RunProfileResultViewModel>();
             this.SubscribeToStateChanges();
             this.PopulateMenuItems();
@@ -95,7 +95,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public ControllerState ExecutionState { get; private set; }
 
-        public ObservableCollection<string> DetailMessages { get; private set; }
+        public ObservableCollection<LoggedMessageViewModel> DetailMessages { get; private set; }
 
         public ObservableCollection<RunProfileResultViewModel> RunHistory { get; private set; }
 
@@ -160,21 +160,12 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.AddDetailMessage(e);
         }
 
-        private string lastDetail;
-
         private void AddDetailMessage(MessageLoggedEventArgs e)
         {
-            if (this.lastDetail == e.Message)
-            {
-                return;
-            }
-
             if (string.IsNullOrWhiteSpace(e.Message))
             {
                 return;
             }
-
-            this.lastDetail = e.Message;
 
             Application.Current.Dispatcher.Invoke(() =>
             {
@@ -186,7 +177,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                         this.DetailMessages.RemoveAt(this.DetailMessages.Count - 1);
                     }
 
-                    this.DetailMessages.Insert(0, $"{e.Date}: {e.Message}");
+                    this.DetailMessages.Insert(0, new LoggedMessageViewModel(e));
                 }
             });
         }

@@ -45,7 +45,7 @@
                             <TextBlock Margin="3,0,0,0">Stop all and cancel runs</TextBlock>
                         </StackPanel>
                     </Button>
-                    
+
                     <StackPanel Orientation="Horizontal" Margin="10 0 0 0">
                         <CheckBox IsChecked="{Binding Path=AutoStartEnabled}" Content="Automatically start controllers when service starts" VerticalContentAlignment="Center"/>
                     </StackPanel>
@@ -167,7 +167,14 @@
                            BorderThickness="1"
                            DataContext="{Binding Path=SelectedItem, ElementName=ListView}" 
                            ScrollViewer.VerticalScrollBarVisibility="Auto" 
-                           ItemsSource="{Binding Path=DetailMessages}" />
+                           ItemsSource="{Binding Path=DetailMessages}">
+                    <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Date" DisplayMemberBinding="{Binding Path=FormattedDate}"/>
+                        <GridViewColumn Header="Message" DisplayMemberBinding="{Binding Path=Message}"/>
+                    </GridView>
+                    </ListView.View>
+                </ListView>
 
             </Grid>
         </Grid>
