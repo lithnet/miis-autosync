@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Net;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using Lithnet.Miiserver.AutoSync;
 using Lithnet.Miiserver.AutoSync.UI.Windows;
 using Microsoft.Win32;
@@ -51,7 +53,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         public string Password { get; set; }
 
 
-        private void CreateMpr()
+        private async void CreateMpr()
         {
             try
             {
@@ -77,13 +79,19 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 ConfigClient c = App.GetDefaultConfigClient();
                 string svcAccount = c.InvokeThenClose(t => t.GetAutoSyncServiceAccountName());
 
-                FimServicePendingImportTrigger.CreateMpr(this.MimServiceHost, creds, svcAccount, this.SetName, this.MprName);
+                Mouse.OverrideCursor = Cursors.Wait;
+                await Task.Run(() => FimServicePendingImportTrigger.CreateMpr(this.MimServiceHost, creds, svcAccount, this.SetName, this.MprName));
+
                 MessageBox.Show("The set and MPR were created successfully", "Lithnet AutoSync", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 Trace.WriteLine(ex);
                 MessageBox.Show($"An error occurred while trying to grant the required permissions. If the problem persists, you can create the MPR manually by granting the AutoSync service account permission to read the msidmCompletedTime attribute on all request objects\n\nError message: {ex.Message}", "Unable to create the MPR");
+            }
+            finally
+            {
+                Mouse.OverrideCursor = Cursors.Arrow;
             }
         }
     }

@@ -47,7 +47,7 @@
 
       </Component>
 
-      <Component Id="cmpb79b2c604b1748aa9606e987e86aad3a" Guid="*" NeverOverwrite="yes" Win64="yes">
+      <Component Id="cmpb79b2c604b1748aa9606e987e86aad3a" Guid="*" Win64="yes">
         <File Id="App.config" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Lithnet.Miiserver.AutoSync.exe.config" />
       </Component>
 

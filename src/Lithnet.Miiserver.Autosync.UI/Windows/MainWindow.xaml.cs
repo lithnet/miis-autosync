@@ -16,7 +16,11 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
             this.DataContext = m;
             m.ResetConfigViewModel();
-            m.ExecutionMonitor.IsSelected = true;
+
+            if (m.ExecutionMonitor != null)
+            {
+                m.ExecutionMonitor.IsSelected = true;
+            }
         }
     }
 }
