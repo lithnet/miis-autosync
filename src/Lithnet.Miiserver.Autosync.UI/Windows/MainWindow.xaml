@@ -17,12 +17,18 @@
         <KeyBinding Key="S"
                     Modifiers="Control"
                     Command="{Binding Path=Commands.Save}" />
-        <KeyBinding Key="Z"
+        <KeyBinding Key="R"
                     Modifiers="Control"
                     Command="{Binding Path=Commands.Revert}" />
         <KeyBinding Key="X"
                     Modifiers="Control"
                     Command="{Binding Path=Commands.Close}" />
+        <KeyBinding Key="B"
+                    Modifiers="Control+Shift"
+                    Command="{Binding Path=Commands.Export}" />
+        <KeyBinding Key="R"
+                    Modifiers="Control+Shift"
+                    Command="{Binding Path=Commands.Import}" />
     </Window.InputBindings>
 
 
@@ -47,52 +53,45 @@
                 <MenuItem Header="_File">
                     <MenuItem.ItemsSource>
                         <CompositeCollection>
-                            <MenuItem Header="Commi_t changes"
+                            <MenuItem Header="{Binding Path=Commands.Save.Text}" 
+                                      InputGestureText="{Binding Path=Commands.Save.GestureText}"
                                       Command="{Binding Path=Commands.Save}" />
-                            <MenuItem Header="_Undo pending changes"
-                                      Command="{Binding Path=Commands.Revert}" />
+
+                            <MenuItem Header="{Binding Path=RevertOrUndoLabel}"
+                                      InputGestureText="{Binding Path=Commands.Revert.GestureText}"
+                                      Command="{Binding Path=Commands.Revert}"/>
 
                             <Separator />
-                            <MenuItem Header="_Backup config..."
-                                      Command="{Binding Path=Commands.Export}" />
-                            <MenuItem Header="R_estore config..."
-                                      Command="{Binding Path=Commands.Import}" />
+                            
+                            <MenuItem Header="{Binding Path=Commands.Export.Text}"
+                                      InputGestureText="{Binding Path=Commands.Export.GestureText}"
+                                      Command="{Binding Path=Commands.Export}"/>
 
+                            <MenuItem Header="{Binding Path=Commands.Import.Text}"
+                                      InputGestureText="{Binding Path=Commands.Import.GestureText}"
+                                      Command="{Binding Path=Commands.Import}"/>
 
                             <Separator/>
-                            <MenuItem Header="_Close"
-                                      Command="{Binding Path=Commands.Close}" />
+                            <MenuItem Header="{Binding Path=Commands.Close.Text}"
+                                      InputGestureText="{Binding Path=Commands.Close.GestureText}"
+                                      Command="{Binding Path=Commands.Close}"/>
 
                         </CompositeCollection>
                     </MenuItem.ItemsSource>
-                    <MenuItem.ItemContainerStyle>
-                        <Style>
-                            <Setter Property="MenuItem.Header"
-                                    Value="{Binding Path=Name}" />
-                            <Setter Property="MenuItem.Command"
-                                    Value="{Binding Path=Command}" />
-                        </Style>
-                    </MenuItem.ItemContainerStyle>
+                   
                 </MenuItem>
                 <MenuItem Header="_Help">
                     <MenuItem.ItemsSource>
                         <CompositeCollection>
-                            <MenuItem Header="_Online Help..."
-                                      Command="{Binding Path=Commands.Help}" />
-
+                            <MenuItem Header="{Binding Path=Commands.Help.Text}"
+                                      InputGestureText="{Binding Path=Commands.Help.GestureText}"
+                                      Command="{Binding Path=Commands.Help}"/>
                             <Separator />
-                            <MenuItem Header="_About..."
-                                      Command="{Binding Path=Commands.About}" />
+                            <MenuItem Header="{Binding Path=Commands.About.Text}"
+                                      InputGestureText="{Binding Path=Commands.About.GestureText}"
+                                      Command="{Binding Path=Commands.About}"/>
                         </CompositeCollection>
                     </MenuItem.ItemsSource>
-                    <MenuItem.ItemContainerStyle>
-                        <Style>
-                            <Setter Property="MenuItem.Header"
-                                    Value="{Binding Path=Name}" />
-                            <Setter Property="MenuItem.Command"
-                                    Value="{Binding Path=Command}" />
-                        </Style>
-                    </MenuItem.ItemContainerStyle>
                 </MenuItem>
             </Menu>
 
@@ -114,9 +113,9 @@
                 <ResourceDictionary>
                     <ResourceDictionary.MergedDictionaries>
                         <ResourceDictionary Source="/ResourceDictionaries/TreeViewItemDictionary.xaml" />
-                       </ResourceDictionary.MergedDictionaries>
+                    </ResourceDictionary.MergedDictionaries>
                 </ResourceDictionary>
-             
+
             </TreeView.Resources>
         </TreeView>
         <ContentControl Content="{Binding Path=SelectedItem, ElementName=TreeViewMain}" 
