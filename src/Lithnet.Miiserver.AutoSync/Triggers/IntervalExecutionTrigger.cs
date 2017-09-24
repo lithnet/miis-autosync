@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Timers;
@@ -40,7 +39,7 @@ namespace Lithnet.Miiserver.AutoSync
                 return;
             }
 
-            Trace.WriteLine($"Starting interval timer for {this.RunProfileName} at {this.Interval}");
+            this.Trace($"Starting interval timer for {this.RunProfileName} at {this.Interval}");
 
             this.checkTimer = new Timer
             {

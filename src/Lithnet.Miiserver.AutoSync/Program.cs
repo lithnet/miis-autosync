@@ -2,13 +2,17 @@
 using System.Linq;
 using System.ServiceProcess;
 using Lithnet.Miiserver.Client;
-using Lithnet.Logging;
 using System.IO;
+using System.Reflection;
 using System.Timers;
 using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
 using Timer = System.Timers.Timer;
+using NLog;
+using NLog.Config;
+using NLog.Layouts;
+using NLog.Targets;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -30,11 +34,26 @@ namespace Lithnet.Miiserver.AutoSync
             set
             {
                 Program.activeConfig = value;
-                Logger.WriteLine("Active config has been set");
+                logger.Info("Active config has been set");
             }
         }
 
         private static bool hasConfig;
+
+        private static Logger logger;
+
+        private static void SetupLogger()
+        {
+            if (System.Diagnostics.Debugger.IsAttached)
+            {
+                DebuggerTarget debug = new DebuggerTarget("debug-window") { Layout = "${longdate}|${level:uppercase=true:padding=5}| ${message}" };
+                LogManager.Configuration.AddTarget(debug);
+                LogManager.Configuration.LoggingRules.Add(new LoggingRule("*", LogLevel.Trace, debug));
+                LogManager.ReconfigExistingLoggers();
+            }
+
+            Program.logger = LogManager.GetCurrentClassLogger();
+        }
 
         /// <summary>
         /// The main entry point for the application.
@@ -43,49 +62,43 @@ namespace Lithnet.Miiserver.AutoSync
         {
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
-            
-            bool runService = args != null && args.Contains("/service");
-            Logger.LogPath = RegistrySettings.LogPath;
 
-            if (!runService)
-            {
-                Logger.OutputToConsole = true;
-            }
+            Program.SetupLogger();
+
+            bool runService = args != null && args.Contains("/service");
 
             if (runService)
             {
                 try
                 {
-                    Logger.WriteLine("Starting service base");
+                    Program.logger.Info("Starting service base");
                     ServiceBase[] servicesToRun = { new AutoSyncService() };
                     ServiceBase.Run(servicesToRun);
-                    Logger.WriteLine("Exiting service");
+                    Program.logger.Info("Exiting service");
                 }
                 catch (Exception ex)
                 {
-                    Logger.WriteException(ex);
+                    Program.logger.Fatal(ex, "The service could not be started");
                     throw;
                 }
             }
             else
             {
-                Logger.WriteLine("Starting standalone process");
-                Start();
+                Program.logger.Info("Starting standalone process");
+                Program.Start();
                 Thread.Sleep(Timeout.Infinite);
             }
         }
 
         private static void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
-            Logger.WriteLine("A task exception was not observed");
-            Logger.WriteException(e.Exception);
+            Program.logger.Error(e.Exception, "A task exception was not observed");
             e.SetObserved();
         }
 
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            Logger.WriteLine("An unhandled exception has occurred in the service");
-            Logger.WriteException((Exception)e.ExceptionObject);
+            Program.logger.Fatal((Exception)e.ExceptionObject, "An unhandled exception has occurred in the service");
             Environment.Exit(1);
         }
 
@@ -94,12 +107,12 @@ namespace Lithnet.Miiserver.AutoSync
             if (Program.npConfigServiceHost == null || Program.npConfigServiceHost.State != CommunicationState.Opened)
             {
                 Program.npConfigServiceHost = ConfigService.CreateNetNamedPipeInstance();
-                Logger.WriteLine("Initialized service host pipe");
+                Program.logger.Info("Initialized service host pipe");
 
                 if (RegistrySettings.NetTcpServerEnabled)
                 {
                     Program.tcpConfigServiceHost = ConfigService.CreateNetTcpInstance();
-                    Logger.WriteLine("Initialized service host tcp");
+                    Program.logger.Info("Initialized service host tcp");
                 }
             }
         }
@@ -119,7 +132,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 if (!Program.hasConfig)
                 {
-                    Logger.WriteLine("Service is not yet configured. Run the editor initialize the configuration");
+                    Program.logger.Warn("Service is not yet configured. Run the editor initialize the configuration");
                     return;
                 }
 
@@ -128,7 +141,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteException(ex);
+                Program.logger.Error(ex, "Unable to start service");
                 throw;
             }
         }
@@ -137,7 +150,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             if (ActiveConfig.Settings.RunHistoryClear)
             {
-                Logger.WriteLine("Run history auto-cleanup enabled");
+                Program.logger.Info("Run history auto-cleanup enabled");
 
                 Program.runHistoryCleanupTimer = new Timer
                 {
@@ -169,7 +182,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             try
             {
-                Logger.WriteLine("Clearing run history older than {0}", ActiveConfig.Settings.RunHistoryAge);
+                Program.logger.Info("Clearing run history older than {0}", ActiveConfig.Settings.RunHistoryAge);
                 DateTime clearBeforeDate = DateTime.UtcNow.Add(-ActiveConfig.Settings.RunHistoryAge);
 
                 if (ActiveConfig.Settings.RunHistorySave
@@ -185,8 +198,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteLine("An error occurred clearing the run history");
-                Logger.WriteException(ex);
+                Program.logger.Error(ex, "An error occurred clearing the run history");
             }
         }
 
@@ -217,8 +229,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteLine("An error occurred during termination");
-                Logger.WriteException(ex);
+                Program.logger.Fatal(ex, "An error occurred during termination");
                 Environment.Exit(3);
             }
         }
@@ -253,7 +264,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static void CreateExecutionEngineInstance()
         {
-            Logger.WriteLine("Creating execution engine");
+            Program.logger.Info("Creating execution engine");
 
             try
             {
@@ -261,14 +272,14 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteLine("Could not create execution engine instance");
-                Logger.WriteException(ex);
+                Program.logger.Fatal(ex, "Could not create execution engine instance");
+                throw;
             }
         }
 
         private static void StartExecutionEngineInstance()
         {
-            Logger.WriteLine("Starting execution engine");
+            Program.logger.Info("Starting execution engine");
 
             if (RegistrySettings.AutoStartEnabled)
             {
@@ -276,13 +287,13 @@ namespace Lithnet.Miiserver.AutoSync
             }
             else
             {
-                Logger.WriteLine("Execution engine auto-start disabled");
+                Program.logger.Info("Execution engine auto-start disabled");
             }
         }
 
         private static void ShutdownExecutionEngineInstance()
         {
-            Logger.WriteLine("Stopping execution engine");
+            Program.logger.Info("Stopping execution engine");
             Program.Engine?.Stop(false);
             Program.Engine?.ShutdownService();
             Program.Engine = null;
@@ -291,6 +302,10 @@ namespace Lithnet.Miiserver.AutoSync
 #if DEBUG
         public static void SetupOutOfBandInstance()
         {
+            NLog.LogManager.Configuration = new NLog.Config.XmlLoggingConfiguration(@"D:\github\lithnet\miis-autosync\src\Lithnet.Miiserver.AutoSync\bin\Debug\Lithnet.Miiserver.AutoSync.exe.config");
+            LogManager.ReconfigExistingLoggers();
+
+            Program.SetupLogger();
             Program.LoadConfiguration();
             Program.StartConfigServiceHost();
             Program.CreateExecutionEngineInstance();

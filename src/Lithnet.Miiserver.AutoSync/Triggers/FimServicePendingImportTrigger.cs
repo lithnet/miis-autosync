@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Runtime.Serialization;
@@ -41,17 +40,17 @@ namespace Lithnet.Miiserver.AutoSync
                 if (this.lastCheckDateTime == null)
                 {
                     xpath = "/Request";
-                    Trace.WriteLine("No watermark available. Querying for latest request history item");
+                    this.Trace("No watermark available. Querying for latest request history item");
                 }
                 else
                 {
                     xpath = string.Format("/Request[msidmCompletedTime > '{0}']", this.lastCheckDateTime.Value.ToResourceManagementServiceDateFormat(false));
-                    Trace.WriteLine($"Searching for changes since {this.lastCheckDateTime.Value.ToResourceManagementServiceDateFormat(false)}");
+                    this.Trace($"Searching for changes since {this.lastCheckDateTime.Value.ToResourceManagementServiceDateFormat(false)}");
                 }
 
                 ISearchResultCollection r = c.GetResources(xpath, 1, new[] { "msidmCompletedTime" }, "msidmCompletedTime", false);
 
-               Trace.WriteLine($"Found {r.Count} change{r.Count.Pluralize()}");
+               this.Trace($"Found {r.Count} change{r.Count.Pluralize()}");
 
                 if (r.Count <= 0)
                 {
@@ -122,7 +121,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             if (user == null)
             {
-                Trace.WriteLine($"Person {accountName} was not found. Creating");
+                Logger.Trace($"Person {accountName} was not found. Creating");
                 user = c.CreateResource("Person");
                 SecurityIdentifier sid = (SecurityIdentifier)new NTAccount(accountName).Translate(typeof(SecurityIdentifier));
                 user.SetValue("AccountName", split[1]);
@@ -138,7 +137,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             if (set == null)
             {
-                Trace.WriteLine($"Set {setName} was not found");
+                Logger.Trace($"Set {setName} was not found");
                 set = c.CreateResource("Set");
             }
 
@@ -146,25 +145,25 @@ namespace Lithnet.Miiserver.AutoSync
             set.AddValue("ExplicitMember", user);
             set.SetValue("Description", "Contains the Lithnet AutoSync service account");
             set.Save();
-            Trace.WriteLine($"Set {setName} saved");
+            Logger.Trace($"Set {setName} saved");
 
             ResourceObject allRequestsSet = c.GetResourceByKey("Set", "DisplayName", "All Requests");
 
             if (allRequestsSet == null)
             {
-                Trace.WriteLine("Set All Requests was not found");
+                Logger.Trace("Set All Requests was not found");
                 allRequestsSet = c.CreateResource("Set");
                 allRequestsSet.SetValue("DisplayName", "All Requests");
                 allRequestsSet.SetValue("Filter", "<Filter xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" Dialect=\"http://schemas.microsoft.com/2006/11/XPathFilterDialect\" xmlns=\"http://schemas.xmlsoap.org/ws/2004/09/enumeration\">/Request</Filter>");
                 allRequestsSet.Save();
-                Trace.WriteLine($"Set All Requests created");
+                Logger.Trace($"Set All Requests created");
             }
 
             ResourceObject mpr = c.GetResourceByKey("ManagementPolicyRule", "DisplayName", mprName);
 
             if (mpr == null)
             {
-                Trace.WriteLine($"MPR {mprName} does not exist");
+                Logger.Trace($"MPR {mprName} does not exist");
                 mpr = c.CreateResource("ManagementPolicyRule");
             }
 
@@ -178,8 +177,7 @@ namespace Lithnet.Miiserver.AutoSync
             mpr.SetValue("ResourceCurrentSet", allRequestsSet);
             mpr.SetValue("PrincipalSet", set);
             mpr.Save();
-            Trace.WriteLine($"MPR {mprName} saved");
-
+            Logger.Trace($"MPR {mprName} saved");
         }
 
         public override string DisplayName => $"{this.Type} ({this.Description})";

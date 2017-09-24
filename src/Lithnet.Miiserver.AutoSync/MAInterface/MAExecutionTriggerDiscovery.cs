@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lithnet.Miiserver.Client;
-using Lithnet.Logging;
+using NLog;
 using System.Xml;
 
 namespace Lithnet.Miiserver.AutoSync
@@ -10,7 +10,9 @@ namespace Lithnet.Miiserver.AutoSync
     public static class MAExecutionTriggerDiscovery
     {
         private const int DefaultIntervalMinutes = 60;
-        
+
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         internal static int GetAverageImportIntervalMinutes(ManagementAgent ma)
         {
             int deltaCount = 0;
@@ -61,8 +63,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (XmlException ex)
             {
-                Logger.WriteLine("There was an error searching the run history. The run history may be corrupted. Using default intervals");
-                Logger.WriteException(ex);
+                logger.Error(ex, "There was an error searching the run history. The run history may be corrupted. Using default intervals");
                 return MAExecutionTriggerDiscovery.DefaultIntervalMinutes;
             }
 

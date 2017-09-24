@@ -4,14 +4,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
 using System.ServiceModel.Description;
-using Lithnet.Logging;
-using System.Diagnostics;
+using NLog;
 using System.ServiceModel.Channels;
 
 namespace Lithnet.Miiserver.AutoSync
 {
     public class EventService : IEventService
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         public static ServiceHost CreateNetNamedPipeInstance()
         {
             return EventService.CreateInstance(EventServiceConfiguration.NetNamedPipeBinding, EventServiceConfiguration.NamedPipeUri);
@@ -38,13 +39,13 @@ namespace Lithnet.Miiserver.AutoSync
                 if (d == null)
                 {
                     s.Description.Behaviors.Add(EventServiceConfiguration.ServiceDebugBehavior);
-                    Trace.WriteLine("Added service debug behavior");
+                    logger.Trace("Added service debug behavior");
                 }
                 else
                 {
                     s.Description.Behaviors.Remove(d);
                     s.Description.Behaviors.Add(EventServiceConfiguration.ServiceDebugBehavior);
-                    Trace.WriteLine("Replaced service debug behavior");
+                    logger.Trace("Replaced service debug behavior");
                 }
 
                 s.Authorization.ServiceAuthorizationManager = new EventServiceAuthorizationManager();
@@ -54,7 +55,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteException(ex);
+                logger.Error(ex, "Could not create service host");
                 throw;
             }
         }
@@ -77,8 +78,7 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                     catch (Exception ex)
                     {
-                        Logger.WriteLine("Error notifying client. Client will be deregistered");
-                        Logger.WriteException(ex);
+                        logger.Warn(ex, "Error notifying client. Client will be deregistered");
                         EventService.DeregisterCallbackChannel(i);
                     }
                 }
@@ -97,8 +97,7 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                     catch (Exception ex)
                     {
-                        Logger.WriteLine("Error notifying client. Client will be deregistered");
-                        Logger.WriteException(ex);
+                        logger.Warn(ex, "Error notifying client. Client will be deregistered");
                         EventService.DeregisterCallbackChannel(i);
                     }
                 }
@@ -141,12 +140,11 @@ namespace Lithnet.Miiserver.AutoSync
                     commObj.Closed += EventService.CommObj_Closed;
                 }
 
-                Trace.WriteLine($"Registered callback channel for {name}/{managementAgentID}");
+                logger.Trace($"Registered callback channel for {name}/{managementAgentID}");
             }
             catch (Exception ex)
             {
-                Logger.WriteLine("An error occurred with the client registration");
-                Logger.WriteException(ex);
+                logger.Error(ex, "An error occurred with the client registration");
                 throw;
             }
         }
@@ -154,13 +152,13 @@ namespace Lithnet.Miiserver.AutoSync
         private static void CommObj_Closed(object sender, EventArgs e)
         {
             EventService.DeregisterCallbackChannel(sender);
-            Trace.WriteLine("Deregistered closed callback channel");
+            logger.Trace("Deregistered closed callback channel");
         }
 
         private static void CommObj_Faulted(object sender, EventArgs e)
         {
             EventService.DeregisterCallbackChannel(sender);
-            Trace.WriteLine("Deregistered faulted callback channel");
+            logger.Trace("Deregistered faulted callback channel");
         }
 
         private static void DeregisterCallbackChannel(object sender)
@@ -192,13 +190,12 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (NoSuchManagementAgentException)
             {
-                Logger.WriteLine($"The client requested a state update for a management agent that doesn't exist {managementAgentID}");
+                logger.Warn($"The client requested a state update for a management agent that doesn't exist {managementAgentID}");
                 return null;
             }
             catch (Exception ex)
             {
-                Logger.WriteLine($"An error occurred while getting the client a full state update for {managementAgentID}");
-                Logger.WriteException(ex);
+                logger.Error(ex, $"An error occurred while getting the client a full state update for {managementAgentID}");
                 throw;
             }
         }

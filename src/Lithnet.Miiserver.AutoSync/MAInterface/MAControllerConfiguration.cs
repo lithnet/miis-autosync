@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using Lithnet.Miiserver.Client;
-using Lithnet.Logging;
+using NLog;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -14,6 +14,8 @@ namespace Lithnet.Miiserver.AutoSync
     [KnownType(typeof(ScheduledExecutionTrigger))]
     public class MAControllerConfiguration
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         [DataMember(Name = "id")]
         public Guid ManagementAgentID { get; set; }
 
@@ -43,11 +45,10 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteLine($"Exception finding management agent {this.ManagementAgentID}/{this.ManagementAgentName}");
-                Logger.WriteException(ex);
+                logger.Error(ex, $"Exception finding management agent {this.ManagementAgentID}/{this.ManagementAgentName}");
             }
 
-            Logger.WriteLine($"Management agent could not be found. Name: '{this.ManagementAgentName}'. ID: '{this.ManagementAgentID}'");
+            logger.Warn($"Management agent could not be found. Name: '{this.ManagementAgentName}'. ID: '{this.ManagementAgentID}'");
 
             this.IsMissing = true;
         }

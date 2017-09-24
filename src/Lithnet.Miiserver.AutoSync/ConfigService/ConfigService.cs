@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
 using System.ServiceModel.Description;
-using Lithnet.Logging;
-using System.Diagnostics;
+using NLog;
 using System.Reflection;
 using System.ServiceModel.Channels;
 using Lithnet.Miiserver.Client;
@@ -13,6 +12,8 @@ namespace Lithnet.Miiserver.AutoSync
 {
     public class ConfigService : IConfigService
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         public static ServiceHost CreateNetNamedPipeInstance()
         {
             return ConfigService.CreateInstance(ConfigServiceConfiguration.NetNamedPipeBinding, ConfigServiceConfiguration.NamedPipeUri);
@@ -39,13 +40,13 @@ namespace Lithnet.Miiserver.AutoSync
                 if (d == null)
                 {
                     s.Description.Behaviors.Add(ConfigServiceConfiguration.ServiceDebugBehavior);
-                    Trace.WriteLine("Added service debug behavior");
+                    logger.Trace("Added service debug behavior");
                 }
                 else
                 {
                     s.Description.Behaviors.Remove(d);
                     s.Description.Behaviors.Add(ConfigServiceConfiguration.ServiceDebugBehavior);
-                    Trace.WriteLine("Replaced service debug behavior");
+                    logger.Trace("Replaced service debug behavior");
                 }
 
                 s.Authorization.ServiceAuthorizationManager = new ConfigServiceAuthorizationManager();
@@ -55,7 +56,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteException(ex);
+                logger.Error(ex, "Cannot create service instance");
                 throw;
             }
         }
@@ -64,14 +65,14 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                Trace.WriteLine($"Calling {nameof(this.GetConfig)} as {Environment.UserName}");
+                logger.Trace($"Calling {nameof(this.GetConfig)} as {Environment.UserName}");
                 Global.ThrowOnSyncEngineNotRunning();
                 ProtectedString.EncryptOnWrite = false;
                 return Program.ActiveConfig;
             }
             catch (Exception ex)
             {
-                Logger.WriteException(ex);
+                logger.Error(ex);
                 throw;
             }
         }
@@ -80,7 +81,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                Trace.WriteLine($"Calling {nameof(this.ValidateConfig)} as {Environment.UserName}");
+                logger.Trace($"Calling {nameof(this.ValidateConfig)} as {Environment.UserName}");
                 Global.ThrowOnSyncEngineNotRunning();
                 ProtectedString.EncryptOnWrite = false;
                 config.ValidateManagementAgents();
@@ -88,7 +89,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteException(ex);
+                logger.Error(ex);
                 throw;
             }
         }
@@ -102,7 +103,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                Trace.WriteLine($"Calling {nameof(this.PutConfig)} as {Environment.UserName}");
+                logger.Trace($"Calling {nameof(this.PutConfig)} as {Environment.UserName}");
                 ProtectedString.EncryptOnWrite = true;
                 ConfigFile.Save(config, RegistrySettings.ConfigurationFile);
                 Program.ActiveConfig = config;
@@ -112,12 +113,12 @@ namespace Lithnet.Miiserver.AutoSync
                 if (items != null && items.Count > 0)
                 {
                     string list = string.Join("\r\n", items);
-                    Logger.WriteLine($"The configuration has been updated. The following management agents must be restarted for the configuration to take effect\r\n{list}");
+                    logger.Info($"The configuration has been updated. The following management agents must be restarted for the configuration to take effect\r\n{list}");
                 }
             }
             catch (Exception ex)
             {
-                Logger.WriteException(ex);
+                logger.Error(ex);
                 throw;
             }
         }
@@ -126,7 +127,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                Trace.WriteLine($"Calling {nameof(this.PutConfig)} as {Environment.UserName}");
+                logger.Trace($"Calling {nameof(this.PutConfig)} as {Environment.UserName}");
                 Global.ThrowOnSyncEngineNotRunning();
                 ProtectedString.EncryptOnWrite = true;
                 ConfigFile.Save(config, RegistrySettings.ConfigurationFile);
@@ -135,7 +136,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteException(ex);
+                logger.Error(ex);
                 throw;
             }
         }
@@ -144,12 +145,12 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                Trace.WriteLine($"Calling {nameof(this.IsPendingRestart)} as {Environment.UserName}");
+                logger.Trace($"Calling {nameof(this.IsPendingRestart)} as {Environment.UserName}");
                 return false;
             }
             catch (Exception ex)
             {
-                Logger.WriteException(ex);
+                logger.Error(ex);
                 throw;
             }
         }
@@ -167,7 +168,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteException(ex);
+                logger.Error(ex);
                 throw;
             }
         }
@@ -181,7 +182,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteException(ex);
+                logger.Error(ex);
                 throw;
             }
         }
@@ -194,11 +195,11 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (TimeoutException ex)
             {
-                Logger.WriteException(ex);
+                logger.Error(ex);
             }
             catch (Exception ex)
             {
-                Logger.WriteException(ex);
+                logger.Error(ex);
                 throw;
             }
         }
@@ -212,7 +213,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteException(ex);
+                logger.Error(ex);
                 throw;
             }
         }
@@ -255,8 +256,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteLine("A request to get the run profile names failed");
-                Logger.WriteException(ex);
+                logger.Error(ex, "A request to get the run profile names failed");
             }
 
             return items;
@@ -318,7 +318,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void SetAutoStartState(bool autoStart)
         {
-            Logger.WriteLine($"Setting auto start to {autoStart}");
+            logger.Info($"Setting auto start to {autoStart}");
             RegistrySettings.AutoStartEnabled = autoStart;
         }
 

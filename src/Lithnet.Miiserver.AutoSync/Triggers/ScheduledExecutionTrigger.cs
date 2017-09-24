@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Timers;
@@ -50,7 +49,7 @@ namespace Lithnet.Miiserver.AutoSync
                 triggerTime = triggerTime.Add(this.Interval);
             }
 
-            Trace.WriteLine("Scheduling event for " + triggerTime);
+            this.Trace("Scheduling event for " + triggerTime);
             this.RemainingMilliseconds = (triggerTime - now).TotalMilliseconds;
         }
 

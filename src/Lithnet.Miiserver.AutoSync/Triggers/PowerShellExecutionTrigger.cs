@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Management.Automation;
 using System.Threading.Tasks;
 using System.Threading;
@@ -166,7 +165,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                Trace.WriteLine($"{this.DisplayName}: Stopping");
+                this.Trace($"{this.DisplayName}: Stopping");
 
                 this.cancellationToken?.Cancel();
                 this.powershell?.Stop();
@@ -179,7 +178,7 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                 }
 
-                Trace.WriteLine($"{this.DisplayName}: Stopped");
+                this.Trace($"{this.DisplayName}: Stopped");
             }
             catch (AggregateException e)
             {

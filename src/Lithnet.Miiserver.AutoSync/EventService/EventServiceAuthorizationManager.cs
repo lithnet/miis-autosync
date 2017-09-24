@@ -1,15 +1,15 @@
 ﻿using System;
-using System.Diagnostics;
 using System.ServiceModel;
 using System.ServiceModel.Description;
 using System.Security.Principal;
-using System.ServiceProcess;
-using Lithnet.Logging;
+using NLog;
 
 namespace Lithnet.Miiserver.AutoSync
 {
     public class EventServiceAuthorizationManager : ServiceAuthorizationManager
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         protected override bool CheckAccessCore(OperationContext operationContext)
         {
             try
@@ -28,7 +28,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteException(ex);
+                logger.Error(ex, "Error checking authorization");
                 throw;
             }
         }

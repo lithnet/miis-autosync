@@ -68,7 +68,27 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                string logPath = RegistrySettings.ParametersKey.GetValue(nameof(LogPath)) as string;
+                string logPath = RegistrySettings.ParametersKey.GetValue(nameof(RegistrySettings.LogPath)) as string;
+
+                if (logPath != null)
+                {
+                    return logPath;
+                }
+
+                string codeBase = Assembly.GetExecutingAssembly().CodeBase;
+                UriBuilder uri = new UriBuilder(codeBase);
+                string path = Uri.UnescapeDataString(uri.Path);
+                string dirName = Path.GetDirectoryName(path);
+
+                return Path.Combine(dirName ?? Global.AssemblyDirectory, "Logs");
+            }
+        }
+
+        public static string LogFile
+        {
+            get
+            {
+                string logPath = RegistrySettings.LogPath;
 
                 if (logPath != null)
                 {

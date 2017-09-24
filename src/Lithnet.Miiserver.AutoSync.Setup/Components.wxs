@@ -6,7 +6,7 @@
     <DirectoryRef Id="APPROOTDIR">
       <Component Id="EventSource" Guid="*" Win64="yes" >
         <Util:EventSource xmlns:Util="http://schemas.microsoft.com/wix/UtilExtension"
-                    Name="autosync" Log="Application" EventMessageFile="[NETFRAMEWORK45FULLINSTALLROOTDIR64]EventLogMessages.dll" KeyPath="yes"/>
+                    Name="AutoSync" Log="Application" EventMessageFile="[NETFRAMEWORK40FULLINSTALLROOTDIR64]EventLogMessages.dll" KeyPath="yes"/>
       </Component>
 
       <Component Id="cmpb05fc8933594449d9aad05ca620a4331" Guid="*" Win64="yes">

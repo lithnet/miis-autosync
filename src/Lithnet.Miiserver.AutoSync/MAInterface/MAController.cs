@@ -5,13 +5,16 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Collections.Concurrent;
 using Lithnet.Miiserver.Client;
-using Lithnet.Logging;
+using NLog;
 
 namespace Lithnet.Miiserver.AutoSync
 {
     internal class MAController
     {
         private const int SpinInterval = 250;
+
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         protected static ManualResetEvent GlobalStaggeredExecutionLock;
         protected static ManualResetEvent GlobalExclusiveOperationLock;
         protected static ManualResetEvent GlobalSynchronizationStepLock;
@@ -186,8 +189,7 @@ namespace Lithnet.Miiserver.AutoSync
                 }
                 catch (Exception ex)
                 {
-                    Logger.WriteLine("Unable to relay state change");
-                    Logger.WriteException(ex);
+                    logger.Warn(ex, "Unable to relay state change");
                 }
             }); // Using the global cancellation token here prevents the final state messages being received (see issue #80)
         }
@@ -238,17 +240,17 @@ namespace Lithnet.Miiserver.AutoSync
                     this.importInterval = new TimeSpan(0, 0, Global.RandomizeOffset(importSeconds));
                     this.importCheckTimer.Interval = this.importInterval.TotalMilliseconds;
                     this.importCheckTimer.AutoReset = true;
-                    this.Log($"Starting import interval timer. Imports will be queued if they have not been run for {this.importInterval}");
+                    this.LogInfo($"Starting import interval timer. Imports will be queued if they have not been run for {this.importInterval}");
                     this.importCheckTimer.Start();
                 }
                 else
                 {
-                    this.Log("Import schedule not enabled");
+                    this.LogInfo("Import schedule not enabled");
                 }
             }
             else
             {
-                this.Log("Import schedule disabled");
+                this.LogInfo("Import schedule disabled");
             }
         }
 
@@ -291,7 +293,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 try
                 {
-                    this.Log($"Registering execution trigger '{t.DisplayName}'");
+                    this.LogInfo($"Registering execution trigger '{t.DisplayName}'");
                     t.Message += this.NotifierTriggerMessage;
                     t.Error += this.NotifierTriggerError;
                     t.TriggerFired += this.NotifierTriggerFired;
@@ -299,8 +301,7 @@ namespace Lithnet.Miiserver.AutoSync
                 }
                 catch (Exception ex)
                 {
-                    this.Log($"Could not start execution trigger {t.DisplayName}");
-                    Logger.WriteException(ex);
+                    this.LogError(ex, $"Could not start execution trigger {t.DisplayName}");
                 }
             }
         }
@@ -308,13 +309,13 @@ namespace Lithnet.Miiserver.AutoSync
         private void NotifierTriggerMessage(object sender, TriggerMessageEventArgs e)
         {
             IMAExecutionTrigger t = (IMAExecutionTrigger)sender;
-            this.Log($"{t.DisplayName}: {e.Message}\n{e.Details}");
+            this.LogInfo($"{t.DisplayName}: {e.Message}\n{e.Details}");
         }
 
         private void NotifierTriggerError(object sender, TriggerMessageEventArgs e)
         {
             IMAExecutionTrigger t = (IMAExecutionTrigger)sender;
-            this.Log($"{t.DisplayName}: ERROR: {e.Message}\n{e.Details}");
+            this.LogError($"{t.DisplayName}: ERROR: {e.Message}\n{e.Details}");
         }
 
         private void StopTriggers()
@@ -323,7 +324,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 try
                 {
-                    this.Log($"Unregistering execution trigger '{t.DisplayName}'");
+                    this.LogInfo($"Unregistering execution trigger '{t.DisplayName}'");
                     t.TriggerFired -= this.NotifierTriggerFired;
                     t.Stop();
                 }
@@ -332,8 +333,7 @@ namespace Lithnet.Miiserver.AutoSync
                 }
                 catch (Exception ex)
                 {
-                    this.Log($"Could not stop execution trigger {t.DisplayName}");
-                    Logger.WriteException(ex);
+                    this.LogError(ex, $"Could not stop execution trigger {t.DisplayName}");
                 }
             }
         }
@@ -403,15 +403,39 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        private void Log(string message)
+        private void LogInfo(string message)
         {
-            Logger.WriteLine($"{this.ma.Name}: {message}");
+            logger.Info($"{this.ma.Name}: {message}");
+            this.Detail = message;
+        }
+
+        private void LogWarn(string message)
+        {
+            logger.Warn($"{this.ma.Name}: {message}");
+            this.Detail = message;
+        }
+
+        private void LogWarn(Exception ex, string message)
+        {
+            logger.Warn(ex, $"{this.ma.Name}: {message}");
+            this.Detail = message;
+        }
+
+        private void LogError(string message)
+        {
+            logger.Error($"{this.ma.Name}: {message}");
+            this.Detail = message;
+        }
+
+        private void LogError(Exception ex, string message)
+        {
+            logger.Error(ex, $"{this.ma.Name}: {message}");
             this.Detail = message;
         }
 
         private void Trace(string message)
         {
-            System.Diagnostics.Trace.WriteLine($"{this.ma.Name}: {message}");
+            logger.Trace(message);
         }
 
         private void Wait(TimeSpan duration, string name, CancellationTokenSource ts)
@@ -493,8 +517,7 @@ namespace Lithnet.Miiserver.AutoSync
                 }
                 catch (Exception ex)
                 {
-                    Logger.WriteLine("Unable to relay run profile complete notification");
-                    Logger.WriteException(ex);
+                    logger.Warn(ex, "Unable to relay run profile complete notification");
                 }
             }, this.controllerCancellationTokenSource.Token);
         }
@@ -527,7 +550,7 @@ namespace Lithnet.Miiserver.AutoSync
                     {
                         count++;
                         this.UpdateExecutionStatus(ControllerState.Running, "Executing");
-                        this.Log($"Executing {e.RunProfileName}");
+                        this.LogInfo($"Executing {e.RunProfileName}");
 
                         try
                         {
@@ -544,13 +567,13 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                     finally
                     {
-                        this.Log($"{e.RunProfileName} returned {result}");
+                        this.LogInfo($"{e.RunProfileName} returned {result}");
                         this.UpdateExecutionStatus(ControllerState.Processing, "Evaluating run results");
                     }
 
                     if (ts.IsCancellationRequested)
                     {
-                        this.Log($"The run profile {e.RunProfileName} was canceled");
+                        this.LogInfo($"The run profile {e.RunProfileName} was canceled");
                         return;
                     }
 
@@ -568,7 +591,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                         if (count > RegistrySettings.RetryCount && RegistrySettings.RetryCount >= 0)
                         {
-                            this.Log($"Aborting run profile after {count} attempt{count.Pluralize()}");
+                            this.LogInfo($"Aborting run profile after {count} attempt{count.Pluralize()}");
                             break;
                         }
 
@@ -577,7 +600,7 @@ namespace Lithnet.Miiserver.AutoSync
                         int interval = Global.RandomizeOffset(RegistrySettings.RetrySleepInterval.TotalMilliseconds * count);
                         this.Trace($"Sleeping thread for {interval}ms before retry");
                         this.Wait(TimeSpan.FromMilliseconds(interval), nameof(RegistrySettings.RetrySleepInterval), ts);
-                        this.Log("Retrying operation");
+                        this.LogInfo("Retrying operation");
                     }
                     else
                     {
@@ -602,8 +625,7 @@ namespace Lithnet.Miiserver.AutoSync
                 }
                 else
                 {
-                    this.Log($"Controller encountered an error executing run profile {this.ExecutingRunProfile}");
-                    Logger.WriteException(ex);
+                    this.LogError(ex, $"Controller encountered an error executing run profile {this.ExecutingRunProfile}");
                 }
             }
             catch (UnexpectedChangeException ex)
@@ -612,8 +634,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                this.Log($"Controller encountered an error executing run profile {this.ExecutingRunProfile}");
-                Logger.WriteException(ex);
+                this.LogError(ex, $"Controller encountered an error executing run profile {this.ExecutingRunProfile}");
             }
             finally
             {
@@ -642,11 +663,11 @@ namespace Lithnet.Miiserver.AutoSync
                 this.Trace("Unmanaged run in progress");
                 this.WaitAndTakeLock(this.localOperationLock, nameof(this.localOperationLock), linkedToken);
 
-                this.Log($"Waiting on unmanaged run {this.ma.ExecutingRunProfileName} to finish");
+                this.LogInfo($"Waiting on unmanaged run {this.ma.ExecutingRunProfileName} to finish");
 
                 if (this.ma.RunProfiles[this.ma.ExecutingRunProfileName].RunSteps.Any(t => t.IsSyncStep))
                 {
-                    this.Log("Getting sync lock for unmanaged run");
+                    this.Trace("Getting sync lock for unmanaged run");
 
                     try
                     {
@@ -703,7 +724,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             if (ex.ShouldTerminateService)
             {
-                this.Log($"Controller indicated that service should immediately stop. Run profile {this.ExecutingRunProfile}");
+                this.LogWarn($"Controller script indicated that service should immediately stop. Run profile {this.ExecutingRunProfile}");
                 if (AutoSyncService.ServiceInstance == null)
                 {
                     Environment.Exit(1);
@@ -715,7 +736,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             else
             {
-                this.Log($"Controller indicated that management agent controller should stop further processing on this MA. Run Profile {this.ExecutingRunProfile}");
+                this.LogWarn($"Controller indicated that management agent controller should stop further processing on this MA. Run Profile {this.ExecutingRunProfile}");
                 this.Stop(false);
             }
         }
@@ -737,14 +758,14 @@ namespace Lithnet.Miiserver.AutoSync
 
             if (config.Version == 0 || config.IsMissing || config.Disabled)
             {
-                Logger.WriteLine($"Ignoring start request as management agent {config.ManagementAgentName} is disabled or unconfigured");
+                logger.Info($"Ignoring start request as management agent {config.ManagementAgentName} is disabled or unconfigured");
                 this.ControlState = ControlState.Disabled;
                 return;
             }
 
             try
             {
-                Logger.WriteLine($"Preparing to start controller for {config.ManagementAgentName}");
+                logger.Info($"Preparing to start controller for {config.ManagementAgentName}");
 
                 this.WaitAndTakeLock(this.serviceControlLock, nameof(this.serviceControlLock), this.controllerCancellationTokenSource);
 
@@ -756,7 +777,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 this.Setup(config);
 
-                this.Log($"Starting controller");
+                this.LogInfo($"Starting controller");
 
                 this.internalTask = new Task(() =>
                 {
@@ -771,9 +792,7 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                     catch (Exception ex)
                     {
-                        this.Log("The controller encountered a unrecoverable error");
-                        Logger.WriteLine(ex.Message);
-                        Logger.WriteLine(ex.StackTrace);
+                        this.LogError(ex, "The controller encountered a unrecoverable error");
                     }
                 }, this.controllerCancellationTokenSource.Token);
 
@@ -783,8 +802,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteLine("An error occurred starting the controller");
-                Logger.WriteException(ex);
+                logger.Error(ex, "An error occurred starting the controller");
                 this.Stop(false);
                 this.Message = $"Startup error: {ex.Message}";
             }
@@ -800,12 +818,12 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 if (this.ma != null && !this.ma.IsIdle())
                 {
-                    this.Log("Requesting sync engine to terminate run");
+                    this.LogInfo("Requesting sync engine to terminate run");
                     this.ma.StopAsync();
                 }
                 else
                 {
-                    this.Log("Canceling current job");
+                    this.LogInfo("Canceling current job");
                     this.jobCancellationTokenSource?.Cancel();
                 }
             }
@@ -814,8 +832,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteLine("Cannot cancel run");
-                Logger.WriteException(ex);
+                this.LogError(ex, "Cannot cancel run");
             }
         }
 
@@ -842,24 +859,24 @@ namespace Lithnet.Miiserver.AutoSync
 
                 this.ControlState = ControlState.Stopping;
 
-                this.Log("Stopping controller");
+                this.LogInfo("Stopping controller");
                 this.pendingActions?.CompleteAdding();
                 this.controllerCancellationTokenSource?.Cancel();
 
                 this.StopTriggers();
 
-                this.Log("Stopped execution triggers");
+                this.LogInfo("Stopped execution triggers");
 
                 if (this.internalTask != null && !this.internalTask.IsCompleted)
                 {
-                    this.Log("Waiting for cancellation to complete");
+                    this.LogInfo("Waiting for cancellation to complete");
                     if (this.internalTask.Wait(TimeSpan.FromSeconds(30)))
                     {
-                        this.Log("Cancellation completed");
+                        this.LogInfo("Cancellation completed");
                     }
                     else
                     {
-                        this.Log("Controller internal task did not stop in the allowed time");
+                        this.LogWarn("Controller internal task did not stop in the allowed time");
                     }
                 }
 
@@ -873,8 +890,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteLine("An error occurred stopping the controller");
-                Logger.WriteException(ex);
+                logger.Error(ex, "An error occurred stopping the controller");
                 this.Message = $"Stop error: {ex.Message}";
             }
             finally
@@ -939,8 +955,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteLine("An error occurred in an unmanaged run");
-                Logger.WriteException(ex);
+                logger.Error(ex, "An error occurred in an unmanaged run");
             }
 
             this.controllerCancellationTokenSource.Token.ThrowIfCancellationRequested();
@@ -959,7 +974,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             try
             {
-                this.Log("Starting action processing queue");
+                this.LogInfo("Starting action processing queue");
                 this.UpdateExecutionStatus(ControllerState.Idle, null, null);
 
                 // ReSharper disable once InconsistentlySynchronizedField
@@ -975,7 +990,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                         if (!this.controllerScript.ShouldExecute(action.RunProfileName))
                         {
-                            this.Log($"Controller script indicated that run profile {action.RunProfileName} should not be executed");
+                            this.LogWarn($"Controller script indicated that run profile {action.RunProfileName} should not be executed");
                             continue;
                         }
                     }
@@ -989,7 +1004,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             finally
             {
-                this.Log("Stopped action processing queue");
+                this.LogInfo("Stopped action processing queue");
             }
         }
 
@@ -1009,14 +1024,14 @@ namespace Lithnet.Miiserver.AutoSync
                 if (action.Exclusive)
                 {
                     this.Message = "Waiting to take lock";
-                    this.Log($"Entering exclusive mode for {action.RunProfileName}");
+                    this.LogInfo($"Entering exclusive mode for {action.RunProfileName}");
 
                     // Signal all controllers to wait before running their next job
                     this.WaitAndTakeLock(MAController.GlobalExclusiveOperationLock, nameof(MAController.GlobalExclusiveOperationLock), this.jobCancellationTokenSource);
                     this.HasExclusiveLock = true;
 
                     this.Message = "Waiting for other MAs to finish";
-                    this.Log("Waiting for all MAs to complete");
+                    this.LogInfo("Waiting for all MAs to complete");
                     // Wait for all  MAs to finish their current job
                     this.Wait(MAController.AllMaLocalOperationLocks.Values.ToArray<WaitHandle>(), nameof(MAController.AllMaLocalOperationLocks), this.jobCancellationTokenSource);
                 }
@@ -1024,7 +1039,7 @@ namespace Lithnet.Miiserver.AutoSync
                 if (this.StepRequiresSyncLock(action.RunProfileName))
                 {
                     this.Message = "Waiting to take lock";
-                    this.Log("Waiting to take sync lock");
+                    this.LogInfo("Waiting to take sync lock");
                     this.WaitAndTakeLock(MAController.GlobalSynchronizationStepLock, nameof(MAController.GlobalSynchronizationStepLock), this.jobCancellationTokenSource);
                     this.HasSyncLock = true;
                 }
@@ -1043,7 +1058,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                         if (id == null)
                         {
-                            this.Log($"Cannot take lock for management agent {managementAgent} as the management agent cannot be found");
+                            this.LogInfo($"Cannot take lock for management agent {managementAgent} as the management agent cannot be found");
                             continue;
                         }
 
@@ -1237,7 +1252,7 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     if (e.Parameters.RunProfileType == MARunProfileType.None)
                     {
-                        this.Log($"Received empty run profile from trigger {trigger.DisplayName}");
+                        this.LogWarn($"Received empty run profile from trigger {trigger.DisplayName}");
                         return;
                     }
                 }
@@ -1246,8 +1261,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                this.Log($"The was an unexpected error processing an incoming trigger from {trigger?.DisplayName}");
-                Logger.WriteException(ex);
+                this.LogError(ex, $"The was an unexpected error processing an incoming trigger from {trigger?.DisplayName}");
             }
         }
 
@@ -1255,7 +1269,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             this.AddPendingActionIfNotQueued(new ExecutionParameters(runProfileName), source);
         }
-        
+
         internal void AddPendingActionIfNotQueued(ExecutionParameters p, string source, bool runNext = false)
         {
             try
@@ -1277,7 +1291,7 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     if (runNext && this.pendingActions.Count > 1)
                     {
-                        this.Log($"Moving {p.RunProfileName} to the front of the execution queue");
+                        this.LogInfo($"Moving {p.RunProfileName} to the front of the execution queue");
                         this.pendingActionList.MoveToFront(p);
                     }
                     else
@@ -1304,26 +1318,25 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     this.pendingActions.Add(p, this.controllerCancellationTokenSource.Token);
                     this.pendingActionList.MoveToFront(p);
-                    this.Log($"Added {p.RunProfileName} to the front of the execution queue (triggered by: {source})");
+                    this.LogInfo($"Added {p.RunProfileName} to the front of the execution queue (triggered by: {source})");
                 }
                 else
                 {
                     this.pendingActions.Add(p, this.controllerCancellationTokenSource.Token);
-                    this.Log($"Added {p.RunProfileName} to the execution queue (triggered by: {source})");
+                    this.LogInfo($"Added {p.RunProfileName} to the execution queue (triggered by: {source})");
                 }
 
                 //this.Detail = $"{p.RunProfileName} added by {source}";
 
                 this.UpdateExecutionQueueState();
 
-                this.Log($"Current queue: {this.GetQueueItemNames()}");
+                this.LogInfo($"Current queue: {this.GetQueueItemNames()}");
             }
             catch (OperationCanceledException)
             { }
             catch (Exception ex)
             {
-                this.Log($"An unexpected error occurred while adding the pending action {p?.RunProfileName}. The event has been discarded");
-                Logger.WriteException(ex);
+                this.LogError(ex, $"An unexpected error occurred while adding the pending action {p?.RunProfileName}. The event has been discarded");
             }
         }
 
@@ -1387,8 +1400,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                this.Log("Send mail failed");
-                Logger.WriteException(ex);
+                this.LogError(ex, "Send mail failed");
             }
         }
 

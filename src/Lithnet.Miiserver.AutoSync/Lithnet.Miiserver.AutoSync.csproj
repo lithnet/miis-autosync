@@ -53,10 +53,6 @@
       <HintPath>..\packages\Costura.Fody.1.6.2\lib\dotnet\Costura.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Lithnet.Logging, Version=1.0.5774.20685, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Lithnet.Logging.1.0.5774.20685\lib\net40\Lithnet.Logging.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="Lithnet.Miiserver.Client, Version=1.0.6461.17022, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Lithnet.Miiserver.Client.1.0.6461.17022\lib\net45\Lithnet.Miiserver.Client.dll</HintPath>
     </Reference>
@@ -66,6 +62,9 @@
     <Reference Include="Microsoft.ResourceManagement, Version=4.1.3451.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Lithnet.ResourceManagement.Client.1.0.6297.14599\lib\net40\Microsoft.ResourceManagement.dll</HintPath>
       <Private>True</Private>
+    </Reference>
+    <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <HintPath>..\packages\NLog.4.4.12\lib\net45\NLog.dll</HintPath>
     </Reference>
     <Reference Include="PreMailer.Net, Version=1.5.3.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\PreMailer.Net.1.5.3\lib\net45\PreMailer.Net.dll</HintPath>

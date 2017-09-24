@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
 using System.DirectoryServices.Protocols;
 using System.Net;
@@ -86,7 +85,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.Fire(MARunProfileType.DeltaImport);
 
             this.nextTriggerAfter = DateTime.Now.Add(this.MinimumIntervalBetweenEvents);
-            Trace.WriteLine($"AD/LDS change detection trigger fired. Suppressing further updates until {this.nextTriggerAfter}");
+            this.Trace($"AD/LDS change detection trigger fired. Suppressing further updates until {this.nextTriggerAfter}");
         }
 
         private void SetupListener()
@@ -153,13 +152,13 @@ namespace Lithnet.Miiserver.AutoSync
 
                     if (resultsCollection == null)
                     {
-                        Trace.WriteLine("Results collection was empty");
+                        this.Trace("Results collection was empty");
                         return;
                     }
 
                     if (DateTime.Now < this.nextTriggerAfter)
                     {
-                        Trace.WriteLine("Discarding AD/LDS change because next trigger time has not been reached");
+                        this.Trace("Discarding AD/LDS change because next trigger time has not been reached");
                         return;
                     }
 
@@ -169,7 +168,7 @@ namespace Lithnet.Miiserver.AutoSync
                     {
                         if (r.Attributes == null || !r.Attributes.Contains(ActiveDirectoryChangeTrigger.ObjectClassAttribute))
                         {
-                            Trace.WriteLine($"Skipping entry {r.DistinguishedName} because the object class list was empty");
+                            this.Trace($"Skipping entry {r.DistinguishedName} because the object class list was empty");
                             continue;
                         }
 
@@ -225,9 +224,9 @@ namespace Lithnet.Miiserver.AutoSync
                         }
 
                         this.Log($"Change detected on {r.DistinguishedName}");
-                        Trace.WriteLine($"LL: {date1.ToLocalTime()}");
-                        Trace.WriteLine($"TS: {date2.ToLocalTime()}");
-                        Trace.WriteLine($"BP: {date3.ToLocalTime()}");
+                        this.Trace($"LL: {date1.ToLocalTime()}");
+                        this.Trace($"TS: {date2.ToLocalTime()}");
+                        this.Trace($"BP: {date3.ToLocalTime()}");
 
                         this.Fire();
                     }

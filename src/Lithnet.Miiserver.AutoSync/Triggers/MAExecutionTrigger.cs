@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.Serialization;
+using NLog;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -13,6 +13,8 @@ namespace Lithnet.Miiserver.AutoSync
     [KnownType(typeof(ScheduledExecutionTrigger))]
     public abstract class MAExecutionTrigger : IMAExecutionTrigger
     {
+        protected static Logger Logger = LogManager.GetCurrentClassLogger();
+
         public static IList<Type> SingleInstanceTriggers = new List<Type>() {typeof(ActiveDirectoryChangeTrigger), typeof(FimServicePendingImportTrigger)};
         
         public abstract string DisplayName { get; }
@@ -60,29 +62,32 @@ namespace Lithnet.Miiserver.AutoSync
             registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(p));
         }
 
+        protected void Trace(string message)
+        {
+            Logger.Trace(message);
+        }
+
         protected void Log(string message)
         {
-            Trace.WriteLine($"{message}");
+            Logger.Trace($"{message}");
             this.Message?.Invoke(this, new TriggerMessageEventArgs(message));
         }
 
         protected void Log(string message, string detail)
         {
-            Trace.WriteLine($"{message}\n{detail}");
+            Logger.Trace($"{message}\n{detail}");
             this.Message?.Invoke(this, new TriggerMessageEventArgs(message, detail));
         }
 
         protected void LogError(string message)
         {
-            Trace.WriteLine($"ERROR: {message}");
+            Logger.Error(message);
             this.Error?.Invoke(this, new TriggerMessageEventArgs(message));
         }
 
         protected void LogError(string message, Exception ex)
         {
-            Trace.WriteLine($"ERROR: {message}");
-            Trace.WriteLine(ex);
-
+            Logger.Error(ex, message);
             this.Error?.Invoke(this, new TriggerMessageEventArgs(message, ex.ToString()));
         }
     }

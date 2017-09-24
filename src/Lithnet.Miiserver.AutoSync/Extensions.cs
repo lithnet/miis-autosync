@@ -1,20 +1,20 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Management.Automation;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.ServiceModel;
-using System.ServiceModel.Channels;
 using System.Threading;
-using Lithnet.Logging;
 using Lithnet.Miiserver.Client;
+using NLog;
 
 namespace Lithnet.Miiserver.AutoSync
 {
     public static class Extensions
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         public static void ResetState(this PowerShell powershell)
         {
             powershell.Streams.Error.Clear();
@@ -33,8 +33,6 @@ namespace Lithnet.Miiserver.AutoSync
                 return;
             }
 
-            Logger.WriteLine("The PowerShell script encountered an error");
-
             StringBuilder b = new StringBuilder();
 
             foreach (ErrorRecord error in powershell.Streams.Error)
@@ -49,12 +47,9 @@ namespace Lithnet.Miiserver.AutoSync
 
                 if (error.Exception != null)
                 {
-                    Logger.WriteException(error.Exception);
                     b.AppendLine(error.Exception.ToString());
                 }
             }
-
-            Logger.WriteLine(b.ToString());
 
             throw new ApplicationException("The PowerShell script encountered an error\n" + b.ToString());
         }
@@ -173,20 +168,17 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                     catch (CommunicationException ex)
                     {
-                        Debug.WriteLine("Invocation communication exception");
-                        Debug.WriteLine(ex);
+                        logger.Debug(ex, "Invocation communication exception");
                         client.Abort();
                     }
                     catch (TimeoutException ex)
                     {
-                        Debug.WriteLine("Invocation timeout");
-                        Debug.WriteLine(ex);
+                        logger.Debug(ex, "Invocation timeout");
                         client.Abort();
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine("Invocation exception");
-                        Debug.WriteLine(ex);
+                        logger.Debug(ex, "Invocation exception");
                         client.Abort();
                         throw;
                     }
@@ -225,20 +217,17 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                     catch (CommunicationException ex)
                     {
-                        Debug.WriteLine("Invocation communication exception");
-                        Debug.WriteLine(ex);
+                        logger.Debug(ex, "Invocation communication exception");
                         client.Abort();
                     }
                     catch (TimeoutException ex)
                     {
-                        Debug.WriteLine("Invocation timeout");
-                        Debug.WriteLine(ex);
+                        logger.Debug(ex, "Invocation timeout");
                         client.Abort();
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine("Invocation exception");
-                        Debug.WriteLine(ex);
+                        logger.Debug(ex, "Invocation exception");
                         client.Abort();
                         throw;
                     }

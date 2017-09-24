@@ -1,16 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
-using Lithnet.Logging;
+using NLog;
 using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync
 {
     internal class ExecutionEngine : MarshalByRefObject
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         private Dictionary<Guid, MAController> controllers;
 
         private ServiceHost npService;
@@ -26,12 +27,12 @@ namespace Lithnet.Miiserver.AutoSync
         public ExecutionEngine()
         {
             this.npService = EventService.CreateNetNamedPipeInstance();
-            Logger.WriteLine("Initialized named pipe event service host");
+            logger.Info("Initialized named pipe event service host");
 
             if (RegistrySettings.NetTcpServerEnabled)
             {
                 this.tcpService = EventService.CreateNetTcpInstance();
-                Logger.WriteLine("Initialized TCP event service host");
+                logger.Info("Initialized TCP event service host");
             }
 
             this.InitializeMAControllers();
@@ -61,7 +62,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             foreach (Guid item in this.GetManagementAgentsPendingRestart())
             {
-                Logger.WriteLine($"Restarting controller '{item}' with new configuration");
+                logger.Info($"Restarting controller '{item}' with new configuration");
                 this.Stop(item, false);
                 this.Start(item);
             }
@@ -132,8 +133,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                Logger.WriteLine("The service host did not shutdown cleanly");
-                Logger.WriteException(ex);
+                logger.Error(ex, "The service host did not shutdown cleanly");
             }
 
             this.npService = null;
@@ -184,7 +184,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             lock (e)
             {
-                Trace.WriteLine($"Starting {e.ManagementAgentName}");
+                logger.Trace($"Starting {e.ManagementAgentName}");
                 e.Start(c);
             }
         }
@@ -242,13 +242,13 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 if (c.IsMissing)
                 {
-                    Logger.WriteLine("{0}: Skipping management agent because it is missing from the Sync Engine", c.ManagementAgentName);
+                    logger.Warn($"{c.ManagementAgentName}: Skipping management agent because it is missing from the Sync Engine");
                     continue;
                 }
 
                 if (this.controllers.ContainsKey(c.ManagementAgentID))
                 {
-                    Trace.WriteLine($"Starting {c.ManagementAgentName}");
+                    logger.Trace($"Starting {c.ManagementAgentName}");
                     Task.Run(() =>
                     {
                         MAController e = this.controllers[c.ManagementAgentID];
@@ -260,7 +260,7 @@ namespace Lithnet.Miiserver.AutoSync
                 }
                 else
                 {
-                    Logger.WriteLine($"Cannot start management agent controller '{c.ManagementAgentName}' because the management agent was not found");
+                    logger.Error($"Cannot start management agent controller '{c.ManagementAgentName}' because the management agent was not found");
                 }
             }
         }
@@ -293,21 +293,20 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                     catch (Exception ex)
                     {
-                        Logger.WriteLine($"The controller for {e.ManagementAgentName} throw an error while stopping");
-                        Logger.WriteException(ex);
+                        logger.Error(ex, $"The controller for {e.ManagementAgentName} throw an error while stopping");
                     }
                 }));
             }
 
-            Logger.WriteLine("Waiting for controllers to stop");
+            logger.Info("Waiting for controllers to stop");
 
             if (!Task.WaitAll(stopTasks.ToArray(), 10000))
             {
-                Logger.WriteLine("Timeout waiting for controllers to stop");
+                logger.Warn("Timeout waiting for controllers to stop");
             }
             else
             {
-                Logger.WriteLine("Controllers stopped successfully");
+                logger.Info("Controllers stopped successfully");
             }
 
             this.State = ControlState.Stopped;
