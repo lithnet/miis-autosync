@@ -62,10 +62,6 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static ConcurrentDictionary<Guid, SynchronizedCollection<IEventCallBack>> subscribers;
 
-        internal delegate void MAStateChangedEventHandler(MAStatus status);
-
-        internal delegate void RunProfileExecutionCompleteEventHandler(RunProfileExecutionCompleteEventArgs e);
-
         internal static void NotifySubscribersOnStatusChange(MAStatus status)
         {
             if (EventService.subscribers.ContainsKey(status.ManagementAgentID))
@@ -94,6 +90,25 @@ namespace Lithnet.Miiserver.AutoSync
                     try
                     {
                         i.RunProfileExecutionComplete(e);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Warn(ex, "Error notifying client. Client will be deregistered");
+                        EventService.DeregisterCallbackChannel(i);
+                    }
+                }
+            }
+        }
+
+        internal static void NotifySubscribersOnMessageLogged(Guid managementAgentID, MessageLoggedEventArgs e)
+        {
+            if (EventService.subscribers.ContainsKey(managementAgentID))
+            {
+                foreach (IEventCallBack i in EventService.subscribers[managementAgentID].ToArray())
+                {
+                    try
+                    {
+                        i.MessageLogged(e);
                     }
                     catch (Exception ex)
                     {
@@ -133,8 +148,7 @@ namespace Lithnet.Miiserver.AutoSync
                 }
 
                 // ReSharper disable once SuspiciousTypeConversion.Global
-                ICommunicationObject commObj = subscriber as ICommunicationObject;
-                if (commObj != null)
+                if (subscriber is ICommunicationObject commObj)
                 {
                     commObj.Faulted += EventService.CommObj_Faulted;
                     commObj.Closed += EventService.CommObj_Closed;
@@ -163,9 +177,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static void DeregisterCallbackChannel(object sender)
         {
-            IEventCallBack subscriber = sender as IEventCallBack;
-
-            if (subscriber != null)
+            if (sender is IEventCallBack subscriber)
             {
                 foreach (SynchronizedCollection<IEventCallBack> callbacks in EventService.subscribers.Values.ToArray())
                 {
@@ -173,8 +185,7 @@ namespace Lithnet.Miiserver.AutoSync
                 }
 
                 // ReSharper disable once SuspiciousTypeConversion.Global
-                ICommunicationObject commObj = subscriber as ICommunicationObject;
-                if (commObj != null)
+                if (subscriber is ICommunicationObject commObj)
                 {
                     commObj.Faulted -= EventService.CommObj_Faulted;
                     commObj.Closed -= EventService.CommObj_Closed;

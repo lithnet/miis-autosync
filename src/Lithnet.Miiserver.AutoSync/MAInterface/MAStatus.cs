@@ -48,10 +48,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         [DataMember]
         public int ActiveVersion { get; set; }
-
-        [DataMember]
-        public string Detail { get; set; }
-
+        
         [DataMember]
         public bool HasSyncLock { get; internal set; }
 
@@ -66,7 +63,6 @@ namespace Lithnet.Miiserver.AutoSync
             this.ExecutingRunProfile = null;
             this.ExecutionQueue = null;
             this.Message = null;
-            this.Detail = null;
         }
     }
 }

@@ -100,6 +100,7 @@
     <Compile Include="Enums\ControlState.cs" />
     <Compile Include="Enums\ControllerState.cs" />
     <Compile Include="Enums\RunMode.cs" />
+    <Compile Include="EventArgs\MessageLoggedEventArgs.cs" />
     <Compile Include="EventArgs\RunProfileExecutionCompleteEventArgs.cs" />
     <Compile Include="EventArgs\TriggerMessageEventArgs.cs" />
     <Compile Include="EventArgs\MAStatusChangedEventArgs.cs" />

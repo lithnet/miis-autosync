@@ -29,6 +29,9 @@ namespace Lithnet.Miiserver.AutoSync
         public delegate void StateChangedEventHandler(object sender, MAStatusChangedEventArgs e);
         public event StateChangedEventHandler StateChanged;
 
+        public delegate void MessageLoggedEventHandler(object sender, MessageLoggedEventArgs e);
+        public event MessageLoggedEventHandler MessageLogged;
+
         private ManualResetEvent localOperationLock;
         private ManualResetEvent serviceControlLock;
         private System.Timers.Timer importCheckTimer;
@@ -76,20 +79,6 @@ namespace Lithnet.Miiserver.AutoSync
                     this.InternalStatus.Message = value;
                     this.RaiseStateChange();
                 }
-            }
-        }
-
-        public string Detail
-        {
-            get => this.InternalStatus.Detail;
-            private set
-            {
-                if (this.InternalStatus.Detail == value)
-                {
-                    return;
-                }
-                this.InternalStatus.Detail = value;
-                this.RaiseStateChange();
             }
         }
 
@@ -179,7 +168,22 @@ namespace Lithnet.Miiserver.AutoSync
             MAController.SyncComplete += this.MAController_SyncComplete;
         }
 
-        internal void RaiseStateChange()
+        private void RaiseMessageLogged(string message)
+        {
+            Task.Run(() =>
+            {
+                try
+                {
+                    this.MessageLogged?.Invoke(this, new MessageLoggedEventArgs(DateTime.Now, message));
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, "Unable to relay state change");
+                }
+            }, this.controllerCancellationTokenSource.Token);
+        }
+
+        private void RaiseStateChange()
         {
             Task.Run(() =>
             {
@@ -406,31 +410,31 @@ namespace Lithnet.Miiserver.AutoSync
         private void LogInfo(string message)
         {
             logger.Info($"{this.ma.Name}: {message}");
-            this.Detail = message;
+            this.RaiseMessageLogged(message);
         }
 
         private void LogWarn(string message)
         {
             logger.Warn($"{this.ma.Name}: {message}");
-            this.Detail = message;
+            this.RaiseMessageLogged(message);
         }
 
         private void LogWarn(Exception ex, string message)
         {
             logger.Warn(ex, $"{this.ma.Name}: {message}");
-            this.Detail = message;
+            this.RaiseMessageLogged(message);
         }
 
         private void LogError(string message)
         {
             logger.Error($"{this.ma.Name}: {message}");
-            this.Detail = message;
+            this.RaiseMessageLogged(message);
         }
 
         private void LogError(Exception ex, string message)
         {
             logger.Error(ex, $"{this.ma.Name}: {message}");
-            this.Detail = message;
+            this.RaiseMessageLogged(message);
         }
 
         private void Trace(string message)
@@ -1278,8 +1282,7 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     if (p.RunProfileType == MARunProfileType.None)
                     {
-                        this.Trace("Dropping pending action request as no run profile name or run profile type was specified");
-                        this.Detail = $"{source} did not specify a run profile";
+                        this.LogInfo($"Dropping pending action request from '{source}' as no run profile name or run profile type was specified");
                         this.RaiseStateChange();
                         return;
                     }
@@ -1296,8 +1299,7 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                     else
                     {
-                        this.Trace($"Ignoring queue request for {p.RunProfileName} as it already exists in the queue");
-                        this.Detail = $"{p.RunProfileName} requested by {source} was ignored because the run profile was already queued";
+                        this.LogInfo($"{p.RunProfileName} requested by {source} was ignored because the run profile was already queued");
                     }
 
                     return;

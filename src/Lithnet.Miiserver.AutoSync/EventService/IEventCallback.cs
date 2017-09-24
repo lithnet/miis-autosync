@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.ServiceModel;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ServiceModel;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -14,5 +9,8 @@ namespace Lithnet.Miiserver.AutoSync
 
         [OperationContract(IsOneWay = true)]
         void RunProfileExecutionComplete(RunProfileExecutionCompleteEventArgs e);
+
+        [OperationContract(IsOneWay = true)]
+        void MessageLogged(MessageLoggedEventArgs e);
     }
 }

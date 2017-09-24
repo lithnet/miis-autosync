@@ -146,7 +146,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.HasForeignLock = status.HasForeignLock;
 
             this.Disabled = this.ControlState == ControlState.Disabled;
-            this.AddDetailMessage(status.Detail);
         }
 
         public new BitmapImage DisplayIcon => this.lastRunResult?.DisplayIcon;
@@ -156,21 +155,26 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.AddRunProfileHistory(e);
         }
 
+        public void MessageLogged(MessageLoggedEventArgs e)
+        {
+            this.AddDetailMessage(e);
+        }
+
         private string lastDetail;
 
-        private void AddDetailMessage(string message)
+        private void AddDetailMessage(MessageLoggedEventArgs e)
         {
-            if (this.lastDetail == message)
+            if (this.lastDetail == e.Message)
             {
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(message))
+            if (string.IsNullOrWhiteSpace(e.Message))
             {
                 return;
             }
 
-            this.lastDetail = message;
+            this.lastDetail = e.Message;
 
             Application.Current.Dispatcher.Invoke(() =>
             {
@@ -182,7 +186,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                         this.DetailMessages.RemoveAt(this.DetailMessages.Count - 1);
                     }
 
-                    this.DetailMessages.Insert(0, $"{DateTime.Now}: {message}");
+                    this.DetailMessages.Insert(0, $"{e.Date}: {e.Message}");
                 }
             });
         }

@@ -17,7 +17,7 @@ namespace Lithnet.Miiserver.AutoSync
         private ServiceHost npService;
 
         private ServiceHost tcpService;
-        
+
         internal static object ServiceControlLock = new object();
 
         private CancellationTokenSource cancellationToken;
@@ -220,8 +220,15 @@ namespace Lithnet.Miiserver.AutoSync
                 MAController x = new MAController(ma);
                 x.StateChanged += this.X_StateChanged;
                 x.RunProfileExecutionComplete += this.X_RunProfileExecutionComplete;
+                x.MessageLogged += this.X_MessageLogged;
+
                 this.controllers.Add(ma.ID, x);
             }
+        }
+
+        private void X_MessageLogged(object sender, MessageLoggedEventArgs e)
+        {
+            EventService.NotifySubscribersOnMessageLogged(((MAController)sender).ManagementAgentID, e);
         }
 
         private void X_RunProfileExecutionComplete(object sender, RunProfileExecutionCompleteEventArgs e)
@@ -245,7 +252,7 @@ namespace Lithnet.Miiserver.AutoSync
                     logger.Warn($"{c.ManagementAgentName}: Skipping management agent because it is missing from the Sync Engine");
                     continue;
                 }
-
+              
                 if (this.controllers.ContainsKey(c.ManagementAgentID))
                 {
                     logger.Trace($"Starting {c.ManagementAgentName}");
