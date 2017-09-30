@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
 using Lithnet.Miiserver.Client;
 using NLog;
@@ -12,7 +13,7 @@ namespace Lithnet.Miiserver.AutoSync
     [KnownType(typeof(IntervalExecutionTrigger))]
     [KnownType(typeof(PowerShellExecutionTrigger))]
     [KnownType(typeof(ScheduledExecutionTrigger))]
-    public class MAControllerConfiguration
+    public class MAControllerConfiguration 
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -36,10 +37,11 @@ namespace Lithnet.Miiserver.AutoSync
 
                 if (id.HasValue)
                 {
-                     var ma = ManagementAgent.GetManagementAgent(id.Value);
+                    ManagementAgent ma = ManagementAgent.GetManagementAgent(id.Value);
                     this.ManagementAgentName = ma.Name;
                     this.ManagementAgentID = ma.ID;
                     this.IsMissing = false;
+                    this.ResolvePartitions(ma);
                     return;
                 }
             }
@@ -53,81 +55,124 @@ namespace Lithnet.Miiserver.AutoSync
             this.IsMissing = true;
         }
 
-        [DataMember(Name = "run-profile-confirming-import")]
-        public string ConfirmingImportRunProfileName { get; set; }
+        internal void ResolvePartitions(ManagementAgent ma)
+        {
+            if (this.Partitions == null)
+            {
+                this.Partitions = new PartitionConfigurationCollection();
+            }
 
-        [DataMember(Name = "run-profile-delta-sync")]
-        public string DeltaSyncRunProfileName { get; set; }
+            foreach (PartitionConfiguration c in this.Partitions)
+            {
+                bool found = false;
 
-        [DataMember(Name = "run-profile-full-sync")]
-        public string FullSyncRunProfileName { get; set; }
+                foreach (Partition p in ma.Partitions.Values.Where(t => t.Selected))
+                {
+                    if (c.ID == p.ID || string.Equals(c.Name, p.Name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        c.UpdateConfiguration(p);
+                        found = true;
+                        break;
+                    }
+                }
 
-        [DataMember(Name = "run-profile-full-import")]
-        public string FullImportRunProfileName { get; set; }
+                if (!found)
+                {
+                    c.IsMissing = true;
+                }
+            }
 
-        [DataMember(Name = "run-profile-scheduled-import")]
-        public string ScheduledImportRunProfileName { get; set; }
+            foreach (Partition p in ma.Partitions.Values.Where(t => t.Selected && this.Partitions.GetItemOrNull(t.ID) == null))
+            {
+                PartitionConfiguration c = new PartitionConfiguration(p);
+                MAConfigDiscovery.DoAutoRunProfileDiscovery(c, ma);
+                this.Partitions.Add(c);
+            }
+        }
 
-        [DataMember(Name = "run-profile-delta-import")]
-        public string DeltaImportRunProfileName { get; set; }
+        [DataMember(Name = "partitions")]
+        public PartitionConfigurationCollection Partitions { get; set; }
 
-        [DataMember(Name = "run-profile-export")]
-        public string ExportRunProfileName { get; set; }
-
+        
         [DataMember(Name = "controller-script-path")]
         public string MAControllerPath { get; set; }
 
         [DataMember(Name = "disabled")]
         public bool Disabled { get; set; }
 
-        [DataMember(Name = "auto-import-scheduling")]
-        public AutoImportScheduling AutoImportScheduling { get; set; }
-
-        [DataMember(Name = "auto-import-interval")]
-        public int AutoImportIntervalMinutes { get; set; }
-
         public MAControllerConfiguration(string managementAgentName, Guid managementAgentID)
         {
             this.ManagementAgentName = managementAgentName;
             this.ManagementAgentID = managementAgentID;
             this.Triggers = new List<IMAExecutionTrigger>();
+            this.Partitions = new PartitionConfigurationCollection();
         }
 
         [DataMember(Name = "triggers")]
         public List<IMAExecutionTrigger> Triggers { get; private set; }
-        
+
         [DataMember(Name = "lock-managementagents")]
         public HashSet<string> LockManagementAgents { get; set; }
 
-        internal bool CanExport => this.ExportRunProfileName != null;
+        internal string GetRunProfileName(MARunProfileType type, Guid partitionID)
+        {
+            PartitionConfiguration p = this.Partitions.GetItemOrNull(partitionID);
 
-        internal bool CanImport => this.ScheduledImportRunProfileName != null || this.FullImportRunProfileName != null;
+            if (p == null)
+            {
+                logger.Warn($"Could not map run profile {type} for partition {partitionID} because the partition was not found");
+                return null;
+            }
 
-        internal bool CanAutoRun => this.DeltaSyncRunProfileName != null ||
-                                    this.ConfirmingImportRunProfileName != null ||
-                                    this.FullSyncRunProfileName != null ||
-                                    this.FullImportRunProfileName != null ||
-                                    this.ScheduledImportRunProfileName != null ||
-                                    this.ExportRunProfileName != null;
+            if (!p.IsActive)
+            {
+                logger.Warn($"Could not map run profile {type} for partition {p.Name} ({partitionID}) because the partition is not active");
+                return null;
+            }
 
-        internal string GetRunProfileName(MARunProfileType type)
+            return this.GetRunProfileName(type, p);
+        }
+
+        internal string GetRunProfileName(MARunProfileType type, string partitionName)
+        {
+            PartitionConfiguration p;
+
+            if (string.IsNullOrWhiteSpace(partitionName))
+            {
+                p = this.Partitions.GetDefaultOrFirstActivePartition();
+            }
+            else
+            {
+                p = this.Partitions.GetItemOrNull(partitionName);
+            }
+
+            if (p == null)
+            {
+                logger.Warn($"Could not map run profile {type} for partition {partitionName} because the partition was not found");
+                return null;
+            }
+
+            return this.GetRunProfileName(type, p);
+        }
+
+        internal string GetRunProfileName(MARunProfileType type, PartitionConfiguration partition)
         {
             switch (type)
             {
                 case MARunProfileType.DeltaImport:
-                    return this.ScheduledImportRunProfileName;
+                    return partition.ScheduledImportRunProfileName;
 
                 case MARunProfileType.FullImport:
-                    return this.FullImportRunProfileName;
+                    return partition.FullImportRunProfileName;
 
                 case MARunProfileType.Export:
-                    return this.ExportRunProfileName;
+                    return partition.ExportRunProfileName;
 
                 case MARunProfileType.DeltaSync:
-                    return this.DeltaSyncRunProfileName;
+                    return partition.DeltaSyncRunProfileName;
 
                 case MARunProfileType.FullSync:
-                    return this.FullSyncRunProfileName;
+                    return partition.FullSyncRunProfileName;
 
                 default:
                 case MARunProfileType.None:

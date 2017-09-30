@@ -22,7 +22,8 @@
     </Condition>
 
     <PropertyRef Id="NETFRAMEWORK40FULLINSTALLROOTDIR64"/>
-    
+    <Property Id="SKIPGROUPCHECK" Secure="yes"/>
+
     <Property Id="SERVICE_PASSWORD" Hidden="yes" Secure="yes"/>
     <Property Id="SERVICE_NAME" Secure="yes" Value="autosync"/>
 
@@ -179,13 +180,13 @@
       <Custom Action="SetServiceAdminsGroupIfBlank" After="CostFinalize">NOT Installed AND NOT SERVICE_ADMINS_GROUP</Custom>
     </InstallUISequence>
     <InstallExecuteSequence>
-      <Custom Action="SetIsLocalProperty" Before="InstallFiles">NOT Installed</Custom>
+      <Custom Action="SetIsLocalProperty" Before="InstallFiles">NOT Installed AND NOT SKIPGROUPCHECK</Custom>
      
-      <Custom Action="CA_SetPropertyValueAsSystem" Before="AddServiceAccountToFimSyncAdminsAsSystem">NOT Installed AND GROUP_FIM_SYNC_ADMINS_IS_LOCAL</Custom>
-      <Custom Action="AddServiceAccountToFimSyncAdminsAsSystem" After="InstallFiles">NOT Installed AND GROUP_FIM_SYNC_ADMINS_IS_LOCAL</Custom>
+      <Custom Action="CA_SetPropertyValueAsSystem" Before="AddServiceAccountToFimSyncAdminsAsSystem">NOT Installed AND GROUP_FIM_SYNC_ADMINS_IS_LOCAL AND NOT SKIPGROUPCHECK</Custom>
+      <Custom Action="AddServiceAccountToFimSyncAdminsAsSystem" After="InstallFiles">NOT Installed AND GROUP_FIM_SYNC_ADMINS_IS_LOCAL AND NOT SKIPGROUPCHECK</Custom>
 
-      <Custom Action="CA_SetPropertyValueAsCaller" Before="AddServiceAccountToFimSyncAdminsAsCaller">NOT Installed AND NOT GROUP_FIM_SYNC_ADMINS_IS_LOCAL</Custom>
-      <Custom Action="AddServiceAccountToFimSyncAdminsAsCaller" After="InstallFiles">NOT Installed AND NOT GROUP_FIM_SYNC_ADMINS_IS_LOCAL</Custom>
+      <Custom Action="CA_SetPropertyValueAsCaller" Before="AddServiceAccountToFimSyncAdminsAsCaller">NOT Installed AND NOT GROUP_FIM_SYNC_ADMINS_IS_LOCAL AND NOT SKIPGROUPCHECK</Custom>
+      <Custom Action="AddServiceAccountToFimSyncAdminsAsCaller" After="InstallFiles">NOT Installed AND NOT GROUP_FIM_SYNC_ADMINS_IS_LOCAL AND NOT SKIPGROUPCHECK</Custom>
     
     </InstallExecuteSequence>
 

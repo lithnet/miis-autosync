@@ -26,9 +26,14 @@ namespace Lithnet.Miiserver.AutoSync
             this.Parameters = new ExecutionParameters(runProfileName, exclusive);
         }
 
-        public ExecutionTriggerEventArgs(MARunProfileType runProfileType)
+        public ExecutionTriggerEventArgs(MARunProfileType runProfileType, Guid partitionID)
         {
-            this.Parameters = new ExecutionParameters(runProfileType);
+            this.Parameters = new ExecutionParameters(runProfileType, partitionID);
+        }
+
+        public ExecutionTriggerEventArgs(MARunProfileType runProfileType, string partitionName)
+        {
+            this.Parameters = new ExecutionParameters(runProfileType, partitionName, false);
         }
     }
 }

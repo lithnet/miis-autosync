@@ -58,8 +58,8 @@ namespace Lithnet.Miiserver.AutoSync
                 }
 
                 this.lastCheckDateTime = r.First().Attributes["msidmCompletedTime"].DateTimeValue;
-             
-                this.Fire(MARunProfileType.DeltaImport);
+
+                this.Fire(MARunProfileType.DeltaImport, "default");
             }
             catch (Exception ex)
             {

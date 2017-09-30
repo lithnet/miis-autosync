@@ -10,29 +10,50 @@ namespace Lithnet.Miiserver.AutoSync
 
         public MARunProfileType RunProfileType { get; set; }
 
+        public Guid PartitionID { get; set; }
+
+        public string PartitionName { get; set; }
+
         public ExecutionParameters()
         {
         }
 
         public ExecutionParameters(string runProfileName)
+            : this(runProfileName, false)
         {
-            this.RunProfileName = runProfileName;
-        }
-
-        public ExecutionParameters(MARunProfileType runProfileType)
-        {
-            this.RunProfileType = runProfileType;
         }
 
         public ExecutionParameters(string runProfileName, bool exclusive)
-            : this(runProfileName)
         {
+            this.RunProfileName = runProfileName;
             this.Exclusive = exclusive;
+        }
+        public ExecutionParameters(MARunProfileType runProfileType)
+            : this(runProfileType, null, false)
+        {
+        }
+
+        public ExecutionParameters(MARunProfileType runProfileType, Guid partitionID)
+            : this(runProfileType, partitionID, false)
+        {
         }
 
         public ExecutionParameters(MARunProfileType runProfileType, bool exclusive)
-            : this(runProfileType)
+            : this(runProfileType, null, exclusive)
         {
+        }
+
+        public ExecutionParameters(MARunProfileType runProfileType, Guid partitionID, bool exclusive)
+        {
+            this.RunProfileType = runProfileType;
+            this.PartitionID = partitionID;
+            this.Exclusive = exclusive;
+        }
+
+        public ExecutionParameters(MARunProfileType runProfileType, string partitionName, bool exclusive)
+        {
+            this.RunProfileType = runProfileType;
+            this.PartitionName = partitionName;
             this.Exclusive = exclusive;
         }
 
@@ -40,23 +61,28 @@ namespace Lithnet.Miiserver.AutoSync
         {
             ExecutionParameters p2 = obj as ExecutionParameters;
 
-            if (p2 == null)
+            if (object.ReferenceEquals(this, p2))
             {
-                return object.ReferenceEquals(this, obj);
+                return true;
             }
 
-            if (!string.IsNullOrWhiteSpace(this.RunProfileName))
+            if ((object)p2 == null)
             {
-                return string.Equals(this.RunProfileName, p2.RunProfileName, StringComparison.OrdinalIgnoreCase) && this.Exclusive == p2.Exclusive;
+                return false;
             }
-
-            return this.RunProfileType == p2.RunProfileType && this.Exclusive == p2.Exclusive;
+            
+            return
+                string.Equals(this.RunProfileName, p2.RunProfileName, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(this.PartitionName, p2.PartitionName, StringComparison.OrdinalIgnoreCase) &&
+                this.PartitionID == p2.PartitionID &&
+                this.RunProfileType == p2.RunProfileType &&
+                this.Exclusive == p2.Exclusive;
         }
 
         public override int GetHashCode()
         {
             // ReSharper disable NonReadonlyMemberInGetHashCode
-            string hashcode = $"{this.RunProfileName}{this.RunProfileType}{this.Exclusive}";
+            string hashcode = $"{this.RunProfileName}{this.RunProfileType}{this.Exclusive}{this.PartitionID}{this.PartitionName}";
             // ReSharper restore NonReadonlyMemberInGetHashCode
             return hashcode.GetHashCode();
         }
@@ -73,9 +99,12 @@ namespace Lithnet.Miiserver.AutoSync
                 return false;
             }
 
-            return (string.Equals(a.RunProfileName, b.RunProfileName, StringComparison.OrdinalIgnoreCase) &&
+            return
+                string.Equals(a.RunProfileName, b.RunProfileName, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(a.PartitionName, b.PartitionName, StringComparison.OrdinalIgnoreCase) &&
+                a.PartitionID == b.PartitionID &&
                 a.RunProfileType == b.RunProfileType &&
-                a.Exclusive == b.Exclusive);
+                a.Exclusive == b.Exclusive;
         }
 
         public static bool operator !=(ExecutionParameters a, ExecutionParameters b)

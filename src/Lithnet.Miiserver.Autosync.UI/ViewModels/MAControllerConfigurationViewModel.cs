@@ -24,6 +24,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             : base(model)
         {
             this.Triggers = new MAExecutionTriggersViewModel(model.Triggers, this);
+            this.Partitions = new PartitionConfigurationCollectionViewModel(model.Partitions, this);
 
             this.SubscribeToErrors(this.Triggers);
 
@@ -36,26 +37,23 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.originalVersion = this.Model.Version;
 
             this.AddIsDirtyProperty(nameof(this.MAControllerPath));
-            this.AddIsDirtyProperty(nameof(this.ScheduledImportRunProfileName));
-            this.AddIsDirtyProperty(nameof(this.FullSyncRunProfileName));
-            this.AddIsDirtyProperty(nameof(this.FullImportRunProfileName));
-            this.AddIsDirtyProperty(nameof(this.ExportRunProfileName));
-            this.AddIsDirtyProperty(nameof(this.DeltaSyncRunProfileName));
-            this.AddIsDirtyProperty(nameof(this.DeltaImportRunProfileName));
-            this.AddIsDirtyProperty(nameof(this.ConfirmingImportRunProfileName));
-            this.AddIsDirtyProperty(nameof(this.AutoImportIntervalMinutes));
-            this.AddIsDirtyProperty(nameof(this.ScheduleImports));
-            this.AddIsDirtyProperty(nameof(this.AutoImportScheduling));
             this.AddIsDirtyProperty(nameof(this.Triggers));
+            this.AddIsDirtyProperty(nameof(this.Partitions));
             this.AddIsDirtyProperty(nameof(this.LockManagementAgents));
             this.AddIsDirtyProperty(nameof(this.Disabled));
             this.AddIsDirtyProperty(nameof(this.IsDeleted));
 
             this.IsDirtySet += this.MAConfigParametersViewModel_IsDirtySet;
 
-            this.Triggers.CollectionChanged += this.Triggers_CollectionChanged;
+            this.Triggers.CollectionChanged += this.ChildCollectionChanged;
+            this.Partitions.CollectionChanged += this.ChildCollectionChanged;
 
             foreach (MAExecutionTriggerViewModel item in this.Triggers)
+            {
+                item.IsDirtySet += this.MAConfigParametersViewModel_IsDirtySet;
+            }
+
+            foreach (PartitionConfigurationViewModel item in this.Partitions)
             {
                 item.IsDirtySet += this.MAConfigParametersViewModel_IsDirtySet;
             }
@@ -104,7 +102,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.IncrementVersion();
         }
 
-        private void Triggers_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        private void ChildCollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
             this.IncrementVersion();
         }
@@ -114,6 +112,11 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.originalVersion = this.Version;
             this.IsDirty = false;
             foreach (MAExecutionTriggerViewModel item in this.Triggers)
+            {
+                item.IsDirty = false;
+            }
+
+            foreach (PartitionConfigurationViewModel item in this.Partitions)
             {
                 item.IsDirty = false;
             }
@@ -183,64 +186,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         }
 
-        public string ScheduledImportRunProfileName
-        {
-            get => this.Model.ScheduledImportRunProfileName ?? App.NullPlaceholder;
-            set => this.Model.ScheduledImportRunProfileName = value == App.NullPlaceholder ? null : value;
-        }
-
-        public string ScheduledImportRunProfileToolTip => "Called automatically by AutoSync when the 'Schedule an import if it has been longer than x minutes since the last import' operation option has been specified";
-
         [AlsoNotifyFor(nameof(IsNew))]
         public int Version => this.Model.Version;
-
-        public string FullSyncRunProfileName
-        {
-            get => this.Model.FullSyncRunProfileName ?? App.NullPlaceholder;
-            set => this.Model.FullSyncRunProfileName = value == App.NullPlaceholder ? null : value;
-        }
-
-        public string FullSyncRunProfileToolTip => "Not called by AutoSync automatically. Only called by custom PowerShell script triggers";
-
-        public string FullImportRunProfileName
-        {
-            get => this.Model.FullImportRunProfileName ?? App.NullPlaceholder;
-            set => this.Model.FullImportRunProfileName = value == App.NullPlaceholder ? null : value;
-        }
-
-        public string FullImportRunProfileToolTip => "Not called by AutoSync automatically. Only called by custom PowerShell script triggers";
-
-        public string ExportRunProfileName
-        {
-            get => this.Model.ExportRunProfileName ?? App.NullPlaceholder;
-            set => this.Model.ExportRunProfileName = value == App.NullPlaceholder ? null : value;
-        }
-
-        public string ExportRunProfileToolTip => "Called automatically by AutoSync when staged exports are detected on a management agent";
-
-        public string DeltaSyncRunProfileName
-        {
-            get => this.Model.DeltaSyncRunProfileName ?? App.NullPlaceholder;
-            set => this.Model.DeltaSyncRunProfileName = value == App.NullPlaceholder ? null : value;
-        }
-
-        public string DeltaSyncRunProfileToolTip => "Called automatically by AutoSync after an import operation has been performed";
-
-        public string DeltaImportRunProfileName
-        {
-            get => this.Model.DeltaImportRunProfileName ?? App.NullPlaceholder;
-            set => this.Model.DeltaImportRunProfileName = value == App.NullPlaceholder ? null : value;
-        }
-
-        public string DeltaImportRunProfileToolTip => "Called by certain triggers when changes have been detected in a connected system. If the management agent doesn't support delta imports, specify a full import profile";
-
-        public string ConfirmingImportRunProfileName
-        {
-            get => this.Model.ConfirmingImportRunProfileName ?? App.NullPlaceholder;
-            set => this.Model.ConfirmingImportRunProfileName = value == App.NullPlaceholder ? null : value;
-        }
-
-        public string ConfirmingImportRunProfileToolTip => "Called automatically by AutoSync after an export has been performed";
 
         public bool Disabled
         {
@@ -248,23 +195,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             set => this.Model.Disabled = value;
         }
 
-        public int AutoImportIntervalMinutes
-        {
-            get => this.Model.AutoImportIntervalMinutes;
-            set => this.Model.AutoImportIntervalMinutes = value;
-        }
+        public PartitionConfigurationCollectionViewModel Partitions { get; private set; }
 
-        public bool ScheduleImports
-        {
-            get => this.Model.AutoImportScheduling != AutoImportScheduling.Disabled;
-            set => this.Model.AutoImportScheduling = value ? AutoImportScheduling.Enabled : AutoImportScheduling.Disabled;
-        }
-
-        public AutoImportScheduling AutoImportScheduling
-        {
-            get => this.Model.AutoImportScheduling;
-            set => this.Model.AutoImportScheduling = value;
-        }
 
         public IEnumerable<string> RunProfileNames => this.GetRunProfileNames(true);
 

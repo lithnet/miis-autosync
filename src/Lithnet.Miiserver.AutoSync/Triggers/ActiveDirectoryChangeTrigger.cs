@@ -82,10 +82,10 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void Fire()
         {
-            this.Fire(MARunProfileType.DeltaImport);
+            this.Fire(MARunProfileType.DeltaImport, this.BaseDN);
 
             this.nextTriggerAfter = DateTime.Now.Add(this.MinimumIntervalBetweenEvents);
-            this.Trace($"AD/LDS change detection trigger fired. Suppressing further updates until {this.nextTriggerAfter}");
+            this.Trace($"Trigger fired. Suppressing further updates until {this.nextTriggerAfter}");
         }
 
         private void SetupListener()
@@ -158,7 +158,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                     if (DateTime.Now < this.nextTriggerAfter)
                     {
-                        this.Trace("Discarding AD/LDS change because next trigger time has not been reached");
+                        this.Trace("Discarding change because next trigger time has not been reached");
                         return;
                     }
 
@@ -269,7 +269,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             if (this.Disabled)
             {
-                this.Log("AD/LDS change listener disabled");
+                this.Log("Trigger disabled");
                 return;
             }
 
@@ -278,7 +278,7 @@ namespace Lithnet.Miiserver.AutoSync
                 this.MinimumIntervalBetweenEvents = TimeSpan.FromSeconds(60);
             }
 
-            this.Log($"Starting {this.DisplayName}");
+            this.Log($"Starting trigger");
 
             this.SetupListener();
         }
@@ -296,7 +296,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (Exception ex)
             {
-                this.LogError("An error occurred trying to stop the ActiveDirectoryChangeTrigger", ex);
+                this.LogError("An error occurred trying to stop the trigger", ex);
             }
         }
 

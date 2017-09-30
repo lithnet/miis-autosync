@@ -243,6 +243,11 @@ namespace Lithnet.Miiserver.AutoSync
 
         public IList<string> GetManagementAgentRunProfileNames(Guid managementAgentID, bool includeMultiStep)
         {
+            return this.GetManagementAgentRunProfileNamesForPartition(managementAgentID, Guid.Empty, includeMultiStep);
+        }
+
+        public IList<string> GetManagementAgentRunProfileNamesForPartition(Guid managementAgentID, Guid partitionID, bool includeMultiStep)
+        {
             List<string> items = new List<string>();
 
             try
@@ -251,7 +256,17 @@ namespace Lithnet.Miiserver.AutoSync
 
                 foreach (KeyValuePair<string, RunConfiguration> i in ma.RunProfiles.Where(t => includeMultiStep || t.Value.RunSteps.Count == 1))
                 {
-                    items.Add(i.Key);
+                    if (partitionID != Guid.Empty)
+                    {
+                        if (i.Value.RunSteps.Any(t => t.Partition == partitionID))
+                        {
+                            items.Add(i.Key);
+                        }
+                    }
+                    else
+                    {
+                        items.Add(i.Key);
+                    }
                 }
             }
             catch (Exception ex)

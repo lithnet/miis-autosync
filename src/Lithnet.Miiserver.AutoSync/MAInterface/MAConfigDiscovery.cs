@@ -9,9 +9,9 @@ namespace Lithnet.Miiserver.AutoSync
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        internal static void DoAutoRunProfileDiscovery(MAControllerConfiguration config, ManagementAgent ma)
+        internal static void DoAutoRunProfileDiscovery(PartitionConfiguration config, ManagementAgent ma)
         {
-            logger.Trace($"{config.ManagementAgentName}: Performing run profile auto-discovery");
+            logger.Trace($"{ma.Name}: Performing run profile auto-discovery for partition {config.Name}");
 
             bool match = false;
 
@@ -45,6 +45,12 @@ namespace Lithnet.Miiserver.AutoSync
                 if (step.ObjectLimit > 0)
                 {
                     logger.Trace($"{ma.Name}: Ignoring limited step run profile {profile.Name}");
+                    continue;
+                }
+
+                if (config.ID != step.Partition)
+                {
+                    logger.Trace($"{ma.Name}: Ignoring profile for other partition {profile.Name}");
                     continue;
                 }
 
@@ -92,6 +98,15 @@ namespace Lithnet.Miiserver.AutoSync
                     config.ScheduledImportRunProfileName = config.FullImportRunProfileName;
                     config.DeltaImportRunProfileName = config.FullImportRunProfileName;
                 }
+            }
+        }
+
+
+        internal static void DoAutoRunProfileDiscovery(MAControllerConfiguration config, ManagementAgent ma)
+        {
+            foreach (PartitionConfiguration p in config.Partitions)
+            {
+                MAConfigDiscovery.DoAutoRunProfileDiscovery(p, ma);
             }
         }
 

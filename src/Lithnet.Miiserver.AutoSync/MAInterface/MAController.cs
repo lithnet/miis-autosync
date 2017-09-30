@@ -4,8 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using Lithnet.Miiserver.Client;
 using NLog;
+using Timer = System.Timers.Timer;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -34,9 +36,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private ManualResetEvent localOperationLock;
         private ManualResetEvent serviceControlLock;
-        private System.Timers.Timer importCheckTimer;
-        private System.Timers.Timer unmanagedChangesCheckTimer;
-        private TimeSpan importInterval;
+        private Timer unmanagedChangesCheckTimer;
         private CancellationTokenSource controllerCancellationTokenSource;
         private CancellationTokenSource jobCancellationTokenSource;
         private Dictionary<string, string> perProfileLastRunStatus;
@@ -45,6 +45,10 @@ namespace Lithnet.Miiserver.AutoSync
         private ExecutionParameterCollection pendingActionList;
         private MAControllerScript controllerScript;
         private Task internalTask;
+        private PartitionDetectionMode detectionMode;
+        private int lastRunNumber = 0;
+
+        private Dictionary<Guid, Timer> importCheckTimers = new Dictionary<Guid, Timer>();
 
         internal MAStatus InternalStatus;
 
@@ -231,50 +235,49 @@ namespace Lithnet.Miiserver.AutoSync
             this.CheckAndQueueUnmanagedChanges();
         }
 
-        private void SetupImportSchedule()
+        private void SetupImportTimers()
         {
-            if (this.Configuration.AutoImportScheduling != AutoImportScheduling.Disabled)
+            this.importCheckTimers.Clear();
+
+            foreach (PartitionConfiguration p in this.Configuration.Partitions.Where(u => u.AutoImportEnabled))
             {
-                if (this.Configuration.AutoImportScheduling == AutoImportScheduling.Enabled ||
-                    (this.ma.ImportAttributeFlows.Select(t => t.ImportFlows).Count() >= this.ma.ExportAttributeFlows.Select(t => t.ExportFlows).Count()))
+                Timer t = new Timer();
+                t.AutoReset = true;
+                t.Interval = TimeSpan.FromMinutes(Math.Max(p.AutoImportIntervalMinutes, 1)).TotalMilliseconds;
+                t.Elapsed += (sender, e) =>
                 {
-                    this.importCheckTimer = new System.Timers.Timer();
-                    this.importCheckTimer.Elapsed += this.ImportCheckTimer_Elapsed;
-                    int importSeconds = this.Configuration.AutoImportIntervalMinutes > 0 ? this.Configuration.AutoImportIntervalMinutes * 60 : MAExecutionTriggerDiscovery.GetAverageImportIntervalMinutes(this.ma) * 60;
-                    this.importInterval = new TimeSpan(0, 0, Global.RandomizeOffset(importSeconds));
-                    this.importCheckTimer.Interval = this.importInterval.TotalMilliseconds;
-                    this.importCheckTimer.AutoReset = true;
-                    this.LogInfo($"Starting import interval timer. Imports will be queued if they have not been run for {this.importInterval}");
-                    this.importCheckTimer.Start();
-                }
-                else
-                {
-                    this.LogInfo("Import schedule not enabled");
-                }
-            }
-            else
-            {
-                this.LogInfo("Import schedule disabled");
+                    if (this.ControlState != ControlState.Running)
+                    {
+                        return;
+                    }
+
+                    this.AddPendingActionIfNotQueued(new ExecutionParameters(p.ScheduledImportRunProfileName), $"Import timer on {p.Name}");
+                };
+
+                this.Trace($"Initialized import timer for partition {p.Name} at interval of {t.Interval}");
+                this.importCheckTimers.Add(p.ID, t);
             }
         }
 
-        private void ImportCheckTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        private void StopImportTimers()
         {
-            if (this.ControlState != ControlState.Running)
+            if (this.importCheckTimers == null)
             {
                 return;
             }
 
-            this.AddPendingActionIfNotQueued(new ExecutionParameters(this.Configuration.ScheduledImportRunProfileName), "Import timer");
+            foreach (KeyValuePair<Guid, Timer> kvp in this.importCheckTimers)
+            {
+                kvp.Value.Stop();
+            }
         }
 
-        private void ResetImportTimerOnImport()
+        private void ResetImportTimerOnImport(Guid partition)
         {
-            if (this.importCheckTimer != null)
+            if (this.importCheckTimers.ContainsKey(partition))
             {
-                this.Trace($"Resetting import timer for {this.importInterval}");
-                this.importCheckTimer.Stop();
-                this.importCheckTimer.Start();
+                this.importCheckTimers[partition].Stop();
+                this.importCheckTimers[partition].Start();
             }
         }
 
@@ -313,13 +316,27 @@ namespace Lithnet.Miiserver.AutoSync
         private void NotifierTriggerMessage(object sender, TriggerMessageEventArgs e)
         {
             IMAExecutionTrigger t = (IMAExecutionTrigger)sender;
-            this.LogInfo($"{t.DisplayName}: {e.Message}\n{e.Details}");
+            if (e.Details == null)
+            {
+                this.LogInfo($"{t.DisplayName}: {e.Message}");
+            }
+            else
+            {
+                this.LogInfo($"{t.DisplayName}: {e.Message}\n{e.Details}");
+            }
         }
 
         private void NotifierTriggerError(object sender, TriggerMessageEventArgs e)
         {
             IMAExecutionTrigger t = (IMAExecutionTrigger)sender;
-            this.LogError($"{t.DisplayName}: ERROR: {e.Message}\n{e.Details}");
+            if (e.Details == null)
+            {
+                this.LogError($"{t.DisplayName}: {e.Message}");
+            }
+            else
+            {
+                this.LogError($"{t.DisplayName}: {e.Message}\n{e.Details}");
+            }
         }
 
         private void StopTriggers()
@@ -351,22 +368,137 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void QueueFollowUpActionsExport(RunDetails d)
         {
-            if (this.CanConfirmExport())
+            for (int i = 0; i < d.StepDetails.Count; i++)
             {
-                if (d.HasUnconfirmedExports())
+                StepDetails s = d.StepDetails[i];
+
+                if (!s.StepDefinition.IsExportStep)
                 {
-                    this.Trace("Unconfirmed exports in last run");
-                    this.AddPendingActionIfNotQueued(new ExecutionParameters(this.Configuration.ConfirmingImportRunProfileName), d.RunProfileName, true);
+                    continue;
                 }
+
+                // found an export step
+
+                if (!s.ExportCounters?.HasChanges ?? false)
+                {
+                    continue;
+                }
+
+                // has unconfirmed changed
+                this.Trace($"Unconfirmed exports in last run");
+
+                string partitionName = s.StepDefinition.Partition;
+
+                if (partitionName == null)
+                {
+                    this.LogWarn($"Partition in step {i} of run profile {d.RunProfileName} had an empty partition");
+                    continue;
+                }
+
+                // can confirm import
+
+                bool hasConfirmed = false;
+
+                for (int j = i++; j < d.StepDetails.Count; j++)
+                {
+                    StepDetails followUpStep = d.StepDetails[j];
+
+                    if (followUpStep.StepDefinition.Partition != partitionName)
+                    {
+                        continue;
+                    }
+
+                    if (followUpStep.StepDefinition.IsImportStep)
+                    {
+                        // already confirmed
+                        this.Trace($"Skipping confirming import as there was an import step in the run");
+                        hasConfirmed = true;
+                        break;
+                    }
+                }
+
+                if (hasConfirmed)
+                {
+                    continue;
+                }
+
+                string confirmingImportRunProfileName = this.Configuration.Partitions.GetActiveItemOrNull(partitionName)?.ConfirmingImportRunProfileName;
+
+                if (confirmingImportRunProfileName == null)
+                {
+                    this.LogWarn($"Confirming imports have not been configured for partition {partitionName} or the partition could not be found");
+                    continue;
+                }
+
+                this.AddPendingActionIfNotQueued(new ExecutionParameters(confirmingImportRunProfileName), d.RunProfileName, true);
             }
         }
 
         private void QueueFollowUpActionsImport(RunDetails d)
         {
-            if (d.HasStagedImports())
+            for (int i = 0; i < d.StepDetails.Count; i++)
             {
+                StepDetails s = d.StepDetails[i];
+
+                if (!s.StepDefinition.IsImportStep)
+                {
+                    continue;
+                }
+
+                // found an import step
+
+                if (!s.StagingCounters?.HasChanges ?? false)
+                {
+                    continue;
+                }
+
+                // has staged imports
                 this.Trace("Staged imports in last run");
-                this.AddPendingActionIfNotQueued(new ExecutionParameters(this.Configuration.DeltaSyncRunProfileName), d.RunProfileName, true);
+
+                string partitionName = s.StepDefinition.Partition;
+
+                if (partitionName == null)
+                {
+                    this.LogWarn($"Partition in step {i} of run profile {d.RunProfileName} had an empty partition");
+                    continue;
+                }
+
+                // can sync staged changed
+
+                bool hasSynced = false;
+
+                for (int j = i++; j < d.StepDetails.Count; j++)
+                {
+                    StepDetails followUpStep = d.StepDetails[j];
+
+                    if (followUpStep.StepDefinition.Partition != partitionName)
+                    {
+                        continue;
+                    }
+
+                    if (followUpStep.StepDefinition.IsSyncStep)
+                    {
+                        // already synced
+                        this.Trace($"Skipping sync of staged import as there was already a sync step in the run");
+                        hasSynced = true;
+                        break;
+                    }
+                }
+
+                if (hasSynced)
+                {
+                    continue;
+                }
+
+                string deltaSyncRunProfileName = this.Configuration.Partitions.GetActiveItemOrNull(partitionName)?.DeltaSyncRunProfileName;
+
+                if (deltaSyncRunProfileName == null)
+                {
+                    this.LogWarn($"Delta syncs have not been configured for partition {partitionName} or the partition was not found");
+                    continue;
+                }
+
+                this.AddPendingActionIfNotQueued(new ExecutionParameters(deltaSyncRunProfileName), d.RunProfileName, true);
             }
         }
 
@@ -397,7 +529,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                     SyncCompleteEventArgs args = new SyncCompleteEventArgs
                     {
-                        SendingMAName = this.ma.Name,
+                        SendingMAName = this.ManagementAgentName,
                         TargetMA = item.MAID
                     };
 
@@ -409,37 +541,37 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void LogInfo(string message)
         {
-            logger.Info($"{this.ma.Name}: {message}");
+            logger.Info($"{this.ManagementAgentName}: {message}");
             this.RaiseMessageLogged(message);
         }
 
         private void LogWarn(string message)
         {
-            logger.Warn($"{this.ma.Name}: {message}");
+            logger.Warn($"{this.ManagementAgentName}: {message}");
             this.RaiseMessageLogged(message);
         }
 
         private void LogWarn(Exception ex, string message)
         {
-            logger.Warn(ex, $"{this.ma.Name}: {message}");
+            logger.Warn(ex, $"{this.ManagementAgentName}: {message}");
             this.RaiseMessageLogged(message);
         }
 
         private void LogError(string message)
         {
-            logger.Error($"{this.ma.Name}: {message}");
+            logger.Error($"{this.ManagementAgentName}: {message}");
             this.RaiseMessageLogged(message);
         }
 
         private void LogError(Exception ex, string message)
         {
-            logger.Error(ex, $"{this.ma.Name}: {message}");
+            logger.Error(ex, $"{this.ManagementAgentName}: {message}");
             this.RaiseMessageLogged(message);
         }
 
         private void Trace(string message)
         {
-            logger.Trace(message);
+            logger.Trace($"{this.ManagementAgentName}: {message}");
         }
 
         private void Wait(TimeSpan duration, string name, CancellationTokenSource ts)
@@ -536,10 +668,13 @@ namespace Lithnet.Miiserver.AutoSync
                 this.ExecutingRunProfile = e.RunProfileName;
                 ts.Token.ThrowIfCancellationRequested();
 
-                if (this.ma.RunProfiles[e.RunProfileName].RunSteps.Any(t => t.IsImportStep))
+                foreach (RunStep s in this.ma.RunProfiles[e.RunProfileName].RunSteps)
                 {
-                    this.Trace("Import step detected. Resetting timer");
-                    this.ResetImportTimerOnImport();
+                    if (s.IsImportStep)
+                    {
+                        this.Trace($"Import step detected on partition {s.Partition}. Resetting timer");
+                        this.ResetImportTimerOnImport(s.Partition);
+                    }
                 }
 
                 int count = 0;
@@ -585,6 +720,8 @@ namespace Lithnet.Miiserver.AutoSync
 
                     this.Trace("Getting run results");
                     r = this.ma.GetLastRun();
+                    this.lastRunNumber = r.RunNumber;
+
                     this.Trace("Got run results");
 
                     this.RaiseRunProfileComplete(r.RunProfileName, r.LastStepStatus, r.RunNumber, r.StartTime, r.EndTime);
@@ -712,6 +849,8 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void PerformPostRunActions(RunDetails r)
         {
+            this.lastRunNumber = r.RunNumber;
+
             this.TrySendMail(r);
             this.controllerScript.ExecutionComplete(r);
 
@@ -780,6 +919,17 @@ namespace Lithnet.Miiserver.AutoSync
                 this.perProfileLastRunStatus = new Dictionary<string, string>();
 
                 this.Setup(config);
+
+                if (this.Configuration.Partitions.ActiveConfigurations.Count() > 1)
+                {
+                    this.Trace("Controller will walk connector space to detect export partitions");
+                    this.detectionMode = PartitionDetectionMode.WalkConnectorSpace;
+                }
+                else
+                {
+                    this.Trace("Controller will assume all partitions require export when pending exports are detected");
+                    this.detectionMode = PartitionDetectionMode.AssumeAll;
+                }
 
                 this.LogInfo($"Starting controller");
 
@@ -899,7 +1049,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             finally
             {
-                this.importCheckTimer?.Stop();
+                this.StopImportTimers();
                 this.ExecutionTriggers.Clear();
 
                 this.pendingActionList = null;
@@ -970,7 +1120,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             this.StartTriggers();
 
-            this.SetupImportSchedule();
+            this.SetupImportTimers();
 
             this.SetupUnmanagedChangesCheckTimer();
 
@@ -1195,24 +1345,53 @@ namespace Lithnet.Miiserver.AutoSync
         {
             try
             {
-                this.Trace("Checking for unmanaged changes");
-
                 // If another operation in this controller is already running, then wait for it to finish
                 this.WaitAndTakeLock(this.localOperationLock, nameof(this.localOperationLock), this.controllerCancellationTokenSource);
 
-                if (this.ShouldExportPendingChanges())
+                this.Trace("Checking for unmanaged changes");
+                RunDetails run = this.ma.GetLastRun();
+
+                if (run == null || this.lastRunNumber == run.RunNumber)
                 {
-                    this.AddPendingActionIfNotQueued(new ExecutionParameters(this.Configuration.ExportRunProfileName), "Pending export check");
+                    return;
                 }
 
-                if (this.ShouldConfirmExport())
+                this.Trace($"Unprocessed changes detected. Last recorded run: {this.lastRunNumber}. Last run in sync engine: {run.RunNumber}");
+
+                this.lastRunNumber = run.RunNumber;
+
+                foreach (PartitionConfiguration c in this.GetPartitionsRequiringExport())
                 {
-                    this.AddPendingActionIfNotQueued(new ExecutionParameters(this.Configuration.ConfirmingImportRunProfileName), "Unconfirmed export check");
+                    if (c.ExportRunProfileName != null)
+                    {
+                        ExecutionParameters p = new ExecutionParameters(c.ExportRunProfileName);
+                        this.AddPendingActionIfNotQueued(p, "Pending export check");
+                    }
                 }
 
-                if (this.ma.HasPendingImports())
+                if (run?.StepDetails != null)
                 {
-                    this.AddPendingActionIfNotQueued(new ExecutionParameters(this.Configuration.DeltaSyncRunProfileName), "Staged import check");
+                    foreach (StepDetails step in run.StepDetails)
+                    {
+                        if (step.HasUnconfirmedExports())
+                        {
+                            PartitionConfiguration c = this.Configuration.Partitions.GetActiveItemOrNull(step.StepDefinition.Partition);
+
+                            if (c != null)
+                            {
+                                this.AddPendingActionIfNotQueued(new ExecutionParameters(c.ConfirmingImportRunProfileName), "Unconfirmed export check");
+                            }
+                        }
+                    }
+                }
+
+                foreach (PartitionConfiguration c in this.GetPartitionsRequiringSync())
+                {
+                    if (c.ExportRunProfileName != null)
+                    {
+                        ExecutionParameters p = new ExecutionParameters(c.DeltaSyncRunProfileName);
+                        this.AddPendingActionIfNotQueued(p, "Staged import check");
+                    }
                 }
             }
             finally
@@ -1226,22 +1405,73 @@ namespace Lithnet.Miiserver.AutoSync
         {
             if (e.TargetMA != this.ma.ID)
             {
-                this.Trace($"Ignoring sync complete message from {e.SendingMAName} for {e.TargetMA}");
-
                 return;
             }
 
-            this.Trace($"Got sync complete message from {e.SendingMAName} for {e.TargetMA}");
+            this.Trace($"Got sync complete message from {e.SendingMAName}");
 
-            if (this.CanExport())
+            foreach (PartitionConfiguration c in this.GetPartitionsRequiringExport())
             {
-                ExecutionParameters p = new ExecutionParameters(this.Configuration.ExportRunProfileName);
-                this.AddPendingActionIfNotQueued(p, "Synchronization on " + e.SendingMAName);
+                if (c.ExportRunProfileName != null)
+                {
+                    ExecutionParameters p = new ExecutionParameters(c.ExportRunProfileName);
+                    this.AddPendingActionIfNotQueued(p, "Synchronization on " + e.SendingMAName);
+                }
             }
-            else
+        }
+
+        private IEnumerable<PartitionConfiguration> GetPartitionsRequiringSync()
+        {
+            return this.GetPartitionsRequiringImportOrExport(this.ma.GetPendingImportCSObjectIDAndPartitions, "sync");
+        }
+
+        private IEnumerable<PartitionConfiguration> GetPartitionsRequiringExport()
+        {
+            return this.GetPartitionsRequiringImportOrExport(this.ma.GetPendingExportCSObjectIDAndPartitions, "export");
+        }
+
+        private IEnumerable<PartitionConfiguration> GetPartitionsRequiringImportOrExport(Func<CSObjectEnumerator> enumerator, string mode)
+        {
+            List<PartitionConfiguration> activePartitions = this.Configuration.Partitions.ActiveConfigurations.ToList();
+            Stopwatch watch = Stopwatch.StartNew();
+
+            int activePartitionCount = activePartitions.Count;
+
+            HashSet<Guid> partitionsDetected = new HashSet<Guid>();
+            int objectCount = 0;
+            
+            foreach (CSObject cs in enumerator.Invoke())
             {
-                this.Trace($"Dropping synchronization complete message from {e.SendingMAName} because MA cannot export");
+                objectCount++;
+
+                if (this.detectionMode == PartitionDetectionMode.AssumeAll)
+                {
+                    return activePartitions;
+                }
+
+                if (cs.PartitionGuid == null)
+                {
+                    this.LogWarn($"CSObject did not have a partition ID {cs.DN}");
+                    continue;
+                }
+
+                if (partitionsDetected.Add(cs.PartitionGuid.Value))
+                {
+                    this.Trace($"Found partition requiring {mode} on {cs.PartitionGuid}");
+
+                    if (partitionsDetected.Count >= activePartitionCount)
+                    {
+                        this.Trace($"All active partitions require {mode}");
+                        break;
+                    }
+                }
             }
+
+            watch.Stop();
+
+            this.Trace($"Iterated through {objectCount} objects to find {partitionsDetected.Count} partitions needing {mode} in {watch.Elapsed}");
+
+            return activePartitions.Where(t => partitionsDetected.Contains(t.ID));
         }
 
         private void NotifierTriggerFired(object sender, ExecutionTriggerEventArgs e)
@@ -1283,11 +1513,29 @@ namespace Lithnet.Miiserver.AutoSync
                     if (p.RunProfileType == MARunProfileType.None)
                     {
                         this.LogInfo($"Dropping pending action request from '{source}' as no run profile name or run profile type was specified");
-                        this.RaiseStateChange();
                         return;
                     }
 
-                    p.RunProfileName = this.Configuration.GetRunProfileName(p.RunProfileType);
+                    if (p.PartitionID != Guid.Empty)
+                    {
+                        p.RunProfileName = this.Configuration.GetRunProfileName(p.RunProfileType, p.PartitionID);
+
+                        if (p.RunProfileName == null)
+                        {
+                            this.LogInfo($"Dropping {p.RunProfileType} request from '{source}' as no matching run profile could be found in the specified partition {p.PartitionID}");
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        p.RunProfileName = this.Configuration.GetRunProfileName(p.RunProfileType, p.PartitionName);
+                    }
+
+                    if (string.IsNullOrWhiteSpace(p.RunProfileName))
+                    {
+                        this.LogInfo($"Dropping {p.RunProfileType} request from '{source}' as no matching run profile could be found in the management agent partition {p.PartitionName}");
+                        return;
+                    }
                 }
 
                 if (this.pendingActions.ToArray().Contains(p))
@@ -1328,8 +1576,6 @@ namespace Lithnet.Miiserver.AutoSync
                     this.LogInfo($"Added {p.RunProfileName} to the execution queue (triggered by: {source})");
                 }
 
-                //this.Detail = $"{p.RunProfileName} added by {source}";
-
                 this.UpdateExecutionQueueState();
 
                 this.LogInfo($"Current queue: {this.GetQueueItemNames()}");
@@ -1367,31 +1613,6 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 return queuedNames;
             }
-        }
-
-        private bool HasUnconfirmedExportsInLastRun()
-        {
-            return this.ma.GetLastRun()?.StepDetails?.FirstOrDefault()?.HasUnconfirmedExports() ?? false;
-        }
-
-        private bool ShouldExportPendingChanges()
-        {
-            return this.CanExport() && this.ma.HasPendingExports();
-        }
-
-        private bool CanExport()
-        {
-            return !string.IsNullOrWhiteSpace(this.Configuration.ExportRunProfileName);
-        }
-
-        private bool CanConfirmExport()
-        {
-            return !string.IsNullOrWhiteSpace(this.Configuration.ConfirmingImportRunProfileName);
-        }
-
-        private bool ShouldConfirmExport()
-        {
-            return this.CanConfirmExport() && this.HasUnconfirmedExportsInLastRun();
         }
 
         private void TrySendMail(RunDetails r)

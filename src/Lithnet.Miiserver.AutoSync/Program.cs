@@ -3,7 +3,6 @@ using System.Linq;
 using System.ServiceProcess;
 using Lithnet.Miiserver.Client;
 using System.IO;
-using System.Reflection;
 using System.Timers;
 using System.ServiceModel;
 using System.Threading;
@@ -11,7 +10,6 @@ using System.Threading.Tasks;
 using Timer = System.Timers.Timer;
 using NLog;
 using NLog.Config;
-using NLog.Layouts;
 using NLog.Targets;
 
 namespace Lithnet.Miiserver.AutoSync
@@ -302,8 +300,15 @@ namespace Lithnet.Miiserver.AutoSync
 #if DEBUG
         public static void SetupOutOfBandInstance()
         {
-            NLog.LogManager.Configuration = new NLog.Config.XmlLoggingConfiguration(@"D:\github\lithnet\miis-autosync\src\Lithnet.Miiserver.AutoSync\bin\Debug\Lithnet.Miiserver.AutoSync.exe.config");
+            LogManager.Configuration = new XmlLoggingConfiguration(@"D:\github\lithnet\miis-autosync\src\Lithnet.Miiserver.AutoSync\bin\Debug\Lithnet.Miiserver.AutoSync.exe.config");
+
+            foreach (LoggingRule item in LogManager.Configuration.LoggingRules.Where(t => t.Targets.Any(u => u.Name == "autosync-service-file")))
+            {
+                item.EnableLoggingForLevels(LogLevel.Trace, LogLevel.Fatal);
+            }
+
             LogManager.ReconfigExistingLoggers();
+            
 
             Program.SetupLogger();
             Program.LoadConfiguration();

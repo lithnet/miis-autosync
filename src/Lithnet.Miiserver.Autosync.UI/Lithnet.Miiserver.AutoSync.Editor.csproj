@@ -110,6 +110,8 @@
     <Compile Include="ViewModels\ExecutionMonitorViewModel.cs" />
     <Compile Include="ViewModels\ExecutionMonitorsViewModel.cs" />
     <Compile Include="ViewModels\LoggedMessageViewModel.cs" />
+    <Compile Include="ViewModels\PartitionConfigurationCollectionViewModel.cs" />
+    <Compile Include="ViewModels\PartitionConfigurationViewModel.cs" />
     <Compile Include="ViewModels\RunProfileResultViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
     <Compile Include="ViewModels\MAExecutionTriggerViewModel.cs" />

@@ -55,6 +55,9 @@ namespace Lithnet.Miiserver.AutoSync
         IList<string> GetManagementAgentRunProfileNames(Guid managementAgentID, bool includeMultiStep);
 
         [OperationContract]
+        IList<string> GetManagementAgentRunProfileNamesForPartition(Guid managementAgentID, Guid partitionID, bool includeMultiStep);
+
+        [OperationContract]
         IList<string> GetAllowedTriggerTypesForMA(Guid managementAgentID);
 
         [OperationContract]

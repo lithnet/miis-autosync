@@ -16,7 +16,6 @@ namespace Lithnet.Miiserver.AutoSync
         {
             ProtectedString.EncryptOnWrite = false;
             ConfigFile x = this.Channel.GetConfig();
-            //x.ValidateManagementAgents();
             return x;
         }
 
@@ -84,6 +83,11 @@ namespace Lithnet.Miiserver.AutoSync
         public IList<string> GetManagementAgentRunProfileNames(Guid managementAgentID, bool includeMultiStep)
         {
             return this.Channel.GetManagementAgentRunProfileNames(managementAgentID, includeMultiStep);
+        }
+
+        public IList<string> GetManagementAgentRunProfileNamesForPartition(Guid managementAgentID, Guid partitionID, bool includeMultiStep)
+        {
+            return this.Channel.GetManagementAgentRunProfileNamesForPartition(managementAgentID, partitionID, includeMultiStep);
         }
 
         public IList<string> GetAllowedTriggerTypesForMA(Guid managementAgentID)

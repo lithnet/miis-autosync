@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Management.Automation;
@@ -88,63 +89,11 @@ namespace Lithnet.Miiserver.AutoSync
             return number == 1 ? string.Empty : "s";
         }
 
-        public static bool HasUnconfirmedExports(this RunDetails d)
-        {
-            if (d?.StepDetails == null)
-            {
-                return false;
-            }
-
-            foreach (StepDetails s in d.StepDetails)
-            {
-                if (s.StepDefinition.IsImportStep)
-                {
-                    // If an import is present, before an export step, a confirming import is not required
-                    return false;
-                }
-
-                if (s.StepDefinition.Type == RunStepType.Export)
-                {
-                    // If we get here, an export step has been found that it more recent than any import step
-                    // that may be in the run profile
-                    return s.ExportCounters?.HasChanges ?? false;
-                }
-            }
-
-            return false;
-        }
-
-        public static bool HasStagedImports(this RunDetails d)
-        {
-            if (d?.StepDetails == null)
-            {
-                return false;
-            }
-
-            foreach (StepDetails s in d.StepDetails)
-            {
-                if (s.StepDefinition.IsSyncStep)
-                {
-                    // If a sync is present, before an import step, a sync is not required
-                    return false;
-                }
-
-                if (s.StepDefinition.IsImportStep)
-                {
-                    // If we get here, an import step has been found that it more recent than any sync step
-                    // that may be in the run profile
-                    return s.StagingCounters?.HasChanges ?? false;
-                }
-            }
-
-            return false;
-        }
-
         public static bool HasUnconfirmedExports(this StepDetails s)
         {
             return s?.ExportCounters?.HasChanges ?? false;
         }
-
+        
         public static TResult InvokeThenClose<TChannel, TResult>(this TChannel client, Func<TChannel, TResult> function) where TChannel : ICommunicationObject
         {
             try

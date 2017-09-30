@@ -49,10 +49,16 @@ namespace Lithnet.Miiserver.AutoSync
             registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(runProfileName, exclusive));
         }
 
-        protected void Fire(MARunProfileType type)
+        protected void Fire(MARunProfileType type, Guid partitionID)
         {
             ExecutionTriggerEventHandler registeredHandlers = this.TriggerFired;
-            registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(type));
+            registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(type, partitionID));
+        }
+
+        protected void Fire(MARunProfileType type, string partitionName)
+        {
+            ExecutionTriggerEventHandler registeredHandlers = this.TriggerFired;
+            registeredHandlers?.Invoke(this, new ExecutionTriggerEventArgs(type, partitionName));
         }
 
         protected void Fire(ExecutionParameters p)
