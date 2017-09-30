@@ -30,6 +30,7 @@
     <Property Id="GROUP_FIM_SYNC_ADMINS" Secure="yes"/>
     <Property Id="GROUP_FIM_SYNC_ADMINS_NAME" Secure="yes"/>
     <Property Id="GROUP_FIM_SYNC_ADMINS_IS_LOCAL" Secure="yes"/>
+    <Property Id="GROUP_FIM_SYNC_ADMINS_IS_DOMAIN" Secure="yes"/>
 
     <Property Id="GROUP_ADD_ACTION_FAILED" Secure="yes"/>
 
@@ -177,17 +178,17 @@
 
     <InstallUISequence>
       <Custom Action="GetFimSyncGroups" After="CostFinalize">NOT Installed</Custom>
-      <Custom Action="SetServiceAdminsGroupIfBlank" After="CostFinalize">NOT Installed AND NOT SERVICE_ADMINS_GROUP</Custom>
+      <Custom Action="SetServiceAdminsGroupIfBlank" After="CostFinalize">(NOT Installed) AND (NOT SERVICE_ADMINS_GROUP)</Custom>
     </InstallUISequence>
     <InstallExecuteSequence>
-      <Custom Action="SetIsLocalProperty" Before="InstallFiles">NOT Installed AND NOT SKIPGROUPCHECK</Custom>
-     
-      <Custom Action="CA_SetPropertyValueAsSystem" Before="AddServiceAccountToFimSyncAdminsAsSystem">NOT Installed AND GROUP_FIM_SYNC_ADMINS_IS_LOCAL AND NOT SKIPGROUPCHECK</Custom>
-      <Custom Action="AddServiceAccountToFimSyncAdminsAsSystem" After="InstallFiles">NOT Installed AND GROUP_FIM_SYNC_ADMINS_IS_LOCAL AND NOT SKIPGROUPCHECK</Custom>
+      <Custom Action="SetIsLocalProperty" Before="InstallFiles">(NOT Installed) AND (NOT SKIPGROUPCHECK)</Custom>
 
-      <Custom Action="CA_SetPropertyValueAsCaller" Before="AddServiceAccountToFimSyncAdminsAsCaller">NOT Installed AND NOT GROUP_FIM_SYNC_ADMINS_IS_LOCAL AND NOT SKIPGROUPCHECK</Custom>
-      <Custom Action="AddServiceAccountToFimSyncAdminsAsCaller" After="InstallFiles">NOT Installed AND NOT GROUP_FIM_SYNC_ADMINS_IS_LOCAL AND NOT SKIPGROUPCHECK</Custom>
-    
+      <Custom Action="CA_SetPropertyValueAsSystem" Before="AddServiceAccountToFimSyncAdminsAsSystem">(NOT Installed) AND GROUP_FIM_SYNC_ADMINS_IS_LOCAL</Custom>
+      <Custom Action="AddServiceAccountToFimSyncAdminsAsSystem" After="InstallFiles">(NOT Installed) AND GROUP_FIM_SYNC_ADMINS_IS_LOCAL</Custom>
+
+      <Custom Action="CA_SetPropertyValueAsCaller" Before="AddServiceAccountToFimSyncAdminsAsCaller">(NOT Installed) AND GROUP_FIM_SYNC_ADMINS_IS_DOMAIN</Custom>
+      <Custom Action="AddServiceAccountToFimSyncAdminsAsCaller" After="InstallFiles">(NOT Installed) AND GROUP_FIM_SYNC_ADMINS_IS_DOMAIN</Custom>
+
     </InstallExecuteSequence>
 
   </Product>

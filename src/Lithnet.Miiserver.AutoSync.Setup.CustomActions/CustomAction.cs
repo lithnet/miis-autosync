@@ -19,6 +19,7 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
             string sid = session["GROUP_FIM_SYNC_ADMINS"];
             FindInDomainOrMachineBySid(sid, out bool isMachine);
             session["GROUP_FIM_SYNC_ADMINS_IS_LOCAL"] = isMachine ? "1" : null;
+            session["GROUP_FIM_SYNC_ADMINS_IS_DOMAIN"] = !isMachine ? "1" : null;
 
             return ActionResult.Success;
         }
@@ -44,7 +45,8 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
             }
             else
             {
-                sid = (SecurityIdentifier)new NTAccount("Fim-dev1\\idm-gg-fimadmins").Translate(typeof(SecurityIdentifier));
+                //#warning remove this
+                //sid = (SecurityIdentifier)new NTAccount("Fim-dev1\\idm-gg-fimadmins").Translate(typeof(SecurityIdentifier));
 
                 session.Log("Got administrators group SID");
                 session["GROUP_FIM_SYNC_ADMINS"] = sid.ToString();
@@ -99,7 +101,7 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
                 throw new NoMatchingPrincipalException($"The group {groupName} ({groupSid}) could not be found");
             }
 
-            UserPrincipal user = (UserPrincipal) CustomActions.FindInDomainOrMachine(account, out isMachine);
+            UserPrincipal user = (UserPrincipal)CustomActions.FindInDomainOrMachine(account, out isMachine);
 
             if (user == null)
             {
@@ -121,7 +123,7 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
             }
 
             session.Log($"User {account} was not in group {groupName} ({groupSid})");
-            
+
             try
             {
                 if (gde.Path.StartsWith("winnt", StringComparison.OrdinalIgnoreCase))
@@ -131,7 +133,7 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
                 }
                 else
                 {
-                    DirectoryEntry ude = (DirectoryEntry) user.GetUnderlyingObject();
+                    DirectoryEntry ude = (DirectoryEntry)user.GetUnderlyingObject();
                     session.Log($"Adding {ude.Path} to group {gde.Path}");
                     nativeGroup.Add(ude.Path);
                 }
