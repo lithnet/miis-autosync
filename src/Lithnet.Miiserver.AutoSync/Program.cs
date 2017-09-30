@@ -42,13 +42,22 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static void SetupLogger()
         {
+#if DEBUG
+
             if (System.Diagnostics.Debugger.IsAttached)
             {
                 DebuggerTarget debug = new DebuggerTarget("debug-window") { Layout = "${longdate}|${level:uppercase=true:padding=5}| ${message}" };
                 LogManager.Configuration.AddTarget(debug);
                 LogManager.Configuration.LoggingRules.Add(new LoggingRule("*", LogLevel.Trace, debug));
-                LogManager.ReconfigExistingLoggers();
             }
+
+            foreach (LoggingRule item in LogManager.Configuration.LoggingRules.Where(t => t.Targets.Any(u => u.Name == "autosync-service-file")))
+            {
+                item.EnableLoggingForLevels(LogLevel.Trace, LogLevel.Fatal);
+            }
+
+            LogManager.ReconfigExistingLoggers();
+#endif
 
             Program.logger = LogManager.GetCurrentClassLogger();
         }
