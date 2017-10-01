@@ -8,12 +8,13 @@ using System.Diagnostics;
 using Lithnet.Miiserver.Client;
 using NLog;
 using Timer = System.Timers.Timer;
+using System.Runtime.CompilerServices;
 
 namespace Lithnet.Miiserver.AutoSync
 {
     internal class MAController
     {
-        private const int SpinInterval = 250;
+        private const int SpinInterval = 1000;
 
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -225,6 +226,8 @@ namespace Lithnet.Miiserver.AutoSync
             this.unmanagedChangesCheckTimer.Start();
         }
 
+        private int inUnmangedChangesTimer = 0;
+
         private void UnmanagedChangesCheckTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             if (this.ControlState != ControlState.Running)
@@ -232,7 +235,21 @@ namespace Lithnet.Miiserver.AutoSync
                 return;
             }
 
-            this.CheckAndQueueUnmanagedChanges();
+            if (Interlocked.Exchange(ref this.inUnmangedChangesTimer, 1) == 1)
+            {
+                return;
+            }
+
+            Thread.CurrentThread.SetThreadName($"{this.ManagementAgentName} unmanaged changes check");
+
+            try
+            {
+                this.CheckAndQueueUnmanagedChanges();
+            }
+            finally
+            {
+                this.inUnmangedChangesTimer = 0;
+            }
         }
 
         private void SetupImportTimers()
@@ -584,72 +601,72 @@ namespace Lithnet.Miiserver.AutoSync
             logger.Trace($"{this.ManagementAgentName}: {message}");
         }
 
-        private void Wait(TimeSpan duration, string name, CancellationTokenSource ts)
+        private void Wait(TimeSpan duration, string name, CancellationTokenSource ts, [CallerMemberName]string caller = "")
         {
             ts.Token.ThrowIfCancellationRequested();
-            this.Trace($"SLEEP: {name}: {duration}");
+            this.Trace($"SLEEP: {name}: {duration}: {caller}");
             ts.Token.WaitHandle.WaitOne(duration);
             ts.Token.ThrowIfCancellationRequested();
         }
 
-        private void Wait(ManualResetEvent mre, string name, CancellationTokenSource ts)
+        private void Wait(ManualResetEvent mre, string name, CancellationTokenSource ts, [CallerMemberName]string caller = "")
         {
-            this.Trace($"LOCK: WAIT: {name}");
+            this.Trace($"LOCK: WAIT: {name}: {caller}");
             WaitHandle.WaitAny(new[] { mre, ts.Token.WaitHandle });
             ts.Token.ThrowIfCancellationRequested();
-            this.Trace($"LOCK: CLEARED: {name}");
+            this.Trace($"LOCK: CLEARED: {name}: {caller}");
         }
 
-        private void WaitAndTakeLock(ManualResetEvent mre, string name, CancellationTokenSource ts)
+        private void WaitAndTakeLock(ManualResetEvent mre, string name, CancellationTokenSource ts, [CallerMemberName]string caller = "")
         {
             bool gotLock = false;
 
             try
             {
-                this.Trace($"SYNCOBJECT: WAIT: {name}");
+                this.Trace($"SYNCOBJECT: WAIT: {name}: {caller}");
                 while (!gotLock)
                 {
                     gotLock = Monitor.TryEnter(mre, MAController.SpinInterval);
                     ts.Token.ThrowIfCancellationRequested();
                 }
 
-                this.Trace($"SYNCOBJECT: LOCKED: {name}");
+                this.Trace($"SYNCOBJECT: LOCKED: {name}: {caller}");
 
                 this.Wait(mre, name, ts);
-                this.TakeLockUnsafe(mre, name, ts);
+                this.TakeLockUnsafe(mre, name, ts, caller);
             }
             finally
             {
                 if (gotLock)
                 {
                     Monitor.Exit(mre);
-                    this.Trace($"SYNCOBJECT: UNLOCKED: {name}");
+                    this.Trace($"SYNCOBJECT: UNLOCKED: {name}: {caller}");
                 }
             }
         }
 
-        private void Wait(WaitHandle[] waitHandles, string name, CancellationTokenSource ts)
+        private void Wait(WaitHandle[] waitHandles, string name, CancellationTokenSource ts, [CallerMemberName]string caller = "")
         {
-            this.Trace($"LOCK: WAIT: {name}");
+            this.Trace($"LOCK: WAIT: {name}: {caller}");
             while (!WaitHandle.WaitAll(waitHandles, 1000))
             {
                 ts.Token.ThrowIfCancellationRequested();
             }
 
             ts.Token.ThrowIfCancellationRequested();
-            this.Trace($"LOCK: CLEARED: {name}");
+            this.Trace($"LOCK: CLEARED: {name}: {caller}");
         }
 
-        private void TakeLockUnsafe(ManualResetEvent mre, string name, CancellationTokenSource ts)
+        private void TakeLockUnsafe(ManualResetEvent mre, string name, CancellationTokenSource ts, string caller)
         {
-            this.Trace($"LOCK: TAKE: {name}");
+            this.Trace($"LOCK: TAKE: {name}: {caller}");
             mre.Reset();
             ts.Token.ThrowIfCancellationRequested();
         }
 
-        private void ReleaseLock(ManualResetEvent mre, string name)
+        private void ReleaseLock(ManualResetEvent mre, string name, [CallerMemberName]string caller = "")
         {
-            this.Trace($"LOCK: RELEASE: {name}");
+            this.Trace($"LOCK: RELEASE: {name}: {caller}");
             mre.Set();
         }
 
@@ -808,15 +825,22 @@ namespace Lithnet.Miiserver.AutoSync
 
             try
             {
-                this.UpdateExecutionStatus(ControllerState.Running, "Unmanaged run in progress", this.ma.ExecutingRunProfileName);
+                string erp = this.ma.ExecutingRunProfileName;
+
+                if (erp == null)
+                {
+                    return;
+                }
+
+                this.UpdateExecutionStatus(ControllerState.Running, "Unmanaged run in progress", erp);
                 CancellationTokenSource linkedToken = this.CreateJobTokenSource();
 
                 this.Trace("Unmanaged run in progress");
                 this.WaitAndTakeLock(this.localOperationLock, nameof(this.localOperationLock), linkedToken);
 
-                this.LogInfo($"Waiting on unmanaged run {this.ma.ExecutingRunProfileName} to finish");
+                this.LogInfo($"Waiting on unmanaged run {erp} to finish");
 
-                if (this.ma.RunProfiles[this.ma.ExecutingRunProfileName].RunSteps.Any(t => t.IsSyncStep))
+                if (this.ma.RunProfiles[erp].RunSteps.Any(t => t.IsSyncStep))
                 {
                     this.Trace("Getting sync lock for unmanaged run");
 
@@ -1449,7 +1473,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             HashSet<Guid> partitionsDetected = new HashSet<Guid>();
             int objectCount = 0;
-            
+
             foreach (CSObject cs in enumerator.Invoke())
             {
                 objectCount++;
