@@ -241,9 +241,12 @@ namespace Lithnet.Miiserver.AutoSync
 
             foreach (PartitionConfiguration p in this.Configuration.Partitions.Where(u => u.AutoImportEnabled))
             {
+                double interval = TimeSpan.FromMinutes(Math.Max(p.AutoImportIntervalMinutes, 1)).TotalMilliseconds;
+                bool timerIntervalReset = false;
+
                 Timer t = new Timer();
                 t.AutoReset = true;
-                t.Interval = TimeSpan.FromMinutes(Math.Max(p.AutoImportIntervalMinutes, 1)).TotalMilliseconds;
+                t.Interval = Global.RandomizeOffset(interval);
                 t.Elapsed += (sender, e) =>
                 {
                     if (this.ControlState != ControlState.Running)
@@ -251,9 +254,16 @@ namespace Lithnet.Miiserver.AutoSync
                         return;
                     }
 
+                    if (!timerIntervalReset)
+                    {
+                        t.Interval = interval;
+                        timerIntervalReset = true;
+                    }
+
                     this.AddPendingActionIfNotQueued(new ExecutionParameters(p.ScheduledImportRunProfileName), $"Import timer on {p.Name}");
                 };
 
+                t.Start();
                 this.Trace($"Initialized import timer for partition {p.Name} at interval of {t.Interval}");
                 this.importCheckTimers.Add(p.ID, t);
             }
