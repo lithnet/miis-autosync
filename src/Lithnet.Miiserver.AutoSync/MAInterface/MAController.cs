@@ -14,7 +14,7 @@ namespace Lithnet.Miiserver.AutoSync
 {
     internal class MAController
     {
-        private const int SpinInterval = 1000;
+        private const int MonitorLockWaitInterval = 100;
 
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -248,7 +248,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
             finally
             {
-                this.inUnmangedChangesTimer = 0;
+                Interlocked.Exchange(ref this.inUnmangedChangesTimer, 0);
             }
         }
 
@@ -609,15 +609,15 @@ namespace Lithnet.Miiserver.AutoSync
             ts.Token.ThrowIfCancellationRequested();
         }
 
-        private void Wait(ManualResetEvent mre, string name, CancellationTokenSource ts, [CallerMemberName]string caller = "")
+        private void Wait(WaitHandle wh, string name, CancellationTokenSource ts, [CallerMemberName]string caller = "")
         {
             this.Trace($"LOCK: WAIT: {name}: {caller}");
-            WaitHandle.WaitAny(new[] { mre, ts.Token.WaitHandle });
+            WaitHandle.WaitAny(new[] { wh, ts.Token.WaitHandle });
             ts.Token.ThrowIfCancellationRequested();
             this.Trace($"LOCK: CLEARED: {name}: {caller}");
         }
 
-        private void WaitAndTakeLock(ManualResetEvent mre, string name, CancellationTokenSource ts, [CallerMemberName]string caller = "")
+        private void WaitAndTakeLock(EventWaitHandle mre, string name, CancellationTokenSource ts, [CallerMemberName]string caller = "")
         {
             bool gotLock = false;
 
@@ -626,7 +626,8 @@ namespace Lithnet.Miiserver.AutoSync
                 this.Trace($"SYNCOBJECT: WAIT: {name}: {caller}");
                 while (!gotLock)
                 {
-                    gotLock = Monitor.TryEnter(mre, MAController.SpinInterval);
+                    gotLock = Monitor.TryEnter(mre, MAController.MonitorLockWaitInterval);
+                    ts.Token.WaitHandle.WaitOne(TimeSpan.FromSeconds(1));
                     ts.Token.ThrowIfCancellationRequested();
                 }
 
@@ -657,14 +658,14 @@ namespace Lithnet.Miiserver.AutoSync
             this.Trace($"LOCK: CLEARED: {name}: {caller}");
         }
 
-        private void TakeLockUnsafe(ManualResetEvent mre, string name, CancellationTokenSource ts, string caller)
+        private void TakeLockUnsafe(EventWaitHandle mre, string name, CancellationTokenSource ts, string caller)
         {
             this.Trace($"LOCK: TAKE: {name}: {caller}");
             mre.Reset();
             ts.Token.ThrowIfCancellationRequested();
         }
 
-        private void ReleaseLock(ManualResetEvent mre, string name, [CallerMemberName]string caller = "")
+        private void ReleaseLock(EventWaitHandle mre, string name, [CallerMemberName]string caller = "")
         {
             this.Trace($"LOCK: RELEASE: {name}: {caller}");
             mre.Set();

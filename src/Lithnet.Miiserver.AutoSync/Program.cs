@@ -51,12 +51,15 @@ namespace Lithnet.Miiserver.AutoSync
                 LogManager.Configuration.LoggingRules.Add(new LoggingRule("*", LogLevel.Trace, debug));
             }
 
-            foreach (LoggingRule item in LogManager.Configuration.LoggingRules.Where(t => t.Targets.Any(u => u.Name == "autosync-service-file")))
+            if (LogManager.Configuration != null)
             {
-                item.EnableLoggingForLevels(LogLevel.Trace, LogLevel.Fatal);
-            }
+                foreach (LoggingRule item in LogManager.Configuration.LoggingRules.Where(t => t.Targets.Any(u => u.Name == "autosync-service-file")))
+                {
+                    item.EnableLoggingForLevels(LogLevel.Trace, LogLevel.Fatal);
+                }
 
-            LogManager.ReconfigExistingLoggers();
+                LogManager.ReconfigExistingLoggers();
+            }
 #endif
 
             Program.logger = LogManager.GetCurrentClassLogger();
