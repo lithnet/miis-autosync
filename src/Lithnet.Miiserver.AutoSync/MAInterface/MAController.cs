@@ -18,10 +18,11 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        protected static ManualResetEvent GlobalStaggeredExecutionLock;
+        protected static SemaphoreSlim GlobalStaggeredExecutionLock;
         protected static ManualResetEvent GlobalExclusiveOperationLock;
-        protected static ManualResetEvent GlobalSynchronizationStepLock;
-        protected static ConcurrentDictionary<Guid, ManualResetEvent> AllMaLocalOperationLocks;
+        protected static SemaphoreSlim GlobalExclusiveOperationLockSemaphore;
+        protected static SemaphoreSlim GlobalSynchronizationStepLock;
+        protected static ConcurrentDictionary<Guid, SemaphoreSlim> AllMaLocalOperationLocks;
 
         public delegate void SyncCompleteEventHandler(object sender, SyncCompleteEventArgs e);
         public static event SyncCompleteEventHandler SyncComplete;
@@ -35,8 +36,8 @@ namespace Lithnet.Miiserver.AutoSync
         public delegate void MessageLoggedEventHandler(object sender, MessageLoggedEventArgs e);
         public event MessageLoggedEventHandler MessageLogged;
 
-        private ManualResetEvent localOperationLock;
-        private ManualResetEvent serviceControlLock;
+        private SemaphoreSlim localOperationLock;
+        private SemaphoreSlim serviceControlLock;
         private Timer unmanagedChangesCheckTimer;
         private CancellationTokenSource controllerCancellationTokenSource;
         private CancellationTokenSource jobCancellationTokenSource;
@@ -154,10 +155,11 @@ namespace Lithnet.Miiserver.AutoSync
 
         static MAController()
         {
-            MAController.GlobalSynchronizationStepLock = new ManualResetEvent(true);
-            MAController.GlobalStaggeredExecutionLock = new ManualResetEvent(true);
+            MAController.GlobalSynchronizationStepLock = new SemaphoreSlim(1, 1);
+            MAController.GlobalStaggeredExecutionLock = new SemaphoreSlim(1, 1);
+            MAController.GlobalExclusiveOperationLockSemaphore = new SemaphoreSlim(1, 1);
             MAController.GlobalExclusiveOperationLock = new ManualResetEvent(true);
-            MAController.AllMaLocalOperationLocks = new ConcurrentDictionary<Guid, ManualResetEvent>();
+            MAController.AllMaLocalOperationLocks = new ConcurrentDictionary<Guid, SemaphoreSlim>();
         }
 
         public MAController(ManagementAgent ma)
@@ -167,8 +169,8 @@ namespace Lithnet.Miiserver.AutoSync
             this.InternalStatus = new MAStatus() { ManagementAgentName = this.ma.Name, ManagementAgentID = this.ma.ID };
             this.ControlState = ControlState.Stopped;
             this.ExecutionTriggers = new List<IMAExecutionTrigger>();
-            this.localOperationLock = new ManualResetEvent(true);
-            this.serviceControlLock = new ManualResetEvent(true);
+            this.localOperationLock = new SemaphoreSlim(1, 1);
+            this.serviceControlLock = new SemaphoreSlim(1, 1);
             MAController.AllMaLocalOperationLocks.TryAdd(this.ma.ID, this.localOperationLock);
             MAController.SyncComplete += this.MAController_SyncComplete;
         }
@@ -617,22 +619,23 @@ namespace Lithnet.Miiserver.AutoSync
             this.Trace($"LOCK: CLEARED: {name}: {caller}");
         }
 
-        private void WaitAndTakeLock(EventWaitHandle mre, string name, CancellationTokenSource ts, [CallerMemberName]string caller = "")
+        private void WaitAndTakeLock(SemaphoreSlim mre, string name, CancellationTokenSource ts, [CallerMemberName]string caller = "")
+        {
+            this.Trace($"LOCK: WAIT: {name}: {caller}");
+            mre.Wait(ts.Token);
+            this.Trace($"LOCK: TAKE: {name}: {caller}");
+        }
+
+        private void WaitAndTakeLockWithSemaphore(EventWaitHandle mre, SemaphoreSlim sem, string name, CancellationTokenSource ts, [CallerMemberName]string caller = "")
         {
             bool gotLock = false;
 
             try
             {
                 this.Trace($"SYNCOBJECT: WAIT: {name}: {caller}");
-                while (!gotLock)
-                {
-                    gotLock = Monitor.TryEnter(mre, MAController.MonitorLockWaitInterval);
-                    ts.Token.WaitHandle.WaitOne(TimeSpan.FromSeconds(1));
-                    ts.Token.ThrowIfCancellationRequested();
-                }
-
+                sem.Wait(ts.Token);
+                gotLock = true;
                 this.Trace($"SYNCOBJECT: LOCKED: {name}: {caller}");
-
                 this.Wait(mre, name, ts);
                 this.TakeLockUnsafe(mre, name, ts, caller);
             }
@@ -640,7 +643,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 if (gotLock)
                 {
-                    Monitor.Exit(mre);
+                    sem.Release();
                     this.Trace($"SYNCOBJECT: UNLOCKED: {name}: {caller}");
                 }
             }
@@ -669,6 +672,12 @@ namespace Lithnet.Miiserver.AutoSync
         {
             this.Trace($"LOCK: RELEASE: {name}: {caller}");
             mre.Set();
+        }
+
+        private void ReleaseLock(SemaphoreSlim mre, string name, [CallerMemberName] string caller = "")
+        {
+            this.Trace($"LOCK: RELEASE: {name}: {caller}");
+            mre.Release();
         }
 
         private void RaiseRunProfileComplete(string runProfileName, string lastStepStatus, int runNumber, DateTime? startTime, DateTime? endTime)
@@ -1199,7 +1208,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void TakeLocksAndExecute(ExecutionParameters action)
         {
-            ConcurrentBag<ManualResetEvent> otherLocks = new ConcurrentBag<ManualResetEvent>();
+            ConcurrentBag<SemaphoreSlim> otherLocks = new ConcurrentBag<SemaphoreSlim>();
 
             try
             {
@@ -1216,13 +1225,13 @@ namespace Lithnet.Miiserver.AutoSync
                     this.LogInfo($"Entering exclusive mode for {action.RunProfileName}");
 
                     // Signal all controllers to wait before running their next job
-                    this.WaitAndTakeLock(MAController.GlobalExclusiveOperationLock, nameof(MAController.GlobalExclusiveOperationLock), this.jobCancellationTokenSource);
+                    this.WaitAndTakeLockWithSemaphore(MAController.GlobalExclusiveOperationLock, MAController.GlobalExclusiveOperationLockSemaphore, nameof(MAController.GlobalExclusiveOperationLock), this.jobCancellationTokenSource);
                     this.HasExclusiveLock = true;
 
                     this.Message = "Waiting for other MAs to finish";
                     this.LogInfo("Waiting for all MAs to complete");
                     // Wait for all  MAs to finish their current job
-                    this.Wait(MAController.AllMaLocalOperationLocks.Values.ToArray<WaitHandle>(), nameof(MAController.AllMaLocalOperationLocks), this.jobCancellationTokenSource);
+                    this.Wait(MAController.AllMaLocalOperationLocks.Values.Select(t => t.AvailableWaitHandle).ToArray<WaitHandle>(), nameof(MAController.AllMaLocalOperationLocks), this.jobCancellationTokenSource);
                 }
 
                 if (this.StepRequiresSyncLock(action.RunProfileName))
@@ -1260,7 +1269,7 @@ namespace Lithnet.Miiserver.AutoSync
                         tasks.Add(Task.Run(() =>
                         {
                             Thread.CurrentThread.SetThreadName($"Get localOperationLock on {managementAgent} for {this.ManagementAgentName}");
-                            ManualResetEvent h = MAController.AllMaLocalOperationLocks[id.Value];
+                            SemaphoreSlim h = MAController.AllMaLocalOperationLocks[id.Value];
                             this.WaitAndTakeLock(h, $"localOperationLock for {managementAgent}", this.jobCancellationTokenSource);
                             otherLocks.Add(h);
                             this.HasForeignLock = true;
@@ -1320,7 +1329,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 if (otherLocks.Any())
                 {
-                    foreach (ManualResetEvent e in otherLocks)
+                    foreach (SemaphoreSlim e in otherLocks)
                     {
                         this.ReleaseLock(e, "foreign localOperationLock");
                     }

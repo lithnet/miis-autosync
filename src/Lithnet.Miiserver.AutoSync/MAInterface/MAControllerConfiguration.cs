@@ -13,7 +13,7 @@ namespace Lithnet.Miiserver.AutoSync
     [KnownType(typeof(IntervalExecutionTrigger))]
     [KnownType(typeof(PowerShellExecutionTrigger))]
     [KnownType(typeof(ScheduledExecutionTrigger))]
-    public class MAControllerConfiguration 
+    public class MAControllerConfiguration
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -23,7 +23,7 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "name")]
         public string ManagementAgentName { get; set; }
 
-        [DataMember(Name = "is-missing")]
+        [DataMember(Name = "is-missing", EmitDefaultValue = false)]
         public bool IsMissing { get; set; }
 
         [DataMember(Name = "version")]
@@ -93,7 +93,7 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "partitions")]
         public PartitionConfigurationCollection Partitions { get; set; }
 
-        
+
         [DataMember(Name = "controller-script-path")]
         public string MAControllerPath { get; set; }
 
