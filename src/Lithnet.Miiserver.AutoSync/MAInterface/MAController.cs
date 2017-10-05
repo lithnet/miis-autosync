@@ -603,27 +603,34 @@ namespace Lithnet.Miiserver.AutoSync
             logger.Trace($"{this.ManagementAgentName}: {message}");
         }
 
+        private void Debug(string message)
+        {
+#if DEBUG
+            logger.Trace($"{this.ManagementAgentName}: {message}");
+#endif
+        }
+
         private void Wait(TimeSpan duration, string name, CancellationTokenSource ts, [CallerMemberName]string caller = "")
         {
             ts.Token.ThrowIfCancellationRequested();
-            this.Trace($"SLEEP: {name}: {duration}: {caller}");
+            this.Debug($"SLEEP: {name}: {duration}: {caller}");
             ts.Token.WaitHandle.WaitOne(duration);
             ts.Token.ThrowIfCancellationRequested();
         }
 
         private void Wait(WaitHandle wh, string name, CancellationTokenSource ts, [CallerMemberName]string caller = "")
         {
-            this.Trace($"LOCK: WAIT: {name}: {caller}");
+            this.Debug($"LOCK: WAIT: {name}: {caller}");
             WaitHandle.WaitAny(new[] { wh, ts.Token.WaitHandle });
             ts.Token.ThrowIfCancellationRequested();
-            this.Trace($"LOCK: CLEARED: {name}: {caller}");
+            this.Debug($"LOCK: CLEARED: {name}: {caller}");
         }
 
         private void WaitAndTakeLock(SemaphoreSlim mre, string name, CancellationTokenSource ts, [CallerMemberName]string caller = "")
         {
-            this.Trace($"LOCK: WAIT: {name}: {caller}");
+            this.Debug($"LOCK: WAIT: {name}: {caller}");
             mre.Wait(ts.Token);
-            this.Trace($"LOCK: TAKE: {name}: {caller}");
+            this.Debug($"LOCK: TAKE: {name}: {caller}");
         }
 
         private void WaitAndTakeLockWithSemaphore(EventWaitHandle mre, SemaphoreSlim sem, string name, CancellationTokenSource ts, [CallerMemberName]string caller = "")
@@ -632,10 +639,10 @@ namespace Lithnet.Miiserver.AutoSync
 
             try
             {
-                this.Trace($"SYNCOBJECT: WAIT: {name}: {caller}");
+                this.Debug($"SYNCOBJECT: WAIT: {name}: {caller}");
                 sem.Wait(ts.Token);
                 gotLock = true;
-                this.Trace($"SYNCOBJECT: LOCKED: {name}: {caller}");
+                this.Debug($"SYNCOBJECT: LOCKED: {name}: {caller}");
                 this.Wait(mre, name, ts);
                 this.TakeLockUnsafe(mre, name, ts, caller);
             }
@@ -644,44 +651,44 @@ namespace Lithnet.Miiserver.AutoSync
                 if (gotLock)
                 {
                     sem.Release();
-                    this.Trace($"SYNCOBJECT: UNLOCKED: {name}: {caller}");
+                    this.Debug($"SYNCOBJECT: UNLOCKED: {name}: {caller}");
                 }
             }
         }
 
         private void Wait(WaitHandle[] waitHandles, string name, CancellationTokenSource ts, [CallerMemberName]string caller = "")
         {
-            this.Trace($"LOCK: WAIT: {name}: {caller}");
+            this.Debug($"LOCK: WAIT: {name}: {caller}");
             while (!WaitHandle.WaitAll(waitHandles, 1000))
             {
                 ts.Token.ThrowIfCancellationRequested();
             }
 
             ts.Token.ThrowIfCancellationRequested();
-            this.Trace($"LOCK: CLEARED: {name}: {caller}");
+            this.Debug($"LOCK: CLEARED: {name}: {caller}");
         }
 
         private void TakeLockUnsafe(EventWaitHandle mre, string name, CancellationTokenSource ts, string caller)
         {
-            this.Trace($"LOCK: TAKE: {name}: {caller}");
+            this.Debug($"LOCK: TAKE: {name}: {caller}");
             mre.Reset();
             ts.Token.ThrowIfCancellationRequested();
         }
 
         private void ReleaseLock(EventWaitHandle mre, string name, [CallerMemberName]string caller = "")
         {
-            this.Trace($"LOCK: RELEASE: {name}: {caller}");
+            this.Debug($"LOCK: RELEASE: {name}: {caller}");
             mre.Set();
         }
 
         private void ReleaseLock(SemaphoreSlim mre, string name, [CallerMemberName] string caller = "")
         {
-            this.Trace($"LOCK: RELEASE: {name}: {caller}");
+            this.Debug($"LOCK: RELEASE: {name}: {caller}");
             mre.Release();
         }
 
         private void RaiseRunProfileComplete(string runProfileName, string lastStepStatus, int runNumber, DateTime? startTime, DateTime? endTime)
-        {
+        { 
             Task.Run(() =>
             {
                 try
