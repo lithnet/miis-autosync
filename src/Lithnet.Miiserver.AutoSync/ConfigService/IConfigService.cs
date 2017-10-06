@@ -70,6 +70,9 @@ namespace Lithnet.Miiserver.AutoSync
         IList<Guid> GetManagementAgentsPendingRestart();
 
         [OperationContract]
+        string GetMAData(Guid managementAgentID);
+
+        [OperationContract]
         void RestartChangedControllers();
         
         [OperationContract]

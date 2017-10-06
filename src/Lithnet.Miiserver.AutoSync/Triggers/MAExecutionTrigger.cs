@@ -5,7 +5,7 @@ using NLog;
 
 namespace Lithnet.Miiserver.AutoSync
 {
-    [DataContract(Name ="ma-execution-trigger")]
+    [DataContract(Name = "ma-execution-trigger")]
     [KnownType(typeof(ActiveDirectoryChangeTrigger))]
     [KnownType(typeof(FimServicePendingImportTrigger))]
     [KnownType(typeof(IntervalExecutionTrigger))]
@@ -15,8 +15,8 @@ namespace Lithnet.Miiserver.AutoSync
     {
         protected static Logger Logger = LogManager.GetCurrentClassLogger();
 
-        public static IList<Type> SingleInstanceTriggers = new List<Type>() {typeof(ActiveDirectoryChangeTrigger), typeof(FimServicePendingImportTrigger)};
-        
+        public static IList<Type> SingleInstanceTriggers = new List<Type>() { typeof(FimServicePendingImportTrigger) };
+
         public abstract string DisplayName { get; }
 
         public abstract string Type { get; }

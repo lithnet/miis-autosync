@@ -87,12 +87,12 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             MessageBoxResult result = MessageBox.Show("This will permanently remove all the configuration for this management agent. Are you sure you want to continue?",
                 "Confirm removal of configuration",
-                MessageBoxButton.OKCancel, 
+                MessageBoxButton.OKCancel,
                 MessageBoxImage.Warning);
 
             if (result == MessageBoxResult.OK)
             {
-                ((MAControllerConfigurationCollectionViewModel) this.Parent).Remove(this);
+                ((MAControllerConfigurationCollectionViewModel)this.Parent).Remove(this);
                 this.IsDeleted = true;
             }
         }
@@ -196,8 +196,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         }
 
         public PartitionConfigurationCollectionViewModel Partitions { get; private set; }
-
-
+        
         public IEnumerable<string> RunProfileNames => this.GetRunProfileNames(true);
 
         public IEnumerable<string> SingleStepRunProfileNames => this.GetRunProfileNames(false);

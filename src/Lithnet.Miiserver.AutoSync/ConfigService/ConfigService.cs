@@ -341,5 +341,11 @@ namespace Lithnet.Miiserver.AutoSync
         {
             return RegistrySettings.AutoStartEnabled;
         }
+
+        public string GetMAData(Guid managementAgentID)
+        {
+            ManagementAgent ma = ManagementAgent.GetManagementAgent(managementAgentID);
+            return ma.GetOuterXml();
+        }
     }
 }

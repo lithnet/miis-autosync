@@ -47,6 +47,9 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "base-dn")]
         public string BaseDN { get; set; }
 
+        [DataMember(Name = "run-profile-name")]
+        public string RunProfileName { get; set; }
+        
         [DataMember(Name = "object-classes")]
         public string[] ObjectClasses { get; set; }
 
@@ -82,7 +85,14 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void Fire()
         {
-            this.Fire(MARunProfileType.DeltaImport, this.BaseDN);
+            if (this.RunProfileName == null)
+            {
+                this.Fire(MARunProfileType.DeltaImport, this.BaseDN);
+            }
+            else
+            {
+                this.Fire(this.RunProfileName);
+            }
 
             this.nextTriggerAfter = DateTime.Now.Add(this.MinimumIntervalBetweenEvents);
             this.Trace($"Trigger fired. Suppressing further updates until {this.nextTriggerAfter}");
@@ -300,11 +310,11 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public override string DisplayName => $"{this.Type} ({this.HostName})";
+        public override string DisplayName => $"{this.Type} ({this.BaseDN})";
 
         public override string Type => TypeDescription;
 
-        public override string Description => $"{this.HostName}";
+        public override string Description => $"{this.BaseDN}";
 
         public override string ToString()
         {
@@ -352,6 +362,10 @@ namespace Lithnet.Miiserver.AutoSync
                 throw new InvalidOperationException("The specified management agent is not an AD or LDS management agent");
             }
 
+            this.LastLogonTimestampOffset = new TimeSpan(0, 5, 0);
+            this.MinimumIntervalBetweenEvents = new TimeSpan(0, 1, 0);
+            this.UseExplicitCredentials = false;
+
             string privateData = ma.ExportManagementAgent();
 
             XmlDocument d = new XmlDocument();
@@ -359,14 +373,16 @@ namespace Lithnet.Miiserver.AutoSync
 
             XmlNode partitionNode = d.SelectSingleNode("/export-ma/ma-data/ma-partition-data/partition[selected=1 and custom-data/adma-partition-data[is-domain=1]]");
 
-            this.HostName = d.SelectSingleNode("/export-ma/ma-data/private-configuration/adma-configuration/forest-name")?.InnerText;
-            this.BaseDN = partitionNode?.SelectSingleNode("custom-data/adma-partition-data/dn")?.InnerText;
-            this.ObjectClasses = partitionNode?.SelectNodes("filter/object-classes/object-class")?.OfType<XmlElement>().Where(t => t.InnerText != "container" && t.InnerText != "domainDNS" && t.InnerText != "organizationalUnit").Select(u => u.InnerText).ToArray();
-            this.LastLogonTimestampOffset = new TimeSpan(0, 5, 0);
-            this.MinimumIntervalBetweenEvents = new TimeSpan(0, 1, 0);
-            this.UseExplicitCredentials = false;
-        }
+            if (partitionNode == null)
+            {
+                return;
+            }
 
+            this.HostName = partitionNode.SelectSingleNode("custom-data/adma-partition-data/name")?.InnerText;
+            this.BaseDN = partitionNode.SelectSingleNode("custom-data/adma-partition-data/dn")?.InnerText;
+            this.ObjectClasses = partitionNode.SelectNodes("filter/object-classes/object-class")?.OfType<XmlElement>().Where(t => t.InnerText != "container" && t.InnerText != "domainDNS" && t.InnerText != "organizationalUnit").Select(u => u.InnerText).ToArray();
+        }
+        
         private void Initialize()
         {
             this.lockObject = new object();

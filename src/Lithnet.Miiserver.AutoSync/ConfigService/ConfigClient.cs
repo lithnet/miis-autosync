@@ -110,6 +110,11 @@ namespace Lithnet.Miiserver.AutoSync
             return this.Channel.GetManagementAgentsPendingRestart();
         }
 
+        public string GetMAData(Guid managementAgentID)
+        {
+            return this.Channel.GetMAData(managementAgentID);
+        }
+
         public void RestartChangedControllers()
         {
             this.Channel.RestartChangedControllers();
