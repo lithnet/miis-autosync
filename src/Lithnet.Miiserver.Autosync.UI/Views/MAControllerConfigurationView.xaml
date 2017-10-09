@@ -41,105 +41,108 @@
                         </TabItem>
 
                         <TabItem Header="Run Profiles" IsEnabled="{Binding IsEnabled}" ui:OnlineHelpProvider.HelpTopic="Management-agent-configuration#run-profiles">
-                            <StackPanel>
+                            <Grid Margin="25 10 0 0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition  />
+                                    <RowDefinition  />
+                                    <RowDefinition  />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
                                 <TextBlock TextWrapping="Wrap"
-                                   Margin="0 20 0 5"
-                                   Text="Specify the run profiles that AutoSync should use for the listed operations. AutoSync supports only single-step run profiles for automatic operations."/>
-                                <Grid Margin="25 10 0 0">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition  />
-                                        <RowDefinition  />
-                                    </Grid.RowDefinitions>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="1*"/>
-                                        <ColumnDefinition Width="3*"/>
-                                    </Grid.ColumnDefinitions>
+                                                 Grid.Row="0"
+                                                 Grid.Column="0"
+                                                 Grid.ColumnSpan="2"
+                                                 Margin="0 20 0 5"
+                                                 Text="Specify the run profiles that AutoSync should use for the listed operations in each partition. AutoSync supports only single-step run profiles for automatic operations."/>
 
-                                    <ListBox Grid.Row="0"
+                                <ListBox Grid.Row="1"
                                               Grid.Column="0"
                                               Margin="10"
                                               Name="ListViewPartitions"
                                               SelectionMode="Single"
+                                              Width="200"
                                               ItemsSource="{Binding Path=Partitions}"
                                               BorderThickness="1">
-                                        <ListBox.Resources>
-                                            <Style TargetType="{x:Type ListBoxItem}">
-                                                <Setter Property="IsSelected" Value="{Binding Path=IsSelected, Mode=TwoWay}"/>
-                                            </Style>
-                                        </ListBox.Resources>
-                                        <ListBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding Path=Name, Mode=OneWay}"/>
-                                            </DataTemplate>
-                                        </ListBox.ItemTemplate>
-                                    </ListBox>
+                                    <ListBox.Resources>
+                                        <Style TargetType="{x:Type ListBoxItem}">
+                                            <Setter Property="IsSelected" Value="{Binding Path=IsSelected, Mode=TwoWay}"/>
+                                        </Style>
+                                    </ListBox.Resources>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Path=Name, Mode=OneWay}"/>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
 
-                                    <Grid Margin="10" Grid.Row="0"  Grid.Column="1" DataContext="{Binding Path=SelectedItem, ElementName=ListViewPartitions}" >
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition  />
-                                            <RowDefinition  />
-                                            <RowDefinition  />
-                                            <RowDefinition  />
-                                            <RowDefinition  />
-                                            <RowDefinition  />
-                                            <RowDefinition  />
-                                            <RowDefinition  />
-                                            <RowDefinition  />
-                                        </Grid.RowDefinitions>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="200"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
+                                <Grid Margin="10" Grid.Row="1"  Grid.Column="1" DataContext="{Binding Path=SelectedItem, ElementName=ListViewPartitions}" >
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition  />
+                                        <RowDefinition  />
+                                        <RowDefinition  />
+                                        <RowDefinition  />
+                                        <RowDefinition  />
+                                        <RowDefinition  />
+                                        <RowDefinition  />
+                                        <RowDefinition  />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="200"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
 
-                                        <Label Grid.Row="0" Grid.Column="0" Content="Confirming import" ToolTip="{Binding Path=ConfirmingImportRunProfileToolTip}"/>
-                                        <ComboBox Grid.Row="0" Grid.Column="1" ToolTip="{Binding Path=ConfirmingImportRunProfileToolTip}"
+                                    <Label Grid.Row="0" Grid.Column="0" Content="Confirming import" ToolTip="{Binding Path=ConfirmingImportRunProfileToolTip}"/>
+                                    <ComboBox Grid.Row="0" Grid.Column="1" ToolTip="{Binding Path=ConfirmingImportRunProfileToolTip}"
                   ItemsSource="{Binding SingleStepRunProfileNames}"
                   SelectedItem="{Binding ConfirmingImportRunProfileName}"/>
 
-                                        <Label Grid.Row="1" Grid.Column="0" Content="Delta import" ToolTip="{Binding Path=DeltaImportRunProfileToolTip}"/>
-                                        <ComboBox Grid.Row="1" Grid.Column="1" ToolTip="{Binding Path=DeltaImportRunProfileToolTip}"
+                                    <Label Grid.Row="1" Grid.Column="0" Content="Delta import" ToolTip="{Binding Path=DeltaImportRunProfileToolTip}"/>
+                                    <ComboBox Grid.Row="1" Grid.Column="1" ToolTip="{Binding Path=DeltaImportRunProfileToolTip}"
                   ItemsSource="{Binding SingleStepRunProfileNames}"
                   SelectedItem="{Binding DeltaImportRunProfileName}"/>
 
-                                        <Label Grid.Row="2" Grid.Column="0" Content="Delta sync" ToolTip="{Binding Path=DeltaSyncRunProfileToolTip}"/>
-                                        <ComboBox Grid.Row="2" Grid.Column="1" ToolTip="{Binding Path=DeltaSyncRunProfileToolTip}"
+                                    <Label Grid.Row="2" Grid.Column="0" Content="Delta sync" ToolTip="{Binding Path=DeltaSyncRunProfileToolTip}"/>
+                                    <ComboBox Grid.Row="2" Grid.Column="1" ToolTip="{Binding Path=DeltaSyncRunProfileToolTip}"
                   ItemsSource="{Binding SingleStepRunProfileNames}"
                   SelectedItem="{Binding DeltaSyncRunProfileName}"/>
 
-                                        <Label Grid.Row="3" Grid.Column="0" Content="Export" ToolTip="{Binding Path=ExportRunProfileToolTip}"/>
-                                        <ComboBox Grid.Row="3" Grid.Column="1" ToolTip="{Binding Path=ExportRunProfileToolTip}"
+                                    <Label Grid.Row="3" Grid.Column="0" Content="Export" ToolTip="{Binding Path=ExportRunProfileToolTip}"/>
+                                    <ComboBox Grid.Row="3" Grid.Column="1" ToolTip="{Binding Path=ExportRunProfileToolTip}"
                   ItemsSource="{Binding SingleStepRunProfileNames}"
                   SelectedItem="{Binding ExportRunProfileName}"/>
 
-                                        <Label Grid.Row="4" Grid.Column="0" Content="Full import" ToolTip="{Binding Path=FullImportRunProfileToolTip}"/>
-                                        <ComboBox Grid.Row="4" Grid.Column="1" ToolTip="{Binding Path=FullImportRunProfileToolTip}"
+                                    <Label Grid.Row="4" Grid.Column="0" Content="Full import" ToolTip="{Binding Path=FullImportRunProfileToolTip}"/>
+                                    <ComboBox Grid.Row="4" Grid.Column="1" ToolTip="{Binding Path=FullImportRunProfileToolTip}"
                   ItemsSource="{Binding SingleStepRunProfileNames}" 
                   SelectedItem="{Binding FullImportRunProfileName}"/>
 
-                                        <Label Grid.Row="5" Grid.Column="0" Content="Full sync" ToolTip="{Binding Path=FullSyncRunProfileToolTip}"/>
-                                        <ComboBox Grid.Row="5" Grid.Column="1" ToolTip="{Binding Path=FullSyncRunProfileToolTip}"
+                                    <Label Grid.Row="5" Grid.Column="0" Content="Full sync" ToolTip="{Binding Path=FullSyncRunProfileToolTip}"/>
+                                    <ComboBox Grid.Row="5" Grid.Column="1" ToolTip="{Binding Path=FullSyncRunProfileToolTip}"
                   ItemsSource="{Binding SingleStepRunProfileNames}"
                   SelectedItem="{Binding FullSyncRunProfileName}"/>
 
 
-                                        <Label Grid.Row="6" Grid.Column="0" Content="Scheduled import" ToolTip="{Binding Path=ScheduledImportRunProfileToolTip}"/>
-                                        <ComboBox Grid.Row="6" Grid.Column="1" ToolTip="{Binding Path=ScheduledImportRunProfileToolTip}"
+                                    <Label Grid.Row="6" Grid.Column="0" Margin="0 20 0 0"  Content="Scheduled import" ToolTip="{Binding Path=ScheduledImportRunProfileToolTip}"/>
+                                    <ComboBox Grid.Row="6" Grid.Column="1"  Margin="0 20 0 0" ToolTip="{Binding Path=ScheduledImportRunProfileToolTip}"
                   ItemsSource="{Binding SingleStepRunProfileNames}"
                   SelectedItem="{Binding ScheduledImportRunProfileName}"
                                                   IsEnabled="{Binding Path=ScheduleImports}"/>
+                                </Grid>
 
-                                        <StackPanel Orientation="Horizontal" Grid.Row="7" Grid.Column="1">
-                                            <CheckBox IsChecked="{Binding Path=ScheduleImports}" />
-                                            <Label Content="Schedule an import if it has been longer than"/>
-                                            <controls:NumericUpDown   Value="{Binding Path=AutoImportIntervalMinutes}" 
+                                <WrapPanel Margin="10 0 10 10" Orientation="Horizontal" Grid.Row="2" Grid.Column="1" DataContext="{Binding Path=SelectedItem, ElementName=ListViewPartitions}">
+                                    <CheckBox IsChecked="{Binding Path=ScheduleImports}" />
+                                    <Label Content="Schedule an import if it has been longer than"/>
+                                    <controls:NumericUpDown   Value="{Binding Path=AutoImportIntervalMinutes}" 
                                                                       Minimum="0"
                                                                       HasDecimals="False"
                                                                       IsEnabled="{Binding Path=ScheduleImports}"/>
-                                            <Label Content="minutes since the last import operation"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </Grid>
-                            </StackPanel>
+                                    <Label Content="minutes since the last import operation"/>
+                                </WrapPanel>
+
+                            </Grid>
                         </TabItem>
 
                         <TabItem Header="Triggers" IsEnabled="{Binding IsEnabled}" ui:OnlineHelpProvider.HelpTopic="Management-agent-configuration#triggers">
