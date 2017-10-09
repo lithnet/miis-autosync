@@ -376,6 +376,8 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     this.LogInfo($"Unregistering execution trigger '{t.DisplayName}'");
                     t.TriggerFired -= this.NotifierTriggerFired;
+                    t.Message -= this.NotifierTriggerMessage;
+                    t.Error -= this.NotifierTriggerError;
                     t.Stop();
                 }
                 catch (OperationCanceledException)
