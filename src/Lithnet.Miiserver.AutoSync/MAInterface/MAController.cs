@@ -842,6 +842,8 @@ namespace Lithnet.Miiserver.AutoSync
                 return;
             }
 
+            bool hasLocalLock = false;
+
             try
             {
                 string erp = this.ma.ExecutingRunProfileName;
@@ -856,6 +858,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 this.Trace("Unmanaged run in progress");
                 this.WaitAndTakeLock(this.localOperationLock, nameof(this.localOperationLock), linkedToken);
+                hasLocalLock = true;
 
                 this.LogInfo($"Waiting on unmanaged run {erp} to finish");
 
@@ -894,7 +897,11 @@ namespace Lithnet.Miiserver.AutoSync
             }
             finally
             {
-                this.ReleaseLock(this.localOperationLock, nameof(this.localOperationLock));
+                if (hasLocalLock)
+                {
+                    this.ReleaseLock(this.localOperationLock, nameof(this.localOperationLock));
+                }
+
                 this.Trace("Unmanaged run complete");
                 this.UpdateExecutionStatus(ControllerState.Idle, null, null);
             }
@@ -959,14 +966,16 @@ namespace Lithnet.Miiserver.AutoSync
                 return;
             }
 
+            bool gotLock = false;
+
             try
             {
                 logger.Info($"Preparing to start controller for {config.ManagementAgentName}");
 
                 this.WaitAndTakeLock(this.serviceControlLock, nameof(this.serviceControlLock), this.controllerCancellationTokenSource);
-
+                gotLock = true;
                 this.ControlState = ControlState.Starting;
-
+                Thread.Sleep(Global.RandomizeOffset(TimeSpan.FromSeconds(5).TotalMilliseconds));
                 this.pendingActionList = new ExecutionParameterCollection();
                 this.pendingActions = new BlockingCollection<ExecutionParameters>(this.pendingActionList);
                 this.perProfileLastRunStatus = new Dictionary<string, string>();
@@ -1015,7 +1024,10 @@ namespace Lithnet.Miiserver.AutoSync
             }
             finally
             {
-                this.ReleaseLock(this.serviceControlLock, nameof(this.serviceControlLock));
+                if (gotLock)
+                {
+                    this.ReleaseLock(this.serviceControlLock, nameof(this.serviceControlLock));
+                }
             }
         }
 
@@ -1045,9 +1057,12 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void Stop(bool cancelRun)
         {
+            bool gotLock = false;
+
             try
             {
                 this.WaitAndTakeLock(this.serviceControlLock, nameof(this.serviceControlLock), this.controllerCancellationTokenSource ?? new CancellationTokenSource());
+                gotLock = true;
 
                 if (this.ControlState == ControlState.Stopped || this.ControlState == ControlState.Disabled)
                 {
@@ -1110,7 +1125,11 @@ namespace Lithnet.Miiserver.AutoSync
                 this.internalTask = null;
                 this.InternalStatus.Clear();
                 this.ControlState = ControlState.Stopped;
-                this.ReleaseLock(this.serviceControlLock, nameof(this.serviceControlLock));
+
+                if (gotLock)
+                {
+                    this.ReleaseLock(this.serviceControlLock, nameof(this.serviceControlLock));
+                }
             }
         }
 
@@ -1218,6 +1237,7 @@ namespace Lithnet.Miiserver.AutoSync
         private void TakeLocksAndExecute(ExecutionParameters action)
         {
             ConcurrentBag<SemaphoreSlim> otherLocks = new ConcurrentBag<SemaphoreSlim>();
+            bool hasLocalLock = false;
 
             try
             {
@@ -1254,6 +1274,7 @@ namespace Lithnet.Miiserver.AutoSync
                 // If another operation in this controller is already running, then wait for it to finish before taking the lock for ourselves
                 this.Message = "Waiting to take lock";
                 this.WaitAndTakeLock(this.localOperationLock, nameof(this.localOperationLock), this.jobCancellationTokenSource);
+                hasLocalLock = true;
 
                 if (this.Configuration.LockManagementAgents != null)
                 {
@@ -1320,8 +1341,11 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 this.UpdateExecutionStatus(ControllerState.Idle, null, null);
 
-                // Reset the local lock so the next operation can run
-                this.ReleaseLock(this.localOperationLock, nameof(this.localOperationLock));
+                if (hasLocalLock)
+                {
+                    // Reset the local lock so the next operation can run
+                    this.ReleaseLock(this.localOperationLock, nameof(this.localOperationLock));
+                }
 
                 if (this.HasSyncLock)
                 {
@@ -1396,10 +1420,13 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void CheckAndQueueUnmanagedChanges()
         {
+            bool hasLocalLock = false;
+
             try
             {
                 // If another operation in this controller is already running, then wait for it to finish
                 this.WaitAndTakeLock(this.localOperationLock, nameof(this.localOperationLock), this.controllerCancellationTokenSource);
+                hasLocalLock = true;
 
                 this.Trace("Checking for unmanaged changes");
                 RunDetails run = this.ma.GetLastRun();
@@ -1449,8 +1476,11 @@ namespace Lithnet.Miiserver.AutoSync
             }
             finally
             {
-                // Reset the local lock so the next operation can run
-                this.ReleaseLock(this.localOperationLock, nameof(this.localOperationLock));
+                if (hasLocalLock)
+                {
+                    // Reset the local lock so the next operation can run
+                    this.ReleaseLock(this.localOperationLock, nameof(this.localOperationLock));
+                }
             }
         }
 

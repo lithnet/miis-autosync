@@ -244,6 +244,7 @@ namespace Lithnet.Miiserver.AutoSync
         private void StartMAControllers()
         {
             this.cancellationToken = new CancellationTokenSource();
+            List<Task> startTasks = new List<Task>();
 
             foreach (MAControllerConfiguration c in Program.ActiveConfig.ManagementAgents)
             {
@@ -252,24 +253,27 @@ namespace Lithnet.Miiserver.AutoSync
                     logger.Warn($"{c.ManagementAgentName}: Skipping management agent because it is missing from the Sync Engine");
                     continue;
                 }
-              
+
+
                 if (this.controllers.ContainsKey(c.ManagementAgentID))
                 {
                     logger.Trace($"Starting {c.ManagementAgentName}");
-                    Task.Run(() =>
+                    startTasks.Add(Task.Factory.StartNew(() =>
                     {
                         MAController e = this.controllers[c.ManagementAgentID];
                         lock (e)
                         {
                             e.Start(c);
                         }
-                    }, this.cancellationToken.Token);
+                    }, this.cancellationToken.Token));
                 }
                 else
                 {
                     logger.Error($"Cannot start management agent controller '{c.ManagementAgentName}' because the management agent was not found");
                 }
             }
+
+            Task.WaitAll(startTasks.ToArray(), this.cancellationToken.Token);
         }
 
         private void StopMAControllers(bool cancelRun)
