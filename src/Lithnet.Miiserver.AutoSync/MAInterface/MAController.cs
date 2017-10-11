@@ -498,7 +498,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 bool hasSynced = false;
 
-                for (int j = i++; j < d.StepDetails.Count; j++)
+                for (int j = i + 1; j < d.StepDetails.Count; j++)
                 {
                     StepDetails followUpStep = d.StepDetails[j];
 
