@@ -392,149 +392,209 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void QueueFollowupActions(RunDetails d)
         {
-            this.QueueFollowUpActionsExport(d);
-            this.QueueFollowUpActionsImport(d);
-            this.QueueFollowUpActionsSync(d);
-        }
+            this.Trace($"Analyzing results from {d.RunProfileName} run #{d.RunNumber}");
 
-        private void QueueFollowUpActionsExport(RunDetails d)
-        {
-            for (int i = 0; i < d.StepDetails.Count; i++)
+            for (int index = d.StepDetails.Count - 1; index >= 0; index--)
             {
-                StepDetails s = d.StepDetails[i];
+                StepDetails s = d.StepDetails[index];
 
-                if (!s.StepDefinition.IsExportStep)
+                if (s.StepDefinition == null)
                 {
+                    this.LogWarn($"Step detail for step {s.StepNumber} was missing the step definition and cannot be processed");
                     continue;
                 }
 
-                // found an export step
-
-                if (!s.ExportCounters?.HasChanges ?? false)
+                if (s.StepDefinition.IsSyncStep)
                 {
+                    this.Trace($"Processing outbound changes from step {s.StepNumber} of {d.RunProfileName}");
+                    this.QueueFollowUpActionsSync(s);
                     continue;
                 }
 
-                // has unconfirmed changed
-                this.Trace($"Unconfirmed exports in last run");
+                Tuple<PartitionConfiguration, MARunProfileType> requiredAction = this.GetImportExportFollowUpActions(s);
 
-                string partitionName = s.StepDefinition.Partition;
-
-                if (partitionName == null)
+                if (requiredAction == null)
                 {
-                    this.LogWarn($"Partition in step {i} of run profile {d.RunProfileName} had an empty partition");
+                    // nothing to do
+                    this.Trace($"Step {s.StepNumber} of {d.RunProfileName} had no follow up actions to perform");
                     continue;
                 }
 
-                // can confirm import
-
-                bool hasConfirmed = false;
-
-                for (int j = i++; j < d.StepDetails.Count; j++)
+                if (this.WasFollowupAlreadyPerformed(d, index, requiredAction))
                 {
-                    StepDetails followUpStep = d.StepDetails[j];
+                    this.Trace($"The expected follow up action '{requiredAction.Item2}' in partition '{requiredAction.Item1.Name}' for step {s.StepNumber} of run profile '{d.RunProfileName}' has already been performed");
+                }
+                else
+                {
+                    this.Trace($"The expected follow up action '{requiredAction.Item2}' in partition '{requiredAction.Item1.Name}' for step {s.StepNumber} of run profile '{d.RunProfileName}' has not yet been performed");
 
-                    if (followUpStep.StepDefinition.Partition != partitionName)
+                    if (requiredAction.Item2 == MARunProfileType.DeltaImport)
                     {
+                        if (requiredAction.Item1.ConfirmingImportRunProfileName == null)
+                        {
+                            this.LogWarn($"A confirming import was required, but they have not been configured for partition {requiredAction.Item1.Name}");
+                            continue;
+                        }
+
+                        this.AddPendingActionIfNotQueued(new ExecutionParameters(requiredAction.Item1.ConfirmingImportRunProfileName), d.RunProfileName, true);
                         continue;
                     }
 
-                    if (followUpStep.StepDefinition.IsImportStep)
+                    if (requiredAction.Item2 == MARunProfileType.DeltaSync)
                     {
-                        // already confirmed
-                        this.Trace($"Skipping confirming import as there was an import step in the run");
-                        hasConfirmed = true;
-                        break;
-                    }
-                }
+                        if (requiredAction.Item1.DeltaSyncRunProfileName == null)
+                        {
+                            this.LogWarn($"A delta sync was required, but they have not been configured for partition {requiredAction.Item1.Name}");
+                            continue;
+                        }
 
-                if (hasConfirmed)
-                {
-                    continue;
-                }
-
-                string confirmingImportRunProfileName = this.Configuration.Partitions.GetActiveItemOrNull(partitionName)?.ConfirmingImportRunProfileName;
-
-                if (confirmingImportRunProfileName == null)
-                {
-                    this.LogWarn($"Confirming imports have not been configured for partition {partitionName} or the partition could not be found");
-                    continue;
-                }
-
-                this.AddPendingActionIfNotQueued(new ExecutionParameters(confirmingImportRunProfileName), d.RunProfileName, true);
-            }
-        }
-
-        private void QueueFollowUpActionsImport(RunDetails d)
-        {
-            for (int i = 0; i < d.StepDetails.Count; i++)
-            {
-                StepDetails s = d.StepDetails[i];
-
-                if (!s.StepDefinition.IsImportStep)
-                {
-                    continue;
-                }
-
-                // found an import step
-
-                if (!s.StagingCounters?.HasChanges ?? false)
-                {
-                    continue;
-                }
-
-                // has staged imports
-                this.Trace("Staged imports in last run");
-
-                string partitionName = s.StepDefinition.Partition;
-
-                if (partitionName == null)
-                {
-                    this.LogWarn($"Partition in step {i} of run profile {d.RunProfileName} had an empty partition");
-                    continue;
-                }
-
-                // can sync staged changed
-
-                bool hasSynced = false;
-
-                for (int j = i + 1; j < d.StepDetails.Count; j++)
-                {
-                    StepDetails followUpStep = d.StepDetails[j];
-
-                    if (followUpStep.StepDefinition.Partition != partitionName)
-                    {
+                        this.AddPendingActionIfNotQueued(new ExecutionParameters(requiredAction.Item1.DeltaSyncRunProfileName), d.RunProfileName, true);
                         continue;
                     }
-
-                    if (followUpStep.StepDefinition.IsSyncStep)
-                    {
-                        // already synced
-                        this.Trace($"Skipping sync of staged import as there was already a sync step in the run");
-                        hasSynced = true;
-                        break;
-                    }
                 }
-
-                if (hasSynced)
-                {
-                    continue;
-                }
-
-                string deltaSyncRunProfileName = this.Configuration.Partitions.GetActiveItemOrNull(partitionName)?.DeltaSyncRunProfileName;
-
-                if (deltaSyncRunProfileName == null)
-                {
-                    this.LogWarn($"Delta syncs have not been configured for partition {partitionName} or the partition was not found");
-                    continue;
-                }
-
-                this.AddPendingActionIfNotQueued(new ExecutionParameters(deltaSyncRunProfileName), d.RunProfileName, true);
             }
         }
 
-        private void QueueFollowUpActionsSync(RunDetails d)
+        private bool WasFollowupAlreadyPerformed(RunDetails d, int i, Tuple<PartitionConfiguration, MARunProfileType> result)
         {
+            for (int j = i - 1; j >= 0; j--)
+            {
+                StepDetails f = d.StepDetails[j];
+
+                if (f.StepDefinition == null)
+                {
+                    this.LogWarn($"Step detail was missing the step definition");
+                    continue;
+                }
+
+                PartitionConfiguration p = this.Configuration.Partitions.GetActiveItemOrNull(f.StepDefinition.Partition);
+
+                if (p == null || p.ID != result.Item1.ID)
+                {
+                    // not for this partition
+                    continue;
+                }
+
+                if (f.StepDefinition.IsImportStep && result.Item2 == MARunProfileType.DeltaImport)
+                {
+                    // the required import follow up has already happened
+                    return true;
+                }
+
+                if (f.StepDefinition.IsExportStep && result.Item2 == MARunProfileType.Export)
+                {
+                    // the required export has already happened
+                    return true;
+                }
+
+                if (f.StepDefinition.IsSyncStep && result.Item2 == MARunProfileType.DeltaSync)
+                {
+                    // the required sync has already happened
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private Tuple<PartitionConfiguration, MARunProfileType> GetImportExportFollowUpActions(StepDetails s)
+        {
+            if (s.StepDefinition == null)
+            {
+                this.LogWarn($"Step detail was missing the step definition");
+                return null;
+            }
+
+            if (s.StepDefinition.Type == RunStepType.Export)
+            {
+                return this.GetExportFollowUpAction(s);
+            }
+
+            if (s.StepDefinition.Type == RunStepType.FullImport || s.StepDefinition.Type == RunStepType.DeltaImport)
+            {
+                return this.GetImportFollowUpAction(s);
+            }
+
+            return null;
+        }
+
+        private Tuple<PartitionConfiguration, MARunProfileType> GetImportFollowUpAction(StepDetails s)
+        {
+            if (!s.StepDefinition.IsImportStep)
+            {
+                return null;
+            }
+
+            if (!s.StagingCounters?.HasChanges ?? false)
+            {
+                this.Trace($"No staged imports in step {s.StepNumber}");
+                return null;
+            }
+
+            // has staged imports
+            this.Trace($"Staged imports in step {s.StepNumber}");
+
+            string partitionName = s.StepDefinition.Partition;
+
+            if (partitionName == null)
+            {
+                this.LogWarn($"Partition in step {s.StepNumber} was blank");
+                return null;
+            }
+
+            PartitionConfiguration p = this.Configuration.Partitions.GetActiveItemOrNull(partitionName);
+
+            if (p == null)
+            {
+                this.LogWarn($"Could not find the partition {partitionName}");
+                return null;
+            }
+
+            return new Tuple<PartitionConfiguration, MARunProfileType>(p, MARunProfileType.DeltaSync);
+        }
+
+        private Tuple<PartitionConfiguration, MARunProfileType> GetExportFollowUpAction(StepDetails s)
+        {
+            if (!s.StepDefinition.IsExportStep)
+            {
+                return null;
+            }
+
+            if (!s.ExportCounters?.HasChanges ?? false)
+            {
+                this.Trace($"No unconfirmed exports in step {s.StepNumber}");
+                return null;
+            }
+
+            // has unconfirmed exports
+            this.Trace($"Unconfirmed exports in step {s.StepNumber}");
+
+            string partitionName = s.StepDefinition.Partition;
+
+            if (partitionName == null)
+            {
+                this.LogWarn($"Partition in step {s.StepNumber} was blank");
+                return null;
+            }
+
+            PartitionConfiguration p = this.Configuration.Partitions.GetActiveItemOrNull(partitionName);
+
+            if (p == null)
+            {
+                this.LogWarn($"Could not find the partition {partitionName}");
+                return null;
+            }
+
+            return new Tuple<PartitionConfiguration, MARunProfileType>(p, MARunProfileType.DeltaImport);
+        }
+
+        private void QueueFollowUpActionsSync(StepDetails s)
+        {
+            if (!s.StepDefinition.IsSyncStep)
+            {
+                return;
+            }
+
             SyncCompleteEventHandler registeredHandlers = MAController.SyncComplete;
 
             if (registeredHandlers == null)
@@ -543,33 +603,25 @@ namespace Lithnet.Miiserver.AutoSync
                 return;
             }
 
-            foreach (StepDetails s in d.StepDetails)
+            foreach (OutboundFlowCounters item in s.OutboundFlowCounters)
             {
-                if (!s.StepDefinition.IsSyncStep)
+                if (!item.HasChanges)
                 {
+                    this.Trace($"No outbound changes detected for {item.ManagementAgent}");
                     continue;
                 }
 
-                foreach (OutboundFlowCounters item in s.OutboundFlowCounters)
+                SyncCompleteEventArgs args = new SyncCompleteEventArgs
                 {
-                    if (!item.HasChanges)
-                    {
-                        this.Trace($"No outbound changes detected for {item.ManagementAgent}");
-                        continue;
-                    }
+                    SendingMAName = this.ManagementAgentName,
+                    TargetMA = item.MAID
+                };
 
-                    SyncCompleteEventArgs args = new SyncCompleteEventArgs
-                    {
-                        SendingMAName = this.ManagementAgentName,
-                        TargetMA = item.MAID
-                    };
-
-                    this.Trace($"Sending outbound change notification for MA {item.ManagementAgent}");
-                    registeredHandlers(this, args);
-                }
+                this.Trace($"Sending outbound change notification for MA {item.ManagementAgent}");
+                registeredHandlers(this, args);
             }
         }
-
+      
         private void LogInfo(string message)
         {
             logger.Info($"{this.ManagementAgentName}: {message}");
@@ -607,7 +659,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void Debug(string message)
         {
-#if DEBUG
+#if LOCKDEBUG
             logger.Trace($"{this.ManagementAgentName}: {message}");
 #endif
         }
@@ -690,7 +742,7 @@ namespace Lithnet.Miiserver.AutoSync
         }
 
         private void RaiseRunProfileComplete(string runProfileName, string lastStepStatus, int runNumber, DateTime? startTime, DateTime? endTime)
-        { 
+        {
             Task.Run(() =>
             {
                 try
@@ -975,7 +1027,6 @@ namespace Lithnet.Miiserver.AutoSync
                 this.WaitAndTakeLock(this.serviceControlLock, nameof(this.serviceControlLock), this.controllerCancellationTokenSource);
                 gotLock = true;
                 this.ControlState = ControlState.Starting;
-                Thread.Sleep(Global.RandomizeOffset(TimeSpan.FromSeconds(5).TotalMilliseconds));
                 this.pendingActionList = new ExecutionParameterCollection();
                 this.pendingActions = new BlockingCollection<ExecutionParameters>(this.pendingActionList);
                 this.perProfileLastRunStatus = new Dictionary<string, string>();
