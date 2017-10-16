@@ -59,7 +59,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                int? value = RegistrySettings.ParametersKey.GetValue(nameof(GetSyncLockForFimMAExport), 0) as int?;
+                int? value = RegistrySettings.ParametersKey.GetValue(nameof(GetSyncLockForFimMAExport), 1) as int?;
                 return value.HasValue && value.Value != 0;
             }
         }
