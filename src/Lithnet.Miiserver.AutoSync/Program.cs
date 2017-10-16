@@ -320,7 +320,6 @@ namespace Lithnet.Miiserver.AutoSync
             }
 
             LogManager.ReconfigExistingLoggers();
-            
 
             Program.SetupLogger();
             Program.LoadConfiguration();
