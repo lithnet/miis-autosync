@@ -27,10 +27,10 @@
     <Property Id="SERVICE_PASSWORD" Hidden="yes" Secure="yes"/>
     <Property Id="SERVICE_NAME" Secure="yes" Value="autosync"/>
 
-    <Property Id="GROUP_FIM_SYNC_ADMINS" Secure="yes"/>
     <Property Id="GROUP_FIM_SYNC_ADMINS_NAME" Secure="yes"/>
     <Property Id="GROUP_FIM_SYNC_ADMINS_IS_LOCAL" Secure="yes"/>
     <Property Id="GROUP_FIM_SYNC_ADMINS_IS_DOMAIN" Secure="yes"/>
+    <Property Id="ADD_TO_FIM_SYNC_ADMINS" Secure="yes" Value="1"/>
 
     <Property Id="GROUP_ADD_ACTION_FAILED" Secure="yes"/>
 
@@ -51,11 +51,11 @@
 
     <CustomAction Id="CA_SetPropertyValueAsSystem"
                   Property="AddServiceAccountToFimSyncAdminsAsSystem"
-                  Value="GROUP_FIM_SYNC_ADMINS=[GROUP_FIM_SYNC_ADMINS];SERVICE_USERNAME=[SERVICE_USERNAME];GROUP_FIM_SYNC_ADMINS_NAME=[GROUP_FIM_SYNC_ADMINS_NAME]"/>
+                  Value="SERVICE_USERNAME=[SERVICE_USERNAME];GROUP_FIM_SYNC_ADMINS_NAME=[GROUP_FIM_SYNC_ADMINS_NAME]"/>
 
     <CustomAction Id="CA_SetPropertyValueAsCaller"
                   Property="AddServiceAccountToFimSyncAdminsAsCaller"
-                  Value="GROUP_FIM_SYNC_ADMINS=[GROUP_FIM_SYNC_ADMINS];SERVICE_USERNAME=[SERVICE_USERNAME];GROUP_FIM_SYNC_ADMINS_NAME=[GROUP_FIM_SYNC_ADMINS_NAME]"/>
+                  Value="SERVICE_USERNAME=[SERVICE_USERNAME];GROUP_FIM_SYNC_ADMINS_NAME=[GROUP_FIM_SYNC_ADMINS_NAME]"/>
 
     <CustomAction Id="SetIsLocalProperty"
                   BinaryKey="CustomActionBinary"
@@ -181,7 +181,7 @@
       <Custom Action="SetServiceAdminsGroupIfBlank" After="CostFinalize">(NOT Installed) AND (NOT SERVICE_ADMINS_GROUP)</Custom>
     </InstallUISequence>
     <InstallExecuteSequence>
-      <Custom Action="SetIsLocalProperty" Before="InstallFiles">(NOT Installed) AND (NOT SKIPGROUPCHECK)</Custom>
+      <Custom Action="SetIsLocalProperty" Before="InstallFiles">(NOT Installed) AND (NOT SKIPGROUPCHECK) AND ADD_TO_FIM_SYNC_ADMINS</Custom>
 
       <Custom Action="CA_SetPropertyValueAsSystem" Before="AddServiceAccountToFimSyncAdminsAsSystem">(NOT Installed) AND GROUP_FIM_SYNC_ADMINS_IS_LOCAL</Custom>
       <Custom Action="AddServiceAccountToFimSyncAdminsAsSystem" After="InstallFiles">(NOT Installed) AND GROUP_FIM_SYNC_ADMINS_IS_LOCAL</Custom>

@@ -16,8 +16,8 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
         [CustomAction]
         public static ActionResult SetIsLocalProperty(Session session)
         {
-            string sid = session["GROUP_FIM_SYNC_ADMINS"];
-            FindInDomainOrMachineBySid(sid, out bool isMachine);
+            string group = session["GROUP_FIM_SYNC_ADMINS_NAME"];
+            FindInDomainOrMachine(group, out bool isMachine);
             session["GROUP_FIM_SYNC_ADMINS_IS_LOCAL"] = isMachine ? "1" : null;
             session["GROUP_FIM_SYNC_ADMINS_IS_DOMAIN"] = !isMachine ? "1" : null;
 
@@ -48,8 +48,7 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
                 //#warning remove this
                 //sid = (SecurityIdentifier)new NTAccount("Fim-dev1\\idm-gg-fimadmins").Translate(typeof(SecurityIdentifier));
 
-                session.Log("Got administrators group SID");
-                session["GROUP_FIM_SYNC_ADMINS"] = sid.ToString();
+                session.Log($"Got administrators group SID: {sid}");
                 session["GROUP_FIM_SYNC_ADMINS_NAME"] = sid.Translate(typeof(NTAccount)).Value;
             }
 
@@ -60,21 +59,20 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
         public static ActionResult AddServiceAccountToFimSyncAdmins(Session session)
         {
             string account = session.CustomActionData["SERVICE_USERNAME"];
-            string group = session.CustomActionData["GROUP_FIM_SYNC_ADMINS"];
             string groupName = session.CustomActionData["GROUP_FIM_SYNC_ADMINS_NAME"];
 
             while (true)
             {
                 try
                 {
-                    session.Log($"Attempting to add user {account} to {groupName} ({group})");
-                    AddUserToGroup(session, account, group, groupName);
+                    session.Log($"Attempting to add user {account} to {groupName}");
+                    AddUserToGroup(session, account, groupName);
                     session.Log("Done");
                     return ActionResult.Success;
                 }
                 catch (Exception ex)
                 {
-                    session.Log($"Could not add user {account} to group {groupName} ({group})");
+                    session.Log($"Could not add user {account} to group {groupName}");
                     session.Log(ex.ToString());
 
                     const int val = (int)InstallMessage.User | (int)MessageButtons.OKCancel | (int)MessageIcon.Error;
@@ -90,15 +88,15 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
             }
         }
 
-        private static void AddUserToGroup(Session session, string account, string groupSid, string groupName)
+        private static void AddUserToGroup(Session session, string account, string groupName)
         {
             bool isMachine;
 
-            GroupPrincipal group = CustomActions.FindInDomainOrMachineBySid(groupSid, out isMachine) as GroupPrincipal;
+            GroupPrincipal group = CustomActions.FindInDomainOrMachine(groupName, out isMachine) as GroupPrincipal;
 
             if (group == null)
             {
-                throw new NoMatchingPrincipalException($"The group {groupName} ({groupSid}) could not be found");
+                throw new NoMatchingPrincipalException($"The group {groupName} could not be found");
             }
 
             UserPrincipal user = (UserPrincipal)CustomActions.FindInDomainOrMachine(account, out isMachine);
@@ -117,12 +115,12 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
                 SecurityIdentifier sid = new SecurityIdentifier(s, 0);
                 if (user.Sid == sid)
                 {
-                    session.Log($"User {account} was already in group {groupName} ({groupSid})");
+                    session.Log($"User {account} was already in group {groupName}");
                     return;
                 }
             }
 
-            session.Log($"User {account} was not in group {groupName} ({groupSid})");
+            session.Log($"User {account} was not in group {groupName}");
 
             try
             {
@@ -142,7 +140,7 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
             {
                 if (e.HResult == -2147019886) //unchecked((int)0x80071392))
                 {
-                    session.Log($"User {account} was already in group {groupName} ({groupSid}) - 0x80071392");
+                    session.Log($"User {account} was already in group {groupName} - 0x80071392");
                     return;
                 }
 
@@ -160,22 +158,6 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
             {
                 context = new PrincipalContext(ContextType.Machine);
                 p = Principal.FindByIdentity(context, accountName);
-                isMachine = true;
-            }
-
-            return p;
-        }
-
-        private static Principal FindInDomainOrMachineBySid(string sid, out bool isMachine)
-        {
-            isMachine = false;
-            PrincipalContext context = new PrincipalContext(ContextType.Domain);
-            Principal p = Principal.FindByIdentity(context, IdentityType.Sid, sid);
-
-            if (p == null)
-            {
-                context = new PrincipalContext(ContextType.Machine);
-                p = Principal.FindByIdentity(context, sid);
                 isMachine = true;
             }
 
