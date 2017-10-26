@@ -13,7 +13,7 @@ function Get-RunProfileToExecute
             $global:lastRowVersion = $rv;
 
             $p = New-Object Lithnet.Miiserver.Autosync.ExecutionParameters;
-            $p.RunProfileType = DeltaImport;
+            $p.RunProfileType = "DeltaImport";
             $p.PartitionName = "default";
             $p.Exclusive = $false;
             write-output $p
