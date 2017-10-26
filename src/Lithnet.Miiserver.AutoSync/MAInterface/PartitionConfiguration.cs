@@ -11,6 +11,8 @@ namespace Lithnet.Miiserver.AutoSync
     [DataContract]
     public class PartitionConfiguration
     {
+        private Guid id;
+
         internal PartitionConfiguration(Partition p)
         {
             this.UpdateConfiguration(p);
@@ -20,10 +22,12 @@ namespace Lithnet.Miiserver.AutoSync
         internal void UpdateConfiguration(Partition p)
         {
             this.Name = p.Name;
-            this.ID = p.ID;
             this.IsSelected = p.Selected;
             this.IsMissing = false;
+            this.ID = p.ID;
         }
+
+        internal PartitionConfigurationCollection Parent { get; set; }
 
         [DataMember(Name = "auto-import-enabled")]
         public bool AutoImportEnabled { get; set; }
@@ -35,7 +39,20 @@ namespace Lithnet.Miiserver.AutoSync
         public string Name { get; set; }
 
         [DataMember(Name = "id")]
-        public Guid ID { get; set; }
+        public Guid ID
+        {
+            get => this.id;
+            set
+            {
+                if (this.id == value)
+                {
+                    return;
+                }
+
+                this.Parent?.UpdateKey(this, value);
+                this.id = value;
+            }
+        }
 
         [DataMember(Name = "run-profile-confirming-import")]
         public string ConfirmingImportRunProfileName { get; set; }

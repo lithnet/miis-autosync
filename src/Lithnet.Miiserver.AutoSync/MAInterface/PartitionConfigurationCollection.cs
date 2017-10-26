@@ -67,12 +67,45 @@ namespace Lithnet.Miiserver.AutoSync
             return item.ID;
         }
 
+        internal void UpdateKey(PartitionConfiguration item, Guid newKey)
+        {
+            this.ChangeItemKey(item, newKey);
+        }
+
         public IEnumerable<PartitionConfiguration> ActiveConfigurations
         {
             get
             {
                 return this.Items.Where(t => t.IsActive);
             }
+        }
+
+        protected override void InsertItem(int index, PartitionConfiguration item)
+        {
+            base.InsertItem(index, item);
+            item.Parent = this;
+        }
+
+        protected override void SetItem(int index, PartitionConfiguration item)
+        {
+            base.SetItem(index, item);
+            item.Parent = this;
+        }
+
+        protected override void RemoveItem(int index)
+        {
+            this[index].Parent = null;
+            base.RemoveItem(index);
+        }
+
+        protected override void ClearItems()
+        {
+            foreach (PartitionConfiguration item in this)
+            {
+                item.Parent = null;
+            }
+
+            base.ClearItems();
         }
     }
 }
