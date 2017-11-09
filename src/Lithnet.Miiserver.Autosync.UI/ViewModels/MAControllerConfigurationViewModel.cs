@@ -23,6 +23,16 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         public MAControllerConfigurationViewModel(MAControllerConfiguration model)
             : base(model)
         {
+            if (model.Partitions == null)
+            {
+                model.Partitions = new PartitionConfigurationCollection();
+            }
+
+            if (model.StagingThresholds == null)
+            {
+                model.StagingThresholds = new Thresholds();
+            }
+
             this.Triggers = new MAExecutionTriggersViewModel(model.Triggers, this);
             this.Partitions = new PartitionConfigurationCollectionViewModel(model.Partitions, this);
 
@@ -43,6 +53,13 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.AddIsDirtyProperty(nameof(this.Disabled));
             this.AddIsDirtyProperty(nameof(this.IsDeleted));
 
+            this.AddIsDirtyProperty(nameof(this.ThresholdStagingAdds));
+            this.AddIsDirtyProperty(nameof(this.ThresholdStagingChanges));
+            this.AddIsDirtyProperty(nameof(this.ThresholdStagingDeleteAdds));
+            this.AddIsDirtyProperty(nameof(this.ThresholdStagingDeletes));
+            this.AddIsDirtyProperty(nameof(this.ThresholdStagingRenames));
+            this.AddIsDirtyProperty(nameof(this.ThresholdStagingUpdates));
+            
             this.IsDirtySet += this.MAConfigParametersViewModel_IsDirtySet;
 
             this.Triggers.CollectionChanged += this.ChildCollectionChanged;
@@ -196,7 +213,43 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         }
 
         public PartitionConfigurationCollectionViewModel Partitions { get; private set; }
-        
+
+        public int? ThresholdStagingAdds
+        {
+            get => this.Model.StagingThresholds.Adds;
+            set => this.Model.StagingThresholds.Adds = value;
+        }
+
+        public int? ThresholdStagingChanges
+        {
+            get => this.Model.StagingThresholds.Changes;
+            set => this.Model.StagingThresholds.Changes = value;
+        }
+
+        public int? ThresholdStagingDeleteAdds
+        {
+            get => this.Model.StagingThresholds.DeleteAdds;
+            set => this.Model.StagingThresholds.DeleteAdds = value;
+        }
+
+        public int? ThresholdStagingDeletes
+        {
+            get => this.Model.StagingThresholds.Deletes;
+            set => this.Model.StagingThresholds.Deletes = value;
+        }
+
+        public int? ThresholdStagingRenames
+        {
+            get => this.Model.StagingThresholds.Renames;
+            set => this.Model.StagingThresholds.Renames = value;
+        }
+
+        public int? ThresholdStagingUpdates
+        {
+            get => this.Model.StagingThresholds.Updates;
+            set => this.Model.StagingThresholds.Updates = value;
+        }
+
         public IEnumerable<string> RunProfileNames => this.GetRunProfileNames(true);
 
         public IEnumerable<string> SingleStepRunProfileNames => this.GetRunProfileNames(false);

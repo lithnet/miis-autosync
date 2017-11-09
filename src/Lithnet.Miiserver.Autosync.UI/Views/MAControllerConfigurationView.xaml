@@ -40,6 +40,7 @@
                             </Grid>
                         </TabItem>
 
+
                         <TabItem Header="Run Profiles" IsEnabled="{Binding IsEnabled}" ui:OnlineHelpProvider.HelpTopic="Management-agent-configuration#run-profiles">
                             <Grid Margin="25 10 0 0">
                                 <Grid.RowDefinitions>
@@ -186,6 +187,87 @@
                                         <ResourceDictionary Source="/ResourceDictionaries/TriggerViewDictionary.xaml"/>
                                     </ContentPresenter.Resources>
                                 </ContentPresenter>
+                            </Grid>
+                        </TabItem>
+
+                        <TabItem Header="Thresholds" ui:OnlineHelpProvider.HelpTopic="Management-agent-configuration#thresholds">
+                            <Grid Margin="25 10 0 0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition  />
+                                    <RowDefinition  />
+                                    <RowDefinition  />
+                                    <RowDefinition  />
+                                    <RowDefinition  />
+                                    <RowDefinition  />
+                                    <RowDefinition  />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition  Width="Auto"/>
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+
+                                <Label Grid.Row="0" Grid.Column="1" Content="You can force the controller to stop immediately if the following thresholds are exceeded upon import operations"/>
+
+                                <Label Grid.Row="1" Grid.Column="0" Content="Total changes"/>
+                                <controls:NumericUpDown  Grid.Row="1"
+                                                         Grid.Column="1"
+                                                         Value="{Binding Path=ThresholdStagingChanges}" 
+                                                         Minimum="0" 
+                                                         Margin="10 0 0 5" 
+                                                         HorizontalAlignment="Left"
+                                                         Width="Auto"
+                                                         HasDecimals="False"/>
+
+                                <Label Grid.Row="2" Grid.Column="0" Content="Adds"/>
+                                <controls:NumericUpDown  Grid.Row="2"
+                                                         Grid.Column="1"
+                                                         Value="{Binding Path=ThresholdStagingAdds}" 
+                                                         Minimum="0" 
+                                                         Margin="10 0 0 5" 
+                                                         HorizontalAlignment="Left"
+                                                         Width="Auto"
+                                                         HasDecimals="False"/>
+
+                                <Label Grid.Row="3" Grid.Column="0" Content="Deletes"/>
+                                <controls:NumericUpDown  Grid.Row="3"
+                                                         Grid.Column="1"
+                                                         Value="{Binding Path=ThresholdStagingDeletes}" 
+                                                         Minimum="0" 
+                                                         Margin="10 0 0 5" 
+                                                         HorizontalAlignment="Left"
+                                                         Width="Auto"
+                                                         HasDecimals="False"/>
+
+                                <Label Grid.Row="4" Grid.Column="0" Content="Delete/Adds"/>
+                                <controls:NumericUpDown  Grid.Row="4"
+                                                         Grid.Column="1"
+                                                         Value="{Binding Path=ThresholdStagingDeleteAdds}" 
+                                                         Minimum="0" 
+                                                         Margin="10 0 0 5" 
+                                                         HorizontalAlignment="Left"
+                                                         Width="Auto"
+                                                         HasDecimals="False"/>
+
+                                <Label Grid.Row="5" Grid.Column="0" Content="Renames"/>
+                                <controls:NumericUpDown  Grid.Row="5"
+                                                         Grid.Column="1"
+                                                         Value="{Binding Path=ThresholdStagingRenames}" 
+                                                         Minimum="0" 
+                                                         Margin="10 0 0 5" 
+                                                         HorizontalAlignment="Left"
+                                                         Width="Auto"
+                                                         HasDecimals="False"/>
+
+                                <Label Grid.Row="6" Grid.Column="0" Content="Updates"/>
+                                <controls:NumericUpDown  Grid.Row="6"
+                                                         Grid.Column="1"
+                                                         Value="{Binding Path=ThresholdStagingUpdates}" 
+                                                         Minimum="0" 
+                                                         Margin="10 0 0 5" 
+                                                         HorizontalAlignment="Left"
+                                                         Width="Auto"
+                                                         HasDecimals="False"/>
+
                             </Grid>
                         </TabItem>
 

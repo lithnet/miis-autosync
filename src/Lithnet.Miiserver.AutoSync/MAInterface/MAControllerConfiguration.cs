@@ -105,6 +105,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.ManagementAgentName = managementAgentName;
             this.ManagementAgentID = managementAgentID;
             this.Triggers = new List<IMAExecutionTrigger>();
+            this.StagingThresholds = new Thresholds();
             this.Partitions = new PartitionConfigurationCollection();
         }
 
@@ -179,6 +180,11 @@ namespace Lithnet.Miiserver.AutoSync
                     throw new ArgumentException("Unknown run profile type");
             }
         }
+
+        [DataMember(Name = "thresholds-staging")]
+        public Thresholds StagingThresholds { get; set; }
+
+        public bool StopEngineOnThresholdExceeded { get; set; }
 
         public override string ToString()
         {

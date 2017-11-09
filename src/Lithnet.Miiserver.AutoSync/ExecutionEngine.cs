@@ -156,7 +156,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             lock (e)
             {
-                e.Stop(cancelRun);
+                e.Stop(cancelRun, true);
             }
         }
 
@@ -296,7 +296,7 @@ namespace Lithnet.Miiserver.AutoSync
                         lock (e)
                         {
                             Thread.CurrentThread.SetThreadName($"Stop controller {e.ManagementAgentName}");
-                            e.Stop(cancelRun);
+                            e.Stop(cancelRun, true);
                         }
                     }
                     catch (OperationCanceledException)

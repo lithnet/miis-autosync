@@ -39,7 +39,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             StringBuilder builder = new StringBuilder();
             builder.AppendFormat(MessageBuilder.GetTemplate("TriggerErrorFragment"), maName, triggerType, triggerDetails, errorTime, hasTerminated ? "Yes" : "No", ex);
-            
+
             InlineResult result = PreMailer.Net.PreMailer.MoveCssInline(MessageBuilder.GetTemplate("EmailTemplate").Replace("%BODY%", builder.ToString()));
 
             return result.Html;
@@ -47,9 +47,21 @@ namespace Lithnet.Miiserver.AutoSync
 
         public static string GetMessageBody(RunDetails r)
         {
+            return GetMessageBody(r, null);
+        }
+
+        public static string GetMessageBody(RunDetails r, string thresholdMessage)
+        {
             StringBuilder builder = new StringBuilder();
 
-            builder.AppendFormat(MessageBuilder.GetTemplate("RunSummaryFragment"), r.RunProfileName, r.MAName, r.StartTime, r.EndTime, r.SecurityID, r.LastStepStatus, r.RunNumber);
+            if (thresholdMessage != null)
+            {
+                builder.AppendFormat(MessageBuilder.GetTemplate("ThresholdExceededFragment"), r.RunProfileName, r.MAName, r.StartTime, r.EndTime, r.SecurityID, r.LastStepStatus, r.RunNumber, thresholdMessage);
+            }
+            else
+            {
+                builder.AppendFormat(MessageBuilder.GetTemplate("RunSummaryFragment"), r.RunProfileName, r.MAName, r.StartTime, r.EndTime, r.SecurityID, r.LastStepStatus, r.RunNumber);
+            }
 
             builder.AppendFormat(MessageBuilder.GetTemplate("StepTableFragment"), MessageBuilder.BuildStepDetails(r.StepDetails));
 
@@ -86,6 +98,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             return result.Html;
         }
+
 
         private static string BuildStepDetails(IReadOnlyList<StepDetails> details)
         {
@@ -386,7 +399,7 @@ namespace Lithnet.Miiserver.AutoSync
                 StringBuilder errorBuilder = new StringBuilder();
 
                 errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "DN", error.DN);
-              
+
                 errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Error type", error.ErrorType);
                 errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "Date occurred", error.DateOccurred);
                 errorBuilder.AppendFormat(MessageBuilder.SimpleRow, "First occurred", error.FirstOccurred);
