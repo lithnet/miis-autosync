@@ -621,7 +621,7 @@ namespace Lithnet.Miiserver.AutoSync
                 registeredHandlers(this, args);
             }
         }
-      
+
         private void LogInfo(string message)
         {
             logger.Info($"{this.ManagementAgentName}: {message}");
@@ -856,6 +856,10 @@ namespace Lithnet.Miiserver.AutoSync
             catch (OperationCanceledException)
             {
             }
+            catch (ThresholdExceededException)
+            {
+                throw;
+            }
             catch (System.Management.Automation.RuntimeException ex)
             {
                 if (ex.InnerException is UnexpectedChangeException changeException)
@@ -962,26 +966,16 @@ namespace Lithnet.Miiserver.AutoSync
         private void PerformPostRunActions(RunDetails r)
         {
             this.lastRunNumber = r.RunNumber;
-            
+
             this.controllerScript.ExecutionComplete(r);
 
             if (this.controllerScript.HasStoppedMA)
             {
-                this.Stop(false, false);
+                this.Stop(false, false, false);
                 return;
             }
 
-            try
-            {
-                this.ThrowOnThresholdsExceeded(r);
-            }
-            catch (ThresholdExceededException ex)
-            {
-                this.LogWarn($"Threshold was exceeded on management agent run profile {this.ExecutingRunProfile}. The controller will be stopped\n{ex.Message}");
-                this.SendThresholdExceededMail(r, ex.Message);
-                this.Stop(false, false);
-                return;
-            }
+            this.ThrowOnThresholdsExceeded(r);
 
             this.TrySendMail(r);
 
@@ -997,61 +991,54 @@ namespace Lithnet.Miiserver.AutoSync
 
             foreach (StepDetails s in r.StepDetails)
             {
-                this.ThrowOnThresholdsExceeded(s);
-            }
-        }
-
-        private void ThrowOnThresholdsExceeded(StepDetails s)
-        {
-            if (this.Configuration.StagingThresholds.Adds != null && this.Configuration.StagingThresholds.Adds > 0)
-            {
-                if (s.StagingCounters.StageAdd >= this.Configuration.StagingThresholds.Adds)
+                if (this.Configuration.StagingThresholds.Adds != null && this.Configuration.StagingThresholds.Adds > 0)
                 {
-                    throw new ThresholdExceededException($"The management agent operation staged {s.StagingCounters.StageAdd} adds which triggered the threshold of {this.Configuration.StagingThresholds.Adds}");
+                    if (s.StagingCounters.StageAdd >= this.Configuration.StagingThresholds.Adds)
+                    {
+                        throw new ThresholdExceededException($"The management agent operation staged {s.StagingCounters.StageAdd} adds which triggered the threshold of {this.Configuration.StagingThresholds.Adds}", r);
+                    }
+                }
+
+                if (this.Configuration.StagingThresholds.Deletes != null && this.Configuration.StagingThresholds.Deletes > 0)
+                {
+                    if (s.StagingCounters.StageDelete >= this.Configuration.StagingThresholds.Deletes)
+                    {
+                        throw new ThresholdExceededException($"The management agent operation staged {s.StagingCounters.StageDelete} deletes which triggered the threshold of {this.Configuration.StagingThresholds.Deletes}", r);
+                    }
+                }
+
+                if (this.Configuration.StagingThresholds.Renames != null && this.Configuration.StagingThresholds.Renames > 0)
+                {
+                    if (s.StagingCounters.StageRename >= this.Configuration.StagingThresholds.Renames)
+                    {
+                        throw new ThresholdExceededException($"The management agent operation staged {s.StagingCounters.StageRename} renames which triggered the threshold of {this.Configuration.StagingThresholds.Renames}", r);
+                    }
+                }
+
+                if (this.Configuration.StagingThresholds.Updates != null && this.Configuration.StagingThresholds.Updates > 0)
+                {
+                    if (s.StagingCounters.StageUpdate >= this.Configuration.StagingThresholds.Updates)
+                    {
+                        throw new ThresholdExceededException($"The management agent operation staged {s.StagingCounters.StageUpdate} updates which triggered the threshold of {this.Configuration.StagingThresholds.Updates}", r);
+                    }
+                }
+
+                if (this.Configuration.StagingThresholds.DeleteAdds != null && this.Configuration.StagingThresholds.DeleteAdds > 0)
+                {
+                    if (s.StagingCounters.StageDeleteAdd >= this.Configuration.StagingThresholds.DeleteAdds)
+                    {
+                        throw new ThresholdExceededException($"The management agent operation staged {s.StagingCounters.StageDeleteAdd} delete/adds which triggered the threshold of {this.Configuration.StagingThresholds.DeleteAdds}", r);
+                    }
+                }
+
+                if (this.Configuration.StagingThresholds.Changes != null && this.Configuration.StagingThresholds.Changes > 0)
+                {
+                    if (s.StagingCounters.StagingChanges >= this.Configuration.StagingThresholds.Changes)
+                    {
+                        throw new ThresholdExceededException($"The management agent operation staged {s.StagingCounters.StagingChanges} total changes which triggered the threshold of {this.Configuration.StagingThresholds.Changes}", r);
+                    }
                 }
             }
-
-            if (this.Configuration.StagingThresholds.Deletes != null && this.Configuration.StagingThresholds.Deletes > 0)
-            {
-                if (s.StagingCounters.StageDelete >= this.Configuration.StagingThresholds.Deletes)
-                {
-                    throw new ThresholdExceededException($"The management agent operation staged {s.StagingCounters.StageDelete} deletes which triggered the threshold of {this.Configuration.StagingThresholds.Deletes}");
-                }
-            }
-
-            if (this.Configuration.StagingThresholds.Renames != null && this.Configuration.StagingThresholds.Renames > 0)
-            {
-                if (s.StagingCounters.StageRename >= this.Configuration.StagingThresholds.Renames)
-                {
-                    throw new ThresholdExceededException($"The management agent operation staged {s.StagingCounters.StageRename} renames which triggered the threshold of {this.Configuration.StagingThresholds.Renames}");
-                }
-            }
-
-            if (this.Configuration.StagingThresholds.Updates != null && this.Configuration.StagingThresholds.Updates > 0)
-            {
-                if (s.StagingCounters.StageUpdate >= this.Configuration.StagingThresholds.Updates)
-                {
-                    throw new ThresholdExceededException($"The management agent operation staged {s.StagingCounters.StageUpdate} updates which triggered the threshold of {this.Configuration.StagingThresholds.Updates}");
-                }
-            }
-
-            if (this.Configuration.StagingThresholds.DeleteAdds != null && this.Configuration.StagingThresholds.DeleteAdds > 0)
-            {
-                if (s.StagingCounters.StageDeleteAdd >= this.Configuration.StagingThresholds.DeleteAdds)
-                {
-                    throw new ThresholdExceededException($"The management agent operation staged {s.StagingCounters.StageDeleteAdd} delete/adds which triggered the threshold of {this.Configuration.StagingThresholds.DeleteAdds}");
-                }
-            }
-
-            if (this.Configuration.StagingThresholds.Changes != null && this.Configuration.StagingThresholds.Changes > 0)
-            {
-                if (s.StagingCounters.StagingChanges >= this.Configuration.StagingThresholds.Changes)
-                {
-                    throw new ThresholdExceededException($"The management agent operation staged {s.StagingCounters.StagingChanges} total changes which triggered the threshold of {this.Configuration.StagingThresholds.Changes}");
-                }
-            }
-
-
         }
 
         private void ProcessUnexpectedChangeException(UnexpectedChangeException ex)
@@ -1064,7 +1051,7 @@ namespace Lithnet.Miiserver.AutoSync
             else
             {
                 this.LogWarn($"Controller indicated that management agent controller should stop further processing on this MA. Run Profile {this.ExecutingRunProfile}");
-                this.Stop(false, false);
+                this.Stop(false, false, false);
             }
         }
 
@@ -1129,6 +1116,9 @@ namespace Lithnet.Miiserver.AutoSync
                     catch (OperationCanceledException)
                     {
                     }
+                    catch (ThresholdExceededException)
+                    {
+                    }
                     catch (Exception ex)
                     {
                         this.LogError(ex, "The controller encountered a unrecoverable error");
@@ -1142,7 +1132,7 @@ namespace Lithnet.Miiserver.AutoSync
             catch (Exception ex)
             {
                 logger.Error(ex, "An error occurred starting the controller");
-                this.Stop(false, false);
+                this.Stop(false, false, false);
                 this.Message = $"Startup error: {ex.Message}";
             }
             finally
@@ -1178,7 +1168,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public void Stop(bool cancelRun, bool waitForInternalTask)
+        public void Stop(bool cancelRun, bool waitForInternalTask, bool thresholdExceeded)
         {
             bool gotLock = false;
 
@@ -1252,6 +1242,11 @@ namespace Lithnet.Miiserver.AutoSync
                 this.InternalStatus.Clear();
                 this.ControlState = ControlState.Stopped;
 
+                if (thresholdExceeded)
+                {
+                    this.Message = "Threshold exceeded";
+                }
+
                 if (gotLock)
                 {
                     this.ReleaseLock(this.serviceControlLock, nameof(this.serviceControlLock));
@@ -1305,6 +1300,13 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 this.WaitOnUnmanagedRun();
             }
+            catch (ThresholdExceededException ex)
+            {
+                this.LogWarn($"Threshold was exceeded on management agent run profile {this.ExecutingRunProfile}. The controller will be stopped\n{ex.Message}");
+                this.SendThresholdExceededMail(ex.RunDetails, ex.Message);
+                this.Stop(false, false, true);
+                throw;
+            }
             catch (Exception ex)
             {
                 logger.Error(ex, "An error occurred in an unmanaged run");
@@ -1352,6 +1354,9 @@ namespace Lithnet.Miiserver.AutoSync
                 }
             }
             catch (OperationCanceledException)
+            {
+            }
+            catch (ThresholdExceededException)
             {
             }
             finally
@@ -1462,6 +1467,12 @@ namespace Lithnet.Miiserver.AutoSync
             }
             catch (OperationCanceledException)
             {
+            }
+            catch (ThresholdExceededException ex)
+            {
+                this.LogWarn($"Threshold was exceeded on management agent run profile {this.ExecutingRunProfile}. The controller will be stopped\n{ex.Message}");
+                this.SendThresholdExceededMail(ex.RunDetails, ex.Message);
+                this.Stop(false, false, true);
             }
             finally
             {
@@ -1842,7 +1853,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 return;
             }
-            
+
             if (this.perProfileLastRunStatus.ContainsKey(r.RunProfileName))
             {
                 if (this.perProfileLastRunStatus[r.RunProfileName] == r.LastStepStatus)
@@ -1875,7 +1886,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             MessageSender.SendMessage($"{r.MAName} {r.RunProfileName}: Controller stopped: Threshold exceeded", MessageBuilder.GetMessageBody(r, message));
         }
-        
+
         private bool ShouldSendMail(RunDetails r)
         {
             if (!MessageSender.CanSendMail())
