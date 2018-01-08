@@ -26,6 +26,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void CheckTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
+            this.Log($"Timer elapsed. Next event at {DateTime.Now.Add(this.Interval)}");
             this.Fire(this.RunProfileName, this.Exclusive);
         }
 
@@ -39,7 +40,7 @@ namespace Lithnet.Miiserver.AutoSync
                 return;
             }
 
-            this.Trace($"Starting interval timer for {this.RunProfileName} at {this.Interval}");
+            this.Log($"Starting interval timer for {this.RunProfileName} at {this.Interval}. First event will occur at {DateTime.Now.Add(this.Interval)}");
 
             this.checkTimer = new Timer
             {
@@ -48,6 +49,7 @@ namespace Lithnet.Miiserver.AutoSync
             };
 
             this.checkTimer.Elapsed += this.CheckTimer_Elapsed;
+
             this.checkTimer.Start();
         }
 

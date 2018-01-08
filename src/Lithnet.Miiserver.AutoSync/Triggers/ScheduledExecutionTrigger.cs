@@ -49,7 +49,7 @@ namespace Lithnet.Miiserver.AutoSync
                 triggerTime = triggerTime.Add(this.Interval);
             }
 
-            this.Trace("Scheduling event for " + triggerTime);
+            this.Log("Scheduling next event for " + triggerTime);
             this.RemainingMilliseconds = (triggerTime - now).TotalMilliseconds;
         }
 
