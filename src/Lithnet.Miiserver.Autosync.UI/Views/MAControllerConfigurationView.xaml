@@ -206,7 +206,7 @@
                                     <ColumnDefinition />
                                 </Grid.ColumnDefinitions>
 
-                                <Label Grid.Row="0" Grid.Column="1" Content="You can force the controller to stop immediately if the following thresholds are exceeded by an import operation"/>
+                                <Label Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Content="You can force the controller to immediately stop if any of the following thresholds are exceeded by an import operation"/>
 
                                 <Label Grid.Row="1" Grid.Column="0" Content="Total changes"/>
                                 <controls:NumericUpDown  Grid.Row="1"

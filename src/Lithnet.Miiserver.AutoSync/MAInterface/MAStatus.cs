@@ -58,6 +58,9 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember]
         public bool HasForeignLock { get; internal set; }
 
+        [DataMember]
+        public bool ThresholdExceeded { get; internal set; }
+        
         public void Clear()
         {
             this.ExecutingRunProfile = null;

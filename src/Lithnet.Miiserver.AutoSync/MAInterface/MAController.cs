@@ -1086,6 +1086,7 @@ namespace Lithnet.Miiserver.AutoSync
                 this.WaitAndTakeLock(this.serviceControlLock, nameof(this.serviceControlLock), this.controllerCancellationTokenSource);
                 gotLock = true;
                 this.ControlState = ControlState.Starting;
+                this.InternalStatus.ThresholdExceeded = false;
                 this.pendingActionList = new ExecutionParameterCollection();
                 this.pendingActions = new BlockingCollection<ExecutionParameters>(this.pendingActionList);
                 this.perProfileLastRunStatus = new Dictionary<string, string>();
@@ -1244,7 +1245,8 @@ namespace Lithnet.Miiserver.AutoSync
 
                 if (thresholdExceeded)
                 {
-                    this.Message = "Threshold exceeded";
+                    this.InternalStatus.ThresholdExceeded = true;
+                    this.RaiseStateChange();
                 }
 
                 if (gotLock)

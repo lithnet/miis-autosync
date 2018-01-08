@@ -38,13 +38,19 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             get
             {
+                if (this.ThresholdExceeded)
+                {
+                    return App.GetImageResource("Blocked.png");
+                }
+
                 switch (this.DisplayState)
                 {
+
                     case "Disabled":
                         return App.GetImageResource("Stop.png");
 
                     case "Idle":
-                       return App.GetImageResource("dot-medium.png");
+                        return App.GetImageResource("dot-medium.png");
 
                     case "Paused":
                         return App.GetImageResource("Pause.png");
@@ -78,6 +84,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         public string ExecutionQueue { get; private set; }
 
         public string Message { get; private set; }
+
+        public bool ThresholdExceeded { get; private set; }
 
         public string ExecutingRunProfile { get; private set; }
 
@@ -135,7 +143,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public void MAStatusChanged(MAStatus status)
         {
-            this.Message = status.Message;
+            this.Message = status.ThresholdExceeded ? "Threshold exceeded" : status.Message;
             this.ExecutingRunProfile = status.ExecutingRunProfile;
             this.ExecutionQueue = status.ExecutionQueue;
             this.DisplayState = status.DisplayState;
@@ -144,6 +152,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.HasExclusiveLock = status.HasExclusiveLock;
             this.HasSyncLock = status.HasSyncLock;
             this.HasForeignLock = status.HasForeignLock;
+            this.ThresholdExceeded = status.ThresholdExceeded;
 
             this.Disabled = this.ControlState == ControlState.Disabled;
         }
