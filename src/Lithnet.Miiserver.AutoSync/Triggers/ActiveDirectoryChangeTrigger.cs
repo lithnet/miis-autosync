@@ -53,7 +53,7 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "object-classes")]
         public string[] ObjectClasses { get; set; }
 
-        public bool HasCredentials => string.IsNullOrEmpty(this.Username);
+        public bool HasCredentials => !string.IsNullOrEmpty(this.Username);
 
         public NetworkCredential GetCredentialPackage()
         {

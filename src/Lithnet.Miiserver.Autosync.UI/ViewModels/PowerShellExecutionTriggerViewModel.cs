@@ -13,6 +13,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
     {
         private PowerShellExecutionTrigger typedModel;
 
+        private const string PlaceholderPassword = "{B0C5980F-11D1-4CED-8BA0-6D09FF248C6F}";
+
         public PowerShellExecutionTriggerViewModel(PowerShellExecutionTrigger model)
             : base(model)
         {
@@ -23,6 +25,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.AddIsDirtyProperty(nameof(this.ScriptPath));
             this.AddIsDirtyProperty(nameof(this.Interval));
             this.AddIsDirtyProperty(nameof(this.ExceptionBehaviour));
+            this.AddIsDirtyProperty(nameof(this.Username));
+            this.AddIsDirtyProperty(nameof(this.Password));
         }
 
         [AlsoNotifyFor("Description")]
@@ -42,6 +46,41 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             get => this.typedModel.ExceptionBehaviour;
             set => this.typedModel.ExceptionBehaviour = value;
+        }
+
+        public string Username
+        {
+            get => this.typedModel.Username;
+            set => this.typedModel.Username = value;
+        }
+
+        public string Password
+        {
+            get
+            {
+                if (this.typedModel.Password == null || !this.typedModel.Password.HasValue)
+                {
+                    return null;
+                }
+                else
+                {
+                    return PlaceholderPassword;
+                }
+            }
+            set
+            {
+                if (value == null)
+                {
+                    this.typedModel.Password = null;
+                }
+
+                if (value == PlaceholderPassword)
+                {
+                    return;
+                }
+
+                this.typedModel.Password = new ProtectedString(value);
+            }
         }
 
         public string Type => this.Model.Type;

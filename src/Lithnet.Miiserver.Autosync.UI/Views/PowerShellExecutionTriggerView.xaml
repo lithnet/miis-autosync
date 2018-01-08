@@ -20,6 +20,9 @@
                     <RowDefinition/>
                     <RowDefinition/>
                     <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
                 </Grid.RowDefinitions>
 
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="PowerShell script"/>
@@ -70,6 +73,31 @@
                           ItemsSource="{Binding Source={presentation:EnumExtension {x:Type autoSync:ExecutionErrorBehaviour}}, Mode=OneWay}"
                           SelectedValue="{Binding ExceptionBehaviour, ValidatesOnDataErrors=True, ValidatesOnExceptions=true}"
                           SelectedValuePath="Value"/>
+
+                <TextBlock Grid.Row="4" 
+                           Grid.Column="0" 
+                           Margin="0 0 0 10"
+                           Text="Credentials to pass to the Get-RunProfileToExecute function (optional)"/>
+
+                <TextBlock Grid.Row="5" 
+                           Grid.Column="0" 
+                           Text="User name"/>
+                <TextBox Grid.Row="5" 
+                         Grid.Column="1" 
+                         Margin="10 0 0 5"
+                         Text="{Binding Username}"
+                         />
+
+                <TextBlock Grid.Row="6" 
+                           Grid.Column="0" 
+                           Text="Password"/>
+                <PasswordBox Grid.Row="6" 
+                             Grid.Column="1" 
+                             Margin="10 0 0 5" 
+                             PasswordChar="*" 
+                             ui:PasswordBoxBindingHelper.Password="{Binding Password}" 
+                              />
+
             </Grid>
         </UserControl>
     </DataTemplate>
