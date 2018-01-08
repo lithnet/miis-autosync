@@ -991,7 +991,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             foreach (StepDetails s in r.StepDetails)
             {
-                if (this.Configuration.StagingThresholds.Adds != null && this.Configuration.StagingThresholds.Adds > 0)
+                if (this.Configuration.StagingThresholds.Adds > 0)
                 {
                     if (s.StagingCounters.StageAdd >= this.Configuration.StagingThresholds.Adds)
                     {
@@ -999,7 +999,7 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                 }
 
-                if (this.Configuration.StagingThresholds.Deletes != null && this.Configuration.StagingThresholds.Deletes > 0)
+                if (this.Configuration.StagingThresholds.Deletes > 0)
                 {
                     if (s.StagingCounters.StageDelete >= this.Configuration.StagingThresholds.Deletes)
                     {
@@ -1007,7 +1007,7 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                 }
 
-                if (this.Configuration.StagingThresholds.Renames != null && this.Configuration.StagingThresholds.Renames > 0)
+                if (this.Configuration.StagingThresholds.Renames > 0)
                 {
                     if (s.StagingCounters.StageRename >= this.Configuration.StagingThresholds.Renames)
                     {
@@ -1015,7 +1015,7 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                 }
 
-                if (this.Configuration.StagingThresholds.Updates != null && this.Configuration.StagingThresholds.Updates > 0)
+                if (this.Configuration.StagingThresholds.Updates > 0)
                 {
                     if (s.StagingCounters.StageUpdate >= this.Configuration.StagingThresholds.Updates)
                     {
@@ -1023,7 +1023,7 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                 }
 
-                if (this.Configuration.StagingThresholds.DeleteAdds != null && this.Configuration.StagingThresholds.DeleteAdds > 0)
+                if (this.Configuration.StagingThresholds.DeleteAdds > 0)
                 {
                     if (s.StagingCounters.StageDeleteAdd >= this.Configuration.StagingThresholds.DeleteAdds)
                     {
@@ -1031,7 +1031,7 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                 }
 
-                if (this.Configuration.StagingThresholds.Changes != null && this.Configuration.StagingThresholds.Changes > 0)
+                if (this.Configuration.StagingThresholds.Changes > 0)
                 {
                     if (s.StagingCounters.StagingChanges >= this.Configuration.StagingThresholds.Changes)
                     {

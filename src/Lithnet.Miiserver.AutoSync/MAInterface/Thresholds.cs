@@ -11,21 +11,21 @@ namespace Lithnet.Miiserver.AutoSync
     public class Thresholds
     {
         [DataMember(Name = "deletes")]
-        public int? Deletes { get; set; }
+        public int Deletes { get; set; }
 
         [DataMember(Name = "renames")]
-        public int? Renames { get; set; }
+        public int Renames { get; set; }
 
         [DataMember(Name = "adds")]
-        public int? Adds { get; set; }
+        public int Adds { get; set; }
 
         [DataMember(Name = "updates")]
-        public int? Updates { get; set; }
+        public int Updates { get; set; }
 
         [DataMember(Name = "delete-adds")]
-        public int? DeleteAdds { get; set; }
+        public int DeleteAdds { get; set; }
 
         [DataMember(Name = "changes")]
-        public int? Changes { get; set; }
+        public int Changes { get; set; }
     }
 }
