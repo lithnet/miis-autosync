@@ -15,5 +15,8 @@ namespace Lithnet.Miiserver.AutoSync
 
         [OperationContract()]
         MAStatus GetFullUpdate(Guid managementAgentID);
+        
+        [OperationContract]
+        bool Ping(Guid managementAgentID);
     }
 }

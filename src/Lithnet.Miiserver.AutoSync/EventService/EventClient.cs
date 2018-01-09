@@ -26,6 +26,11 @@ namespace Lithnet.Miiserver.AutoSync
             return this.Channel.GetFullUpdate(managementAgentID);
         }
 
+        public bool Ping(Guid managementAgentID)
+        {
+            return this.Channel.Ping(managementAgentID);
+        }
+
         public static EventClient GetNamedPipesClient(InstanceContext ctx)
         {
             return new EventClient(ctx, EventServiceConfiguration.NetNamedPipeBinding, EventServiceConfiguration.NetNamedPipeEndpointAddress);

@@ -27,7 +27,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
         {
             AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
             TaskScheduler.UnobservedTaskException += this.TaskScheduler_UnobservedTaskException;
-            Application.Current.DispatcherUnhandledException += this.Dispatcher_UnhandledException; 
+            Application.Current.DispatcherUnhandledException += this.Dispatcher_UnhandledException;
 
 #if DEBUG
             if (Debugger.IsAttached)
@@ -105,7 +105,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
         private void ShowDummyWindow()
         {
-            Window t = new Window() {AllowsTransparency = true, ShowInTaskbar = false, WindowStyle = WindowStyle.None, Background = Brushes.Transparent};
+            Window t = new Window() { AllowsTransparency = true, ShowInTaskbar = false, WindowStyle = WindowStyle.None, Background = Brushes.Transparent };
             t.Show();
         }
 
@@ -179,10 +179,10 @@ namespace Lithnet.Miiserver.AutoSync.UI
                 Environment.Exit(1);
             }
         }
-        
+
         internal static EventClient GetDefaultEventClient(InstanceContext ctx)
         {
-            if (string.Equals(UserSettings.AutoSyncServerHost, "localhost", StringComparison.OrdinalIgnoreCase))
+            if (App.IsConnectedToLocalhost())
             {
                 return EventClient.GetNamedPipesClient(ctx);
             }
@@ -194,7 +194,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
         public static ConfigClient GetDefaultConfigClient()
         {
-            if (string.Equals(UserSettings.AutoSyncServerHost, "localhost", StringComparison.OrdinalIgnoreCase))
+            if (App.IsConnectedToLocalhost())
             {
                 return ConfigClient.GetNamedPipesClient();
             }
@@ -203,6 +203,13 @@ namespace Lithnet.Miiserver.AutoSync.UI
                 return ConfigClient.GetNetTcpClient(UserSettings.AutoSyncServerHost, UserSettings.AutoSyncServerPort, UserSettings.AutoSyncServerIdentity);
             }
         }
+
+        public static bool IsConnectedToLocalhost()
+        {
+            return string.Equals(UserSettings.AutoSyncServerHost, "localhost", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static string Hostname => UserSettings.AutoSyncServerHost;
 
         internal static BitmapImage GetImageResource(string name)
         {

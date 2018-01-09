@@ -25,7 +25,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public ConfigFileViewModel ConfigFile { get; set; }
 
-        public string DisplayName => "Lithnet AutoSync" + (this.IsDirty ? "*" : string.Empty);
+        public string DisplayName => "Lithnet AutoSync" + (App.IsConnectedToLocalhost() ? string.Empty : $" - {App.Hostname}") + (this.IsDirty ? "*" : string.Empty);
 
         public Cursor Cursor { get; set; }
 

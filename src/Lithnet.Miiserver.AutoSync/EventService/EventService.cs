@@ -154,12 +154,47 @@ namespace Lithnet.Miiserver.AutoSync
                     commObj.Closed += EventService.CommObj_Closed;
                 }
 
-                logger.Trace($"Registered callback channel for {name}/{managementAgentID}");
+                logger.Trace($"Registered callback channel for {name}/{managementAgentID} on client {EventService.RemoteHost}");
             }
             catch (Exception ex)
             {
                 logger.Error(ex, "An error occurred with the client registration");
                 throw;
+            }
+        }
+
+        public bool Ping(Guid managementAgentID)
+        {
+            IEventCallBack subscriber = OperationContext.Current.GetCallbackChannel<IEventCallBack>();
+
+            if (EventService.subscribers.ContainsKey(managementAgentID))
+            {
+                if (EventService.subscribers[managementAgentID].Contains(subscriber))
+                {
+                    // Still registered
+                    logger.Trace($"Client ping succeeded for {managementAgentID} at {EventService.RemoteHost}");
+                    return true;
+                }
+            }
+
+            logger.Warn($"Client ping failed for {managementAgentID} at {EventService.RemoteHost}. Client is no longer registered.");
+
+            // Not registered
+            return false;
+        }
+
+        private static string RemoteHost
+        {
+            get
+            {
+                RemoteEndpointMessageProperty remoteEndpoint = OperationContext.Current?.IncomingMessageProperties[RemoteEndpointMessageProperty.Name] as RemoteEndpointMessageProperty;
+
+                if (remoteEndpoint == null)
+                {
+                    return null;
+                }
+
+                return $"{remoteEndpoint?.Address}:{remoteEndpoint?.Port}";
             }
         }
 

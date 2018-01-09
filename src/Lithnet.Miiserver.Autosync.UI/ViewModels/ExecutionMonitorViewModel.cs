@@ -10,12 +10,17 @@ using System.Windows;
 using System.Windows.Media.Imaging;
 using Lithnet.Common.Presentation;
 using PropertyChanged;
+using Timer = System.Timers.Timer;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
     public class ExecutionMonitorViewModel : ViewModelBase<object>, IEventCallBack
     {
         private EventClient client;
+
+        private Timer pingTimer;
+
+        private int faultedCount;
 
         public ExecutionMonitorViewModel(KeyValuePair<Guid, string> ma)
             : base(ma)
@@ -421,15 +426,46 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             MAStatus status = this.client.GetFullUpdate(this.ManagementAgentID);
             Debug.WriteLine($"Got full update from {this.ManagementAgentName}/{this.ManagementAgentID}");
 
+            this.StartPingTimer();
+
             if (status != null)
             {
                 this.MAStatusChanged(status);
             }
         }
 
+        private void StartPingTimer()
+        {
+            if (!App.IsConnectedToLocalhost())
+            {
+                this.pingTimer = new Timer();
+                this.pingTimer.Interval = TimeSpan.FromSeconds(60).TotalMilliseconds;
+                this.pingTimer.Elapsed += this.PingTimerElapsed;
+                this.pingTimer.Start();
+            }
+        }
+
+        private void StopPingTimer()
+        {
+            this.pingTimer?.Stop();
+        }
+
+        private void PingTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            if (this.IsConnected)
+            {
+                if (!this.client.Ping(this.ManagementAgentID))
+                {
+                    Trace.WriteLine("Server ping failed. Restarting client");
+                    this.CleanupAndRestartClient();
+                }
+            }
+        }
+        
         private void InnerChannel_Faulted(object sender, EventArgs e)
         {
             Trace.WriteLine($"Closing faulted event channel on client side for {this.ManagementAgentName}/{this.ManagementAgentID}");
+            this.StopPingTimer();
             this.faultedCount++;
             try
             {
@@ -443,6 +479,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         private void InnerChannel_Closed(object sender, EventArgs e)
         {
             Trace.WriteLine($"Closing event channel on client side for {this.ManagementAgentName}/{this.ManagementAgentID}");
+            this.StopPingTimer();
             this.IsConnected = false;
             this.DisplayState = "Disconnected";
             this.client.InnerChannel.Closed -= this.InnerChannel_Closed;
@@ -453,8 +490,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 this.CleanupAndRestartClient();
             }
         }
-
-        private int faultedCount;
 
         private void CleanupAndRestartClient()
         {
