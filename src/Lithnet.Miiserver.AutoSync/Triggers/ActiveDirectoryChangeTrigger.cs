@@ -18,9 +18,15 @@ namespace Lithnet.Miiserver.AutoSync
     {
         private const string TypeDescription = "AD/LDS change detection";
 
-        private const string LastLogonAttributeName = "lastLogon";
-        private const string LastLogonTimeStampAttributeName = "lastLogonTimeStamp";
-        private const string BadPasswordAttribute = "badPasswordTime";
+        private static readonly string[] TimeStampAttributesToIgnore = {
+                "lastLogon",
+                "lastLogonTimeStamp",
+                "badPasswordTime",
+                "msDS-FailedInteractiveLogonCount",
+                "msDS-FailedInteractiveLogonCountAtLastSuccessfulLogon",
+                "msDS-LastFailedInteractiveLogonTime",
+                "msDS-LastSuccessfulInteractiveLogonTime"};
+
         private const string ObjectClassAttribute = "objectClass";
 
         private object lockObject;
@@ -49,7 +55,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         [DataMember(Name = "run-profile-name")]
         public string RunProfileName { get; set; }
-        
+
         [DataMember(Name = "object-classes")]
         public string[] ObjectClasses { get; set; }
 
@@ -114,14 +120,15 @@ namespace Lithnet.Miiserver.AutoSync
                     this.connection = new LdapConnection(directory);
                 }
 
+                List<string> attributesToGet = new List<string>() { ActiveDirectoryChangeTrigger.ObjectClassAttribute };
+                attributesToGet.AddRange(ActiveDirectoryChangeTrigger.TimeStampAttributesToIgnore);
+
                 SearchRequest r = new SearchRequest(
                     this.BaseDN,
                     "(objectClass=*)",
                     SearchScope.Subtree,
-                    ActiveDirectoryChangeTrigger.ObjectClassAttribute,
-                    ActiveDirectoryChangeTrigger.LastLogonAttributeName,
-                    ActiveDirectoryChangeTrigger.LastLogonTimeStampAttributeName,
-                    ActiveDirectoryChangeTrigger.BadPasswordAttribute);
+                    attributesToGet.ToArray()
+                    );
 
                 r.Controls.Add(new DirectoryNotificationControl());
 
@@ -194,49 +201,29 @@ namespace Lithnet.Miiserver.AutoSync
                             continue;
                         }
 
-                        DateTime date1 = DateTime.MinValue;
+                        bool dateTooSoon = false;
 
-                        if (r.Attributes.Contains(ActiveDirectoryChangeTrigger.LastLogonAttributeName))
+                        foreach (string timestampAttribute in ActiveDirectoryChangeTrigger.TimeStampAttributesToIgnore)
                         {
-                            string ts = r.Attributes[ActiveDirectoryChangeTrigger.LastLogonAttributeName][0] as string;
-                            date1 = DateTime.FromFileTimeUtc(Convert.ToInt64(ts));
-
-                            if (date1 > lastLogonOldestDate)
+                            if (r.Attributes.Contains(timestampAttribute))
                             {
-                                continue;
+                                string ts = r.Attributes[timestampAttribute][0] as string;
+                                DateTime date1 = DateTime.FromFileTimeUtc(Convert.ToInt64(ts));
+
+                                if (date1 > lastLogonOldestDate)
+                                {
+                                    dateTooSoon = true;
+                                    break;
+                                }
                             }
                         }
 
-                        DateTime date2 = DateTime.MinValue;
-
-                        if (r.Attributes.Contains(ActiveDirectoryChangeTrigger.LastLogonTimeStampAttributeName))
+                        if (dateTooSoon)
                         {
-                            string ts = r.Attributes[ActiveDirectoryChangeTrigger.LastLogonTimeStampAttributeName][0] as string;
-                            date2 = DateTime.FromFileTimeUtc(Convert.ToInt64(ts));
-
-                            if (date2 > lastLogonOldestDate)
-                            {
-                                continue;
-                            }
-                        }
-
-                        DateTime date3 = DateTime.MinValue;
-
-                        if (r.Attributes.Contains(ActiveDirectoryChangeTrigger.BadPasswordAttribute))
-                        {
-                            string ts = r.Attributes[ActiveDirectoryChangeTrigger.BadPasswordAttribute][0] as string;
-                            date3 = DateTime.FromFileTimeUtc(Convert.ToInt64(ts));
-
-                            if (date3 > lastLogonOldestDate)
-                            {
-                                continue;
-                            }
+                            continue;
                         }
 
                         this.Log($"Change detected on {r.DistinguishedName}");
-                        this.Trace($"LL: {date1.ToLocalTime()}");
-                        this.Trace($"TS: {date2.ToLocalTime()}");
-                        this.Trace($"BP: {date3.ToLocalTime()}");
 
                         this.Fire();
                     }
@@ -382,7 +369,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.BaseDN = partitionNode.SelectSingleNode("custom-data/adma-partition-data/dn")?.InnerText;
             this.ObjectClasses = partitionNode.SelectNodes("filter/object-classes/object-class")?.OfType<XmlElement>().Where(t => t.InnerText != "container" && t.InnerText != "domainDNS" && t.InnerText != "organizationalUnit").Select(u => u.InnerText).ToArray();
         }
-        
+
         private void Initialize()
         {
             this.lockObject = new object();

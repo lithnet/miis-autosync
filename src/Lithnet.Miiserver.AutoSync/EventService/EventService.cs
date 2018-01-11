@@ -187,6 +187,11 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
+                if (!OperationContext.Current?.IncomingMessageProperties.ContainsKey(RemoteEndpointMessageProperty.Name) ?? false)
+                {
+                    return "localhost";
+                }
+
                 RemoteEndpointMessageProperty remoteEndpoint = OperationContext.Current?.IncomingMessageProperties[RemoteEndpointMessageProperty.Name] as RemoteEndpointMessageProperty;
 
                 if (remoteEndpoint == null)
