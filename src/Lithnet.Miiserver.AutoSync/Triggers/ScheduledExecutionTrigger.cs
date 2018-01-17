@@ -102,7 +102,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public override string Type => TypeDescription;
 
-        public override string Description => $"{this.RunProfileName} every {this.Interval} starting from {this.StartDateTime}";
+        public override string Description => $"{this.RunProfileName} every {this.Interval} starting from {this.StartDateTime:F}";
 
         public override string ToString()
         {
