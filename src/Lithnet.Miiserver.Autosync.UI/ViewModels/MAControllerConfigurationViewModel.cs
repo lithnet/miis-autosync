@@ -62,8 +62,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             
             this.IsDirtySet += this.MAConfigParametersViewModel_IsDirtySet;
 
-            this.Triggers.CollectionChanged += this.ChildCollectionChanged;
-            this.Partitions.CollectionChanged += this.ChildCollectionChanged;
+            this.Triggers.CollectionChanged += this.TriggersCollectionChanged;
+            this.Partitions.CollectionChanged += this.PartitionsCollectionChanged;
 
             foreach (MAExecutionTriggerViewModel item in this.Triggers)
             {
@@ -119,9 +119,13 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.IncrementVersion();
         }
 
-        private void ChildCollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        private void TriggersCollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
-            this.IncrementVersion();
+            this.RaisePropertyChanged(nameof(this.Triggers));
+        }
+        private void PartitionsCollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            this.RaisePropertyChanged(nameof(this.Partitions));
         }
 
         internal void Commit()
