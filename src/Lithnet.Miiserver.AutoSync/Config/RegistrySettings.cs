@@ -40,7 +40,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public static string ServiceAccount => (string) RegistrySettings.ServiceKey.GetValue("ObjectName", null);
+        public static string ServiceAccount => (string)RegistrySettings.ServiceKey.GetValue("ObjectName", null);
 
         public static bool AutoStartEnabled
         {
@@ -132,7 +132,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                return (string) RegistrySettings.ParametersKey.GetValue(nameof(NetTcpBindAddress), Environment.MachineName);
+                return (string)RegistrySettings.ParametersKey.GetValue(nameof(NetTcpBindAddress), Environment.MachineName);
             }
         }
 
@@ -140,7 +140,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                return (int) RegistrySettings.ParametersKey.GetValue(nameof(NetTcpBindPort), 54338);
+                return (int)RegistrySettings.ParametersKey.GetValue(nameof(NetTcpBindPort), 54338);
             }
         }
 
@@ -190,7 +190,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                return (int) RegistrySettings.ParametersKey.GetValue(nameof(RetryCount), 5);
+                return (int)RegistrySettings.ParametersKey.GetValue(nameof(RetryCount), 5);
             }
         }
 
@@ -225,6 +225,16 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     return TimeSpan.FromSeconds(2);
                 }
+            }
+        }
+
+        public static TimeSpan ExclusiveModeDeferralInterval
+        {
+            get
+            {
+                int seconds = (int)RegistrySettings.ParametersKey.GetValue(nameof(ExclusiveModeDeferralInterval), 2);
+
+                return new TimeSpan(0, 0, seconds);
             }
         }
 
@@ -266,7 +276,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                int minutes = (int) RegistrySettings.ParametersKey.GetValue(nameof(RunHistoryTimerInterval), 0);
+                int minutes = (int)RegistrySettings.ParametersKey.GetValue(nameof(RunHistoryTimerInterval), 0);
 
                 if (minutes > 0)
                 {

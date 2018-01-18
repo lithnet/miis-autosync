@@ -45,6 +45,26 @@
         <RegistryValue Root="HKLM" Key="System\CurrentControlSet\Services\[SERVICE_NAME]\Parameters" Name="ServiceAdminsGroup" Type="string" Value="[SERVICE_ADMINS_GROUP]" />
         <RegistryValue Root="HKLM" Key="System\CurrentControlSet\Services\[SERVICE_NAME]\Parameters" Name="ConfigFile" Type="string" Value="[APPROOTDIR]config.xml" />
 
+        <util:PerformanceCategory Id="PerformanceCounter" Name="Lithnet AutoSync" MultiInstance="yes" DefaultLanguage="english">
+          <util:PerformanceCounter Name="Queue length" Type="numberOfItems64"  Help="Shows the current number of jobs in the execution queue"/>
+          <util:PerformanceCounter Name="Total run count" Type="numberOfItems64"  Help="Shows the total number of jobs executed"/>
+
+          <util:PerformanceCounter Name="Wait time % - sync lock" Type="numberOfItems64"  />
+          <util:PerformanceCounter Name="Wait time % - exclusive lock" Type="numberOfItems64"  />
+          <util:PerformanceCounter Name="Wait time %" Type="numberOfItems64"  />
+
+          <util:PerformanceCounter Name="Wait time average - sync lock" Type="numberOfItems64"  />
+          <util:PerformanceCounter Name="Wait time average - exclusive lock" Type="numberOfItems64"  />
+          <util:PerformanceCounter Name="Wait time average" Type="numberOfItems64" />
+
+          <util:PerformanceCounter Name="Execution time average" Type="numberOfItems64" />
+
+          <util:PerformanceCounter Name="Execution time %" Type="numberOfItems64"  />
+
+          <util:PerformanceCounter Name="Idle time %" Type="numberOfItems64"  />
+
+
+        </util:PerformanceCategory>
       </Component>
 
       <Component Id="cmpb79b2c604b1748aa9606e987e86aad3a" Guid="*" Win64="yes">

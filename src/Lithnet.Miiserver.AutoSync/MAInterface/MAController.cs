@@ -49,6 +49,7 @@ namespace Lithnet.Miiserver.AutoSync
         private Task internalTask;
         private PartitionDetectionMode detectionMode;
         private int lastRunNumber = 0;
+        private MAControllerPerfCounters counters;
 
         private Dictionary<Guid, Timer> importCheckTimers = new Dictionary<Guid, Timer>();
 
@@ -173,6 +174,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.serviceControlLock = new SemaphoreSlim(1, 1);
             MAController.AllMaLocalOperationLocks.TryAdd(this.ma.ID, this.localOperationLock);
             MAController.SyncComplete += this.MAController_SyncComplete;
+            this.counters = new MAControllerPerfCounters(ma.Name);
         }
 
         private void RaiseMessageLogged(string message)
@@ -782,6 +784,7 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     ts.Token.ThrowIfCancellationRequested();
                     string result = null;
+                    Stopwatch stopwatch = new Stopwatch();
 
                     try
                     {
@@ -791,7 +794,13 @@ namespace Lithnet.Miiserver.AutoSync
 
                         try
                         {
+                            this.counters.RunCount.Increment();
+                            stopwatch.Start();
                             result = this.ma.ExecuteRunProfile(e.RunProfileName, ts.Token);
+                            stopwatch.Stop();
+
+                            this.counters.AddExecutionTime(stopwatch.Elapsed);
+                            this.IncrementCounters(this.ma.RunProfiles[e.RunProfileName].RunSteps);
                         }
                         catch (OperationCanceledException)
                         {
@@ -804,7 +813,7 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                     finally
                     {
-                        this.LogInfo($"{e.RunProfileName} returned {result}");
+                        this.LogInfo($"{e.RunProfileName} returned {result} (duration {stopwatch.Elapsed:hh\\:mm\\:ss})");
                         this.UpdateExecutionStatus(ControllerState.Processing, "Evaluating run results");
                     }
 
@@ -883,6 +892,61 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 this.UpdateExecutionStatus(ControllerState.Idle, null, null);
             }
+        }
+
+        private void IncrementCounters(IEnumerable<RunStep> steps)
+        {
+
+            //foreach (RunStep s in steps)
+            //{
+            //    switch (s.Type)
+            //    {
+            //        case RunStepType.DeltaImport:
+            //            this.counters.ImportsPerHourDelta.Increment();
+            //            this.counters.ImportsPerHourTotal.Increment();
+            //            break;
+
+            //        case RunStepType.DeltaImportDeltaSynchronization:
+            //            this.counters.ImportsPerHourDelta.Increment();
+            //            this.counters.ImportsPerHourTotal.Increment();
+            //            this.counters.SyncsPerHourDelta.Increment();
+            //            this.counters.SyncsPerHourTotal.Increment();
+            //            break;
+
+            //        case RunStepType.DeltaSynchronization:
+            //            this.counters.SyncsPerHourDelta.Increment();
+            //            this.counters.SyncsPerHourTotal.Increment();
+            //            break;
+
+            //        case RunStepType.Export:
+            //            this.counters.ExportsPerHourTotal.Increment();
+            //            break;
+
+            //        case RunStepType.FullImport:
+            //            this.counters.ImportsPerHourFull.Increment();
+            //            this.counters.ImportsPerHourTotal.Increment();
+            //            break;
+
+            //        case RunStepType.FullImportDeltaSynchronization:
+            //            this.counters.SyncsPerHourDelta.Increment();
+            //            this.counters.SyncsPerHourTotal.Increment();
+            //            this.counters.ImportsPerHourFull.Increment();
+            //            this.counters.ImportsPerHourTotal.Increment();
+            //            break;
+
+            //        case RunStepType.FullImportFullSynchronization:
+            //            this.counters.SyncsPerHourFull.Increment();
+            //            this.counters.SyncsPerHourTotal.Increment();
+            //            this.counters.ImportsPerHourFull.Increment();
+            //            this.counters.ImportsPerHourTotal.Increment();
+            //            break;
+
+            //        case RunStepType.FullSynchronization:
+            //            this.counters.SyncsPerHourFull.Increment();
+            //            this.counters.SyncsPerHourTotal.Increment();
+            //            break;
+            //    }
+            //}
         }
 
         private CancellationTokenSource CreateJobTokenSource()
@@ -1092,6 +1156,7 @@ namespace Lithnet.Miiserver.AutoSync
                 this.perProfileLastRunStatus = new Dictionary<string, string>();
 
                 this.Setup(config);
+                this.counters.Start();
 
                 if (this.Configuration.Partitions.ActiveConfigurations.Count() > 1)
                 {
@@ -1236,7 +1301,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 this.StopImportTimers();
                 this.ExecutionTriggers.Clear();
-
+                this.counters.Stop();
                 this.pendingActionList = null;
                 this.pendingActions = null;
                 this.internalTask = null;
@@ -1337,6 +1402,7 @@ namespace Lithnet.Miiserver.AutoSync
                 foreach (ExecutionParameters action in this.pendingActions.GetConsumingEnumerable(this.controllerCancellationTokenSource.Token))
                 {
                     this.controllerCancellationTokenSource.Token.ThrowIfCancellationRequested();
+                    this.counters.CurrentQueueLength.Decrement();
 
                     this.UpdateExecutionStatus(ControllerState.Waiting, "Staging run", action.RunProfileName, this.GetQueueItemNames(false));
 
@@ -1371,20 +1437,31 @@ namespace Lithnet.Miiserver.AutoSync
         {
             ConcurrentBag<SemaphoreSlim> otherLocks = new ConcurrentBag<SemaphoreSlim>();
             bool hasLocalLock = false;
+            Stopwatch totalWaitTimer = new Stopwatch();
+            totalWaitTimer.Start();
+            Stopwatch opTimer = new Stopwatch();
 
             try
             {
                 this.WaitOnUnmanagedRun();
 
                 this.jobCancellationTokenSource = this.CreateJobTokenSource();
-
                 this.UpdateExecutionStatus(ControllerState.Waiting, "Waiting for lock holder to finish", action.RunProfileName);
+
+                opTimer.Start();
                 this.Wait(MAController.GlobalExclusiveOperationLock, nameof(MAController.GlobalExclusiveOperationLock), this.jobCancellationTokenSource);
+
 
                 if (action.Exclusive)
                 {
                     this.Message = "Waiting to take lock";
                     this.LogInfo($"Entering exclusive mode for {action.RunProfileName}");
+
+                    // Give any waiting non-exclusive operations a chance to kick off before locking things up completely
+                    if (RegistrySettings.ExclusiveModeDeferralInterval.TotalSeconds > 0)
+                    {
+                        Thread.Sleep(RegistrySettings.ExclusiveModeDeferralInterval);
+                    }
 
                     // Signal all controllers to wait before running their next job
                     this.WaitAndTakeLockWithSemaphore(MAController.GlobalExclusiveOperationLock, MAController.GlobalExclusiveOperationLockSemaphore, nameof(MAController.GlobalExclusiveOperationLock), this.jobCancellationTokenSource);
@@ -1396,11 +1473,17 @@ namespace Lithnet.Miiserver.AutoSync
                     this.Wait(MAController.AllMaLocalOperationLocks.Values.Select(t => t.AvailableWaitHandle).ToArray<WaitHandle>(), nameof(MAController.AllMaLocalOperationLocks), this.jobCancellationTokenSource);
                 }
 
+                opTimer.Stop();
+                this.counters.AddWaitTimeExclusive(opTimer.Elapsed);
+
                 if (this.StepRequiresSyncLock(action.RunProfileName))
                 {
                     this.Message = "Waiting to take lock";
                     this.LogInfo("Waiting to take sync lock");
+                    opTimer.Start();
                     this.WaitAndTakeLock(MAController.GlobalSynchronizationStepLock, nameof(MAController.GlobalSynchronizationStepLock), this.jobCancellationTokenSource);
+                    opTimer.Stop();
+                    this.counters.AddWaitTimeSync(opTimer.Elapsed);
                     this.HasSyncLock = true;
                 }
 
@@ -1465,6 +1548,9 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                 }
 
+                totalWaitTimer.Stop();
+                this.counters.AddWaitTime(totalWaitTimer.Elapsed);
+                this.LogInfo($"Locks obtained in {totalWaitTimer.Elapsed:hh\\:mm\\:ss}");
                 this.Execute(action, this.jobCancellationTokenSource);
             }
             catch (OperationCanceledException)
@@ -1797,6 +1883,8 @@ namespace Lithnet.Miiserver.AutoSync
                     this.pendingActions.Add(p, this.controllerCancellationTokenSource.Token);
                     this.LogInfo($"Added {p.RunProfileName} to the execution queue (triggered by: {source})");
                 }
+
+                this.counters.CurrentQueueLength.Increment();
 
                 this.UpdateExecutionQueueState();
 

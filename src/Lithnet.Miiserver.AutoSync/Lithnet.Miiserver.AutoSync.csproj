@@ -124,6 +124,7 @@
     <Compile Include="Mail\MessageSender.cs" />
     <Compile Include="MAInterface\PartitionConfiguration.cs" />
     <Compile Include="MAInterface\Thresholds.cs" />
+    <Compile Include="PerfCounters.cs" />
     <Compile Include="PersistentSearch\CallBackEventBridge.cs" />
     <Compile Include="MAInterface\MAControllerScript.cs" />
     <Compile Include="PersistentSearch\PersistentSearchChangeType.cs" />
