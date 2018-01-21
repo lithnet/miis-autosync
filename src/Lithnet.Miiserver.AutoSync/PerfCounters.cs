@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Timers;
+using NLog;
 
 namespace Lithnet.Miiserver.AutoSync
 {
     internal class MAControllerPerfCounters
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         private Stopwatch activeTimer;
 
         private Timer timer;
@@ -41,7 +41,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public MAControllerPerfCounters(string maName)
         {
-            this.RunCount = MAControllerPerfCounters.CreateCounter("Total run count", maName);
+            this.RunCount = MAControllerPerfCounters.CreateCounter("Runs/10 min", maName);
             this.WaitTimeAverageSyncLock = MAControllerPerfCounters.CreateCounter("Wait time average - sync lock", maName);
             this.WaitTimeAverageExclusiveLock = MAControllerPerfCounters.CreateCounter("Wait time average - exclusive lock", maName);
             this.WaitTimeAverage = MAControllerPerfCounters.CreateCounter("Wait time average", maName);
@@ -57,6 +57,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.timer = new Timer();
             this.timer.Interval = TimeSpan.FromSeconds(5).TotalMilliseconds;
             this.timer.Elapsed += this.Timer_Elapsed;
+            this.executionHistory = new List<DateTime>();
         }
 
         private void Timer_Elapsed(object sender, ElapsedEventArgs e)
@@ -67,6 +68,7 @@ namespace Lithnet.Miiserver.AutoSync
         public void Stop()
         {
             this.timer?.Stop();
+            this.activeTimer?.Stop();
             this.ResetValues();
         }
 
@@ -82,6 +84,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.CurrentQueueLength.RawValue = 0;
             this.ExecutionTimeTotal.RawValue = 0;
             this.ExecutionTimeAverage.RawValue = 0;
+            this.IdleTimePercent.RawValue = 0;
             this.WaitTime.RawValue = 0;
             this.WaitTimeExclusiveLock.RawValue = 0;
             this.WaitTimeSyncLock.RawValue = 0;
@@ -89,6 +92,21 @@ namespace Lithnet.Miiserver.AutoSync
             this.WaitTimeAverageExclusiveLock.RawValue = 0;
             this.WaitTimeAverageSyncLock.RawValue = 0;
             this.RunCount.RawValue = 0;
+
+            this.executionTimeCounts = 0;
+            this.executionTimeTotal = new TimeSpan();
+
+            this.waitTimeCounts = 0;
+            this.waitTimeTotal = new TimeSpan();
+
+            this.waitTimeSyncCounts = 0;
+            this.waitTimeSync = new TimeSpan();
+
+            this.waitTimeExclusiveCounts = 0;
+            this.waitTimeExclusive = new TimeSpan();
+
+            this.executionHistory.Clear();
+
         }
 
         private static PerformanceCounter CreateCounter(string name, string maName)
@@ -105,13 +123,16 @@ namespace Lithnet.Miiserver.AutoSync
         }
 
         private int executionTimeCounts;
-
         private TimeSpan executionTimeTotal;
+
+        private List<DateTime> executionHistory;
 
         public void AddExecutionTime(TimeSpan value)
         {
             this.executionTimeTotal = this.executionTimeTotal.Add(value);
             this.executionTimeCounts++;
+            this.executionHistory.Add(DateTime.Now);
+
             this.UpdateCounters();
         }
 
@@ -147,38 +168,49 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void UpdateCounters()
         {
-            double elapsed = this.activeTimer.Elapsed.TotalSeconds;
-
-            if (elapsed <= 0)
+            try
             {
-                return;
-            }
+                double elapsed = this.activeTimer.Elapsed.TotalSeconds;
 
-            if (this.waitTimeExclusiveCounts > 0)
+                if (elapsed <= 0)
+                {
+                    return;
+                }
+
+                if (this.waitTimeExclusiveCounts > 0)
+                {
+                    this.WaitTimeAverageExclusiveLock.RawValue = Convert.ToInt64(this.waitTimeExclusive.TotalSeconds / this.waitTimeExclusiveCounts);
+                    this.WaitTimeExclusiveLock.RawValue = (long) (this.waitTimeExclusive.TotalSeconds / this.activeTimer.Elapsed.TotalSeconds * 100);
+                }
+
+                if (this.waitTimeSyncCounts > 0)
+                {
+                    this.WaitTimeAverageSyncLock.RawValue = Convert.ToInt64(this.waitTimeSync.TotalSeconds / this.waitTimeSyncCounts);
+                    this.WaitTimeSyncLock.RawValue = (long) (this.waitTimeSync.TotalSeconds / this.activeTimer.Elapsed.TotalSeconds * 100);
+                }
+
+                if (this.waitTimeCounts > 0)
+                {
+                    this.WaitTimeAverage.RawValue = Convert.ToInt64(this.waitTimeTotal.TotalSeconds / this.waitTimeCounts);
+                    this.WaitTime.RawValue = (long) (this.waitTimeTotal.TotalSeconds / this.activeTimer.Elapsed.TotalSeconds * 100);
+                }
+
+                if (this.executionTimeCounts > 0)
+                {
+                    this.ExecutionTimeAverage.RawValue = Convert.ToInt64(this.executionTimeTotal.TotalSeconds / this.executionTimeCounts);
+                    this.ExecutionTimeTotal.RawValue = (long) (this.executionTimeTotal.TotalSeconds / this.activeTimer.Elapsed.TotalSeconds * 100);
+                }
+
+                this.IdleTimePercent.RawValue = (long) (((this.activeTimer.Elapsed.TotalSeconds - this.executionTimeTotal.TotalSeconds - this.waitTimeTotal.TotalSeconds) / this.activeTimer.Elapsed.TotalSeconds) * 100);
+
+                this.executionHistory.RemoveAll(t => t < DateTime.Now.AddMinutes(-10));
+
+                this.RunCount.RawValue = this.executionHistory.Count;
+            }
+            catch (Exception ex)
             {
-                this.WaitTimeAverageExclusiveLock.RawValue = Convert.ToInt64(this.waitTimeExclusive.TotalSeconds / this.waitTimeExclusiveCounts);
-                this.WaitTimeExclusiveLock.RawValue = (long) (this.waitTimeExclusive.TotalSeconds / this.activeTimer.Elapsed.TotalSeconds * 100);
+                logger.Warn(ex, "Performance counter update failed");
             }
-
-            if (this.waitTimeSyncCounts > 0)
-            {
-                this.WaitTimeAverageSyncLock.RawValue = Convert.ToInt64(this.waitTimeSync.TotalSeconds / this.waitTimeSyncCounts);
-                this.WaitTimeSyncLock.RawValue = (long) (this.waitTimeSync.TotalSeconds / this.activeTimer.Elapsed.TotalSeconds * 100);
-            }
-
-            if (this.waitTimeCounts > 0)
-            {
-                this.WaitTimeAverage.RawValue = Convert.ToInt64(this.waitTimeTotal.TotalSeconds / this.waitTimeCounts);
-                this.WaitTime.RawValue = (long) (this.waitTimeTotal.TotalSeconds / this.activeTimer.Elapsed.TotalSeconds * 100);
-            }
-
-            if (this.executionTimeCounts > 0)
-            {
-                this.ExecutionTimeAverage.RawValue = Convert.ToInt64(this.executionTimeTotal.TotalSeconds / this.executionTimeCounts);
-                this.ExecutionTimeTotal.RawValue = (long) (this.executionTimeTotal.TotalSeconds / this.activeTimer.Elapsed.TotalSeconds * 100);
-            }
-
-            this.IdleTimePercent.RawValue = (long)(((this.activeTimer.Elapsed.TotalSeconds - this.executionTimeTotal.TotalSeconds - this.waitTimeTotal.TotalSeconds) / this.activeTimer.Elapsed.TotalSeconds) * 100);
         }
     }
 }

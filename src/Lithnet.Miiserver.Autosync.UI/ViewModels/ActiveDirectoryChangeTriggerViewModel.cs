@@ -98,6 +98,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public string Description => this.Model.Description;
 
+        [AlsoNotifyFor("Description")]
         public bool Disabled
         {
             get => this.typedModel.Disabled;

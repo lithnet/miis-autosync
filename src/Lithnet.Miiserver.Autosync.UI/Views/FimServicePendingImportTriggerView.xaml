@@ -18,31 +18,34 @@
                     <RowDefinition/>
                     <RowDefinition/>
                     <RowDefinition/>
+                    <RowDefinition/>
                 </Grid.RowDefinitions>
 
-                <Label Grid.Row="0" 
+                <CheckBox Grid.Row="0" Grid.Column="1" Margin="10 0 0 5" Content="Disable trigger" IsChecked="{Binding Path=Disabled}"/>
+
+                <Label Grid.Row="1" 
                        Grid.Column="0"
                        Content="Host"/>
-                <TextBox Grid.Row="0"
+                <TextBox Grid.Row="1"
                          Grid.Column="1" 
                          Margin="10 0 0 5" 
                          Text="{Binding HostName}"
                          IsReadOnly="True"/>
 
-                <Label Grid.Row="1" 
+                <Label Grid.Row="2" 
                        Grid.Column="0" 
                        Content="Check for changes every"/>
-                <ui:TimeSpanControl Grid.Row="1"
+                <ui:TimeSpanControl Grid.Row="2"
                                     Grid.Column="1" 
                                     Margin="10 0 0 5"
                                    Value="{Binding Interval}" 
                                     MinimumTimeSpan="00:00:05" />
 
-                <TextBlock Grid.Row="2" TextWrapping="Wrap" Margin="10"
+                <TextBlock Grid.Row="3" TextWrapping="Wrap" Margin="10"
                        Grid.Column="1">The AutoSync service account needs permission to read the msidmCompletedTime attribute of all Request objects. You can create these manually, or use the option to automatically create the set and MPR.</TextBlock>
 
                 <StackPanel Orientation="Horizontal"
-                            Grid.Row="3"
+                            Grid.Row="4"
                             Grid.Column="1" Margin="10 0 0 5">
                     <Button 
                         Content="Create set and MPR..." 

@@ -33,7 +33,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public ExecutionTriggerEventArgs(MARunProfileType runProfileType, string partitionName)
         {
-            this.Parameters = new ExecutionParameters(runProfileType, partitionName, false);
+            this.Parameters = new ExecutionParameters(runProfileType, partitionName, false, false);
         }
     }
 }

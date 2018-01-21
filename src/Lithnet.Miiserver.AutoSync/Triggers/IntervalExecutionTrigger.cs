@@ -24,14 +24,27 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "exclusive")]
         public bool Exclusive { get; set; }
 
+        [DataMember(Name = "run-immediate")]
+        public bool RunImmediate { get; set; }
+
         private void CheckTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             this.Log($"Timer elapsed. Next event at {DateTime.Now.Add(this.Interval)}");
-            this.Fire(this.RunProfileName, this.Exclusive);
+            ExecutionParameters p = new ExecutionParameters();
+            p.RunProfileName = this.RunProfileName;
+            p.Exclusive = this.Exclusive;
+            p.RunImmediate = this.RunImmediate;
+            this.Fire(p);
         }
 
         public override void Start(string managementAgentName)
         {
+            if (this.Disabled)
+            {
+                this.Log("Trigger disabled");
+                return;
+            }
+
             this.ManagementAgentName = managementAgentName;
 
             if (this.RunProfileName == null)
@@ -70,7 +83,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public override string Type => TypeDescription;
 
-        public override string Description => $"{this.RunProfileName} every {this.Interval}";
+        public override string Description => $"{this.DisabledText}{this.RunProfileName} every {this.Interval}";
 
         public override string ToString()
         {

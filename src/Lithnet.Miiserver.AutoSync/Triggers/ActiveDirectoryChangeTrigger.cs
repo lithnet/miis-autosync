@@ -83,9 +83,6 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "last-logon-offset")]
         public TimeSpan LastLogonTimestampOffset { get; set; }
 
-        [DataMember(Name = "disabled")]
-        public bool Disabled { get; set; }
-
         [DataMember(Name = "use-explicit-credentials")]
         public bool UseExplicitCredentials { get; set; }
 
@@ -301,7 +298,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public override string Type => TypeDescription;
 
-        public override string Description => $"{this.BaseDN}";
+        public override string Description => $"{this.DisabledText}{this.BaseDN}";
 
         public override string ToString()
         {

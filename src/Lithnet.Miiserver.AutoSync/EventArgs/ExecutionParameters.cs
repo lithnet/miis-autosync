@@ -6,11 +6,15 @@ namespace Lithnet.Miiserver.AutoSync
     {
         public bool Exclusive { get; set; }
 
+        public bool RunImmediate { get; set; }
+
         public string RunProfileName { get; set; }
 
         public MARunProfileType RunProfileType { get; set; }
 
         public Guid PartitionID { get; set; }
+
+        public long QueueID { get; set; }
 
         public string PartitionName { get; set; }
 
@@ -19,43 +23,51 @@ namespace Lithnet.Miiserver.AutoSync
         }
 
         public ExecutionParameters(string runProfileName)
-            : this(runProfileName, false)
+            : this(runProfileName, false, false)
         {
         }
 
         public ExecutionParameters(string runProfileName, bool exclusive)
+            : this(runProfileName, exclusive, false)
+        {
+        }
+
+        public ExecutionParameters(string runProfileName, bool exclusive, bool runImmediate)
         {
             this.RunProfileName = runProfileName;
             this.Exclusive = exclusive;
+            this.RunImmediate = runImmediate;
         }
 
         public ExecutionParameters(MARunProfileType runProfileType)
-            : this(runProfileType, null, false)
+            : this(runProfileType, null, false, false)
         {
         }
 
         public ExecutionParameters(MARunProfileType runProfileType, Guid partitionID)
-            : this(runProfileType, partitionID, false)
+            : this(runProfileType, partitionID, false, false)
         {
         }
 
-        public ExecutionParameters(MARunProfileType runProfileType, bool exclusive)
-            : this(runProfileType, null, exclusive)
+        public ExecutionParameters(MARunProfileType runProfileType, bool exclusive, bool runImmediate)
+            : this(runProfileType, null, exclusive, runImmediate)
         {
         }
 
-        public ExecutionParameters(MARunProfileType runProfileType, Guid partitionID, bool exclusive)
+        public ExecutionParameters(MARunProfileType runProfileType, Guid partitionID, bool exclusive, bool runImmediate)
         {
             this.RunProfileType = runProfileType;
             this.PartitionID = partitionID;
             this.Exclusive = exclusive;
+            this.RunImmediate = runImmediate;
         }
 
-        public ExecutionParameters(MARunProfileType runProfileType, string partitionName, bool exclusive)
+        public ExecutionParameters(MARunProfileType runProfileType, string partitionName, bool exclusive, bool runImmediate)
         {
             this.RunProfileType = runProfileType;
             this.PartitionName = partitionName;
             this.Exclusive = exclusive;
+            this.RunImmediate = runImmediate;
         }
 
         public override bool Equals(object obj)

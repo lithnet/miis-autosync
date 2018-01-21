@@ -223,7 +223,7 @@ namespace Lithnet.Miiserver.AutoSync
                 }
                 else
                 {
-                    return TimeSpan.FromSeconds(2);
+                    return TimeSpan.FromSeconds(1);
                 }
             }
         }
@@ -237,6 +237,19 @@ namespace Lithnet.Miiserver.AutoSync
                 return new TimeSpan(0, 0, seconds);
             }
         }
+
+        public static int LockMode
+        {
+            get
+            {
+                // LockMode = 0 : FIFO locking
+                // LockMode = 1 : Exclusive jobs yield to any non-exclusive job that was in the queue at the time the exclusive job took the x-lock
+                // LockMode = 2 : Exclusive jobs yield to all non-exclusive jobs
+
+                return (int)RegistrySettings.ParametersKey.GetValue(nameof(LockMode), 0);
+            }
+        }
+
 
         public static TimeSpan PostRunInterval
         {

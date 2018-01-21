@@ -17,6 +17,24 @@ namespace Lithnet.Miiserver.AutoSync
 
         public static IList<Type> SingleInstanceTriggers = new List<Type>() { typeof(FimServicePendingImportTrigger) };
 
+        protected string DisabledText
+        {
+            get
+            {
+                if (this.Disabled)
+                {
+                    return "(Disabled) ";
+                }
+                else
+                {
+                    return string.Empty;
+                }
+            }
+        }
+
+        [DataMember(Name = "disabled")]
+        public bool Disabled { get; set; }
+
         public abstract string DisplayName { get; }
 
         public abstract string Type { get; }

@@ -27,6 +27,14 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.AddIsDirtyProperty(nameof(this.ExceptionBehaviour));
             this.AddIsDirtyProperty(nameof(this.Username));
             this.AddIsDirtyProperty(nameof(this.Password));
+            this.AddIsDirtyProperty(nameof(this.Disabled));
+        }
+
+        [AlsoNotifyFor("Description")]
+        public bool Disabled
+        {
+            get => this.typedModel.Disabled;
+            set => this.typedModel.Disabled = value;
         }
 
         [AlsoNotifyFor("Description")]

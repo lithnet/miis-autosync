@@ -47,7 +47,7 @@
 
         <util:PerformanceCategory Id="PerformanceCounter" Name="Lithnet AutoSync" MultiInstance="yes" DefaultLanguage="english">
           <util:PerformanceCounter Name="Queue length" Type="numberOfItems64"  Help="Shows the current number of jobs in the execution queue"/>
-          <util:PerformanceCounter Name="Total run count" Type="numberOfItems64"  Help="Shows the total number of jobs executed"/>
+          <util:PerformanceCounter Name="Runs/10 min" Type="numberOfItems64"  Help="Shows the total number of jobs executed"/>
 
           <util:PerformanceCounter Name="Wait time % - sync lock" Type="numberOfItems64"  />
           <util:PerformanceCounter Name="Wait time % - exclusive lock" Type="numberOfItems64"  />

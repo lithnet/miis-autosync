@@ -49,13 +49,19 @@ namespace Lithnet.Miiserver.AutoSync
 
         public override string Type => TypeDescription;
 
-        public override string Description => $"{System.IO.Path.GetFileName(this.ScriptPath)}";
+        public override string Description => $"{this.DisabledText}{System.IO.Path.GetFileName(this.ScriptPath)}";
         
         [DataMember(Name = "interval")]
         public TimeSpan Interval { get; set; }
 
         public override void Start(string managementAgentName)
         {
+            if (this.Disabled)
+            {
+                this.Log("Trigger disabled");
+                return;
+            }
+
             this.ManagementAgentName = managementAgentName;
 
             if (!System.IO.File.Exists(this.ScriptPath))

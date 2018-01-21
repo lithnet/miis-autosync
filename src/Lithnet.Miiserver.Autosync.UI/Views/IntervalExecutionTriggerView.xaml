@@ -17,30 +17,34 @@
                     <RowDefinition/>
                     <RowDefinition/>
                     <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
                 </Grid.RowDefinitions>
-                
-                <Label Grid.Row="0" 
+
+                <CheckBox Grid.Row="0" Grid.Column="1" Margin="10 0 0 5" Content="Disable trigger" IsChecked="{Binding Path=Disabled}"/>
+
+                <Label Grid.Row="1" 
                        Grid.Column="0" 
                        Content="Run profile"/>
-                <ComboBox Grid.Row="0" 
+                <ComboBox Grid.Row="1" 
                           Grid.Column="1" 
                           Margin="10 0 0 5"
                           ItemsSource="{Binding RunProfileNames}"
                           SelectedItem="{Binding RunProfileName, ValidatesOnDataErrors=True, ValidatesOnExceptions=true}"/>
                 
-                <Label Grid.Row="1" 
+                <Label Grid.Row="2" 
                        Grid.Column="0" 
                        Content="Trigger the run profile every"/>
                 <ui:TimeSpanControl 
-                    Grid.Row="1" 
+                    Grid.Row="2" 
                     Grid.Column="1" 
                     Margin="10 0 0 5"
                     Value="{Binding Interval}" 
                     MinimumTimeSpan="00:00:05" >
                 </ui:TimeSpanControl>
                 
-                <CheckBox Grid.Row="2" Grid.Column="1" Margin="10 0 0 5" Content="Run profile must be executed exclusively" IsChecked="{Binding Path=Exclusive}"/>
-                
+                <CheckBox Grid.Row="3" Grid.Column="1" Margin="10 0 0 5" Content="Run profile must be executed exclusively" IsChecked="{Binding Path=Exclusive}"/>
+                <CheckBox Grid.Row="4" Grid.Column="1" Margin="10 0 0 5" Content="Add run profile to the front of the queue" IsChecked="{Binding Path=RunImmediate}"/>
             </Grid>
         </UserControl>
     </DataTemplate>

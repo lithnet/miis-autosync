@@ -21,6 +21,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.typedModel = model;
             this.AddIsDirtyProperty(nameof(this.HostName));
             this.AddIsDirtyProperty(nameof(this.Interval));
+            this.AddIsDirtyProperty(nameof(this.Disabled));
             this.Commands.AddItem("CreateMPR", x => this.CreateMpr());
 
         }
@@ -28,6 +29,13 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         public string Type => this.Model.Type;
 
         public string Description => this.Model.Description;
+
+        [AlsoNotifyFor("Description")]
+        public bool Disabled
+        {
+            get => this.typedModel.Disabled;
+            set => this.typedModel.Disabled = value;
+        }
 
         [AlsoNotifyFor("Description")]
         public string HostName

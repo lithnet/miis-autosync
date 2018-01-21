@@ -19,6 +19,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.AddIsDirtyProperty(nameof(this.RunProfileName));
             this.AddIsDirtyProperty(nameof(this.Interval));
             this.AddIsDirtyProperty(nameof(this.Exclusive));
+            this.AddIsDirtyProperty(nameof(this.RunImmediate));
+            this.AddIsDirtyProperty(nameof(this.Disabled));
         }
 
         public string Type => this.Model.Type;
@@ -29,6 +31,18 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             get => this.typedModel.Exclusive;
             set => this.typedModel.Exclusive = value;
+        }
+
+        [AlsoNotifyFor("Description")]
+        public bool Disabled
+        {
+            get => this.typedModel.Disabled;
+            set => this.typedModel.Disabled = value;
+        }
+        public bool RunImmediate
+        {
+            get => this.typedModel.RunImmediate;
+            set => this.typedModel.RunImmediate = value;
         }
 
         [AlsoNotifyFor("Description")]

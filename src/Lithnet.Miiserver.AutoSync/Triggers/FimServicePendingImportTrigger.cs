@@ -75,6 +75,12 @@ namespace Lithnet.Miiserver.AutoSync
 
         public override void Start(string managementAgentName)
         {
+            if (this.Disabled)
+            {
+                this.Log("Trigger disabled");
+                return;
+            }
+
             this.ManagementAgentName = managementAgentName;
 
             this.checkTimer = new Timer
@@ -184,7 +190,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public override string Type => TypeDescription;
 
-        public override string Description => $"{this.HostName}";
+        public override string Description => $"{this.DisabledText}{this.HostName}";
         
         private static string GetFimServiceHostName(ManagementAgent ma)
         {

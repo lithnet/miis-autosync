@@ -8,6 +8,8 @@ namespace Lithnet.Miiserver.AutoSync
     
     public interface IMAExecutionTrigger
     {
+        bool Disabled { get; }
+
         string DisplayName { get; }
 
         string Type { get; }
