@@ -33,15 +33,19 @@ namespace Lithnet.Miiserver.AutoSync
         protected static ConcurrentDictionary<Guid, SemaphoreSlim> AllMaLocalOperationLocks;
 
         public delegate void SyncCompleteEventHandler(object sender, SyncCompleteEventArgs e);
+
         public static event SyncCompleteEventHandler SyncComplete;
 
         public delegate void RunProfileExecutionCompleteEventHandler(object sender, RunProfileExecutionCompleteEventArgs e);
+
         public event RunProfileExecutionCompleteEventHandler RunProfileExecutionComplete;
 
         public delegate void StateChangedEventHandler(object sender, MAStatusChangedEventArgs e);
+
         public event StateChangedEventHandler StateChanged;
 
         public delegate void MessageLoggedEventHandler(object sender, MessageLoggedEventArgs e);
+
         public event MessageLoggedEventHandler MessageLogged;
 
         private SemaphoreSlim localOperationLock;
@@ -684,7 +688,7 @@ namespace Lithnet.Miiserver.AutoSync
 #endif
         }
 
-        private void Wait(TimeSpan duration, string name, CancellationTokenSource ts, [CallerMemberName]string caller = "")
+        private void Wait(TimeSpan duration, string name, CancellationTokenSource ts, [CallerMemberName] string caller = "")
         {
             ts.Token.ThrowIfCancellationRequested();
             this.Debug($"SLEEP: {name}: {duration}: {caller}");
@@ -692,7 +696,7 @@ namespace Lithnet.Miiserver.AutoSync
             ts.Token.ThrowIfCancellationRequested();
         }
 
-        private void Wait(WaitHandle wh, string name, CancellationTokenSource ts, [CallerMemberName]string caller = "")
+        private void Wait(WaitHandle wh, string name, CancellationTokenSource ts, [CallerMemberName] string caller = "")
         {
             this.Debug($"LOCK: WAIT: {name}: {caller}");
             WaitHandle.WaitAny(new[] { wh, ts.Token.WaitHandle });
@@ -700,7 +704,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.Debug($"LOCK: CLEARED: {name}: {caller}");
         }
 
-        private void WaitAndTakeLock(SemaphoreSlim mre, string name, CancellationTokenSource ts, [CallerMemberName]string caller = "")
+        private void WaitAndTakeLock(SemaphoreSlim mre, string name, CancellationTokenSource ts, [CallerMemberName] string caller = "")
         {
             this.Debug($"LOCK: WAIT: {name}: {caller}");
             mre.Wait(ts.Token);
@@ -708,7 +712,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.Debug($"LOCK: TAKE: {name}: {caller}");
         }
 
-        private void WaitAndTakeLockWithSemaphore(EventWaitHandle mre, SemaphoreSlim sem, string name, CancellationTokenSource ts, [CallerMemberName]string caller = "")
+        private void WaitAndTakeLockWithSemaphore(EventWaitHandle mre, SemaphoreSlim sem, string name, CancellationTokenSource ts, [CallerMemberName] string caller = "")
         {
             bool gotLock = false;
 
@@ -733,7 +737,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        private void Wait(WaitHandle[] waitHandles, string name, CancellationTokenSource ts, [CallerMemberName]string caller = "")
+        private void Wait(WaitHandle[] waitHandles, string name, CancellationTokenSource ts, [CallerMemberName] string caller = "")
         {
             this.Debug($"LOCK: WAIT: {name}: {caller}");
             while (!WaitHandle.WaitAll(waitHandles, 1000))
@@ -752,7 +756,7 @@ namespace Lithnet.Miiserver.AutoSync
             ts.Token.ThrowIfCancellationRequested();
         }
 
-        private void ReleaseLock(EventWaitHandle mre, string name, [CallerMemberName]string caller = "")
+        private void ReleaseLock(EventWaitHandle mre, string name, [CallerMemberName] string caller = "")
         {
             this.Debug($"LOCK: RELEASE: {name}: {caller}");
             mre.Set();
@@ -1912,50 +1916,28 @@ namespace Lithnet.Miiserver.AutoSync
                 this.WaitAndTakeLock(this.localOperationLock, nameof(this.localOperationLock), this.controllerCancellationTokenSource);
                 hasLocalLock = true;
 
-                this.Trace("Checking for unmanaged changes");
+                bool hasRun = this.lastRunNumber > 0;
+                int lastKnownRun = this.lastRunNumber;
+
                 RunDetails run = this.ma.GetLastRun();
+                this.lastRunNumber = run?.RunNumber ?? 0;
 
-                if (run == null || this.lastRunNumber == run.RunNumber)
+                this.Trace("Checking for unmanaged changes");
+
+                if (hasRun && run != null)
                 {
-                    return;
-                }
-
-                this.Trace($"Unprocessed changes detected. Last recorded run: {this.lastRunNumber}. Last run in sync engine: {run.RunNumber}");
-
-                this.lastRunNumber = run.RunNumber;
-
-                foreach (PartitionConfiguration c in this.GetPartitionsRequiringExport())
-                {
-                    if (c.ExportRunProfileName != null)
+                    if (lastKnownRun == this.lastRunNumber)
                     {
-                        ExecutionParameters p = new ExecutionParameters(c.ExportRunProfileName);
-                        this.AddPendingActionIfNotQueued(p, "Pending export check");
+                        return;
                     }
+
+                    this.Trace($"Unprocessed changes detected. Last recorded run: {lastKnownRun}. Last run in sync engine: {run.RunNumber}");
+
+                    this.PerformPostRunActions(run);
                 }
-
-                if (run?.StepDetails != null)
+                else
                 {
-                    foreach (StepDetails step in run.StepDetails)
-                    {
-                        if (step.HasUnconfirmedExports())
-                        {
-                            PartitionConfiguration c = this.Configuration.Partitions.GetActiveItemOrNull(step.StepDefinition.Partition);
-
-                            if (c != null)
-                            {
-                                this.AddPendingActionIfNotQueued(new ExecutionParameters(c.ConfirmingImportRunProfileName), "Unconfirmed export check");
-                            }
-                        }
-                    }
-                }
-
-                foreach (PartitionConfiguration c in this.GetPartitionsRequiringSync())
-                {
-                    if (c.ExportRunProfileName != null)
-                    {
-                        ExecutionParameters p = new ExecutionParameters(c.DeltaSyncRunProfileName);
-                        this.AddPendingActionIfNotQueued(p, "Staged import check");
-                    }
+                    this.CheckAndQueueUnmanagedChanges(run);
                 }
             }
             finally
@@ -1964,6 +1946,43 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     // Reset the local lock so the next operation can run
                     this.ReleaseLock(this.localOperationLock, nameof(this.localOperationLock));
+                }
+            }
+        }
+
+        private void CheckAndQueueUnmanagedChanges(RunDetails run)
+        {
+            foreach (PartitionConfiguration c in this.GetPartitionsRequiringExport())
+            {
+                if (c.ExportRunProfileName != null)
+                {
+                    ExecutionParameters p = new ExecutionParameters(c.ExportRunProfileName);
+                    this.AddPendingActionIfNotQueued(p, "Pending export check");
+                }
+            }
+
+            if (run?.StepDetails != null)
+            {
+                foreach (StepDetails step in run.StepDetails)
+                {
+                    if (step.HasUnconfirmedExports())
+                    {
+                        PartitionConfiguration c = this.Configuration.Partitions.GetActiveItemOrNull(step.StepDefinition.Partition);
+
+                        if (c != null)
+                        {
+                            this.AddPendingActionIfNotQueued(new ExecutionParameters(c.ConfirmingImportRunProfileName), "Unconfirmed export check");
+                        }
+                    }
+                }
+            }
+
+            foreach (PartitionConfiguration c in this.GetPartitionsRequiringSync())
+            {
+                if (c.ExportRunProfileName != null)
+                {
+                    ExecutionParameters p = new ExecutionParameters(c.DeltaSyncRunProfileName);
+                    this.AddPendingActionIfNotQueued(p, "Staged import check");
                 }
             }
         }
