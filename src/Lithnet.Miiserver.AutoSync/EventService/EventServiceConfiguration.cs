@@ -1,6 +1,6 @@
 ﻿using System;
-using System.ServiceModel.Channels;
 using System.ServiceModel;
+using System.ServiceModel.Channels;
 using System.ServiceModel.Description;
 
 namespace Lithnet.Miiserver.AutoSync

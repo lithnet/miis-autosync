@@ -7,16 +7,19 @@ namespace Lithnet.Miiserver.AutoSync
 {
     internal class ExecutionParameterCollection : IProducerConsumerCollection<ExecutionParameters>
     {
-        private List<ExecutionParameters> items;
+        private List<ExecutionParameters> internalList;
 
         public ExecutionParameterCollection()
         {
-            this.items = new List<ExecutionParameters>();
+            this.internalList = new List<ExecutionParameters>();
         }
 
         public IEnumerator<ExecutionParameters> GetEnumerator()
         {
-            return this.items.GetEnumerator();
+            lock (this.SyncRoot)
+            {
+                return this.internalList.GetEnumerator();
+            }
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -28,7 +31,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             lock (this.SyncRoot)
             {
-                this.items.ToArray().CopyTo(array, index);
+                this.internalList.ToArray().CopyTo(array, index);
             }
         }
 
@@ -38,7 +41,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 lock (this.SyncRoot)
                 {
-                    return this.items.Count;
+                    return this.internalList.Count;
                 }
             }
         }
@@ -51,7 +54,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             lock (this.SyncRoot)
             {
-                this.items.CopyTo(array, index);
+                this.internalList.CopyTo(array, index);
             }
         }
 
@@ -59,8 +62,8 @@ namespace Lithnet.Miiserver.AutoSync
         {
             lock (this.SyncRoot)
             {
-                this.items.Remove(item);
-                this.items.Insert(0, item);
+                this.internalList.Remove(item);
+                this.internalList.Insert(0, item);
             }
         }
 
@@ -68,24 +71,32 @@ namespace Lithnet.Miiserver.AutoSync
         {
             lock (this.SyncRoot)
             {
-                this.items.Add(item);
+                this.internalList.Add(item);
             }
 
             return true;
+        }
+
+        public bool Contains(ExecutionParameters item)
+        {
+            lock (this.SyncRoot)
+            {
+                return this.internalList.Contains(item);
+            }
         }
 
         public bool TryTake(out ExecutionParameters item)
         {
             lock (this.SyncRoot)
             {
-                if (this.items.Count == 0)
+                if (this.internalList.Count == 0)
                 {
                     item = null;
                     return false;
                 }
 
-                item = this.items[0];
-                this.items.RemoveAt(0);
+                item = this.internalList[0];
+                this.internalList.RemoveAt(0);
                 return true;
             }
         }
@@ -94,7 +105,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             lock (this.SyncRoot)
             {
-                this.items.Remove(item);
+                this.internalList.Remove(item);
             }
         }
 
@@ -102,7 +113,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             lock (this.SyncRoot)
             {
-                return this.items.ToArray();
+                return this.internalList.ToArray();
             }
         }
     }

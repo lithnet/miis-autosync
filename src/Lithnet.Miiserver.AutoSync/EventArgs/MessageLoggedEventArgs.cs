@@ -6,10 +6,11 @@ namespace Lithnet.Miiserver.AutoSync
     [DataContract]
     public class MessageLoggedEventArgs : EventArgs
     {
-        internal MessageLoggedEventArgs(DateTime date, string message)
+        internal MessageLoggedEventArgs(DateTime date, Guid managementAgentID, string message)
         {
             this.Message = message;
             this.Date = date;
+            this.ManagementAgentID = managementAgentID;
         }
 
         [DataMember]
@@ -17,5 +18,8 @@ namespace Lithnet.Miiserver.AutoSync
 
         [DataMember]
         public DateTime Date { get; private set; }
+
+        [DataMember]
+        public Guid ManagementAgentID { get; private set; }
     }
 }

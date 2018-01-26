@@ -1,15 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
-using System.Text;
 using System.Threading.Tasks;
+using NLog;
 
 namespace Lithnet.Miiserver.AutoSync
 {
     [DataContract]
-    public class MAStatus
+    public class MAStatus : INotifyPropertyChanged
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+        
+        public delegate void StateChangedEventHandler(object sender, MAStatusChangedEventArgs e);
+
+        public event StateChangedEventHandler StateChanged;
+
         [DataMember]
         public Guid ManagementAgentID { get; set; }
 
@@ -48,7 +54,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         [DataMember]
         public int ActiveVersion { get; set; }
-        
+
         [DataMember]
         public bool HasSyncLock { get; internal set; }
 
@@ -60,12 +66,67 @@ namespace Lithnet.Miiserver.AutoSync
 
         [DataMember]
         public bool ThresholdExceeded { get; internal set; }
+
+        public MAStatus()
+        {
+
+        }
+
+        internal MAStatus(string managementAgentName, Guid managementAgentID)
+        {
+            this.ManagementAgentName = managementAgentName;
+            this.ManagementAgentID = managementAgentID;
+        }
+
+        private void RaiseStateChange()
+        {
+            Task.Run(() =>
+            {
+                try
+                {
+                    this.StateChanged?.Invoke(this, new MAStatusChangedEventArgs(this, this.ManagementAgentName));
+                }
+                catch (Exception ex)
+                {
+                    logger.Warn(ex, "Unable to relay state change");
+                }
+            }); // Using the global cancellation token here prevents the final state messages being received (see issue #80)
+        }
         
+        internal void UpdateExecutionStatus(ControllerState state, string message)
+        {
+            this.ExecutionState = state;
+            this.Message = message;
+        }
+
+        internal void UpdateExecutionStatus(ControllerState state, string message, string executingRunProfile)
+        {
+            this.ExecutionState = state;
+            this.Message = message;
+            this.ExecutingRunProfile = executingRunProfile;
+        }
+
+        internal void UpdateExecutionStatus(ControllerState state, string message, string executingRunProfile, string executionQueue)
+        {
+            this.ExecutionState = state;
+            this.Message = message;
+            this.ExecutingRunProfile = executingRunProfile;
+            this.ExecutionQueue = executionQueue;
+        }
+
         public void Clear()
         {
             this.ExecutingRunProfile = null;
             this.ExecutionQueue = null;
             this.Message = null;
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            this.RaiseStateChange();
         }
     }
 }

@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.ServiceModel;
-using System.ServiceModel.Description;
-using NLog;
 using System.Reflection;
+using System.ServiceModel;
 using System.ServiceModel.Channels;
+using System.ServiceModel.Description;
 using Lithnet.Miiserver.Client;
+using NLog;
 
 namespace Lithnet.Miiserver.AutoSync
 {

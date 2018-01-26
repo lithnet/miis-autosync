@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
-using NLog;
 using Lithnet.Miiserver.Client;
+using NLog;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -81,18 +81,18 @@ namespace Lithnet.Miiserver.AutoSync
 
                 MAController e = this.controllers[newItem.ManagementAgentID];
 
-                if ((e.ControlState == ControlState.Disabled || e.Configuration == null) && newItem.Disabled)
+                if ((e.State.ControlState == ControlState.Disabled || e.Configuration == null) && newItem.Disabled)
                 {
                     continue;
                 }
 
-                if (e.ControlState == ControlState.Disabled && !newItem.Disabled)
+                if (e.State.ControlState == ControlState.Disabled && !newItem.Disabled)
                 {
                     restartItems.Add(newItem.ManagementAgentID);
                     continue;
                 }
 
-                if (e.ControlState == ControlState.Stopped)
+                if (e.State.ControlState == ControlState.Stopped)
                 {
                     continue;
                 }
@@ -163,12 +163,12 @@ namespace Lithnet.Miiserver.AutoSync
         public void AddToExecutionQueue(Guid managementAgentID, string runProfileName)
         {
             MAController e = this.GetContorllerOrThrow(managementAgentID);
-            if (e.ControlState != ControlState.Running)
+            if (e.State.ControlState != ControlState.Running)
             {
                 return;
             }
 
-            e.AddPendingActionIfNotQueued(runProfileName, "Manual entry");
+            e.Queue.Add(runProfileName, "Manual entry");
         }
 
         public void Start(Guid managementAgentID)
@@ -200,7 +200,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             foreach (MAController x in this.controllers.Values)
             {
-                states.Add(x.InternalStatus);
+                states.Add(x.State);
             }
 
             return states;
@@ -208,7 +208,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         internal MAStatus GetMAState(Guid managementAgentID)
         {
-            return this.GetContorllerOrThrow(managementAgentID).InternalStatus;
+            return this.GetContorllerOrThrow(managementAgentID).State;
         }
 
         private void InitializeMAControllers()
@@ -218,7 +218,7 @@ namespace Lithnet.Miiserver.AutoSync
             foreach (ManagementAgent ma in ManagementAgent.GetManagementAgents())
             {
                 MAController x = new MAController(ma);
-                x.StateChanged += this.X_StateChanged;
+                x.State.StateChanged += this.X_StateChanged;
                 x.RunProfileExecutionComplete += this.X_RunProfileExecutionComplete;
                 x.MessageLogged += this.X_MessageLogged;
 
@@ -228,12 +228,12 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void X_MessageLogged(object sender, MessageLoggedEventArgs e)
         {
-            EventService.NotifySubscribersOnMessageLogged(((MAController)sender).ManagementAgentID, e);
+            EventService.NotifySubscribersOnMessageLogged(e);
         }
 
         private void X_RunProfileExecutionComplete(object sender, RunProfileExecutionCompleteEventArgs e)
         {
-            EventService.NotifySubscribersOnRunProfileExecutionComplete(((MAController)sender).ManagementAgentID, e);
+            EventService.NotifySubscribersOnRunProfileExecutionComplete(e);
         }
 
         private void X_StateChanged(object sender, MAStatusChangedEventArgs e)

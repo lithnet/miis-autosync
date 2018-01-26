@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Management.Automation;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.ServiceModel;
+using System.Text;
 using System.Threading;
 using Lithnet.Miiserver.Client;
 using NLog;
@@ -177,6 +177,26 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                 }
             }
+        }
+
+        public static bool IsSyncStep(this ManagementAgent ma, string runProfileName)
+        {
+            return ma.RunProfiles.IsSyncStep(runProfileName);
+        }
+
+        public static bool IsSyncStep(this IReadOnlyDictionary<string, RunConfiguration> profiles, string runProfileName)
+        {
+            return profiles[runProfileName].RunSteps.IsSyncStep();
+        }
+
+        public static bool IsSyncStep(this RunConfiguration profile)
+        {
+            return profile.RunSteps.Any(t => t.IsSyncStep);
+        }
+
+        public static bool IsSyncStep(this IReadOnlyList<RunStep> steps)
+        {
+            return steps.Any(t => t.IsSyncStep);
         }
     }
 }
