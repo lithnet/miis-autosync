@@ -3,9 +3,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
+using System.ServiceModel.Channels;
 using System.ServiceModel.Description;
 using NLog;
-using System.ServiceModel.Channels;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -81,11 +81,11 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        internal static void NotifySubscribersOnRunProfileExecutionComplete(Guid managementAgentID, RunProfileExecutionCompleteEventArgs e)
+        internal static void NotifySubscribersOnRunProfileExecutionComplete(RunProfileExecutionCompleteEventArgs e)
         {
-            if (EventService.subscribers.ContainsKey(managementAgentID))
+            if (EventService.subscribers.ContainsKey(e.ManagementAgentID))
             {
-                foreach (IEventCallBack i in EventService.subscribers[managementAgentID].ToArray())
+                foreach (IEventCallBack i in EventService.subscribers[e.ManagementAgentID].ToArray())
                 {
                     try
                     {
@@ -100,11 +100,11 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        internal static void NotifySubscribersOnMessageLogged(Guid managementAgentID, MessageLoggedEventArgs e)
+        internal static void NotifySubscribersOnMessageLogged(MessageLoggedEventArgs e)
         {
-            if (EventService.subscribers.ContainsKey(managementAgentID))
+            if (EventService.subscribers.ContainsKey(e.ManagementAgentID))
             {
-                foreach (IEventCallBack i in EventService.subscribers[managementAgentID].ToArray())
+                foreach (IEventCallBack i in EventService.subscribers[e.ManagementAgentID].ToArray())
                 {
                     try
                     {

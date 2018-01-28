@@ -2,9 +2,9 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Management.Automation;
-using System.Threading.Tasks;
-using System.Threading;
 using System.Runtime.Serialization;
+using System.Threading;
+using System.Threading.Tasks;
 using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync

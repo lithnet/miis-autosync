@@ -7,8 +7,8 @@ using System.Runtime.Serialization;
 using System.Security.Principal;
 using System.Timers;
 using System.Xml;
-using Lithnet.ResourceManagement.Client;
 using Lithnet.Miiserver.Client;
+using Lithnet.ResourceManagement.Client;
 
 namespace Lithnet.Miiserver.AutoSync
 {

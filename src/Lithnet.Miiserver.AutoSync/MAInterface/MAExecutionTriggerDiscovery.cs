@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml;
 using Lithnet.Miiserver.Client;
 using NLog;
-using System.Xml;
 
 namespace Lithnet.Miiserver.AutoSync
 {

@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Security.Principal;
 using System.ServiceModel;
 using System.ServiceModel.Description;
-using System.Security.Principal;
 using NLog;
 
 namespace Lithnet.Miiserver.AutoSync

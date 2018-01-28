@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Lithnet.Miiserver.AutoSync
+﻿namespace Lithnet.Miiserver.AutoSync
 {
     public delegate void ExecutionTriggerEventHandler(object sender, ExecutionTriggerEventArgs e);
 
