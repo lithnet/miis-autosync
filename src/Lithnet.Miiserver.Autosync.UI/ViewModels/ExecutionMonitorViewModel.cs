@@ -14,13 +14,15 @@ using Timer = System.Timers.Timer;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
-    public class ExecutionMonitorViewModel : ViewModelBase<object>, IEventCallBack
+    public class ExecutionMonitorViewModel : ViewModelBase<object>, IEventCallBack, IDisposable
     {
         private EventClient client;
 
         private Timer pingTimer;
 
         private int faultedCount;
+
+        private bool disposed;
 
         public ExecutionMonitorViewModel(KeyValuePair<Guid, string> ma)
             : base(ma)
@@ -387,6 +389,11 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void SubscribeToStateChanges()
         {
+            if (this.disposed)
+            {
+                return;
+            }
+
             Trace.WriteLine($"Attempting to open event channel for {this.ManagementAgentName}/{this.ManagementAgentID}");
             InstanceContext i = new InstanceContext(this);
             this.IsConnected = false;
@@ -436,7 +443,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void StartPingTimer()
         {
-            if (!App.IsConnectedToLocalhost())
+            if (!App.ConnectedToLocalHost)
             {
                 this.pingTimer = new Timer();
                 this.pingTimer.Interval = TimeSpan.FromSeconds(60).TotalMilliseconds;
@@ -493,12 +500,33 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void CleanupAndRestartClient()
         {
+            if (this.disposed)
+            {
+                return;
+            }
+
             if (this.faultedCount > 5)
             {
                 throw new ApplicationException($"An unrecoverable error occurred trying to reestablish the monitor channel for {this.ManagementAgentName}");
             }
 
             this.SubscribeToStateChanges();
+        }
+
+        public void Dispose()
+        {
+            this.disposed = true;
+
+            this.pingTimer?.Stop();
+            this.pingTimer?.Dispose();
+
+            try
+            {
+                this.client.Abort();
+            }
+            catch
+            {
+            }
         }
     }
 }

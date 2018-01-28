@@ -113,6 +113,7 @@
     <Compile Include="ViewModels\PartitionConfigurationCollectionViewModel.cs" />
     <Compile Include="ViewModels\PartitionConfigurationViewModel.cs" />
     <Compile Include="ViewModels\RunProfileResultViewModel.cs" />
+    <Compile Include="ViewModels\ConnectDialogViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
     <Compile Include="ViewModels\MAExecutionTriggerViewModel.cs" />
     <Compile Include="ViewModels\MainWindowViewModel.cs" />
@@ -155,6 +156,14 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="Windows\ConnectingDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Windows\ConnectDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Windows\CreateMprWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -173,6 +182,12 @@
     </Compile>
     <Compile Include="Windows\AddTriggerWindow.xaml.cs">
       <DependentUpon>AddTriggerWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\ConnectingDialog.xaml.cs">
+      <DependentUpon>ConnectingDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\ConnectDialog.xaml.cs">
+      <DependentUpon>ConnectDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Windows\CreateMprWindow.xaml.cs">
       <DependentUpon>CreateMprWindow.xaml</DependentUpon>

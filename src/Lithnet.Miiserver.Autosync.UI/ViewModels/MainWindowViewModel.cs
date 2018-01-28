@@ -13,6 +13,8 @@ using MahApps.Metro.Controls;
 using Microsoft.Win32;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Threading;
+using Lithnet.Miiserver.AutoSync.UI.Windows;
 using PropertyChanged;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
@@ -25,7 +27,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public ConfigFileViewModel ConfigFile { get; set; }
 
-        public string DisplayName => "Lithnet AutoSync" + (App.IsConnectedToLocalhost() ? string.Empty : $" - {App.Hostname}") + (this.IsDirty ? "*" : string.Empty);
+        public string DisplayName => "Lithnet AutoSync" + (App.ConnectedToLocalHost ? string.Empty : $" - {App.ConnectedHost}") + (this.IsDirty ? "*" : string.Empty);
 
         public Cursor Cursor { get; set; }
 
@@ -62,6 +64,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.AddDependentPropertyNotification("IsDirty", nameof(this.DisplayName));
             this.AddDependentPropertyNotification("IsDirty", nameof(this.RevertOrUndoLabel));
 
+            this.Commands.AddItem("Connect", "_Connect...", new KeyGesture(Key.C, ModifierKeys.Control | ModifierKeys.Shift), x => this.Connect());
             this.Commands.AddItem("Save", "_Commit changes", new KeyGesture(Key.S, ModifierKeys.Control), x => this.Save(), x => this.CanSave());
             this.Commands.AddItem("Revert", "Re_load config", new KeyGesture(Key.R, ModifierKeys.Control), x => this.Revert());
             this.Commands.AddItem("Export", "_Backup configuration...", new KeyGesture(Key.B, ModifierKeys.Control | ModifierKeys.Shift), x => this.Export(), x => this.CanExport());
@@ -77,7 +80,18 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             Application.Current.MainWindow.Closing += this.MainWindow_Closing;
 
             ViewModelBase.ViewModelIsDirtySet += this.ViewModelBase_ViewModelIsDirtySet;
-            this.SetupExecutionMonitors();
+        }
+
+        private void Connect()
+        {
+            this.UpdateFocusedBindings();
+
+            if (!this.ContinueOnUnsavedChanges())
+            {
+                return;
+            }
+
+            App.Reconnect(this);
         }
 
         private void SetupExecutionMonitors()
@@ -145,6 +159,49 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
 
             this.ResetConfigViewModel();
+        }
+
+        internal void AbortExecutionMonitors()
+        {
+            if (this.ExecutionMonitor == null)
+            {
+                return;
+            }
+
+            foreach (var item in this.ExecutionMonitor)
+            {
+                item.Dispose();
+            }
+        }
+
+        internal void Initialize()
+        {
+            ConnectingDialog connectingDialog = new ConnectingDialog();
+
+            try
+            {
+                connectingDialog.CaptionText = $"Connecting to {UserSettings.AutoSyncServerHost}";
+                connectingDialog.DataContext = connectingDialog;
+
+                connectingDialog.Show();
+                connectingDialog.Activate();
+
+                App.DoEvents();
+
+                this.SetupExecutionMonitors();
+                this.ResetConfigViewModel();
+
+                this.RaisePropertyChanged(nameof(this.DisplayName));
+
+                if (this.ExecutionMonitor != null)
+                {
+                    this.ExecutionMonitor.IsSelected = true;
+                }
+            }
+            finally
+            {
+                connectingDialog.Hide();
+            }
         }
 
         internal void ResetConfigViewModel()
