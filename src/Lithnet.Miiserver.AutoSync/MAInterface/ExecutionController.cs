@@ -88,14 +88,28 @@ namespace Lithnet.Miiserver.AutoSync
             this.counters = counters;
         }
 
-        public bool TryCancelRun()
+        public bool TryCancelRun(bool ignoreException)
         {
             try
             {
                 if (this.ma != null && !this.ma.IsIdle())
                 {
                     this.logger.LogInfo("Requesting sync engine to terminate run");
-                    this.ma.StopAsync();
+
+                    Task.Factory.StartNew(() =>
+                    {
+                        try
+                        {
+                            this.ma.Stop();
+                        }
+                        catch (Exception)
+                        {
+                            if (!ignoreException)
+                            {
+                                throw;
+                            }
+                        }
+                    });
                 }
                 else
                 {
@@ -380,7 +394,7 @@ namespace Lithnet.Miiserver.AutoSync
                 this.logger.LogInfo("Yielding to non-exclusive jobs");
             }
 
-            LockController.Wait(ExecutionController.allMaLocalOperationLocks.Values.Where(t => t != this.localOperationLock).Select(t => t.AvailableWaitHandle).ToArray(), nameof(ExecutionController.allMaLocalOperationLocks), this.jobCancellationTokenSource, this.ManagementAgentName);
+            LockController.Wait(this.GetLocalOperationLockArray(), nameof(ExecutionController.allMaLocalOperationLocks), this.jobCancellationTokenSource, this.ManagementAgentName);
 
             return this.TakeExclusiveRunLock();
         }
@@ -425,7 +439,8 @@ namespace Lithnet.Miiserver.AutoSync
             this.state.Message = "Waiting for other MAs to finish";
             this.logger.LogInfo("Waiting for all MAs to complete");
             // Wait for all  MAs to finish their current job
-            LockController.Wait(ExecutionController.allMaLocalOperationLocks.Values.Select(t => t.AvailableWaitHandle).ToArray(), nameof(ExecutionController.allMaLocalOperationLocks), this.jobCancellationTokenSource, this.ManagementAgentName);
+
+            LockController.Wait(this.GetLocalOperationLockArray(), nameof(ExecutionController.allMaLocalOperationLocks), this.jobCancellationTokenSource, this.ManagementAgentName);
         }
 
         private void TakeSyncLock()
@@ -438,6 +453,11 @@ namespace Lithnet.Miiserver.AutoSync
             opTimer.Stop();
             this.counters.AddWaitTimeSync(opTimer.Elapsed);
             this.state.HasSyncLock = true;
+        }
+
+        private WaitHandle[] GetLocalOperationLockArray(bool includeLocal = false)
+        {
+            return ExecutionController.allMaLocalOperationLocks.Values.Where(t => includeLocal || t != this.localOperationLock).Select(t => t.AvailableWaitHandle).ToArray();
         }
 
         private ConcurrentBag<SemaphoreSlim> GetForeignLocks()

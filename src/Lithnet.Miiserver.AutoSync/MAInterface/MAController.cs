@@ -12,7 +12,7 @@ namespace Lithnet.Miiserver.AutoSync
     internal class MAController
     {
         private static Logger rawLogger = LogManager.GetCurrentClassLogger();
-        
+
         public event EventHandler<MessageLoggedEventArgs> MessageLogged
         {
             add => this.logger.MessageLogged += value;
@@ -30,14 +30,13 @@ namespace Lithnet.Miiserver.AutoSync
         private int inUnmangedChangesTimer;
         private Dictionary<Guid, Timer> importCheckTimers = new Dictionary<Guid, Timer>();
         private ControllerLogger logger;
+        private ExecutionController execController;
 
         internal ExecutionQueue Queue { get; set; }
 
         internal MAStatus State { get; }
 
         private TriggerController Triggers { get; set; }
-
-        private ExecutionController execController;
 
         public MAControllerConfiguration Configuration { get; private set; }
 
@@ -58,7 +57,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void SetupUnmanagedChangesCheckTimer()
         {
-            this.unmanagedChangesCheckTimer = new System.Timers.Timer();
+            this.unmanagedChangesCheckTimer = new Timer();
             this.unmanagedChangesCheckTimer.Elapsed += this.UnmanagedChangesCheckTimer_Elapsed;
             this.unmanagedChangesCheckTimer.AutoReset = true;
             this.unmanagedChangesCheckTimer.Interval = Global.RandomizeOffset(RegistrySettings.UnmanagedChangesCheckInterval.TotalMilliseconds);
@@ -181,10 +180,10 @@ namespace Lithnet.Miiserver.AutoSync
                 gotLock = true;
 
                 this.Configuration = config;
+                this.State.Reset();
                 this.State.ActiveVersion = config.Version;
                 this.State.ControlState = config.Disabled ? ControlState.Disabled : ControlState.Starting;
-                this.State.ThresholdExceeded = false;
-                
+
                 this.Queue = new ExecutionQueue(config, this.logger, this.State, this.ma.RunProfiles);
 
                 this.execController = new ExecutionController(this.ma, this.State, config, this.logger, this.Queue, this.counters, this.controllerCancellationTokenSource);
@@ -209,15 +208,18 @@ namespace Lithnet.Miiserver.AutoSync
                     catch (OperationCanceledException)
                     {
                     }
-                    catch (ThresholdExceededException)
+                    catch (ThresholdExceededException ex)
                     {
+                        this.HandleThresholdExceededException(ex);
                     }
-                    catch (UnexpectedChangeException)
+                    catch (UnexpectedChangeException ex)
                     {
+                        this.HandleUnexpectedChangeException(ex);
                     }
                     catch (Exception ex)
                     {
                         this.logger.LogError(ex, "The controller encountered a unrecoverable error");
+                        this.StopOnError("Unrecoverable error");
                     }
                 }, this.controllerCancellationTokenSource.Token);
 
@@ -228,8 +230,7 @@ namespace Lithnet.Miiserver.AutoSync
             catch (Exception ex)
             {
                 rawLogger.Error(ex, "An error occurred starting the controller");
-                this.Stop(false, false, false);
-                this.State.Message = $"Startup error: {ex.Message}";
+                this.StopOnError($"Startup error: {ex.Message}");
             }
             finally
             {
@@ -251,7 +252,38 @@ namespace Lithnet.Miiserver.AutoSync
             this.ResetImportTimerOnImport(e.PartitionID);
         }
 
-        public void Stop(bool cancelRun, bool waitForInternalTask, bool thresholdExceeded)
+        public void Stop(bool cancelRun)
+        {
+            this.StopInternal(true);
+
+            if (cancelRun)
+            {
+                this.execController?.TryCancelRun(true);
+            }
+        }
+
+        private void StopOnUnexpectedChangeException(string stopMessage)
+        {
+            this.StopInternal(false);
+            this.State.HasError = true;
+            this.State.Message = stopMessage;
+        }
+
+        private void StopOnThresholdExceededException(string stopMessage)
+        {
+            this.StopInternal(false);
+            this.State.ThresholdExceeded = true;
+            this.State.Message = stopMessage;
+        }
+
+        private void StopOnError(string stopMessage)
+        {
+            this.StopInternal(false);
+            this.State.HasError = true;
+            this.State.Message = stopMessage;
+        }
+
+        private void StopInternal(bool waitForInternalTask)
         {
             bool gotLock = false;
 
@@ -262,11 +294,6 @@ namespace Lithnet.Miiserver.AutoSync
 
                 if (this.State.ControlState == ControlState.Stopped || this.State.ControlState == ControlState.Disabled)
                 {
-                    if (cancelRun)
-                    {
-                        this.execController?.TryCancelRun();
-                    }
-
                     return;
                 }
 
@@ -300,11 +327,6 @@ namespace Lithnet.Miiserver.AutoSync
                         }
                     }
                 }
-
-                if (cancelRun)
-                {
-                    this.execController?.TryCancelRun();
-                }
             }
             catch (OperationCanceledException)
             {
@@ -320,14 +342,9 @@ namespace Lithnet.Miiserver.AutoSync
                 this.counters.Stop();
                 this.Queue = null;
                 this.internalTask = null;
-                this.State.Clear();
+                this.State.Reset();
                 this.State.ControlState = ControlState.Stopped;
-
-                if (thresholdExceeded)
-                {
-                    this.State.ThresholdExceeded = true;
-                }
-
+                
                 if (gotLock)
                 {
                     LockController.ReleaseLock(this.serviceControlLock, nameof(this.serviceControlLock), this.ManagementAgentName);
@@ -337,29 +354,12 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void CancelRun()
         {
-            this.execController?.TryCancelRun();
+            this.execController?.TryCancelRun(true);
         }
 
         private void InitializeController()
         {
-            try
-            {
-                this.execController.WaitOnUnmanagedRun();
-            }
-            catch (ThresholdExceededException ex)
-            {
-                this.HandleThresholdExceededException(ex);
-                throw;
-            }
-            catch (UnexpectedChangeException ex)
-            {
-                this.HandleUnexpectedChangeException(ex);
-                throw;
-            }
-            catch (Exception ex)
-            {
-                rawLogger.Error(ex, "An error occurred in an unmanaged run");
-            }
+            this.execController.WaitOnUnmanagedRun();
 
             this.controllerCancellationTokenSource.Token.ThrowIfCancellationRequested();
 
@@ -385,7 +385,6 @@ namespace Lithnet.Miiserver.AutoSync
                 this.logger.LogInfo("Starting action processing queue");
                 this.State.ExecutionState = ControllerState.Idle;
 
-                // ReSharper disable once InconsistentlySynchronizedField
                 foreach (ExecutionParameters action in this.Queue.GetConsumingEnumerable(this.controllerCancellationTokenSource.Token))
                 {
                     this.controllerCancellationTokenSource.Token.ThrowIfCancellationRequested();
@@ -394,20 +393,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                     this.State.UpdateExecutionStatus(ControllerState.Waiting, "Staging run", action.RunProfileName, this.Queue.GetQueueItemNames());
 
-                    try
-                    {
-                        this.execController.TakeLocksAndExecute(action);
-                    }
-                    catch (ThresholdExceededException ex)
-                    {
-                        this.HandleThresholdExceededException(ex);
-                        break;
-                    }
-                    catch (UnexpectedChangeException ex)
-                    {
-                        this.HandleUnexpectedChangeException(ex);
-                        break;
-                    }
+                    this.execController.TakeLocksAndExecute(action);
                 }
             }
             catch (OperationCanceledException)
@@ -429,7 +415,7 @@ namespace Lithnet.Miiserver.AutoSync
             else
             {
                 this.logger.LogWarn($"Controller indicated that management agent controller should stop further processing on this MA. Run Profile {this.State.ExecutingRunProfile}");
-                this.Stop(false, false, false);
+                this.StopOnUnexpectedChangeException("Controller script detected an unexpected change");
             }
         }
 
@@ -437,7 +423,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             this.logger.LogWarn($"Threshold was exceeded on management agent run profile {this.State.ExecutingRunProfile}. The controller will be stopped\n{ex.Message}");
             RunDetailParser.SendThresholdExceededMail(ex.RunDetails, ex.Message);
-            this.Stop(false, false, true);
+            this.StopOnThresholdExceededException("Threshold exceeded");
         }
     }
 }

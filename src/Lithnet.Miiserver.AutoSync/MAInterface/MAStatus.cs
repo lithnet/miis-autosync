@@ -57,7 +57,10 @@ namespace Lithnet.Miiserver.AutoSync
 
         [DataMember]
         public bool HasSyncLock { get; internal set; }
-
+        
+        [DataMember]
+        public bool HasError { get; internal set; }
+        
         [DataMember]
         public bool HasExclusiveLock { get; internal set; }
 
@@ -114,11 +117,19 @@ namespace Lithnet.Miiserver.AutoSync
             this.ExecutionQueue = executionQueue;
         }
 
-        public void Clear()
+        public void ClearExecutionStatus()
         {
             this.ExecutingRunProfile = null;
             this.ExecutionQueue = null;
+            this.ExecutionState = ControllerState.Idle;
+        }
+
+        public void Reset()
+        {
+            this.ClearExecutionStatus();
             this.Message = null;
+            this.ThresholdExceeded = false;
+            this.HasError = false;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

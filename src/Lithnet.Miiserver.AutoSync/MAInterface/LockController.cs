@@ -68,9 +68,13 @@ namespace Lithnet.Miiserver.AutoSync
         public static void Wait(WaitHandle[] waitHandles, string name, CancellationTokenSource ts, string managementAgentName, [CallerMemberName] string caller = "")
         {
             LockController.Debug(managementAgentName, $"LOCK: WAIT: {name}: {caller}");
-            while (!WaitHandle.WaitAll(waitHandles, 1000))
+
+            if (waitHandles != null && waitHandles.Length > 0)
             {
-                ts.Token.ThrowIfCancellationRequested();
+                while (!WaitHandle.WaitAll(waitHandles, 1000))
+                {
+                    ts.Token.ThrowIfCancellationRequested();
+                }
             }
 
             ts.Token.ThrowIfCancellationRequested();
