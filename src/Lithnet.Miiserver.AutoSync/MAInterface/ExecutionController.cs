@@ -155,7 +155,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void TakeLocksAndExecuteMode0(ExecutionParameters action)
         {
-            ConcurrentBag<SemaphoreSlim> otherLocks = new ConcurrentBag<SemaphoreSlim>();
+            ConcurrentBag<SemaphoreSlim> otherLocks = null;
             bool hasLocalLock = false;
             bool hasGlobalRunningLock = false;
             Stopwatch totalWaitTimer = new Stopwatch();
@@ -237,7 +237,7 @@ namespace Lithnet.Miiserver.AutoSync
                     this.state.HasExclusiveLock = false;
                 }
 
-                if (otherLocks.Any())
+                if (otherLocks?.Any() ?? false)
                 {
                     foreach (SemaphoreSlim e in otherLocks)
                     {
@@ -256,7 +256,7 @@ namespace Lithnet.Miiserver.AutoSync
             Stopwatch totalWaitTimer = new Stopwatch();
             totalWaitTimer.Start();
             Stopwatch opTimer = new Stopwatch();
-            bool hasGlobalRuningLock = false;
+            bool hasGlobalRunningLock = false;
 
             try
             {
@@ -284,11 +284,9 @@ namespace Lithnet.Miiserver.AutoSync
                 opTimer.Stop();
                 this.counters.AddWaitTimeExclusive(opTimer.Elapsed);
 
-                otherLocks = this.GetForeignLocks();
-
                 if (action.Exclusive)
                 {
-                    hasGlobalRuningLock = this.YieldAndTakeExclusiveRunLock();
+                    hasGlobalRunningLock = this.YieldAndTakeExclusiveRunLock();
 
                     this.WaitOnOtherMAs();
                 }
@@ -299,6 +297,8 @@ namespace Lithnet.Miiserver.AutoSync
                 }
 
                 hasLocalLock = this.TakeLocalLock();
+
+                otherLocks = this.GetForeignLocks();
 
                 this.StaggerStart();
 
@@ -315,7 +315,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 this.state.UpdateExecutionStatus(ControllerState.Idle, null, null);
 
-                if (hasGlobalRuningLock)
+                if (hasGlobalRunningLock)
                 {
                     LockController.ReleaseLock(globalExclusiveOperationRunningLock, nameof(globalExclusiveOperationRunningLock), this.ManagementAgentName);
                 }
