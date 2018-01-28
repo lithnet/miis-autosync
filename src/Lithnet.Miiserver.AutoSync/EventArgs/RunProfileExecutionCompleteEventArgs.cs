@@ -7,6 +7,7 @@ namespace Lithnet.Miiserver.AutoSync
     public class RunProfileExecutionCompleteEventArgs : EventArgs
     {
         public RunProfileExecutionCompleteEventArgs(string managementAgentName,
+            Guid managementAgentID,
             string runProfileName,
             string result,
             int runNumber,
@@ -19,6 +20,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.RunNumber = runNumber;
             this.StartDate = startDate;
             this.EndDate = endDate;
+            this.ManagementAgentID = managementAgentID;
         }
 
         [DataMember]
@@ -38,5 +40,8 @@ namespace Lithnet.Miiserver.AutoSync
 
         [DataMember]
         public string ManagementAgentName { get; set; }
+
+        [DataMember]
+        public Guid ManagementAgentID { get; set; }
     }
 }

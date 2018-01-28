@@ -29,6 +29,8 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "version")]
         public int Version { get; set; }
 
+        public PartitionDetectionMode DetectionMode { get; private set; }
+        
         internal void ResolveManagementAgent()
         {
             try
@@ -87,6 +89,15 @@ namespace Lithnet.Miiserver.AutoSync
                 PartitionConfiguration c = new PartitionConfiguration(p);
                 MAConfigDiscovery.DoAutoRunProfileDiscovery(c, ma);
                 this.Partitions.Add(c);
+            }
+
+            if (this.Partitions.ActiveConfigurations.Count() > 1)
+            {
+                this.DetectionMode = PartitionDetectionMode.WalkConnectorSpace;
+            }
+            else
+            {
+                this.DetectionMode = PartitionDetectionMode.AssumeAll;
             }
         }
 

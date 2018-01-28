@@ -70,6 +70,9 @@
       <HintPath>..\packages\PreMailer.Net.1.5.3\lib\net45\PreMailer.Net.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="PropertyChanged, Version=1.0.0.0, Culture=neutral, PublicKeyToken=ee3ee20bcf148ddd, processorArchitecture=MSIL">
+      <HintPath>..\packages\PropertyChanged.Fody.2.2.5\lib\net452\PropertyChanged.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
@@ -103,6 +106,7 @@
     <Compile Include="Enums\RunMode.cs" />
     <Compile Include="EventArgs\MessageLoggedEventArgs.cs" />
     <Compile Include="EventArgs\RunProfileExecutionCompleteEventArgs.cs" />
+    <Compile Include="EventArgs\BeforeExecutionStartEventArgs.cs" />
     <Compile Include="EventArgs\TriggerMessageEventArgs.cs" />
     <Compile Include="EventArgs\MAStatusChangedEventArgs.cs" />
     <Compile Include="EventService\EventClient.cs" />
@@ -114,6 +118,10 @@
     <Compile Include="Exceptions\NoSuchManagementAgentException.cs" />
     <Compile Include="Exceptions\SyncEngineStoppedException.cs" />
     <Compile Include="Exceptions\ThresholdExceededException.cs" />
+    <Compile Include="MAInterface\ControllerLogger.cs" />
+    <Compile Include="MAInterface\ExecutionController.cs" />
+    <Compile Include="MAInterface\ExecutionQueue.cs" />
+    <Compile Include="MAInterface\LockController.cs" />
     <Compile Include="MAInterface\PartitionConfigurationCollection.cs" />
     <Compile Include="MAInterface\MAControllerConfigurationCollection.cs" />
     <Compile Include="MAInterface\MAStatus.cs" />
@@ -123,7 +131,9 @@
     <Compile Include="Mail\MessageBuilder.cs" />
     <Compile Include="Mail\MessageSender.cs" />
     <Compile Include="MAInterface\PartitionConfiguration.cs" />
+    <Compile Include="MAInterface\RunDetailParser.cs" />
     <Compile Include="MAInterface\Thresholds.cs" />
+    <Compile Include="MAInterface\TriggerController.cs" />
     <Compile Include="PerfCounters.cs" />
     <Compile Include="PersistentSearch\CallBackEventBridge.cs" />
     <Compile Include="MAInterface\MAControllerScript.cs" />
@@ -233,13 +243,12 @@ foreach (var item in filesToCleanup)
   <Target Name="CleanReferenceCopyLocalPaths" AfterTargets="AfterBuild;NonWinFodyTarget">
     <CosturaCleanup Config="FodyWeavers.xml" Files="@(ReferenceCopyLocalPaths->'$(OutDir)%(DestinationSubDirectory)%(Filename)%(Extension)')" />
   </Target>
-  <Import Project="..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets" Condition="Exists('..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets'))" />
     <Error Condition="!Exists('..\packages\Costura.Fody.1.6.2\build\dotnet\Costura.Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Costura.Fody.1.6.2\build\dotnet\Costura.Fody.targets'))" />
+    <Error Condition="!Exists('..\packages\Fody.2.3.20\build\Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Fody.2.3.20\build\Fody.targets'))" />
   </Target>
   <PropertyGroup>
     <PostBuildEvent>"C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe" sign /sha1 "$(CSCERTTHUMBPRINT)" /t http://timestamp.digicert.com /fd sha256 /v "$(TargetFileName)"
@@ -262,6 +271,7 @@ foreach (var item in filesToCleanup)
       PostBuildMacros;
     </PostBuildEventDependsOn>
   </PropertyGroup>
+  <Import Project="..\packages\Fody.2.3.20\build\Fody.targets" Condition="Exists('..\packages\Fody.2.3.20\build\Fody.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Management.Automation;
-using NLog;
 using Lithnet.Miiserver.Client;
+using NLog;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -102,11 +102,9 @@ namespace Lithnet.Miiserver.AutoSync
                     this.HasStoppedMA = true;
                     throw ex.InnerException;
                 }
-                else
-                {
-                    logger.Error(ex, $"{this.config.ManagementAgentName}: ShouldExecute handler threw an exception");
-                    return false;
-                }
+
+                logger.Error(ex, $"{this.config.ManagementAgentName}: ShouldExecute handler threw an exception");
+                return false;
             }
             catch (UnexpectedChangeException)
             {
@@ -145,10 +143,9 @@ namespace Lithnet.Miiserver.AutoSync
                     this.HasStoppedMA = true;
                     throw ex.InnerException;
                 }
-                else
-                {
-                    logger.Error(ex, $"{this.config.ManagementAgentName}: ExecutionComplete handler threw an exception");
-                }
+
+                logger.Error(ex, $"{this.config.ManagementAgentName}: ExecutionComplete handler threw an exception");
+
             }
             catch (UnexpectedChangeException)
             {

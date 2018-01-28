@@ -1,16 +1,16 @@
 ﻿using System;
-using System.Linq;
-using System.ServiceProcess;
-using Lithnet.Miiserver.Client;
 using System.IO;
-using System.Timers;
+using System.Linq;
 using System.ServiceModel;
+using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
-using Timer = System.Timers.Timer;
+using System.Timers;
+using Lithnet.Miiserver.Client;
 using NLog;
 using NLog.Config;
 using NLog.Targets;
+using Timer = System.Timers.Timer;
 
 namespace Lithnet.Miiserver.AutoSync
 {

@@ -48,6 +48,12 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                     return App.GetImageResource("Blocked.png");
                 }
 
+                if (this.HasError)
+                {
+                    return App.GetImageResource("Error_red.ico");
+
+                }
+
                 switch (this.DisplayState)
                 {
 
@@ -92,6 +98,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public bool ThresholdExceeded { get; private set; }
 
+        public bool HasError { get; private set; }
+        
         public string ExecutingRunProfile { get; private set; }
 
         [AlsoNotifyFor(nameof(LastRun), nameof(DisplayIcon))]
@@ -158,6 +166,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.HasSyncLock = status.HasSyncLock;
             this.HasForeignLock = status.HasForeignLock;
             this.ThresholdExceeded = status.ThresholdExceeded;
+            this.HasError = status.HasError;
 
             this.Disabled = this.ControlState == ControlState.Disabled;
         }

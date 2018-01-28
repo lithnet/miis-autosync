@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
-using Lithnet.Miiserver.Client;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Xml;
+using Lithnet.Miiserver.Client;
 using NLog;
 
 namespace Lithnet.Miiserver.AutoSync
