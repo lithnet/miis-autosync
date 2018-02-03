@@ -182,9 +182,10 @@ namespace Lithnet.Miiserver.AutoSync
 
             MAController e = this.GetContorllerOrThrow(managementAgentID);
 
+            logger.Trace($"Starting {e.ManagementAgentName}");
+
             lock (e)
             {
-                logger.Trace($"Starting {e.ManagementAgentName}");
                 e.Start(c);
             }
         }

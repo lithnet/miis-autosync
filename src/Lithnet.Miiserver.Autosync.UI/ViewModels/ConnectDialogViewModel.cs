@@ -1,21 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
-using System.ServiceModel;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Input;
 using Lithnet.Common.Presentation;
-using Lithnet.Miiserver.AutoSync;
-using Lithnet.Miiserver.AutoSync.UI.Windows;
-using PropertyChanged;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
     public class ConnectDialogViewModel : ViewModelBase
     {
-        public ConnectDialogViewModel()
+        private Window window;
+
+        public ConnectDialogViewModel(Window window)
         {
+            this.window = window;
         }
 
         public bool AutoConnect { get; set; }
@@ -75,7 +70,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 this.Cursor = Cursors.Wait;
                 this.IsEnabled = false;
-                return App.TryConnectionWithDialog(hostname, port);
+
+                return App.TryConnectionWithProgressDialog(hostname, port, null, this.window);
             }
             finally
             {

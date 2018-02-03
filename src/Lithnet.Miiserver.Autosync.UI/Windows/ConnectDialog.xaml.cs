@@ -28,6 +28,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.Windows
 
         private void ButtonOk_Click(object sender, RoutedEventArgs e)
         {
+            App.UpdateFocusedBindings();
             ConnectDialogViewModel vm = (ConnectDialogViewModel)this.DataContext;
 
             if (vm.ValidateConnection())

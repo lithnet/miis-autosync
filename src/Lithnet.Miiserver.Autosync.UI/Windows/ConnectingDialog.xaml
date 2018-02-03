@@ -13,6 +13,7 @@
         ShowIconOnTitleBar="False" ShowSystemMenuOnRightClick="False" BorderThickness="1" BorderBrush="{DynamicResource AccentColorBrush}"
         WindowStartupLocation="CenterScreen"
         Cursor="{Binding Path=Cursor}"
+        WindowTransitionsEnabled="False"
          >
     <Grid>
         <Grid.ColumnDefinitions>

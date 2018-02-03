@@ -1,16 +1,24 @@
 ﻿using Lithnet.Logging;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Net;
 using System.ServiceModel;
 using System.ServiceProcess;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Lithnet.Miiserver.AutoSync.UI.ViewModels;
 using Lithnet.Miiserver.AutoSync.UI.Windows;
+using MahApps.Metro.Controls;
+using Misuzilla.Security;
 
 namespace Lithnet.Miiserver.AutoSync.UI
 {
@@ -19,6 +27,8 @@ namespace Lithnet.Miiserver.AutoSync.UI
     /// </summary>
     public partial class App : Application
     {
+        private static NetworkCredential connectedCredential;
+
         internal const string HelpBaseUrl = "https://github.com/lithnet/miis-autosync/wiki/";
 
         internal const string NullPlaceholder = "(none)";
@@ -60,7 +70,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
             Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
             window.Show();
 
-            App.Connect(false, true);
+            App.Connect(false, true, window);
 
             MainWindowViewModel m = new MainWindowViewModel();
             window.DataContext = m;
@@ -69,54 +79,131 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
         internal static void Reconnect(MainWindowViewModel vm)
         {
-            if (App.Connect(true, false))
+            if (App.Connect(true, false, Application.Current.MainWindow))
             {
                 vm.AbortExecutionMonitors();
                 vm.Initialize();
             }
         }
 
-        internal static bool TryDefaultConnection()
+        internal static bool TryDefaultConnection(Window owner)
         {
             if (!UserSettings.AutoConnect)
             {
                 return false;
             }
 
-            return App.TryConnectionWithDialog(UserSettings.AutoSyncServerHost, UserSettings.AutoSyncServerPort);
+            return App.TryConnectionWithProgressDialog(UserSettings.AutoSyncServerHost, UserSettings.AutoSyncServerPort, null, owner);
         }
 
-        internal static bool TryConnectionWithDialog(string host, int port)
+        internal static bool TryConnectionWithProgressDialog(string host, int port, NetworkCredential credential, Window owner)
         {
             ConnectingDialog connectingDialog = new ConnectingDialog();
 
             try
             {
                 connectingDialog.CaptionText = $"Connecting to {host}";
-                connectingDialog.DataContext = connectingDialog;
 
                 connectingDialog.Show();
+                connectingDialog.Owner = owner;
+                owner.IsEnabled = false;
                 connectingDialog.Activate();
 
                 App.DoEvents();
 
-                return App.TryConnect(host, port);
+                WindowInteropHelper windowHelper = new WindowInteropHelper(connectingDialog);
+
+                return App.TryConnect(host, port, credential, windowHelper.Handle);
             }
             finally
             {
                 connectingDialog.Hide();
+                owner.IsEnabled = true;
             }
         }
 
-        internal static bool TryConnect(string host, int port)
+        internal static bool TryConnect(string host, int port, NetworkCredential credential, IntPtr hwnd)
         {
+            bool attempted = false;
+
             try
             {
-                ConfigClient c = App.GetConfigClient(host, port);
-                Trace.WriteLine($"Attempting to connect to the AutoSync service at {c.Endpoint.Address}");
-                c.Open();
-                Trace.WriteLine($"Connected to the AutoSync service");
-                return true;
+                while (true)
+                {
+                    int errorCode;
+                    bool hasSaved = false;
+
+                    if (credential == null)
+                    {
+                        credential = App.GetSavedCredentialsOrNull(host);
+
+                        if (credential != null)
+                        {
+                            hasSaved = true;
+                        }
+                    }
+
+                    try
+                    {
+                        ConfigClient c = App.GetConfigClient(host, port, credential);
+                        Trace.WriteLine($"Attempting to connect to the AutoSync service at {c.Endpoint.Address}");
+                        c.Open();
+                        Trace.WriteLine($"Connected to the AutoSync service");
+                        App.connectedCredential = credential;
+                        return true;
+                    }
+                    catch (System.ServiceModel.Security.SecurityAccessDeniedException)
+                    {
+                        errorCode = 5;
+                    }
+                    catch (System.ServiceModel.Security.SecurityNegotiationException)
+                    {
+                        errorCode = 1326;
+                    }
+
+                    CredentialUI.PromptForWindowsCredentialsOptions options = new CredentialUI.PromptForWindowsCredentialsOptions("Lithnet AutoSync", $"Enter credentials for {host}");
+                    if (attempted)
+                    {
+                        options.AuthErrorCode = errorCode;
+                    }
+                    else
+                    {
+                        attempted = true;
+                    }
+
+                    options.IsSaveChecked = hasSaved;
+                    options.HwndParent = hwnd;
+                    options.Flags = CredentialUI.PromptForWindowsCredentialsFlag.CREDUIWIN_CHECKBOX | CredentialUI.PromptForWindowsCredentialsFlag.CREDUIWIN_GENERIC;
+
+                    PromptCredentialsResult result;
+
+                    if (hasSaved)
+                    {
+                        result = CredentialUI.PromptForWindowsCredentials(options, credential.UserName, credential.Password);
+                    }
+                    else
+                    {
+                        result = CredentialUI.PromptForWindowsCredentials(options, $"{Environment.UserDomainName}\\{Environment.UserName}", null);
+
+                    }
+
+                    if (result == null)
+                    {
+                        // User canceled the operation
+                        return false;
+                    }
+
+                    credential = new NetworkCredential(result.UserName, result.Password);
+
+                    if (result.IsSaveChecked)
+                    {
+                        CredentialManager.Write(App.GetCredentialTargetName(host), CredentialType.Generic, CredentialPersistence.LocalMachine, result.UserName, result.Password);
+                    }
+                    else
+                    {
+                        CredentialManager.TryDelete(App.GetCredentialTargetName(host), CredentialType.Generic);
+                    }
+                }
             }
             catch (EndpointNotFoundException ex)
             {
@@ -162,11 +249,39 @@ namespace Lithnet.Miiserver.AutoSync.UI
             }
         }
 
-        internal static bool Connect(bool forceShowDialog, bool exitOnCancel)
+        private static string GetCredentialTargetName(string host)
+        {
+            return $"autosync/{host.ToLowerInvariant()}";
+        }
+
+        private static NetworkCredential GetSavedCredentialsOrNull(string host)
+        {
+            NetworkCredential credential = null;
+
+            try
+            {
+                var storedCreds = CredentialManager.Read(App.GetCredentialTargetName(host), CredentialType.Generic);
+
+                credential = new NetworkCredential();
+                credential.UserName = storedCreds.UserName;
+                credential.Password = storedCreds.Password;
+            }
+            catch (Win32Exception ex)
+            {
+                if (ex.NativeErrorCode != 1168)
+                {
+                    Trace.Write(ex.ToString());
+                }
+            }
+
+            return credential;
+        }
+
+        internal static bool Connect(bool forceShowDialog, bool exitOnCancel, Window owner)
         {
             if (!forceShowDialog)
             {
-                if (App.TryDefaultConnection())
+                if (App.TryDefaultConnection(owner))
                 {
                     App.ConnectedHost = UserSettings.AutoSyncServerHost;
                     App.ConnectedPort = UserSettings.AutoSyncServerPort;
@@ -175,7 +290,9 @@ namespace Lithnet.Miiserver.AutoSync.UI
                 }
             }
 
-            ConnectDialogViewModel vm = new ConnectDialogViewModel();
+            ConnectDialog dialog = new ConnectDialog();
+            dialog.Owner = owner;
+            ConnectDialogViewModel vm = new ConnectDialogViewModel(dialog);
             vm.HostnameRaw = UserSettings.AutoSyncServerHost;
             vm.AutoConnect = UserSettings.AutoConnect;
 
@@ -184,7 +301,6 @@ namespace Lithnet.Miiserver.AutoSync.UI
                 vm.HostnameRaw += $":{UserSettings.AutoSyncServerPort}";
             }
 
-            ConnectDialog dialog = new ConnectDialog();
             dialog.DataContext = vm;
 
             if (!dialog.ShowDialog() ?? false)
@@ -295,34 +411,44 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
         internal static EventClient GetDefaultEventClient(InstanceContext ctx)
         {
+            EventClient c;
+
             if (App.IsLocalhost(App.ConnectedHost))
             {
-                return EventClient.GetNamedPipesClient(ctx);
+                c = EventClient.GetNamedPipesClient(ctx);
             }
             else
             {
-                return EventClient.GetNetTcpClient(ctx, App.ConnectedHost, App.ConnectedPort, UserSettings.AutoSyncServerIdentity);
+                c = EventClient.GetNetTcpClient(ctx, App.ConnectedHost, App.ConnectedPort, UserSettings.AutoSyncServerIdentity);
+                c.ClientCredentials.Windows.ClientCredential = App.connectedCredential;
             }
+
+            return c;
         }
 
-        public static ConfigClient GetConfigClient(string host, int port)
+        internal static ConfigClient GetConfigClient(string host, int port, NetworkCredential credential)
         {
+            ConfigClient c;
+
             if (App.IsLocalhost(host))
             {
-                return ConfigClient.GetNamedPipesClient();
+                c = ConfigClient.GetNamedPipesClient();
             }
             else
             {
-                return ConfigClient.GetNetTcpClient(host, port, UserSettings.AutoSyncServerIdentity);
+                c = ConfigClient.GetNetTcpClient(host, port, UserSettings.AutoSyncServerIdentity);
+                c.ClientCredentials.Windows.ClientCredential = credential;
             }
+
+            return c;
         }
 
-        public static ConfigClient GetDefaultConfigClient()
+        internal static ConfigClient GetDefaultConfigClient()
         {
-            return App.GetConfigClient(App.ConnectedHost, App.ConnectedPort);
+            return App.GetConfigClient(App.ConnectedHost, App.ConnectedPort, App.connectedCredential);
         }
 
-        public static bool IsLocalhost(string hostname)
+        internal static bool IsLocalhost(string hostname)
         {
             return string.Equals(hostname, "localhost", StringComparison.OrdinalIgnoreCase);
         }
@@ -330,6 +456,31 @@ namespace Lithnet.Miiserver.AutoSync.UI
         internal static BitmapImage GetImageResource(string name)
         {
             return new BitmapImage(new Uri($"pack://application:,,,/Resources/{name}", UriKind.Absolute));
+        }
+
+        internal static void UpdateFocusedBindings()
+        {
+            object focusedItem = Keyboard.FocusedElement;
+
+            if (focusedItem == null)
+            {
+                return;
+            }
+
+            BindingExpression expression = (focusedItem as TextBox)?.GetBindingExpression(TextBox.TextProperty);
+            expression?.UpdateSource();
+
+            expression = (focusedItem as ComboBox)?.GetBindingExpression(ComboBox.TextProperty);
+            expression?.UpdateSource();
+
+            expression = (focusedItem as PasswordBox)?.GetBindingExpression(PasswordBoxBindingHelper.PasswordProperty);
+            expression?.UpdateSource();
+
+            expression = (focusedItem as TimeSpanControl)?.GetBindingExpression(TimeSpanControl.ValueProperty);
+            expression?.UpdateSource();
+
+            expression = (focusedItem as DateTimePicker)?.GetBindingExpression(DateTimePicker.SelectedDateProperty);
+            expression?.UpdateSource();
         }
     }
 }

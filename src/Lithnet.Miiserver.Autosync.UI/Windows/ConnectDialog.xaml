@@ -5,16 +5,18 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Lithnet.Miiserver.AutoSync.UI.Windows"
         xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
+        xmlns:ui="clr-namespace:Lithnet.Miiserver.AutoSync.UI"
         mc:Ignorable="d"
         Title="Connect" 
-        Height="183" 
+        Height="182.587" 
         Width="483"
         ShowCloseButton="False" ShowMinButton="False" ShowMaxRestoreButton="False" ShowInTaskbar="False"
         ShowIconOnTitleBar="False" ShowSystemMenuOnRightClick="False" BorderThickness="1" BorderBrush="{DynamicResource AccentColorBrush}"
         WindowStartupLocation="CenterScreen"
         Cursor="{Binding Path=Cursor}"
+        WindowTransitionsEnabled="False"
          >
-    <Grid>
+    <Grid Margin="0,0,0,28">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition/>
@@ -47,7 +49,7 @@
 
         <StackPanel Grid.Column="0"
                     Grid.ColumnSpan="2"
-                    Grid.Row="2"
+                    Grid.Row="7"
                     HorizontalAlignment="Center"
                     Orientation="Horizontal">
             <Button x:Name="ButtonOk" 

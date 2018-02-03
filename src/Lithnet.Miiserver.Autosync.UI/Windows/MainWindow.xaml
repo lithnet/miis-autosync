@@ -34,7 +34,6 @@
                     Command="{Binding Path=Commands.Connect}" />
     </Window.InputBindings>
 
-
     <Grid>
 
         <Grid.ColumnDefinitions>

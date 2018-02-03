@@ -1,19 +1,13 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.ServiceModel;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Input;
 using Lithnet.Common.Presentation;
-using MahApps.Metro.Controls;
 using Microsoft.Win32;
 using System.Linq;
-using System.Threading.Tasks;
-using System.Windows.Threading;
 using Lithnet.Miiserver.AutoSync.UI.Windows;
 using PropertyChanged;
 
@@ -84,7 +78,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void Connect()
         {
-            this.UpdateFocusedBindings();
+            App.UpdateFocusedBindings();
 
             if (!this.ContinueOnUnsavedChanges())
             {
@@ -249,7 +243,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void Import()
         {
-            this.UpdateFocusedBindings();
+            App.UpdateFocusedBindings();
 
             if (!this.ContinueOnUnsavedChanges())
             {
@@ -311,7 +305,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void Save()
         {
-            this.UpdateFocusedBindings();
+            App.UpdateFocusedBindings();
 
             try
             {
@@ -426,7 +420,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void Export()
         {
-            this.UpdateFocusedBindings();
+            App.UpdateFocusedBindings();
 
             if (this.HasErrors)
             {
@@ -470,7 +464,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void MainWindow_Closing(object sender, CancelEventArgs e)
         {
-            this.UpdateFocusedBindings();
+            App.UpdateFocusedBindings();
 
             if (!this.ContinueOnUnsavedChanges())
             {
@@ -480,7 +474,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void Close()
         {
-            this.UpdateFocusedBindings();
+            App.UpdateFocusedBindings();
 
             if (!this.ContinueOnUnsavedChanges())
             {
@@ -521,31 +515,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
 
             return true;
-        }
-
-        private void UpdateFocusedBindings()
-        {
-            object focusedItem = Keyboard.FocusedElement;
-
-            if (focusedItem == null)
-            {
-                return;
-            }
-
-            BindingExpression expression = (focusedItem as TextBox)?.GetBindingExpression(TextBox.TextProperty);
-            expression?.UpdateSource();
-
-            expression = (focusedItem as ComboBox)?.GetBindingExpression(ComboBox.TextProperty);
-            expression?.UpdateSource();
-
-            expression = (focusedItem as PasswordBox)?.GetBindingExpression(PasswordBoxBindingHelper.PasswordProperty);
-            expression?.UpdateSource();
-
-            expression = (focusedItem as TimeSpanControl)?.GetBindingExpression(TimeSpanControl.ValueProperty);
-            expression?.UpdateSource();
-
-            expression = (focusedItem as DateTimePicker)?.GetBindingExpression(DateTimePicker.SelectedDateProperty);
-            expression?.UpdateSource();
         }
     }
 }

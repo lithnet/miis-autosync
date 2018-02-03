@@ -24,6 +24,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.Windows
         public ConnectingDialog()
         {
             this.InitializeComponent();
+            this.DataContext = this;
         }
 
         public string CaptionText { get; set; }
