@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.DirectoryServices;
 using System.Security.Principal;
 using System.Linq;
 using Microsoft.Deployment.WindowsInstaller;
 using System.DirectoryServices.AccountManagement;
+using System.Net;
 using ActiveDs;
 using Lithnet.Miiserver.Client;
 
@@ -85,6 +87,57 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
                         return ActionResult.Failure;
                     }
                 }
+            }
+        }
+
+        [CustomAction]
+        public static ActionResult AddSpnsToServiceAccount(Session session)
+        {
+            string account = session.CustomActionData["SERVICE_USERNAME"];
+
+            try
+            {
+                session.Log($"Attempting add SPNs to user {account}");
+                AddSpns(session, account);
+                session.Log("Done");
+                return ActionResult.Success;
+
+            }
+            catch (Exception ex)
+            {
+                session.Log($"Could not add SPNs to {account}");
+                session.Log(ex.ToString());
+                return ActionResult.Failure;
+            }
+        }
+
+        private static void AddSpns(Session session, string account)
+        {
+            bool isMachine;
+
+            UserPrincipal user = (UserPrincipal)CustomActions.FindInDomainOrMachine(account, out isMachine);
+
+            if (user == null)
+            {
+                throw new NoMatchingPrincipalException($"The user {account} could not be found");
+            }
+
+            if (isMachine)
+            {
+                session.Log($"Cannot add SPN to a local account. Exiting.");
+                return;
+            }
+
+            HashSet<string> hostnames = new HashSet<string>();
+
+            hostnames.Add(SpnInterop.GetComputerDnsName(ComputerNameFormat.ComputerNameDnsFullyQualified));
+            hostnames.Add(SpnInterop.GetComputerDnsName(ComputerNameFormat.ComputerNameNetBios));
+
+            SpnInterop.SetSpn("autosync", hostnames.ToArray(), user.DistinguishedName);
+
+            foreach (string hostname in hostnames)
+            {
+                session.Log($"Added spn autosync/{hostname} to {user.DistinguishedName}");
             }
         }
 

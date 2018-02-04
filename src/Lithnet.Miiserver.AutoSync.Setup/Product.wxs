@@ -49,6 +49,13 @@
               Execute="deferred"
               Impersonate="yes"/>
 
+    <CustomAction Id="AddSpnsToServiceAccount"
+                  BinaryKey="CustomActionBinary"
+                  DllEntry="AddSpnsToServiceAccount"
+                  Return="ignore"
+                  Execute="deferred"
+                  Impersonate="yes"/>
+
     <CustomAction Id="CA_SetPropertyValueAsSystem"
                   Property="AddServiceAccountToFimSyncAdminsAsSystem"
                   Value="SERVICE_USERNAME=[SERVICE_USERNAME];GROUP_FIM_SYNC_ADMINS_NAME=[GROUP_FIM_SYNC_ADMINS_NAME]"/>
@@ -56,6 +63,10 @@
     <CustomAction Id="CA_SetPropertyValueAsCaller"
                   Property="AddServiceAccountToFimSyncAdminsAsCaller"
                   Value="SERVICE_USERNAME=[SERVICE_USERNAME];GROUP_FIM_SYNC_ADMINS_NAME=[GROUP_FIM_SYNC_ADMINS_NAME]"/>
+
+    <CustomAction Id="CA_SetPropertyValueAddSpnsToServiceAccount"
+                  Property="AddSpnsToServiceAccount"
+                  Value="SERVICE_USERNAME=[SERVICE_USERNAME]"/>
 
     <CustomAction Id="SetIsLocalProperty"
                   BinaryKey="CustomActionBinary"
@@ -200,6 +211,9 @@
 
       <Custom Action="CA_SetPropertyValueAsCaller" Before="AddServiceAccountToFimSyncAdminsAsCaller"><![CDATA[(NOT Installed) AND GROUP_FIM_SYNC_ADMINS_IS_DOMAIN AND (&AUTOSYNCSERVICE=3)]]></Custom>
       <Custom Action="AddServiceAccountToFimSyncAdminsAsCaller" After="InstallFiles"><![CDATA[(NOT Installed) AND GROUP_FIM_SYNC_ADMINS_IS_DOMAIN AND (&AUTOSYNCSERVICE=3)]]></Custom>
+
+      <Custom Action="CA_SetPropertyValueAddSpnsToServiceAccount" Before="AddSpnsToServiceAccount"><![CDATA[(NOT Installed) AND (&AUTOSYNCSERVICE=3)]]></Custom>
+      <Custom Action="AddSpnsToServiceAccount" After="InstallFiles"><![CDATA[(NOT Installed) AND (&AUTOSYNCSERVICE=3)]]></Custom>
 
     </InstallExecuteSequence>
 
