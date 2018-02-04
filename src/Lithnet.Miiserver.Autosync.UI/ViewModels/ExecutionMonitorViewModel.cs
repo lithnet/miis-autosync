@@ -276,7 +276,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                     Command = new DelegateCommand(t => { }, t => this.CanAddToExecutionQueue())
                 };
 
-                ConfigClient c = App.GetDefaultConfigClient();
+                ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                 c.InvokeThenClose(u =>
                 {
                     foreach (string rp in c.GetManagementAgentRunProfileNames(this.ManagementAgentID, true).OrderBy(t => t))
@@ -308,7 +308,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 try
                 {
-                    ConfigClient c = App.GetDefaultConfigClient();
+                    ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                     c.AddToExecutionQueue(this.ManagementAgentID, runProfileName);
                 }
                 catch (EndpointNotFoundException ex)
@@ -331,7 +331,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 try
                 {
-                    ConfigClient c = App.GetDefaultConfigClient();
+                    ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                     c.InvokeThenClose(x => x.Stop(this.ManagementAgentID, cancelRun));
                 }
                 catch (Exception ex)
@@ -363,7 +363,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 try
                 {
-                    ConfigClient c = App.GetDefaultConfigClient();
+                    ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                     c.InvokeThenClose(x => x.CancelRun(this.ManagementAgentID));
                 }
                 catch (Exception ex)
@@ -380,7 +380,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 try
                 {
-                    ConfigClient c = App.GetDefaultConfigClient();
+                    ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                     c.InvokeThenClose(x => x.Start(this.ManagementAgentID));
                 }
                 catch (Exception ex)
@@ -412,7 +412,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 try
                 {
                     this.DisplayState = "Disconnected";
-                    this.client = App.GetDefaultEventClient(i);
+                    this.client = ConnectionManager.GetDefaultEventClient(i);
                     this.client.Open();
                     this.client.Register(this.ManagementAgentID);
                     this.IsConnected = true;
@@ -452,7 +452,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void StartPingTimer()
         {
-            if (!App.ConnectedToLocalHost)
+            if (ConnectionManager.ConnectViaNetTcp)
             {
                 this.pingTimer = new Timer();
                 this.pingTimer.Interval = TimeSpan.FromSeconds(60).TotalMilliseconds;

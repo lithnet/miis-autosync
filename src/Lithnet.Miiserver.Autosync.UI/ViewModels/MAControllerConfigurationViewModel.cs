@@ -270,7 +270,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
             try
             {
-                ConfigClient c = App.GetDefaultConfigClient();
+                ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                 c.InvokeThenClose(u => items.AddRange(c.GetManagementAgentRunProfileNames(this.ManagementAgentID, includeMultiStep)));
             }
             catch (Exception ex)
@@ -310,7 +310,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                         return;
                     }
 
-                    ConfigClient c = App.GetDefaultConfigClient();
+                    ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                     IMAExecutionTrigger instance = c.InvokeThenClose(t => t.CreateTriggerForManagementAgent(this.SelectedTrigger.FullName, this.ManagementAgentID));
                     this.Triggers.Add(instance, true);
                     this.Triggers.Find(instance).IsDirtySet += this.MAConfigParametersViewModel_IsDirtySet;
@@ -348,7 +348,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
             try
             {
-                ConfigClient c = App.GetDefaultConfigClient();
+                ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                 allowedTypeNames = c.InvokeThenClose(t => t.GetAllowedTriggerTypesForMA(this.ManagementAgentID));
             }
             catch (Exception ex)

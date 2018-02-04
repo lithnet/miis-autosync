@@ -71,7 +71,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 this.Cursor = Cursors.Wait;
                 this.IsEnabled = false;
 
-                return App.TryConnectionWithProgressDialog(hostname, port, null, this.window);
+                return ConnectionManager.TryConnectWithProgress(hostname, port, null, this.window);
             }
             finally
             {

@@ -24,7 +24,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 try
                 {
-                    ConfigClient c = App.GetDefaultConfigClient();
+                    ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                     return c.InvokeThenClose(x => x.GetAutoStartState());
                 }
                 catch (Exception ex)
@@ -38,7 +38,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 try
                 {
-                    ConfigClient c = App.GetDefaultConfigClient();
+                    ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                     c.InvokeThenClose(x => x.SetAutoStartState(value));
                 }
                 catch (EndpointNotFoundException ex)
@@ -96,7 +96,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 {
                     this.starting = true;
                     Application.Current.Dispatcher.Invoke(CommandManager.InvalidateRequerySuggested);
-                    ConfigClient c = App.GetDefaultConfigClient();
+                    ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                     c.GetEngineState();
                     c.InvokeThenClose(x => x.StartAll());
                 }
@@ -130,7 +130,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 {
                     this.stopping = true;
                     Application.Current.Dispatcher.Invoke(CommandManager.InvalidateRequerySuggested);
-                    ConfigClient c = App.GetDefaultConfigClient();
+                    ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                     c.InvokeThenClose(x => x.StopAll(cancelRuns));
                 }
                 catch (EndpointNotFoundException ex)

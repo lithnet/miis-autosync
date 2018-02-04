@@ -96,6 +96,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ConnectionManager.cs" />
     <Compile Include="Controls\TreeViewItemControl.xaml.cs">
       <DependentUpon>TreeViewItemControl.xaml</DependentUpon>
     </Compile>

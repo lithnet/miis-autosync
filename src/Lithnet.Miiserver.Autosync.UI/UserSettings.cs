@@ -42,6 +42,12 @@ namespace Lithnet.Miiserver.AutoSync.UI
             set => UserSettings.UserSettingsKey.SetValue(nameof(AutoConnect), value ? 1 : 0);
         }
 
-        public static string AutoSyncServerIdentity => (string)UserSettings.UserSettingsKey.GetValue(nameof(AutoSyncServerIdentity), "autosync/{0}");
+        public static bool UseNetTcpForLocalHost
+        {
+            get => (int)UserSettings.UserSettingsKey.GetValue(nameof(UserSettings.UseNetTcpForLocalHost), 0) != 0;
+            set => UserSettings.UserSettingsKey.SetValue(nameof(UseNetTcpForLocalHost), value ? 1 : 0);
+        }
+        
+        public static string AutoSyncServerIdentity => (string)UserSettings.UserSettingsKey.GetValue(nameof(AutoSyncServerIdentity), null);
     }
 }

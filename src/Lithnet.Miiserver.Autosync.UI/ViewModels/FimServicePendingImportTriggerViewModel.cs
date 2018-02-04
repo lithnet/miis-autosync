@@ -84,7 +84,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                     creds = new NetworkCredential(this.Username, this.Password);
                 }
 
-                ConfigClient c = App.GetDefaultConfigClient();
+                ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                 string svcAccount = c.InvokeThenClose(t => t.GetAutoSyncServiceAccountName());
 
                 Mouse.OverrideCursor = Cursors.Wait;

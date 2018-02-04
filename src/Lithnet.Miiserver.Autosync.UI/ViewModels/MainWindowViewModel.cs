@@ -21,7 +21,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public ConfigFileViewModel ConfigFile { get; set; }
 
-        public string DisplayName => "Lithnet AutoSync" + (App.ConnectedToLocalHost ? string.Empty : $" - {App.ConnectedHost}") + (this.IsDirty ? "*" : string.Empty);
+        public string DisplayName => "Lithnet AutoSync" + (ConnectionManager.ConnectedHost == null ? string.Empty : $" - {ConnectionManager.ConnectedHost}") + (this.IsDirty ? "*" : string.Empty);
 
         public Cursor Cursor { get; set; }
 
@@ -94,7 +94,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
             try
             {
-                ConfigClient c = App.GetDefaultConfigClient();
+                ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                 Debug.WriteLine("Getting management agent names");
                 c.InvokeThenClose(x => maNames = x.GetManagementAgentNameIDs());
                 Debug.WriteLine("Got management agent names");
@@ -207,7 +207,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 ConfigFile file = null;
 
 
-                ConfigClient c = App.GetDefaultConfigClient();
+                ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                 c.InvokeThenClose(x => file = x.GetConfig());
 
                 if (file == null)
@@ -282,7 +282,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             try
             {
                 this.Cursor = Cursors.Wait;
-                ConfigClient c = App.GetDefaultConfigClient();
+                ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                 f = c.ValidateConfig(f);
                 c.InvokeThenClose(x => x.PutConfig(f));
                 this.AskToRestartService();
@@ -336,7 +336,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                ConfigClient c = App.GetDefaultConfigClient();
+                ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                 c.InvokeThenClose(t => t.PutConfig(this.ConfigFile.Model));
                 this.Commit();
             }
@@ -378,7 +378,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                ConfigClient c = App.GetDefaultConfigClient();
+                ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                 List<Guid> pendingRestartGuids = c.GetManagementAgentsPendingRestart()?.ToList();
 
                 if (pendingRestartGuids != null && pendingRestartGuids.Count > 0)
