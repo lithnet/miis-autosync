@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.ServiceModel;
 using System.ServiceProcess;
@@ -447,10 +448,41 @@ namespace Lithnet.Miiserver.AutoSync.UI
         {
             return App.GetConfigClient(App.ConnectedHost, App.ConnectedPort, App.connectedCredential);
         }
-
-        internal static bool IsLocalhost(string hostname)
+        
+        internal static bool IsLocalhost(string incomingHostName)
         {
-            return string.Equals(hostname, "localhost", StringComparison.OrdinalIgnoreCase);
+            try
+            {
+                IPHostEntry localMachineAddresses = Dns.GetHostEntry(Dns.GetHostName());
+
+                if (IPAddress.TryParse(incomingHostName, out IPAddress incomingIPAddress))
+                {
+                    incomingIPAddress = new IPAddress(incomingIPAddress.GetAddressBytes()); // Removes the scope from link-local ipv6 addresses
+
+                    if (IPAddress.IsLoopback(incomingIPAddress))
+                    {
+                        return true;
+                    }
+
+                    foreach (IPAddress entry in localMachineAddresses.AddressList)
+                    {
+                        IPAddress localMachineAddress = new IPAddress(entry.GetAddressBytes());
+
+                        if (localMachineAddress.Equals(incomingIPAddress))
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                IPHostEntry incomingHostAddresses = Dns.GetHostEntry(incomingHostName);
+
+                return localMachineAddresses.AddressList.Any(localMachineAddress => incomingHostAddresses.AddressList.Any(incomingHostAddress => IPAddress.IsLoopback(incomingHostAddress) || incomingHostAddress.Equals(localMachineAddress)));
+            }
+            catch (System.Net.Sockets.SocketException)
+            {
+                return false;
+            }
         }
 
         internal static BitmapImage GetImageResource(string name)
