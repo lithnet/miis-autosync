@@ -98,14 +98,22 @@
       </DirectorySearch>
     </Property>
 
-    <Property Id="SERVICE_USERNAME" Secure="yes">
+    <Property Id="SERVICE_USERNAME" Value="NT AUTHORITY\NetworkService" />
+      
+    <Property Id="SAVED_SERVICE_USERNAME" Secure="yes">
       <RegistrySearch Id="ExistingServiceAccount"
                       Root="HKLM"
                       Key="SYSTEM\CurrentControlSet\services\[SERVICE_NAME]"
                       Name="ObjectName"
-                      Type="raw"
+                      Type="raw" 
                       Win64="yes"/>
     </Property>
+
+    <SetProperty Id="SERVICE_USERNAME" After="AppSearch" Value="[SAVED_SERVICE_USERNAME]" Sequence="first">SAVED_SERVICE_USERNAME</SetProperty>
+
+    <Property Id="USE_CUSTOM_SERVICE_USERNAME" Secure="yes" />
+
+    <SetProperty Id="USE_CUSTOM_SERVICE_USERNAME" After="AppSearch" Value="1" Sequence="first"><![CDATA[SERVICE_USERNAME ~<> "NT AUTHORITY\NetworkService"]]></SetProperty>
 
     <Property Id="SERVICE_ADMINS_GROUP" Secure="yes">
       <RegistrySearch Id="ExistingServiceAdminsGroup"
@@ -129,7 +137,7 @@
     </Condition>-->
     
     <Property Id="WIXUI_INSTALLDIR" Value="APPROOTDIR" />
-
+    
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramMenuFolder">
         <Directory Id="ApplicationProgramsFolder" Name="Lithnet AutoSync"/>
@@ -194,7 +202,6 @@
     <Feature Id="AUTOSYNCEDITOR" Title="User Interface" Level="1" AllowAdvertise="no" InstallDefault="local" TypicalDefault="install" Absent="disallow" Description="Installs the user interface that allows you to connect to and manage a local or remote AutoSync service instance">
       <ComponentGroupRef Id="Editor" />
     </Feature>
-
 
     <CustomAction Id="SetServiceAdminsGroupIfBlank" Property="SERVICE_ADMINS_GROUP" Value="[GROUP_FIM_SYNC_ADMINS_NAME]"/>
 

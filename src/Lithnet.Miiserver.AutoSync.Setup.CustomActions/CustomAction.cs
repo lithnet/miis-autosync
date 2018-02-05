@@ -97,6 +97,13 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
 
             try
             {
+                SecurityIdentifier wellKnownSid = CustomActions.GetSidIfWellKnownNetworkOrSystemAccount(account);
+                if (wellKnownSid != null)
+                {
+                    session.Log($"Skipping SPN addition as the target is a well-known account");
+                    return ActionResult.Success;
+                }
+
                 session.Log($"Attempting add SPNs to user {account}");
                 AddSpns(session, account);
                 session.Log("Done");
@@ -114,8 +121,8 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
         private static void AddSpns(Session session, string account)
         {
             bool isMachine;
-
-            UserPrincipal user = (UserPrincipal)CustomActions.FindInDomainOrMachine(account, out isMachine);
+            
+            Principal user = CustomActions.FindInDomainOrMachine(account, out isMachine);
 
             if (user == null)
             {
@@ -143,62 +150,98 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
 
         private static void AddUserToGroup(Session session, string account, string groupName)
         {
-            bool isMachine;
-
-            GroupPrincipal group = CustomActions.FindInDomainOrMachine(groupName, out isMachine) as GroupPrincipal;
+            GroupPrincipal group = CustomActions.FindInDomainOrMachine(groupName, out bool groupIsOnLocalMachine) as GroupPrincipal;
 
             if (group == null)
             {
                 throw new NoMatchingPrincipalException($"The group {groupName} could not be found");
             }
 
-            UserPrincipal user = (UserPrincipal)CustomActions.FindInDomainOrMachine(account, out isMachine);
+            SecurityIdentifier userSid = CustomActions.GetSidIfWellKnownNetworkOrSystemAccount(account);
+            Principal principal;
 
-            if (user == null)
+            if (userSid == null)
             {
-                throw new NoMatchingPrincipalException($"The user {account} could not be found");
-            }
+                principal = (UserPrincipal)CustomActions.FindInDomainOrMachine(account, out bool userIsOnLocalMachine);
 
-            DirectoryEntry gde = (DirectoryEntry)group.GetUnderlyingObject();
-            IADsGroup nativeGroup = (IADsGroup)gde.NativeObject;
-
-            foreach (object item in nativeGroup.Members())
-            {
-                byte[] s = (byte[])item.GetType().InvokeMember("ObjectSid", System.Reflection.BindingFlags.GetProperty, null, item, null);
-                SecurityIdentifier sid = new SecurityIdentifier(s, 0);
-                if (user.Sid == sid)
+                if (principal == null)
                 {
-                    session.Log($"User {account} was already in group {groupName}");
-                    return;
+                    throw new NoMatchingPrincipalException($"The user {account} could not be found");
                 }
             }
-
-            session.Log($"User {account} was not in group {groupName}");
-
-            try
+            else
             {
-                if (gde.Path.StartsWith("winnt", StringComparison.OrdinalIgnoreCase))
+                if (groupIsOnLocalMachine)
                 {
-                    session.Log($"Adding WINNT://{user.Sid} to group {gde.Path}");
-                    nativeGroup.Add($"WINNT://{user.Sid}");
+                    PrincipalContext context = new PrincipalContext(ContextType.Machine);
+                    principal = Principal.FindByIdentity(context, IdentityType.Sid, userSid.ToString());
                 }
                 else
                 {
-                    DirectoryEntry ude = (DirectoryEntry)user.GetUnderlyingObject();
-                    session.Log($"Adding {ude.Path} to group {gde.Path}");
-                    nativeGroup.Add(ude.Path);
+                    PrincipalContext context = new PrincipalContext(ContextType.Domain);
+                    principal = Principal.FindByIdentity(context, Environment.MachineName);
                 }
+            }
+
+            IADsGroup nativeGroup = (IADsGroup)((DirectoryEntry)group.GetUnderlyingObject()).NativeObject;
+
+            if (CustomActions.IsUserInGroup(nativeGroup, userSid))
+            {
+                session.Log($"User {account} was already in group {groupName}");
+                return;
+            }
+            else
+            {
+                session.Log($"User {account} was not in group {groupName}");
+            }
+
+            CustomActions.AddPrincipalToGroup(nativeGroup, principal);
+        }
+
+        private static void AddPrincipalToGroup(IADsGroup nativeGroup, Principal principal)
+        {
+            SecurityIdentifier sid = principal.Sid;
+
+            try
+            {
+                string path;
+
+                if (nativeGroup.ADsPath.StartsWith("winnt", StringComparison.OrdinalIgnoreCase))
+                {
+                    path = $"WINNT://{sid}";
+                }
+                else
+                {
+                    path = ((DirectoryEntry)principal.GetUnderlyingObject()).Path;
+                }
+
+                nativeGroup.Add(path);
             }
             catch (System.Runtime.InteropServices.COMException e)
             {
                 if (e.HResult == -2147019886) //unchecked((int)0x80071392))
                 {
-                    session.Log($"User {account} was already in group {groupName} - 0x80071392");
+                    //session.Log($"User {account} was already in group {groupName} - 0x80071392");
                     return;
                 }
 
                 throw;
             }
+        }
+
+        private static bool IsUserInGroup(IADsGroup nativeGroup, SecurityIdentifier userSid)
+        {
+            foreach (object item in nativeGroup.Members())
+            {
+                byte[] s = (byte[])item.GetType().InvokeMember("ObjectSid", System.Reflection.BindingFlags.GetProperty, null, item, null);
+                SecurityIdentifier sid = new SecurityIdentifier(s, 0);
+                if (userSid == sid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static Principal FindInDomainOrMachine(string accountName, out bool isMachine)
@@ -215,6 +258,34 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
             }
 
             return p;
+        }
+
+        private static SecurityIdentifier networkServiceSid = new SecurityIdentifier("S-1-5-20");
+        private static SecurityIdentifier localSystemSid = new SecurityIdentifier("S-1-5-18");
+
+        public static SecurityIdentifier GetSidIfWellKnownNetworkOrSystemAccount(string accountName)
+        {
+            try
+            {
+                NTAccount account = new NTAccount(accountName);
+                SecurityIdentifier sid = (SecurityIdentifier)account.Translate(typeof(SecurityIdentifier));
+
+                if (sid.IsWellKnown(WellKnownSidType.NetworkServiceSid) || sid.IsWellKnown(WellKnownSidType.LocalSystemSid))
+                {
+                    return sid;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("Well known account SID not found");
+                Trace.WriteLine(ex);
+            }
+
+            return null;
         }
     }
 }

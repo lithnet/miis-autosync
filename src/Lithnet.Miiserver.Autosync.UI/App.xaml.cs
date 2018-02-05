@@ -24,7 +24,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
         private object lockObject = new object();
 
-        
+
         internal const string HelpBaseUrl = "https://github.com/lithnet/miis-autosync/wiki/";
 
         internal const string NullPlaceholder = "(none)";
@@ -63,7 +63,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
             window.Show();
 
             ConnectionManager.TryConnectWithDialog(false, true, window);
-            
+
             m.Initialize();
         }
 
@@ -148,7 +148,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
             Application.Current.Dispatcher.Invoke(new Action(delegate { }), DispatcherPriority.Background);
         }
 
-     
+
         internal static BitmapImage GetImageResource(string name)
         {
             return new BitmapImage(new Uri($"pack://application:,,,/Resources/{name}", UriKind.Absolute));
