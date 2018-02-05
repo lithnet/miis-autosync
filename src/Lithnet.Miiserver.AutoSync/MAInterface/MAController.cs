@@ -338,6 +338,14 @@ namespace Lithnet.Miiserver.AutoSync
             }
             finally
             {
+                if (this.execController != null)
+                {
+                    this.execController.Unregister();
+                    this.execController.BeforeExecutionStartImport -= this.ExecController_BeforeExecutionStartImport;
+                    this.execController.RunProfileExecutionComplete -= this.ExecController_RunProfileExecutionComplete;
+                    this.execController = null;
+                }
+
                 this.StopImportTimers();
                 this.counters.Stop();
                 this.Queue = null;

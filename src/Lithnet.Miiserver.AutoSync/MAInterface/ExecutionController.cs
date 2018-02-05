@@ -88,6 +88,11 @@ namespace Lithnet.Miiserver.AutoSync
             this.counters = counters;
         }
 
+        public void Unregister()
+        {
+            SyncComplete -= this.ExecutionController_SyncComplete;
+        }
+
         public bool TryCancelRun(bool ignoreException)
         {
             try
