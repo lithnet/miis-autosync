@@ -35,6 +35,11 @@ namespace Lithnet.Miiserver.AutoSync
             return this.Channel.IsPendingRestart();
         }
 
+        public int GetServiceContractVersion()
+        {
+            return this.Channel.GetServiceContractVersion();
+        }
+
         public void Stop(Guid managementAgentID, bool cancelRun)
         {
             this.Channel.Stop(managementAgentID, cancelRun);
@@ -138,6 +143,19 @@ namespace Lithnet.Miiserver.AutoSync
         public string GetAutoSyncServiceAccountName()
         {
             return this.Channel.GetAutoSyncServiceAccountName();
+        }
+
+        public void ValidateServiceContractVersion()
+        {
+            if (this.GetServiceContractVersion() > ConfigService.ServiceContractVersion)
+            {
+                throw new UnsupportedVersionException("This client needs to be upgraded before it can connect to the specified server");
+            }
+
+            if (this.GetServiceContractVersion() < ConfigService.ServiceContractVersion)
+            {
+                throw new UnsupportedVersionException("This client cannot connect to the server because the server is running an older version. Install a version of the client that matches the one installed on the server, or upgrade the server");
+            }
         }
 
         public static ConfigClient GetNamedPipesClient()

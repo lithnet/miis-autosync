@@ -15,7 +15,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
     public static class ConnectionManager
     {
         private static NetworkCredential connectedCredential;
-        
+
         internal static string ConnectedHost { get; set; }
 
         internal static int ConnectedPort { get; set; }
@@ -85,7 +85,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
             return true;
         }
-        
+
         internal static bool TryConnectWithProgress(string host, int port, NetworkCredential credential, Window owner)
         {
             ConnectingDialog connectingDialog = new ConnectingDialog();
@@ -110,7 +110,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
                 owner.IsEnabled = true;
             }
         }
-        
+
         private static bool TryDefaultConnection(Window owner)
         {
             if (!UserSettings.AutoConnect)
@@ -211,6 +211,16 @@ namespace Lithnet.Miiserver.AutoSync.UI
                     }
                 }
             }
+            catch (UnsupportedVersionException ex)
+            {
+                Trace.WriteLine(ex);
+                MessageBox.Show(
+                   ex.Message,
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return false;
+            }
             catch (EndpointNotFoundException ex)
             {
                 Trace.WriteLine(ex);
@@ -269,6 +279,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
                     ConfigClient c = ConnectionManager.GetConfigClient(host, port, credential, serveridentity);
                     Trace.WriteLine($"Attempting to connect to the AutoSync service at {c.Endpoint.Address} with expected identity {string.Format(serveridentity, host)}");
                     c.Open();
+                    c.ValidateServiceContractVersion();
                     Trace.WriteLine($"Connected to the AutoSync service");
                     ConnectionManager.ServerIdentityFormatString = serveridentity;
                     return;

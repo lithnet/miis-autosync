@@ -12,6 +12,8 @@ namespace Lithnet.Miiserver.AutoSync
 {
     public class ConfigService : IConfigService
     {
+        public const int ServiceContractVersion = 1;
+
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
         public static ServiceHost CreateNetNamedPipeInstance()
@@ -153,6 +155,11 @@ namespace Lithnet.Miiserver.AutoSync
                 logger.Error(ex);
                 throw;
             }
+        }
+
+        public int GetServiceContractVersion()
+        {
+            return ConfigService.ServiceContractVersion;
         }
 
         public void CancelRun(Guid managementAgentID)
