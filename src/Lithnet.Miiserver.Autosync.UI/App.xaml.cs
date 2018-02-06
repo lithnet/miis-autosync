@@ -55,16 +55,18 @@ namespace Lithnet.Miiserver.AutoSync.UI
             this.InitializeComponent();
 
             Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
-            MainWindow window = new UI.MainWindow();
+            MainWindow window = new MainWindow();
             Application.Current.MainWindow = window;
             Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
             MainWindowViewModel m = new MainWindowViewModel();
             window.DataContext = m;
             window.Show();
 
-            ConnectionManager.TryConnectWithDialog(false, true, window);
-
-            m.Initialize();
+            Task.Factory.StartNew(() =>
+            {
+                ConnectionManager.TryConnectWithDialog(false, true, window);
+                m.Initialize();
+            });
         }
 
         internal static void Reconnect(MainWindowViewModel vm)

@@ -170,32 +170,35 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         internal void Initialize()
         {
-            ConnectingDialog connectingDialog = new ConnectingDialog();
-
-            try
+            Application.Current.Dispatcher.Invoke(() =>
             {
-                connectingDialog.CaptionText = $"Connecting to {UserSettings.AutoSyncServerHost}";
-                connectingDialog.DataContext = connectingDialog;
+                ConnectingDialog connectingDialog = new ConnectingDialog();
 
-                connectingDialog.Show();
-                connectingDialog.Activate();
-
-                App.DoEvents();
-
-                this.SetupExecutionMonitors();
-                this.ResetConfigViewModel();
-
-                this.RaisePropertyChanged(nameof(this.DisplayName));
-
-                if (this.ExecutionMonitor != null)
+                try
                 {
-                    this.ExecutionMonitor.IsSelected = true;
+                    connectingDialog.CaptionText = $"Connecting to {UserSettings.AutoSyncServerHost}";
+                    connectingDialog.DataContext = connectingDialog;
+
+                    connectingDialog.Show();
+                    connectingDialog.Activate();
+
+                    App.DoEvents();
+
+                    this.SetupExecutionMonitors();
+                    this.ResetConfigViewModel();
+
+                    this.RaisePropertyChanged(nameof(this.DisplayName));
+
+                    if (this.ExecutionMonitor != null)
+                    {
+                        this.ExecutionMonitor.IsSelected = true;
+                    }
                 }
-            }
-            finally
-            {
-                connectingDialog.Hide();
-            }
+                finally
+                {
+                    connectingDialog.Hide();
+                }
+            });
         }
 
         internal void ResetConfigViewModel()

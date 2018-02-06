@@ -1,17 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using Lithnet.Miiserver.AutoSync.UI.ViewModels;
 using MahApps.Metro.Controls;
 
 namespace Lithnet.Miiserver.AutoSync.UI.Windows
@@ -25,8 +13,18 @@ namespace Lithnet.Miiserver.AutoSync.UI.Windows
         {
             this.InitializeComponent();
             this.DataContext = this;
+            this.CancellationTokenSource = new CancellationTokenSource();
         }
 
+        public CancellationTokenSource CancellationTokenSource { get; private set; }
+
         public string CaptionText { get; set; }
+
+        private void ButtonCancel_Click(object sender, RoutedEventArgs e)
+        {
+            this.CancellationTokenSource.Cancel();
+            this.ButtonCancel.IsEnabled = false;
+            this.ButtonCancel.Content = "Canceling...";
+        }
     }
 }

@@ -4,8 +4,11 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.ServiceModel;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
+using System.Windows.Threading;
 using Lithnet.Miiserver.AutoSync.UI.ViewModels;
 using Lithnet.Miiserver.AutoSync.UI.Windows;
 using Misuzilla.Security;
@@ -49,21 +52,28 @@ namespace Lithnet.Miiserver.AutoSync.UI
                     return true;
                 }
             }
+     
+            ConnectDialogViewModel vm = new ConnectDialogViewModel();
 
-            ConnectDialog dialog = new ConnectDialog();
-            dialog.Owner = owner;
-            ConnectDialogViewModel vm = new ConnectDialogViewModel(dialog);
-            vm.HostnameRaw = UserSettings.AutoSyncServerHost;
-            vm.AutoConnect = UserSettings.AutoConnect;
-
-            if (UserSettings.AutoSyncServerPort != UserSettings.DefaultTcpPort)
+            bool dialogResult = Application.Current.Dispatcher.Invoke<bool>(() =>
             {
-                vm.HostnameRaw += $":{UserSettings.AutoSyncServerPort}";
-            }
+                ConnectDialog dialog = new ConnectDialog();
+                dialog.Owner = owner;
+                vm.Window = dialog;
+                vm.HostnameRaw = UserSettings.AutoSyncServerHost;
+                vm.AutoConnect = UserSettings.AutoConnect;
 
-            dialog.DataContext = vm;
+                if (UserSettings.AutoSyncServerPort != UserSettings.DefaultTcpPort)
+                {
+                    vm.HostnameRaw += $":{UserSettings.AutoSyncServerPort}";
+                }
 
-            if (!dialog.ShowDialog() ?? false)
+                dialog.DataContext = vm;
+
+                return dialog.ShowDialog() ?? false;
+             });
+
+            if (!dialogResult)
             {
                 if (exitOnCancel)
                 {
@@ -88,26 +98,34 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
         internal static bool TryConnectWithProgress(string host, int port, NetworkCredential credential, Window owner)
         {
-            ConnectingDialog connectingDialog = new ConnectingDialog();
+            ConnectingDialog connectingDialog = null;
+            IntPtr windowHandle = IntPtr.Zero;
 
             try
             {
-                connectingDialog.CaptionText = $"Connecting to {host}";
-                connectingDialog.Show();
-                connectingDialog.Owner = owner;
-                owner.IsEnabled = false;
-                connectingDialog.Activate();
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    connectingDialog = new ConnectingDialog();
+                    connectingDialog.CaptionText = $"Connecting to {host}";
+                    connectingDialog.Owner = owner;
+                    connectingDialog.Show();
+                    owner.IsEnabled = false;
+                    connectingDialog.Activate();
 
-                App.DoEvents();
+                    WindowInteropHelper windowHelper = new WindowInteropHelper(connectingDialog);
+                    windowHandle = windowHelper.Handle;
+                    App.DoEvents();
+                });
 
-                WindowInteropHelper windowHelper = new WindowInteropHelper(connectingDialog);
-
-                return ConnectionManager.TryConnect(host, port, credential, windowHelper.Handle);
+                return ConnectionManager.TryConnect(host, port, credential, connectingDialog.CancellationTokenSource.Token, windowHandle);
             }
             finally
             {
-                connectingDialog.Hide();
-                owner.IsEnabled = true;
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    connectingDialog?.Hide();
+                    owner.IsEnabled = true;
+                });
             }
         }
 
@@ -121,14 +139,14 @@ namespace Lithnet.Miiserver.AutoSync.UI
             return ConnectionManager.TryConnectWithProgress(UserSettings.AutoSyncServerHost, UserSettings.AutoSyncServerPort, null, owner);
         }
 
-        private static bool TryConnect(string host, int port, NetworkCredential credential, IntPtr hwnd)
+        private static bool TryConnect(string host, int port, NetworkCredential credential, CancellationToken token, IntPtr owningWindowHandle)
         {
             bool attempted = false;
 
             try
             {
                 CredentialUI.PromptForWindowsCredentialsOptions options = new CredentialUI.PromptForWindowsCredentialsOptions("Lithnet AutoSync", $"Enter credentials for {host}");
-                options.HwndParent = hwnd;
+                options.HwndParent = owningWindowHandle;
                 options.Flags = CredentialUI.PromptForWindowsCredentialsFlag.CREDUIWIN_CHECKBOX | CredentialUI.PromptForWindowsCredentialsFlag.CREDUIWIN_GENERIC;
 
                 if (credential == null)
@@ -148,8 +166,10 @@ namespace Lithnet.Miiserver.AutoSync.UI
                     try
                     {
                         ConnectionManager.ConnectViaNetTcp = UserSettings.UseNetTcpForLocalHost || !ConnectionManager.IsLocalhost(host);
-                        ConnectionManager.ConnectWithServerIdentities(host, port, credential, UserSettings.AutoSyncServerIdentity, "host/{0}", "autosync/{0}");
+                        ConnectionManager.ConnectWithServerIdentities(host, port, credential, token, UserSettings.AutoSyncServerIdentity, "host/{0}", "autosync/{0}");
                         ConnectionManager.connectedCredential = credential;
+
+                        token.ThrowIfCancellationRequested();
                         return true;
                     }
                     catch (System.ServiceModel.Security.SecurityAccessDeniedException ex)
@@ -182,14 +202,21 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
                     PromptCredentialsResult result = null;
 
-                    if (credential != null)
+                    token.ThrowIfCancellationRequested();
+
+                    Application.Current.Dispatcher.Invoke(() =>
                     {
-                        result = CredentialUI.PromptForWindowsCredentials(options, credential.UserName, credential.Password);
-                    }
-                    else
-                    {
-                        result = CredentialUI.PromptForWindowsCredentials(options, null, null);
-                    }
+                        if (credential != null)
+                        {
+                            result = CredentialUI.PromptForWindowsCredentials(options, credential.UserName, credential.Password);
+                        }
+                        else
+                        {
+                            result = CredentialUI.PromptForWindowsCredentials(options, null, null);
+                        }
+                    });
+
+                    token.ThrowIfCancellationRequested();
 
                     if (result == null)
                     {
@@ -211,61 +238,96 @@ namespace Lithnet.Miiserver.AutoSync.UI
                     }
                 }
             }
+            catch (OperationCanceledException)
+            {
+                return false;
+            }
             catch (UnsupportedVersionException ex)
             {
                 Trace.WriteLine(ex);
-                MessageBox.Show(
-                   ex.Message,
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                if (token.IsCancellationRequested)
+                {
+                    return false;
+                }
+
+                Application.Current.Dispatcher.Invoke(() =>
+                    MessageBox.Show(
+                        ex.Message,
+                        "Error",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error));
                 return false;
             }
             catch (EndpointNotFoundException ex)
             {
                 Trace.WriteLine(ex);
-                MessageBox.Show(
-                    $"Could not contact the AutoSync service. Ensure the Lithnet AutoSync service is running",
+                if (token.IsCancellationRequested)
+                {
+                    return false;
+                }
+
+                Application.Current.Dispatcher.Invoke(() => MessageBox.Show(
+                    $"Could not contact the AutoSync service. The specified endpoint was not found. Ensure the Lithnet AutoSync service is running on the host",
                     "Error",
                     MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    MessageBoxImage.Error));
                 return false;
             }
-            catch (System.TimeoutException ex)
+            catch (TimeoutException ex)
             {
                 Trace.WriteLine(ex);
-                MessageBox.Show(
-                    $"Could not contact the AutoSync service. Ensure the Lithnet AutoSync service is running",
+                if (token.IsCancellationRequested)
+                {
+                    return false;
+                }
+
+                Application.Current.Dispatcher.Invoke(() => MessageBox.Show(
+                    $"Could not contact the AutoSync service due to a connection timeout. Ensure the Lithnet AutoSync service is running on the host, and that the firewall is not blocking access",
                     "Error",
                     MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    MessageBoxImage.Error));
                 return false;
             }
             catch (System.ServiceModel.Security.SecurityNegotiationException ex)
             {
                 Trace.WriteLine(ex);
-                MessageBox.Show($"There was an error trying to establish a secure session with the AutoSync server\n\n{ex.Message}", "Security error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (token.IsCancellationRequested)
+                {
+                    return false;
+                }
+
+                Application.Current.Dispatcher.Invoke(() => MessageBox.Show($"There was an error trying to establish a secure session with the AutoSync server\n\n{ex.Message}", "Security error", MessageBoxButton.OK, MessageBoxImage.Error));
                 return false;
             }
             catch (System.ServiceModel.Security.SecurityAccessDeniedException ex)
             {
                 Trace.WriteLine(ex);
-                MessageBox.Show("You do not have permission to manage the AutoSync service", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (token.IsCancellationRequested)
+                {
+                    return false;
+                }
+
+                Application.Current.Dispatcher.Invoke(() => MessageBox.Show("You do not have permission to manage the AutoSync service", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Error));
                 return false;
             }
             catch (Exception ex)
             {
                 Trace.WriteLine(ex);
-                MessageBox.Show(
+                if (token.IsCancellationRequested)
+                {
+                    return false;
+                }
+
+                Application.Current.Dispatcher.Invoke(() => MessageBox.Show(
                     $"An unexpected error occurred communicating with the AutoSync service. Restart the AutoSync service and try again",
                     "Error",
                     MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                    MessageBoxImage.Error));
                 return false;
             }
         }
 
-        private static void ConnectWithServerIdentities(string host, int port, NetworkCredential credential, params string[] serverIdentities)
+        private static void ConnectWithServerIdentities(string host, int port, NetworkCredential credential, CancellationToken token, params string[] serverIdentities)
         {
             foreach (string serveridentity in serverIdentities)
             {
@@ -276,13 +338,45 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
                 try
                 {
+                    token.ThrowIfCancellationRequested();
+
                     ConfigClient c = ConnectionManager.GetConfigClient(host, port, credential, serveridentity);
                     Trace.WriteLine($"Attempting to connect to the AutoSync service at {c.Endpoint.Address} with expected identity {string.Format(serveridentity, host)}");
-                    c.Open();
+
+                    token.Register(() =>
+                    {
+                        try
+                        {
+                            c.Abort();
+                        }
+                        catch (Exception ex)
+                        {
+                            Trace.WriteLine(ex);
+                        }
+                    });
+
+                    Task result = Task.Factory.StartNew(c.Open, token);
+                    result.Wait(token);
+                    if (result.IsCanceled)
+                    {
+                        token.ThrowIfCancellationRequested();
+                    }
+
+                    if (result.IsFaulted)
+                    {
+                        throw result.Exception?.InnerException ?? new Exception();
+                    }
+
+                    token.ThrowIfCancellationRequested();
                     c.ValidateServiceContractVersion();
+                    token.ThrowIfCancellationRequested();
                     Trace.WriteLine($"Connected to the AutoSync service");
                     ConnectionManager.ServerIdentityFormatString = serveridentity;
                     return;
+                }
+                catch (AggregateException ex)
+                {
+                    throw ex.InnerException ?? ex;
                 }
                 catch (System.ServiceModel.Security.SecurityNegotiationException ex)
                 {

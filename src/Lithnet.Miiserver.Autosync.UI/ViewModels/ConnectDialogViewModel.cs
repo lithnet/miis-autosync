@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 using Lithnet.Common.Presentation;
 
@@ -6,13 +7,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
     public class ConnectDialogViewModel : ViewModelBase
     {
-        private Window window;
-
-        public ConnectDialogViewModel(Window window)
-        {
-            this.window = window;
-        }
-
+        internal Window Window { get; set; }
+        
         public bool AutoConnect { get; set; }
 
         public string HostnameRaw { get; set; }
@@ -59,19 +55,19 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public bool IsEnabled { get; set; } = true;
 
-        internal bool ValidateConnection()
+        internal async Task<bool> ValidateConnection()
         {
-            return this.TryConnect(this.Hostname, this.Port);
+            return await this.TryConnect(this.Hostname, this.Port);
         }
 
-        private bool TryConnect(string hostname, int port)
+        private async Task<bool> TryConnect(string hostname, int port)
         {
             try
             {
                 this.Cursor = Cursors.Wait;
                 this.IsEnabled = false;
 
-                return ConnectionManager.TryConnectWithProgress(hostname, port, null, this.window);
+                return await Task.Run(() => ConnectionManager.TryConnectWithProgress(hostname, port, null, this.Window));
             }
             finally
             {

@@ -1,16 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+﻿using System.Windows;
 using Lithnet.Miiserver.AutoSync.UI.ViewModels;
 using MahApps.Metro.Controls;
 
@@ -26,14 +14,26 @@ namespace Lithnet.Miiserver.AutoSync.UI.Windows
             this.InitializeComponent();
         }
 
-        private void ButtonOk_Click(object sender, RoutedEventArgs e)
+        private async void ButtonOk_Click(object sender, RoutedEventArgs e)
         {
             App.UpdateFocusedBindings();
             ConnectDialogViewModel vm = (ConnectDialogViewModel)this.DataContext;
 
-            if (vm.ValidateConnection())
+            try
             {
-                this.DialogResult = true;
+                if (await vm.ValidateConnection())
+                {
+                    this.DialogResult = true;
+                }
+                else
+                {
+                    this.Activate();
+                }
+            }
+            catch
+            {
+                this.Activate();
+                throw;
             }
         }
     }

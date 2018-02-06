@@ -21,6 +21,7 @@
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition />
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <Label Grid.Column="0"
@@ -29,8 +30,18 @@
                FontSize="15"
                VerticalAlignment="Center"
                HorizontalAlignment="Center"
-               Content= "{Binding Path=CaptionText}"
+               Content= "{Binding Path=CaptionText, FallbackValue='Connecting...'}" 
                />
+
+        <Button x:Name="ButtonCancel"
+                Click="ButtonCancel_Click"  
+            Grid.Column="0"
+                Grid.Row="1"
+                Content="Cancel"
+                Margin="10"
+                VerticalAlignment="Bottom"
+                HorizontalAlignment="Center" 
+                />
     </Grid>
 </controls:MetroWindow>
 
