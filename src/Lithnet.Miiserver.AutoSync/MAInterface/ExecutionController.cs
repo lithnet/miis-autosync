@@ -11,6 +11,8 @@ namespace Lithnet.Miiserver.AutoSync
 {
     internal class ExecutionController
     {
+        private bool disposed;
+
         private static long waitingExclusiveOpID;
 
         private static ConcurrentDictionary<Guid, SemaphoreSlim> allMaLocalOperationLocks;
@@ -76,8 +78,17 @@ namespace Lithnet.Miiserver.AutoSync
         {
             this.ma = ma;
             this.state = state;
-            this.localOperationLock = new SemaphoreSlim(1, 1);
-            allMaLocalOperationLocks.TryAdd(this.ma.ID, this.localOperationLock);
+
+            if (allMaLocalOperationLocks.ContainsKey(this.ma.ID))
+            {
+                this.localOperationLock = allMaLocalOperationLocks[this.ma.ID];
+            }
+            else
+            {
+                this.localOperationLock = new SemaphoreSlim(1, 1);
+                allMaLocalOperationLocks.TryAdd(this.ma.ID, this.localOperationLock);
+            }
+
             SyncComplete += this.ExecutionController_SyncComplete;
             this.controllerCancellationTokenSource = controllerCancellationTokenSource;
             this.config = config;
@@ -88,13 +99,10 @@ namespace Lithnet.Miiserver.AutoSync
             this.counters = counters;
         }
 
-        public void Unregister()
-        {
-            SyncComplete -= this.ExecutionController_SyncComplete;
-        }
-
         public bool TryCancelRun(bool ignoreException)
         {
+            this.ThrowOnDisposed();
+
             try
             {
                 if (this.ma != null && !this.ma.IsIdle())
@@ -136,6 +144,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void TakeLocksAndExecute(ExecutionParameters action)
         {
+            this.ThrowOnDisposed();
 
             if (this.controllerScript.SupportsShouldExecute)
             {
@@ -188,7 +197,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                     this.TakeExclusiveLock();
                     hasGlobalRunningLock = this.TakeExclusiveRunLock();
-                    
+
                     this.WaitOnOtherMAs();
                 }
 
@@ -203,7 +212,7 @@ namespace Lithnet.Miiserver.AutoSync
                 hasLocalLock = this.TakeLocalLock();
 
                 otherLocks = this.GetForeignLocks();
-             
+
                 this.StaggerStart();
 
                 totalWaitTimer.Stop();
@@ -438,7 +447,7 @@ namespace Lithnet.Miiserver.AutoSync
                 }
             }
         }
-        
+
         private void WaitOnOtherMAs()
         {
             this.state.Message = "Waiting for other MAs to finish";
@@ -766,6 +775,8 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void WaitOnUnmanagedRun()
         {
+            this.ThrowOnDisposed();
+
             if (this.ma.IsIdle())
             {
                 return;
@@ -923,7 +934,6 @@ namespace Lithnet.Miiserver.AutoSync
             return activePartitions.Where(t => partitionsDetected.Contains(t.ID));
         }
 
-
         private void ExecutionController_SyncComplete(object sender, SyncCompleteEventArgs e)
         {
             if (e.TargetMA != this.ma.ID)
@@ -948,9 +958,10 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-
         public void CheckAndQueueUnmanagedChanges()
         {
+            this.ThrowOnDisposed();
+
             bool hasLocalLock = false;
 
             try
@@ -1054,6 +1065,29 @@ namespace Lithnet.Miiserver.AutoSync
             }
 
             return false;
+        }
+
+        public void Dispose()
+        {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            this.disposed = true;
+
+            SyncComplete -= this.ExecutionController_SyncComplete;
+            allMaLocalOperationLocks.TryRemove(this.ma.ID, out SemaphoreSlim value);
+
+            this.localOperationLock?.Dispose();
+        }
+
+        private void ThrowOnDisposed()
+        {
+            if (this.disposed)
+            {
+                throw new ObjectDisposedException(this.ManagementAgentName);
+            }
         }
     }
 }
