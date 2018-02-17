@@ -52,10 +52,9 @@ namespace Lithnet.Miiserver.AutoSync
             return random.Next(number - (number / offsetPercent), number + (number / offsetPercent));
         }
 
-        private static ServiceController serviceController = new ServiceController("fimsynchronizationservice");
-
         public static bool IsSyncEngineRunning()
         {
+            ServiceController serviceController = new ServiceController("fimsynchronizationservice");
             return serviceController.Status == ServiceControllerStatus.Running;
         }
 

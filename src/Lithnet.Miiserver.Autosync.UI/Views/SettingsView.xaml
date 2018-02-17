@@ -21,6 +21,7 @@
                                     <RowDefinition  />
                                     <RowDefinition  />
                                     <RowDefinition  />
+                                    <RowDefinition  />
                                 </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition  Width="Auto"/>
@@ -69,6 +70,13 @@
                                             Content=" ... "
                                             Command="{Binding Commands.SelectPath}"/>
                                 </Grid>
+
+                                <Label  Grid.Row="3"
+                                        Grid.Column="1" 
+                                        Margin="10 0 0 5"
+                                        Content="The script is located on the server and cannot be edited remotely"
+                                        Visibility="{Binding Path=ShowRemoteEditWarning, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                        />
 
                             </Grid>
                         </TabItem>

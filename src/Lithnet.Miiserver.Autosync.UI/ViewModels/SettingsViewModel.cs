@@ -16,7 +16,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         public SettingsViewModel(Settings model)
             : base(model)
         {
-            this.Commands.Add("SelectPath", new DelegateCommand(t => this.SelectPath(), u => this.CanSelectPath()));
+            this.Commands.Add("SelectPath", new DelegateCommand(t => this.SelectPath(), u => this.CanEditFiles && this.CanSelectPath()));
 
             if (this.RunHistoryAge.TotalSeconds <= 0)
             {
@@ -51,6 +51,10 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         }
 
+        public bool CanEditFiles => ConnectionManager.ConnectedToLocalHost;
+
+        public bool ShowRemoteEditWarning => !ConnectionManager.ConnectedToLocalHost;
+        
         public string DisplayName => "Settings";
 
         public bool RunHistoryClear

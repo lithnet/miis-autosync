@@ -24,12 +24,13 @@
                     <RowDefinition/>
                     <RowDefinition/>
                     <RowDefinition/>
+                    <RowDefinition/>
                 </Grid.RowDefinitions>
 
                 <CheckBox Grid.Row="0" Grid.Column="1" Margin="10 0 0 5" Content="Disable trigger" IsChecked="{Binding Path=Disabled}"/>
 
                 <TextBlock Grid.Row="1" Grid.Column="0" Text="PowerShell script"/>
-                
+
                 <Grid Grid.Row="1"
                       Grid.Column="1"
                       Margin="10 0 0 5">
@@ -46,7 +47,13 @@
                             Command="{Binding Commands.Browse}"/>
                 </Grid>
 
-                <StackPanel Grid.Row="2"
+                <Label  Grid.Row="2"
+                        Grid.Column="1" 
+                        Margin="10 0 0 5"
+                        Content="The script is located on the server and cannot be edited remotely"
+                        Visibility="{Binding Path=ShowRemoteEditWarning, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                <StackPanel Grid.Row="3"
                             Grid.Column="1"
                             Margin="10 0 0 5"
                             Orientation="Horizontal"
@@ -54,47 +61,50 @@
                     <Button Margin="10 0 0 5" Content="Edit script" Command="{Binding Commands.Edit}"/>
                     <Button Margin="5 0 0 5" Content="New script from template" Command="{Binding Commands.New}"/>
                 </StackPanel>
-                
-                <TextBlock Grid.Row="3" 
+
+
+
+
+                <TextBlock Grid.Row="4" 
                        Grid.Column="0" 
                        TextWrapping="Wrap"
                        Text="Wait for the following duration after the script completes before invoking it again"/>
                 <ui:TimeSpanControl 
-                    Grid.Row="3" 
+                    Grid.Row="4" 
                     Grid.Column="1" 
                     Margin="10 0 0 15"
                     VerticalAlignment="Top"
                     Value="{Binding Interval}" 
                     MinimumTimeSpan="00:00:05"/>
 
-                <TextBlock Grid.Row="4" 
+                <TextBlock Grid.Row="5" 
                        Grid.Column="0" 
                            Text="Error handling"/>
-                <ComboBox Grid.Row="4"
+                <ComboBox Grid.Row="5"
                           Grid.Column="1"
                           Margin="10 0 0 5"
                           ItemsSource="{Binding Source={presentation:EnumExtension {x:Type autoSync:ExecutionErrorBehaviour}}, Mode=OneWay}"
                           SelectedValue="{Binding ExceptionBehaviour, ValidatesOnDataErrors=True, ValidatesOnExceptions=true}"
                           SelectedValuePath="Value"/>
 
-                <TextBlock Grid.Row="5" 
+                <TextBlock Grid.Row="6" 
                            Grid.Column="0" 
                            Margin="0 0 0 10"
                            Text="Credentials to pass to the Get-RunProfileToExecute function (optional)"/>
 
-                <TextBlock Grid.Row="6" 
+                <TextBlock Grid.Row="7" 
                            Grid.Column="0" 
                            Text="User name"/>
-                <TextBox Grid.Row="6" 
+                <TextBox Grid.Row="7" 
                          Grid.Column="1" 
                          Margin="10 0 0 5"
                          Text="{Binding Username}"
                          />
 
-                <TextBlock Grid.Row="7" 
+                <TextBlock Grid.Row="8" 
                            Grid.Column="0" 
                            Text="Password"/>
-                <PasswordBox Grid.Row="7" 
+                <PasswordBox Grid.Row="8" 
                              Grid.Column="1" 
                              Margin="10 0 0 5" 
                              PasswordChar="*" 
