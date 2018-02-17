@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.ServiceProcess;
 using System.Threading.Tasks;
 using System.Windows;
@@ -9,9 +10,11 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using Lithnet.Logging;
 using Lithnet.Miiserver.AutoSync.UI.ViewModels;
 using MahApps.Metro.Controls;
+using NLog;
+using NLog.Config;
+using NLog.Targets;
 
 namespace Lithnet.Miiserver.AutoSync.UI
 {
@@ -24,7 +27,8 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
         private object lockObject = new object();
 
-
+        private static Logger logger;
+        
         internal const string HelpBaseUrl = "https://github.com/lithnet/miis-autosync/wiki/";
 
         internal const string NullPlaceholder = "(none)";
@@ -33,6 +37,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
         public App()
         {
+            App.SetupLogger();
             AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
             TaskScheduler.UnobservedTaskException += this.TaskScheduler_UnobservedTaskException;
             Application.Current.DispatcherUnhandledException += this.Dispatcher_UnhandledException;
@@ -67,6 +72,40 @@ namespace Lithnet.Miiserver.AutoSync.UI
                 ConnectionManager.TryConnectWithDialog(false, true, window);
                 m.Initialize();
             });
+        }
+
+
+        private static void SetupLogger()
+        {
+#if DEBUG
+            if (LogManager.Configuration == null)
+            {
+                LogManager.Configuration = new LoggingConfiguration();
+            }
+
+            if (Debugger.IsAttached)
+            {
+                DebuggerTarget debug = new DebuggerTarget("debug-window") { Layout = "${longdate}|${level:uppercase=true:padding=5}| ${message}" };
+                LogManager.Configuration.AddTarget(debug);
+                LogManager.Configuration.LoggingRules.Add(new LoggingRule("*", LogLevel.Trace, debug));
+            }
+
+            TraceTarget trace = new TraceTarget("trace-target") { Layout = "${longdate}|${level:uppercase=true:padding=5}| ${message}" };
+            LogManager.Configuration.AddTarget(trace);
+            LogManager.Configuration.LoggingRules.Add(new LoggingRule("*", LogLevel.Trace, trace));
+
+            if (LogManager.Configuration != null)
+            {
+                foreach (LoggingRule item in LogManager.Configuration.LoggingRules.Where(t => t.Targets.Any(u => u.Name == "autosync-ui-file")))
+                {
+                    item.EnableLoggingForLevels(LogLevel.Trace, LogLevel.Fatal);
+                }
+
+                LogManager.ReconfigExistingLoggers();
+            }
+#endif
+
+            App.logger = LogManager.GetCurrentClassLogger();
         }
 
         internal static void Reconnect(MainWindowViewModel vm)
@@ -134,8 +173,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
                 this.hasThrown = true;
 
-                Logger.WriteLine("Unhandled exception in application");
-                Logger.WriteLine(e.ToString());
+                logger.Error(e, "Unhandled exception in application");
                 MessageBox.Show(
                     $"An unexpected error occurred and the editor will terminate\n\n {e.Message}",
                     "Error",

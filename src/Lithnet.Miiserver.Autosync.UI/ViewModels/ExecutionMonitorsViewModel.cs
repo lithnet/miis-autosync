@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Lithnet.Common.Presentation;
+using NLog;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
@@ -15,6 +16,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         private bool starting;
 
         private bool stopping;
+
+        private static Logger logger = LogManager.GetCurrentClassLogger();
 
         public string DisplayName => "Execution Monitor";
 
@@ -29,8 +32,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine("Cannot get auto start state");
-                    Trace.WriteLine(ex.ToString());
+                    logger.Error(ex, "Cannot get auto start state");
                     return false;
                 }
             }
@@ -41,15 +43,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                     ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                     c.InvokeThenClose(x => x.SetAutoStartState(value));
                 }
-                catch (EndpointNotFoundException ex)
-                {
-                    Trace.WriteLine(ex.ToString());
-                    MessageBox.Show($"Could not contact the AutoSync service", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine("Cannot set auto start state");
-                    Trace.WriteLine(ex.ToString());
+                    logger.Error(ex, "Could not set the auto start state");
                 }
             }
         }
@@ -100,14 +96,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                     c.GetEngineState();
                     c.InvokeThenClose(x => x.StartAll());
                 }
-                catch (EndpointNotFoundException ex)
-                {
-                    Trace.WriteLine(ex.ToString());
-                    MessageBox.Show($"Could not contact the AutoSync service", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine(ex);
+                    logger.Error(ex, "Could not start the management agents");
                     MessageBox.Show($"Error starting the management agents\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
                 finally
@@ -133,14 +124,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                     ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                     c.InvokeThenClose(x => x.StopAll(cancelRuns));
                 }
-                catch (EndpointNotFoundException ex)
-                {
-                    Trace.WriteLine(ex.ToString());
-                    MessageBox.Show($"Could not contact the AutoSync service", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine(ex);
+                    logger.Error(ex, "Could not stop the management agents");
                     MessageBox.Show($"Error stopping the management agents\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
                 finally

@@ -4,12 +4,16 @@ using System.Diagnostics;
 using System.Linq;
 using Lithnet.Common.Presentation;
 using PropertyChanged;
+using NLog;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
     public class PartitionConfigurationViewModel : ViewModelBase<PartitionConfiguration>
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         private int originalVersion;
+
         private MAControllerConfigurationViewModel maconfig;
 
         public PartitionConfigurationViewModel(PartitionConfiguration model, MAControllerConfigurationViewModel maconfig)
@@ -42,7 +46,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
 
             this.Model.Version++;
-            Trace.WriteLine($"{this.Name} config version change from {this.originalVersion} to {this.Model.Version}");
+            logger.Trace($"{this.Name} config version change from {this.originalVersion} to {this.Model.Version}");
 
             this.RaisePropertyChanged(nameof(this.Version));
             this.RaisePropertyChanged(nameof(this.IsNew));
@@ -172,8 +176,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
             catch (Exception ex)
             {
-                Trace.WriteLine("Unable to enumerate run profiles");
-                Trace.WriteLine(ex.ToString());
+                logger.Error(ex, "Unable to enumerate run profiles");
             }
 
             return items;

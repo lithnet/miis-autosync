@@ -9,12 +9,15 @@ using System.Windows;
 using Lithnet.Common.Presentation;
 using Lithnet.Miiserver.AutoSync.UI.Windows;
 using Microsoft.Win32;
+using NLog;
 using PropertyChanged;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
     public class MAControllerConfigurationViewModel : ViewModelBase<MAControllerConfiguration>
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         private List<Type> allowedTypes;
 
         private int originalVersion;
@@ -59,7 +62,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.AddIsDirtyProperty(nameof(this.ThresholdStagingDeletes));
             this.AddIsDirtyProperty(nameof(this.ThresholdStagingRenames));
             this.AddIsDirtyProperty(nameof(this.ThresholdStagingUpdates));
-            
+
             this.IsDirtySet += this.MAConfigParametersViewModel_IsDirtySet;
 
             this.Triggers.CollectionChanged += this.TriggersCollectionChanged;
@@ -151,7 +154,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
 
             this.Model.Version++;
-            Trace.WriteLine($"{this.ManagementAgentName} config version change from {this.originalVersion} to {this.Model.Version}");
+            logger.Trace($"{this.ManagementAgentName} config version change from {this.originalVersion} to {this.Model.Version}");
 
             this.RaisePropertyChanged(nameof(this.Version));
             this.RaisePropertyChanged(nameof(this.IsNew));
@@ -275,8 +278,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
             catch (Exception ex)
             {
-                Trace.WriteLine("Unable to enumerate run profiles");
-                Trace.WriteLine(ex.ToString());
+                logger.Trace(ex, "Unable to enumerate run profiles");
             }
 
             return items;
@@ -318,8 +320,8 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
             catch (Exception ex)
             {
+                logger.Error(ex, "Unable to create trigger");
                 MessageBox.Show($"Unable to create the trigger\n{ex.Message}", "Unable to create trigger");
-                Trace.WriteLine(ex);
             }
         }
 
@@ -353,8 +355,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
             catch (Exception ex)
             {
-                Trace.WriteLine("Unable to get allowed triggers");
-                Trace.WriteLine(ex.ToString());
+                logger.Error(ex, "Unable to get allowed triggers");
                 return;
             }
 
@@ -457,7 +458,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine(ex);
+                    logger.Trace(ex);
                 }
             }
             else

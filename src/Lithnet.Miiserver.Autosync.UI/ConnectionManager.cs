@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.ServiceModel;
@@ -8,16 +7,18 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
-using System.Windows.Threading;
 using Lithnet.Miiserver.AutoSync.UI.ViewModels;
 using Lithnet.Miiserver.AutoSync.UI.Windows;
 using Misuzilla.Security;
+using NLog;
 
 namespace Lithnet.Miiserver.AutoSync.UI
 {
     public static class ConnectionManager
     {
         private static NetworkCredential connectedCredential;
+
+        private static Logger logger = LogManager.GetCurrentClassLogger();
 
         internal static string ConnectedHost { get; set; }
 
@@ -52,7 +53,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
                     return true;
                 }
             }
-     
+
             ConnectDialogViewModel vm = new ConnectDialogViewModel();
 
             bool dialogResult = Application.Current.Dispatcher.Invoke<bool>(() =>
@@ -71,7 +72,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
                 dialog.DataContext = vm;
 
                 return dialog.ShowDialog() ?? false;
-             });
+            });
 
             if (!dialogResult)
             {
@@ -174,15 +175,15 @@ namespace Lithnet.Miiserver.AutoSync.UI
                     }
                     catch (System.ServiceModel.Security.SecurityAccessDeniedException ex)
                     {
-                        Trace.WriteLine(ex);
+                        logger.Trace(ex);
                         errorCode = 5;
                     }
                     catch (System.ServiceModel.Security.SecurityNegotiationException ex)
                     {
-                        Trace.WriteLine(ex);
+                        logger.Trace(ex);
                         if (ex.InnerException is Win32Exception e)
                         {
-                            Trace.WriteLine($"Attempt failed with native error code {e.NativeErrorCode}");
+                            logger.Trace($"Attempt failed with native error code {e.NativeErrorCode}");
                             errorCode = e.NativeErrorCode;
                         }
                         else
@@ -220,7 +221,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
                     if (result == null)
                     {
-                        Trace.WriteLine("User canceled the credential prompt");
+                        logger.Trace("User canceled the credential prompt");
                         // User canceled the operation
                         return false;
                     }
@@ -244,7 +245,8 @@ namespace Lithnet.Miiserver.AutoSync.UI
             }
             catch (UnsupportedVersionException ex)
             {
-                Trace.WriteLine(ex);
+                logger.Error(ex);
+
                 if (token.IsCancellationRequested)
                 {
                     return false;
@@ -260,14 +262,16 @@ namespace Lithnet.Miiserver.AutoSync.UI
             }
             catch (EndpointNotFoundException ex)
             {
-                Trace.WriteLine(ex);
+                string message = $"Could not contact the AutoSync service. The specified endpoint was not found. Ensure the Lithnet AutoSync service is running on the host";
+                logger.Info(ex, message);
+
                 if (token.IsCancellationRequested)
                 {
                     return false;
                 }
 
                 Application.Current.Dispatcher.Invoke(() => MessageBox.Show(
-                    $"Could not contact the AutoSync service. The specified endpoint was not found. Ensure the Lithnet AutoSync service is running on the host",
+                    message,
                     "Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error));
@@ -275,14 +279,16 @@ namespace Lithnet.Miiserver.AutoSync.UI
             }
             catch (TimeoutException ex)
             {
-                Trace.WriteLine(ex);
+                string message = $"Could not contact the AutoSync service due to a connection timeout. Ensure the Lithnet AutoSync service is running on the host, and that the firewall is not blocking access";
+                logger.Info(ex, message);
+
                 if (token.IsCancellationRequested)
                 {
                     return false;
                 }
 
                 Application.Current.Dispatcher.Invoke(() => MessageBox.Show(
-                    $"Could not contact the AutoSync service due to a connection timeout. Ensure the Lithnet AutoSync service is running on the host, and that the firewall is not blocking access",
+                    message,
                     "Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error));
@@ -290,36 +296,42 @@ namespace Lithnet.Miiserver.AutoSync.UI
             }
             catch (System.ServiceModel.Security.SecurityNegotiationException ex)
             {
-                Trace.WriteLine(ex);
+                string message = $"There was an error trying to establish a secure session with the AutoSync server\n\n{ex.Message}";
+                logger.Error(ex, message);
+
                 if (token.IsCancellationRequested)
                 {
                     return false;
                 }
 
-                Application.Current.Dispatcher.Invoke(() => MessageBox.Show($"There was an error trying to establish a secure session with the AutoSync server\n\n{ex.Message}", "Security error", MessageBoxButton.OK, MessageBoxImage.Error));
+                Application.Current.Dispatcher.Invoke(() => MessageBox.Show(message, "Security error", MessageBoxButton.OK, MessageBoxImage.Error));
                 return false;
             }
             catch (System.ServiceModel.Security.SecurityAccessDeniedException ex)
             {
-                Trace.WriteLine(ex);
+                string message = "You do not have permission to manage the AutoSync service";
+                logger.Info(ex, message);
+
                 if (token.IsCancellationRequested)
                 {
                     return false;
                 }
 
-                Application.Current.Dispatcher.Invoke(() => MessageBox.Show("You do not have permission to manage the AutoSync service", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Error));
+                Application.Current.Dispatcher.Invoke(() => MessageBox.Show(message, "Access Denied", MessageBoxButton.OK, MessageBoxImage.Error));
                 return false;
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(ex);
+                string message = $"An unexpected error occurred communicating with the AutoSync service. Restart the AutoSync service and try again";
+                logger.Error(ex, message);
+
                 if (token.IsCancellationRequested)
                 {
                     return false;
                 }
 
                 Application.Current.Dispatcher.Invoke(() => MessageBox.Show(
-                    $"An unexpected error occurred communicating with the AutoSync service. Restart the AutoSync service and try again",
+                    message,
                     "Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error));
@@ -341,7 +353,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
                     token.ThrowIfCancellationRequested();
 
                     ConfigClient c = ConnectionManager.GetConfigClient(host, port, credential, serveridentity);
-                    Trace.WriteLine($"Attempting to connect to the AutoSync service at {c.Endpoint.Address} with expected identity {string.Format(serveridentity, host)}");
+                    logger.Info($"Attempting to connect to the AutoSync service at {c.Endpoint.Address} with expected identity {string.Format(serveridentity, host)}");
 
                     token.Register(() =>
                     {
@@ -351,7 +363,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
                         }
                         catch (Exception ex)
                         {
-                            Trace.WriteLine(ex);
+                            logger.Warn(ex, "Connection abort failed");
                         }
                     });
 
@@ -370,7 +382,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
                     token.ThrowIfCancellationRequested();
                     c.ValidateServiceContractVersion();
                     token.ThrowIfCancellationRequested();
-                    Trace.WriteLine($"Connected to the AutoSync service");
+                    logger.Info("Connected to the AutoSync service");
                     ConnectionManager.ServerIdentityFormatString = serveridentity;
                     return;
                 }
@@ -384,7 +396,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
                     {
                         if (e.NativeErrorCode == -2146893022) // 0x80090322 - SEC_E_WRONG_PRINCIPAL
                         {
-                            Trace.WriteLine("Principal name did not match");
+                            logger.Error(e, "The principal name did not match");
                             continue;
                         }
                     }
@@ -415,7 +427,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
             {
                 if (ex.NativeErrorCode != 1168)
                 {
-                    Trace.Write(ex.ToString());
+                    logger.Error(ex, "Could not retrieve credentials from store");
                 }
             }
 

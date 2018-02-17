@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Diagnostics;
 using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using Lithnet.Common.Presentation;
+using NLog;
 using PropertyChanged;
 using Timer = System.Timers.Timer;
 
@@ -23,6 +23,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         private int faultedCount;
 
         private bool disposed;
+
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
 
         public ExecutionMonitorViewModel(KeyValuePair<Guid, string> ma)
             : base(ma)
@@ -297,8 +300,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
             catch (Exception ex)
             {
-                Trace.WriteLine("Error getting the run profile list");
-                Trace.WriteLine(ex.ToString());
+                logger.Error(ex, "Could not get the run profile list");
             }
         }
 
@@ -311,16 +313,10 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                     ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                     c.AddToExecutionQueue(this.ManagementAgentID, runProfileName);
                 }
-                catch (EndpointNotFoundException ex)
-                {
-                    Trace.WriteLine(ex.ToString());
-                    MessageBox.Show($"Could not contact the AutoSync service", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
                 catch (Exception ex)
                 {
+                    logger.Error(ex, "Could not add the run profile to the execution queue");
                     MessageBox.Show($"Could not add the run profile to the execution queue\r\n\r\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    Trace.WriteLine("Could not add the run profile to the execution queue");
-                    Trace.WriteLine(ex.ToString());
                 }
             });
         }
@@ -336,7 +332,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine(ex);
+                    logger.Error(ex, "Could not stop the management agent");
                     MessageBox.Show($"Could not stop the management agent\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             });
@@ -368,7 +364,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine(ex);
+                    logger.Error(ex, "Could not cancel the management agent");
                     MessageBox.Show($"Could not cancel the management agent\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             });
@@ -385,7 +381,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine(ex);
+                    logger.Error(ex, "Could not start the management agent");
                     MessageBox.Show($"Could not start the management agent\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             });
@@ -403,7 +399,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 return;
             }
 
-            Trace.WriteLine($"Attempting to open event channel for {this.ManagementAgentName}/{this.ManagementAgentID}");
+            logger.Trace($"Attempting to open event channel for {this.ManagementAgentName}/{this.ManagementAgentID}");
             InstanceContext i = new InstanceContext(this);
             this.IsConnected = false;
 
@@ -421,26 +417,25 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 catch (TimeoutException)
                 {
                     this.client.Abort();
-                    Trace.WriteLine("Timeout connecting to server");
+                    logger.Trace("Timeout connecting to server");
                     Thread.Sleep(UserSettings.ReconnectInterval);
                 }
                 catch (Exception ex)
                 {
                     this.client.Abort();
-                    Trace.WriteLine("Error connecting to server");
-                    Trace.WriteLine(ex);
+                    logger.Trace(ex, "Error connecting to server");
                     Thread.Sleep(UserSettings.ReconnectInterval);
                 }
             }
 
-            Trace.WriteLine($"Registered event channel for {this.ManagementAgentName}/{this.ManagementAgentID}");
+            logger.Trace($"Registered event channel for {this.ManagementAgentName}/{this.ManagementAgentID}");
 
             this.client.InnerChannel.Closed += this.InnerChannel_Closed;
             this.client.InnerChannel.Faulted += this.InnerChannel_Faulted;
 
-            Debug.WriteLine($"Requesting full update for {this.ManagementAgentName}/{this.ManagementAgentID}");
+            logger.Trace($"Requesting full update for {this.ManagementAgentName}/{this.ManagementAgentID}");
             MAStatus status = this.client.GetFullUpdate(this.ManagementAgentID);
-            Debug.WriteLine($"Got full update from {this.ManagementAgentName}/{this.ManagementAgentID}");
+            logger.Trace($"Got full update from {this.ManagementAgentName}/{this.ManagementAgentID}");
 
             this.StartPingTimer();
 
@@ -472,7 +467,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 if (!this.client.Ping(this.ManagementAgentID))
                 {
-                    Trace.WriteLine("Server ping failed. Restarting client");
+                    logger.Trace("Server ping failed. Restarting client");
                     this.CleanupAndRestartClient();
                 }
             }
@@ -480,7 +475,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         
         private void InnerChannel_Faulted(object sender, EventArgs e)
         {
-            Trace.WriteLine($"Closing faulted event channel on client side for {this.ManagementAgentName}/{this.ManagementAgentID}");
+            logger.Warn($"Closing faulted event channel on client side for {this.ManagementAgentName}/{this.ManagementAgentID}");
             this.StopPingTimer();
             this.faultedCount++;
             try
@@ -494,7 +489,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void InnerChannel_Closed(object sender, EventArgs e)
         {
-            Trace.WriteLine($"Closing event channel on client side for {this.ManagementAgentName}/{this.ManagementAgentID}");
+            logger.Warn($"Closing event channel on client side for {this.ManagementAgentName}/{this.ManagementAgentID}");
             this.StopPingTimer();
             this.IsConnected = false;
             this.DisplayState = "Disconnected";
