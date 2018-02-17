@@ -101,6 +101,16 @@ namespace Lithnet.Miiserver.AutoSync
             return RegistrySettings.ServiceAccount;
         }
 
+        public byte[] GetFileContent(string path)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void PutFileContent(string path, byte[] content)
+        {
+            throw new NotImplementedException();
+        }
+
         public void PutConfig(ConfigFile config)
         {
             try

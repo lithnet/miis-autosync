@@ -89,5 +89,11 @@ namespace Lithnet.Miiserver.AutoSync
 
         [OperationContract]
         string GetAutoSyncServiceAccountName();
+
+        [OperationContract]
+        byte[] GetFileContent(string path);
+
+        [OperationContract]
+        void PutFileContent(string path, byte[] content);
     }
 }

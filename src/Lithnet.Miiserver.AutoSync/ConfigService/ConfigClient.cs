@@ -145,6 +145,16 @@ namespace Lithnet.Miiserver.AutoSync
             return this.Channel.GetAutoSyncServiceAccountName();
         }
 
+        public byte[] GetFileContent(string path)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void PutFileContent(string path, byte[] content)
+        {
+            throw new NotImplementedException();
+        }
+
         public void ValidateServiceContractVersion()
         {
             if (this.GetServiceContractVersion() > ConfigService.ServiceContractVersion)
