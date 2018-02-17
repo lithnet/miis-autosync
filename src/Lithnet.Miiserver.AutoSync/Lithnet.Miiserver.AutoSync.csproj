@@ -56,11 +56,11 @@
     <Reference Include="Lithnet.Miiserver.Client, Version=1.0.6499.19453, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Lithnet.Miiserver.Client.1.0.6499.19453\lib\net45\Lithnet.Miiserver.Client.dll</HintPath>
     </Reference>
-    <Reference Include="Lithnet.ResourceManagement.Client, Version=1.0.6297.14599, Culture=neutral, PublicKeyToken=bd0636700c1e2538, processorArchitecture=MSIL">
-      <HintPath>..\packages\Lithnet.ResourceManagement.Client.1.0.6297.14599\lib\net40\Lithnet.ResourceManagement.Client.dll</HintPath>
+    <Reference Include="Lithnet.ResourceManagement.Client, Version=1.0.6623.18312, Culture=neutral, PublicKeyToken=bd0636700c1e2538, processorArchitecture=MSIL">
+      <HintPath>..\packages\Lithnet.ResourceManagement.Client.1.0.6623.18312\lib\net40\Lithnet.ResourceManagement.Client.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.ResourceManagement, Version=4.1.3451.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Lithnet.ResourceManagement.Client.1.0.6297.14599\lib\net40\Microsoft.ResourceManagement.dll</HintPath>
+      <HintPath>..\packages\Lithnet.ResourceManagement.Client.1.0.6623.18312\lib\net40\Microsoft.ResourceManagement.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
@@ -72,6 +72,7 @@
     </Reference>
     <Reference Include="PropertyChanged, Version=1.0.0.0, Culture=neutral, PublicKeyToken=ee3ee20bcf148ddd, processorArchitecture=MSIL">
       <HintPath>..\packages\PropertyChanged.Fody.2.2.5\lib\net452\PropertyChanged.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -190,7 +191,9 @@
     <None Include="Examples\Trigger-ACMA-CheckPendingImports.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="autosync.ico" />

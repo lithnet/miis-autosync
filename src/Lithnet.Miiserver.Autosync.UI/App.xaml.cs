@@ -41,7 +41,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
             AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
             TaskScheduler.UnobservedTaskException += this.TaskScheduler_UnobservedTaskException;
             Application.Current.DispatcherUnhandledException += this.Dispatcher_UnhandledException;
-
+            
 #if DEBUG
             if (Debugger.IsAttached)
             {
