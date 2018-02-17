@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.ServiceModel;
 using System.Windows;
 using System.Windows.Input;
@@ -10,12 +9,15 @@ using Microsoft.Win32;
 using System.Linq;
 using Lithnet.Miiserver.AutoSync.UI.Windows;
 using PropertyChanged;
+using NLog;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
     internal class MainWindowViewModel : ViewModelBase
     {
         private bool confirmedCloseOnDirtyViewModel;
+
+        private static Logger logger = LogManager.GetCurrentClassLogger();
 
         internal ExecutionMonitorsViewModel ExecutionMonitor { get; set; }
 
@@ -95,33 +97,27 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             try
             {
                 ConfigClient c = ConnectionManager.GetDefaultConfigClient();
-                Debug.WriteLine("Getting management agent names");
+                logger.Trace("Getting management agent names");
                 c.InvokeThenClose(x => maNames = x.GetManagementAgentNameIDs());
-                Debug.WriteLine("Got management agent names");
+                logger.Trace("Got management agent names");
                 this.ExecutionMonitor = new ExecutionMonitorsViewModel(maNames.Cast<object>().ToList());
-            }
-            catch (EndpointNotFoundException ex)
-            {
-                Trace.WriteLine(ex.ToString());
-                MessageBox.Show($"Could not contact the AutoSync service. The execution monitor could not be set up.", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             catch (Exception ex)
             {
-                Trace.WriteLine("Could not setup execution monitors");
-                Trace.WriteLine(ex.ToString());
+                logger.Error(ex, "Could not set up execution monitors");
                 MessageBox.Show($"Could not setup the execution monitor\n\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void ViewModelBase_ViewModelIsDirtySet(object sender, PropertyChangedEventArgs e)
         {
-            Debug.WriteLine($"A view model of type '{sender.GetType().Name}' changed its state to dirty based on a change of property '{e.PropertyName}'");
+            logger.Trace($"A view model of type '{sender.GetType().Name}' changed its state to dirty based on a change of property '{e.PropertyName}'");
 
             if (!this.IsDirty)
             {
                 this.ConfigFile.Version++;
                 this.IsDirty = true;
-                Trace.WriteLine($"Setting view model state to dirty based on a change of property '{e.PropertyName}' on an object of type '{sender.GetType().Name}'");
+                logger.Trace($"Setting view model state to dirty based on a change of property '{e.PropertyName}' on an object of type '{sender.GetType().Name}'");
             }
         }
 
@@ -129,7 +125,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                Process.Start(App.HelpBaseUrl);
+                System.Diagnostics.Process.Start(App.HelpBaseUrl);
             }
             catch
             {
@@ -225,16 +221,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
                 this.IsDirty = false;
             }
-            catch (EndpointNotFoundException ex)
-            {
-                Trace.WriteLine(ex.ToString());
-                MessageBox.Show($"Could not contact the AutoSync service", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
-                this.ConfigFile = null;
-            }
             catch (Exception ex)
             {
-                Trace.WriteLine("Exception refreshing view");
-                Trace.WriteLine(ex.ToString());
+                logger.Error(ex, "Could not reload the configuration from the server");
                 MessageBox.Show($"Could not reload the configuration from the server\n\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 this.ConfigFile = null;
             }
@@ -277,11 +266,11 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(ex);
+                logger.Error(ex, "Could not open the file");
                 MessageBox.Show($"Could not open the file\n\n{ex.Message}", "File Open", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-
+            
             try
             {
                 this.Cursor = Cursors.Wait;
@@ -292,7 +281,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(ex);
+                logger.Error(ex, "Could not import the file");
                 MessageBox.Show($"Could not import the file\n\n{ex.Message}", "File import operation", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -326,7 +315,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(ex);
+                logger.Error(ex, "Could not save the configuration");
                 MessageBox.Show($"Could not save the configuration\n\n{ex.Message}", "Save operation", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -343,15 +332,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 c.InvokeThenClose(t => t.PutConfig(this.ConfigFile.Model));
                 this.Commit();
             }
-            catch (EndpointNotFoundException ex)
-            {
-                Trace.WriteLine(ex.ToString());
-                MessageBox.Show($"Could not contact the AutoSync service. The save operation could not be completed", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
-                this.ConfigFile = null;
-            }
             catch (Exception ex)
             {
-                Trace.WriteLine(ex);
+                logger.Error(ex, "Could not commit the configuration");
                 MessageBox.Show($"Could not commit the configuration\n\n{ex.Message}", "Save operation", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -400,23 +383,15 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                         }
                         catch (Exception ex)
                         {
-                            Trace.WriteLine("Error restarting controllers");
-                            Trace.WriteLine(ex.ToString());
+                            logger.Error(ex, "Error restarting controllers");
                             MessageBox.Show($"Could not restart the management agents\n\n{ex.Message}", "Restart management agents", MessageBoxButton.OK, MessageBoxImage.Error);
                         }
                     }
                 }
             }
-            catch (EndpointNotFoundException ex)
-            {
-                Trace.WriteLine(ex.ToString());
-                MessageBox.Show($"Could not contact the AutoSync service", "AutoSync service unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
-                this.ConfigFile = null;
-            }
             catch (Exception ex)
             {
-                Trace.WriteLine("Error determining controllers to restart");
-                Trace.WriteLine(ex.ToString());
+                logger.Error(ex, "Error determining controllers that need a restart");
                 MessageBox.Show($"Could not determine if any management agents required a restart\n\n{ex.Message}", "Restart management agents", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -456,7 +431,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(ex);
+                logger.Error(ex, "Could not save the file");
                 MessageBox.Show($"Could not save the file\n\n{ex.Message}", "Save File", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -507,8 +482,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                     }
                     catch (Exception ex)
                     {
-                        Trace.WriteLine("An error occurred trying to commit the changes");
-                        Trace.WriteLine(ex);
+                        logger.Error(ex, "Could not commit the changes");
                         MessageBox.Show($"An error occurred committing the changes\r\n\r\n{ex.Message}", "Error committing changes", MessageBoxButton.OK, MessageBoxImage.Error);
                         return false;
                     }

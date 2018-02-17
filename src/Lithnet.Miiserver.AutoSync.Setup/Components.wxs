@@ -72,11 +72,16 @@
       </Component>
 
       <Component Id="cmpb79b2c604b1748aa9606e987e86aad3a" Guid="*" Win64="yes">
-        <File Id="App.config" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Lithnet.Miiserver.AutoSync.exe.config" />
+        <File Id="fil71652B8B330F4264A18B25FE573ADBAA" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.TargetDir)Lithnet.Miiserver.AutoSync.exe.config" />
       </Component>
 
       <Component Id="cmpB0A7A00F68064A1CBAC65F08E16234FF" Guid="*" Win64="yes">
+        <Util:EventSource xmlns:Util="http://schemas.microsoft.com/wix/UtilExtension" Name="AutoSync UI" Log="Application" EventMessageFile="[NETFRAMEWORK40FULLINSTALLROOTDIR64]EventLogMessages.dll" KeyPath="no"/>
         <File Id="fil0D04FCAD13404EE3AB54CC0491E5D533" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.Editor.TargetDir)\Lithnet.Miiserver.AutoSync.Editor.exe" />
+      </Component>
+      
+      <Component Id="cmpDE5D530026D644F9958D536F5070BBB2" Guid="*" Win64="yes">
+        <File Id="fil66C25ECA2FB54436854F9396BF40B92F" KeyPath="yes" Source="$(var.Lithnet.Miiserver.AutoSync.Editor.TargetDir)\Lithnet.Miiserver.AutoSync.Editor.exe.config" />
       </Component>
 
     </DirectoryRef>
@@ -124,6 +129,7 @@
     <ComponentGroup Id="Editor">
       <ComponentRef Id="cmpB0A7A00F68064A1CBAC65F08E16234FF"/>
       <ComponentRef Id="cmpF5883C13B9AC434D8CDB1F0271451D48"/>
+      <ComponentRef Id="cmpDE5D530026D644F9958D536F5070BBB2"/>
     </ComponentGroup>
     <ComponentGroup Id="Service">
       <ComponentRef Id="EventSource"/>

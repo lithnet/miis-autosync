@@ -7,7 +7,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
     public class ActiveDirectoryChangeTriggerViewModel : MAExecutionTriggerViewModel
     {
-        private static char[] separators = new char[] { ',', ';' };
+        private static char[] separators = new char[] {',', ';'};
 
         private ActiveDirectoryChangeTrigger typedModel;
 
@@ -139,86 +139,5 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 }
             }
         }
-
-        //internal override void DoAutoConfig(string madata, MAControllerConfigurationViewModel controller)
-        //{
-        //    XmlDocument d = new XmlDocument();
-        //    d.LoadXml(madata);
-
-        //   // XmlNode partitionNode = d.SelectSingleNode("/ma-data/ma-partition-data/partition[selected=1 and custom-data/adma-partition-data[is-domain=1]]");
-        //    XmlNodeList allActivePartitions = d.SelectNodes("/ma-data/ma-partition-data/partition[selected=1]");
-
-        //    if (allActivePartitions == null)
-        //    {
-        //        Trace.WriteLine("There were no active partitions");
-        //        return;
-        //    }
-        
-        //    List<XmlNode> unconfiguredPartitions = new List<XmlNode>();
-        //    List<ActiveDirectoryChangeTriggerViewModel> otherVMs = controller.Triggers.OfType<ActiveDirectoryChangeTriggerViewModel>().ToList();
-
-        //    foreach (XmlNode partition in allActivePartitions)
-        //    {
-        //        Guid partitionID;
-        //        string partitionString = partition.SelectSingleNode("id")?.InnerText;
-        //        if (!Guid.TryParse(partitionString, out partitionID))
-        //        {
-        //            Trace.WriteLine($"Management agent partition ID could not be parsed: {partitionString}");
-        //            continue;
-        //        }
-
-        //        if (otherVMs.Any(t => t.PartitionID == partitionID))
-        //        {
-        //            Trace.WriteLine($"Management agent partition already has a trigger: {partitionString}");
-        //            continue;
-        //        }
-
-        //        Trace.WriteLine($"Found unconfigured trigger: {partitionString}");
-        //        unconfiguredPartitions.Add(partition);
-        //    }
-
-        //    if (unconfiguredPartitions.Count == 0)
-        //    {
-        //        Trace.WriteLine($"No unconfigured triggers found");
-        //        return;
-        //    }
-
-        //    XmlNode primaryPartition = unconfiguredPartitions.FirstOrDefault(t => t.SelectSingleNode("custom-data/adma-partition-data/is-domain")?.InnerText == "1");
-
-        //    if (primaryPartition != null)
-        //    {
-        //        this.DoAutoConfig(primaryPartition);
-        //    }
-        //    else
-        //    {
-        //        this.DoAutoConfig(unconfiguredPartitions.First());
-        //    }
-
-        //}
-
-        //private void DoAutoConfig(XmlNode partition)
-        //{
-        //    this.HostName = partition.SelectSingleNode("custom-data/adma-partition-data/name")?.InnerText;
-        //    this.BaseDN = partition.SelectSingleNode("custom-data/adma-partition-data/dn")?.InnerText;
-        //    this.PartitionName = partition.SelectSingleNode("name")?.InnerText;
-
-        //    Guid partitionID;
-        //    string partitionString = partition.SelectSingleNode("id")?.InnerText;
-        //    if (Guid.TryParse(partitionString, out partitionID))
-        //    {
-        //        this.PartitionID = partitionID;
-        //    }
-
-        //    string[] objectClasses = partition?.SelectNodes("filter/object-classes/object-class")?.OfType<XmlElement>().Where(t => t.InnerText != "container" && t.InnerText != "domainDNS" && t.InnerText != "organizationalUnit").Select(u => u.InnerText).ToArray();
-
-        //    if (objectClasses != null)
-        //    {
-        //        this.ObjectClasses = string.Join(";", objectClasses);
-        //    }
-
-        //    this.LastLogonTimestampOffset = new TimeSpan(0, 5, 0);
-        //    this.MinimumIntervalBetweenEvents = new TimeSpan(0, 1, 0);
-        //    this.UseExplicitCredentials = false;
-        //}
     }
 }

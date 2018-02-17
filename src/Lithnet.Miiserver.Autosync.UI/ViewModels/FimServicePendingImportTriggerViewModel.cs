@@ -1,18 +1,18 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using Lithnet.Miiserver.AutoSync;
 using Lithnet.Miiserver.AutoSync.UI.Windows;
-using Microsoft.Win32;
+using NLog;
 using PropertyChanged;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
     public class FimServicePendingImportTriggerViewModel : MAExecutionTriggerViewModel
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         private FimServicePendingImportTrigger typedModel;
 
         public FimServicePendingImportTriggerViewModel(FimServicePendingImportTrigger model)
@@ -94,8 +94,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(ex);
-                MessageBox.Show($"An error occurred while trying to grant the required permissions. If the problem persists, you can create the MPR manually by granting the AutoSync service account permission to read the msidmCompletedTime attribute on all request objects\n\nError message: {ex.Message}", "Unable to create the MPR");
+                string message = "An error occurred while trying to grant the required permissions. If the problem persists, you can create the MPR manually by granting the AutoSync service account permission to read the msidmCompletedTime attribute on all request objects";
+                logger.Error(ex, message);
+                MessageBox.Show($"{message}\n\nError message: {ex.Message}", "Unable to create the MPR");
             }
             finally
             {

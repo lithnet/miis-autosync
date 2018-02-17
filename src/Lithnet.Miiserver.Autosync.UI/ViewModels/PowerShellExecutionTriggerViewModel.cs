@@ -3,14 +3,16 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using Lithnet.Common.Presentation;
-using Lithnet.Miiserver.AutoSync;
 using Microsoft.Win32;
 using PropertyChanged;
+using NLog;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
     public class PowerShellExecutionTriggerViewModel : MAExecutionTriggerViewModel
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         private PowerShellExecutionTrigger typedModel;
 
         private const string PlaceholderPassword = "{B0C5980F-11D1-4CED-8BA0-6D09FF248C6F}";
@@ -161,7 +163,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine("Error parsing file path\n" + ex);
+                    logger.Error(ex, "error parsing file path");
                 }
             }
             else
