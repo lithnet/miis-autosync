@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.DirectoryServices;
 using System.Security.Principal;
 using System.Linq;
 using Microsoft.Deployment.WindowsInstaller;
 using System.DirectoryServices.AccountManagement;
-using System.Net;
 using ActiveDs;
 using Lithnet.Miiserver.Client;
 
@@ -18,12 +16,52 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
         [CustomAction]
         public static ActionResult SetIsLocalProperty(Session session)
         {
-            string group = session["GROUP_FIM_SYNC_ADMINS_NAME"];
-            FindInDomainOrMachine(group, out bool isMachine);
-            session["GROUP_FIM_SYNC_ADMINS_IS_LOCAL"] = isMachine ? "1" : null;
-            session["GROUP_FIM_SYNC_ADMINS_IS_DOMAIN"] = !isMachine ? "1" : null;
+            try
+            {
+                Trace.WriteLine("Starting set is local");
+                string group = session["GROUP_FIM_SYNC_ADMINS_NAME"];
 
-            return ActionResult.Success;
+                Principal result = FindInDomainOrMachine(group);
+
+                if (result == null)
+                {
+                    Trace.WriteLine($"group {group} not found");
+
+                    session["GROUP_FIM_SYNC_ADMINS_NOT_FOUND"] = "1";
+                    session["GROUP_FIM_SYNC_ADMINS_IS_DOMAIN"] = null;
+                    session["GROUP_FIM_SYNC_ADMINS_IS_LOCAL"] = null;
+                    return ActionResult.Success;
+                }
+
+                Trace.WriteLine($"Found principal {result.SamAccountName} in context {result.ContextType}:{result.Context.ConnectedServer}");
+
+                if (!(result is GroupPrincipal))
+                {
+                    Trace.WriteLine($"The specified object was not a group {group}");
+
+                    session["GROUP_FIM_SYNC_ADMINS_NOT_FOUND"] = "1";
+                    session["GROUP_FIM_SYNC_ADMINS_IS_DOMAIN"] = null;
+                    session["GROUP_FIM_SYNC_ADMINS_IS_LOCAL"] = null;
+                    return ActionResult.Success;
+                }
+
+                session["GROUP_FIM_SYNC_ADMINS_NOT_FOUND"] = null;
+                session["GROUP_FIM_SYNC_ADMINS_IS_LOCAL"] = result.ContextType == ContextType.Machine ? "1" : null;
+                session["GROUP_FIM_SYNC_ADMINS_IS_DOMAIN"] = result.ContextType == ContextType.Domain ? "1" : null;
+
+                return ActionResult.Success;
+            }
+            catch (Exception ex)
+            {
+                session.Log(ex.ToString());
+                return ActionResult.Failure;
+            }
+            finally
+            {
+                Trace.WriteLine($"Set IsLocal to {session["GROUP_FIM_SYNC_ADMINS_IS_LOCAL"]}");
+                Trace.WriteLine($"Set IsDomain to {session["GROUP_FIM_SYNC_ADMINS_IS_DOMAIN"]}");
+                Trace.WriteLine($"Set GroupNotFound to {session["GROUP_FIM_SYNC_ADMINS_NOT_FOUND"]}");
+            }
         }
 
         [CustomAction]
@@ -120,16 +158,14 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
 
         private static void AddSpns(Session session, string account)
         {
-            bool isMachine;
-            
-            Principal user = CustomActions.FindInDomainOrMachine(account, out isMachine);
+            Principal user = CustomActions.FindInDomainOrMachine(account);
 
             if (user == null)
             {
                 throw new NoMatchingPrincipalException($"The user {account} could not be found");
             }
 
-            if (isMachine)
+            if (user.ContextType != ContextType.Domain)
             {
                 session.Log($"Cannot add SPN to a local account. Exiting.");
                 return;
@@ -150,9 +186,7 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
 
         private static void AddUserToGroup(Session session, string account, string groupName)
         {
-            GroupPrincipal group = CustomActions.FindInDomainOrMachine(groupName, out bool groupIsOnLocalMachine) as GroupPrincipal;
-
-            if (group == null)
+            if (!(CustomActions.FindInDomainOrMachine(groupName) is GroupPrincipal group))
             {
                 throw new NoMatchingPrincipalException($"The group {groupName} could not be found");
             }
@@ -162,7 +196,7 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
 
             if (userSid == null)
             {
-                principal = (UserPrincipal)CustomActions.FindInDomainOrMachine(account, out bool userIsOnLocalMachine);
+                principal = CustomActions.FindInDomainOrMachine(account);
 
                 if (principal == null)
                 {
@@ -171,7 +205,7 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
             }
             else
             {
-                if (groupIsOnLocalMachine)
+                if (group.ContextType == ContextType.Machine)
                 {
                     PrincipalContext context = new PrincipalContext(ContextType.Machine);
                     principal = Principal.FindByIdentity(context, IdentityType.Sid, userSid.ToString());
@@ -244,24 +278,25 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
             return false;
         }
 
-        private static Principal FindInDomainOrMachine(string accountName, out bool isMachine)
+        private static Principal FindInDomainOrMachine(string accountName)
         {
-            isMachine = false;
             PrincipalContext context = new PrincipalContext(ContextType.Domain);
             Principal p = Principal.FindByIdentity(context, accountName);
 
             if (p == null)
             {
-                context = new PrincipalContext(ContextType.Machine);
-                p = Principal.FindByIdentity(context, accountName);
-                isMachine = true;
+                string authority = accountName.Split('\\')[0];
+
+                if ((!accountName.Contains("\\")) || authority.Equals(Environment.MachineName, StringComparison.InvariantCultureIgnoreCase) || authority.Equals("."))
+                {
+                    context = new PrincipalContext(ContextType.Machine);
+                    p = Principal.FindByIdentity(context, accountName);
+                    return p;
+                }
             }
 
             return p;
         }
-
-        private static SecurityIdentifier networkServiceSid = new SecurityIdentifier("S-1-5-20");
-        private static SecurityIdentifier localSystemSid = new SecurityIdentifier("S-1-5-18");
 
         public static SecurityIdentifier GetSidIfWellKnownNetworkOrSystemAccount(string accountName)
         {
