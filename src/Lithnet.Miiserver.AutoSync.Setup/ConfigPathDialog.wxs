@@ -1,40 +1,43 @@
-﻿<?xml version="1.0"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Fragment>
     <UI>
       <Dialog Id="ConfigPathDialog" Width="370" Height="270" Title="Service settings">
-
         <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Transparent="yes" NoPrefix="yes" Text="Configure the AutoSync service" />
-
-        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)" />
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)">
+          <Publish Event="DoAction" Value="SetIsLocalProperty" Order="1">1</Publish>
+          <Publish Property="SHOW_GROUP_FIM_SYNC_ADMINS_NOT_FOUND" Value="[GROUP_FIM_SYNC_ADMINS_NOT_FOUND]" Order="2">1</Publish>
+          <Publish Property="SERVICE_USERNAME" Order="3"><![CDATA[GROUP_FIM_SYNC_ADMINS_IS_DOMAIN AND (SERVICE_USERNAME ~= "NT AUTHORITY\NetworkService")]]></Publish>
+          <Publish Property="USE_CUSTOM_SERVICE_USERNAME" Order="4" Value="1">GROUP_FIM_SYNC_ADMINS_IS_DOMAIN</Publish>
+          <Publish Event="NewDialog" Value="ServiceDetailsDialog" Order="5">NOT GROUP_FIM_SYNC_ADMINS_NOT_FOUND</Publish>
+        </Control>
         <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)" />
         <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
           <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
         </Control>
-        
-        <Control Id="label3" Type="Text"          X="15"  Y="50" Height="15" Width="348"  Text="Specify the path that the application will write its logs to" />
-        <Control Id="label1" Type="Text"          X="15"  Y="70" Height="15" Width="51"   Text="Log file path:" />
-        <Control Id="txtLogFilePath" Type="Edit"  X="90"  Y="70" Height="15" Width="200"  Property="APPLOGDIR"/>
-        
-        <Control Id="btBrowseLogFilePath" Type="PushButton"
-                                                  X="297" Y="70" Height="17" Width="56" Text="Browse..." >
+        <Control Id="label3" Type="Text" X="15" Y="50" Height="15" Width="348" Text="Specify the path that the application will write its logs to" />
+        <Control Id="label1" Type="Text" X="15" Y="70" Height="15" Width="51" Text="Log file path:" />
+        <Control Id="txtLogFilePath" Type="Edit" X="90" Y="70" Height="15" Width="200" Property="APPLOGDIR" />
+        <Control Id="btBrowseLogFilePath" Type="PushButton" X="297" Y="70" Height="17" Width="56" Text="Browse...">
           <Publish Property="_BrowseProperty" Value="APPLOGDIR" Order="1">1</Publish>
           <Publish Event="SpawnDialog" Value="BrowseDlg" Order="2">1</Publish>
         </Control>
-
-        <Control Id="label4" Type="Text"          X="15"  Y="100" Height="30" Width="348" Text="Specify an existing group that will contain the users allowed to administer the AutoSync service (in DOMAIN\group format)" />
-        <Control Id="SvcAdminsLabel" Type="Text"  X="15"  Y="130" Height="15" Width="51"  Text="Group name:" />
-        <Control Id="SvcAdminstxt" Type="Edit"    X="90"  Y="130" Height="15" Width="200" Property="SERVICE_ADMINS_GROUP"/>
-
-        <Control Id="AddAccountLabel" Type="Text" X="15"  Y="160" Height="30" Width="348" TabSkip="no" Text="The AutoSync service account specified above needs to be a member of the MIM Sync Admins group. This installer will not be able to continue if these permissions are not available" />
-        <Control Id="check1" Type="CheckBox"      X="90"  Y="180" Height="15" Width="220" Text="Add the service account to the group during installation" Property="ADD_TO_FIM_SYNC_ADMINS" CheckBoxValue="1"/>
-        <Control Id="label5" Type="Text"          X="15"  Y="200" Height="15" Width="75"  Text="MIM Admins group:" />
-        <Control Id="AdminGroupEdit" Type="Edit"  X="90"  Y="200" Height="15" Width="220" Property="GROUP_FIM_SYNC_ADMINS_NAME" >
+        <Control Id="label4" Type="Text" X="15" Y="100" Height="30" Width="348" Text="Specify an existing group that will contain the users allowed to administer the AutoSync service (in DOMAIN\group format)" />
+        <Control Id="SvcAdminsLabel" Type="Text" X="15" Y="130" Height="15" Width="51" Text="Group name:" />
+        <Control Id="SvcAdminstxt" Type="Edit" X="90" Y="130" Height="15" Width="200" Property="SERVICE_ADMINS_GROUP" />
+        <Control Id="AddAccountLabel" Type="Text" X="15" Y="160" Height="30" Width="348" TabSkip="no" Text="The AutoSync service account specified above needs to be a member of the MIM Sync Admins group. This installer will not be able to continue if these permissions are not available">
+        </Control>
+        <Control Id="check1" Type="CheckBox" X="90" Y="180" Height="15" Width="220" Text="Add the service account to the group during installation" Property="ADD_TO_FIM_SYNC_ADMINS" CheckBoxValue="1" />
+        <Control Id="label5" Type="Text" X="15" Y="200" Height="15" Width="75" Text="MIM Admins group:" />
+        <Control Id="AdminGroupEdit" Type="Edit" X="90" Y="200" Height="15" Width="220" Property="GROUP_FIM_SYNC_ADMINS_NAME">
           <Condition Action="enable">ADD_TO_FIM_SYNC_ADMINS=1</Condition>
           <Condition Action="disable"><![CDATA[ADD_TO_FIM_SYNC_ADMINS<>1]]></Condition>
         </Control>
-        
         <Control Id="BannerBitmap" Type="Bitmap" Height="44" Width="370" X="0" Y="0" Text="!(loc.InstallDirDlgBannerBitmap)" />
+        <Control Type="Text" Id="labelGroupNotFound" Width="200" Height="17" X="90" Y="220" Text="{\WixUI_Font_Large_Red}Group not found">
+          <Condition Action="show">SHOW_GROUP_FIM_SYNC_ADMINS_NOT_FOUND</Condition>
+          <Condition Action="hide">NOT SHOW_GROUP_FIM_SYNC_ADMINS_NOT_FOUND</Condition>
+        </Control>
       </Dialog>
     </UI>
   </Fragment>

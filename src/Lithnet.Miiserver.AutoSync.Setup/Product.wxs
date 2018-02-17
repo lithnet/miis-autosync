@@ -27,6 +27,8 @@
     <Property Id="SERVICE_PASSWORD" Hidden="yes" Secure="yes"/>
     <Property Id="SERVICE_NAME" Secure="yes" Value="autosync"/>
 
+    <Property Id="GROUP_FIM_SYNC_ADMINS_NOT_FOUND" Secure="yes"/>
+    <Property Id="SHOW_GROUP_FIM_SYNC_ADMINS_NOT_FOUND" Secure="yes"/>
     <Property Id="GROUP_FIM_SYNC_ADMINS_NAME" Secure="yes"/>
     <Property Id="GROUP_FIM_SYNC_ADMINS_IS_LOCAL" Secure="yes"/>
     <Property Id="GROUP_FIM_SYNC_ADMINS_IS_DOMAIN" Secure="yes"/>
@@ -49,6 +51,13 @@
               Execute="deferred"
               Impersonate="yes"/>
 
+    <CustomAction Id="AddSpnsToServiceAccount"
+                  BinaryKey="CustomActionBinary"
+                  DllEntry="AddSpnsToServiceAccount"
+                  Return="ignore"
+                  Execute="deferred"
+                  Impersonate="yes"/>
+
     <CustomAction Id="CA_SetPropertyValueAsSystem"
                   Property="AddServiceAccountToFimSyncAdminsAsSystem"
                   Value="SERVICE_USERNAME=[SERVICE_USERNAME];GROUP_FIM_SYNC_ADMINS_NAME=[GROUP_FIM_SYNC_ADMINS_NAME]"/>
@@ -56,6 +65,10 @@
     <CustomAction Id="CA_SetPropertyValueAsCaller"
                   Property="AddServiceAccountToFimSyncAdminsAsCaller"
                   Value="SERVICE_USERNAME=[SERVICE_USERNAME];GROUP_FIM_SYNC_ADMINS_NAME=[GROUP_FIM_SYNC_ADMINS_NAME]"/>
+
+    <CustomAction Id="CA_SetPropertyValueAddSpnsToServiceAccount"
+                  Property="AddSpnsToServiceAccount"
+                  Value="SERVICE_USERNAME=[SERVICE_USERNAME]"/>
 
     <CustomAction Id="SetIsLocalProperty"
                   BinaryKey="CustomActionBinary"
@@ -87,14 +100,22 @@
       </DirectorySearch>
     </Property>
 
-    <Property Id="SERVICE_USERNAME" Secure="yes">
+    <Property Id="SERVICE_USERNAME" Value="NT AUTHORITY\NetworkService" />
+      
+    <Property Id="SAVED_SERVICE_USERNAME" Secure="yes">
       <RegistrySearch Id="ExistingServiceAccount"
                       Root="HKLM"
                       Key="SYSTEM\CurrentControlSet\services\[SERVICE_NAME]"
                       Name="ObjectName"
-                      Type="raw"
+                      Type="raw" 
                       Win64="yes"/>
     </Property>
+
+    <SetProperty Id="SERVICE_USERNAME" After="AppSearch" Value="[SAVED_SERVICE_USERNAME]" Sequence="first">SAVED_SERVICE_USERNAME</SetProperty>
+
+    <Property Id="USE_CUSTOM_SERVICE_USERNAME" Secure="yes" />
+
+    <SetProperty Id="USE_CUSTOM_SERVICE_USERNAME" After="AppSearch" Value="1" Sequence="first"><![CDATA[(SERVICE_USERNAME ~<> "NT AUTHORITY\NetworkService")]]></SetProperty>
 
     <Property Id="SERVICE_ADMINS_GROUP" Secure="yes">
       <RegistrySearch Id="ExistingServiceAdminsGroup"
@@ -113,12 +134,12 @@
                       Type="raw"
                       Win64="yes" />
     </Property>
-
-    <Condition Message="This application requires the Forefront Identity Manager 2010 R2 4.1.3441 or later to be installed">
+    <!--    <Condition Message="This application requires the Forefront Identity Manager 2010 R2 4.1.3441 or later to be installed">
       <![CDATA[Installed OR SYNCVERSION]]>
-    </Condition>
+    </Condition>-->
+    
     <Property Id="WIXUI_INSTALLDIR" Value="APPROOTDIR" />
-
+    
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramMenuFolder">
         <Directory Id="ApplicationProgramsFolder" Name="Lithnet AutoSync"/>
@@ -148,46 +169,60 @@
       <DialogRef Id="FatalError" />
       <DialogRef Id="InstallDirDlg" />
       <DialogRef Id="UserExit" />
+      <DialogRef Id="CustomizeDlg"/>
 
-      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg">NOT Installed</Publish>
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="CustomizeDlg">NOT Installed</Publish>
 
-      <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="ServiceDetailsDialog">1</Publish>
-      <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg">1</Publish>
+      <Publish Dialog="CustomizeDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg">NOT Installed</Publish>
+      <Publish Dialog="CustomizeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg">NOT Installed</Publish>
+
+      <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="CustomizeDlg">1</Publish>
+      <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="ConfigPathDialog"><![CDATA[(&AUTOSYNCSERVICE=3)]]></Publish>
+      <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg"><![CDATA[(&AUTOSYNCSERVICE<>3)]]></Publish>
+      
       <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Property="_BrowseProperty" Value="[WIXUI_INSTALLDIR]" Order="10">1</Publish>
       <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Event="SpawnDialog" Value="BrowseDlg" Order="20">1</Publish>
 
-      <Publish Dialog="ServiceDetailsDialog" Control="Back" Event="NewDialog" Value="InstallDirDlg" Order="1"></Publish>
-      <Publish Dialog="ServiceDetailsDialog" Control="Next" Event="NewDialog" Value="ConfigPathDialog" Order="4">PASSWORD_COMPARE = "1"</Publish>
+      <Publish Dialog="ConfigPathDialog" Control="Back" Event="NewDialog" Value="InstallDirDlg" Order="1"></Publish>
+      <Publish Dialog="ConfigPathDialog" Control="Next" Event="NewDialog" Value="ServiceDetailsDialog" Order="1"></Publish>
 
-      <Publish Dialog="ConfigPathDialog" Control="Back" Event="NewDialog" Value="ServiceDetailsDialog" Order="1"></Publish>
-      <Publish Dialog="ConfigPathDialog" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="1"></Publish>
-      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="ConfigPathDialog" Order="1"></Publish>
+      <Publish Dialog="ServiceDetailsDialog" Control="Back" Event="NewDialog" Value="ConfigPathDialog" Order="1"></Publish>
+      <Publish Dialog="ServiceDetailsDialog" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="4">PASSWORD_COMPARE = "1"</Publish>
+
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="ServiceDetailsDialog" Order="1"><![CDATA[(&AUTOSYNCSERVICE=3)]]></Publish>
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="InstallDirDlg" Order="1"><![CDATA[(&AUTOSYNCSERVICE<>3)]]></Publish>
 
       <Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="999">1</Publish>
     </UI>
 
 
-
-    <Feature Id="AutoSync" Title="Lithnet AutoSync" Level="1">
-      <ComponentGroupRef Id="Binaries" />
+    <Feature Id="AUTOSYNCSERVICE" Title="AutoSync Service" Level="1" AllowAdvertise="no" InstallDefault="local" TypicalDefault="install" Absent="disallow" Description="Installs the Lithnet AutoSync service">
+      <ComponentGroupRef Id="Service" />
       <ComponentGroupRef Id="Examples" />
+      <Condition Level="0">NOT SYNCVERSION</Condition>
+    </Feature>
+    <Feature Id="AUTOSYNCEDITOR" Title="User Interface" Level="1" AllowAdvertise="no" InstallDefault="local" TypicalDefault="install" Absent="disallow" Description="Installs the user interface that allows you to connect to and manage a local or remote AutoSync service instance">
       <ComponentGroupRef Id="Editor" />
     </Feature>
 
     <CustomAction Id="SetServiceAdminsGroupIfBlank" Property="SERVICE_ADMINS_GROUP" Value="[GROUP_FIM_SYNC_ADMINS_NAME]"/>
 
     <InstallUISequence>
-      <Custom Action="GetFimSyncGroups" After="CostFinalize">NOT Installed</Custom>
-      <Custom Action="SetServiceAdminsGroupIfBlank" After="CostFinalize">(NOT Installed) AND (NOT SERVICE_ADMINS_GROUP)</Custom>
+      <Custom Action="GetFimSyncGroups" After="CostFinalize"><![CDATA[NOT Installed AND SYNCVERSION]]></Custom>
+      <Custom Action="SetServiceAdminsGroupIfBlank" After="CostFinalize"><![CDATA[(NOT Installed) AND (NOT SERVICE_ADMINS_GROUP) AND SYNCVERSION]]></Custom>
     </InstallUISequence>
+    
     <InstallExecuteSequence>
-      <Custom Action="SetIsLocalProperty" Before="InstallFiles">(NOT Installed) AND (NOT SKIPGROUPCHECK) AND ADD_TO_FIM_SYNC_ADMINS</Custom>
+      <!--<Custom Action="SetIsLocalProperty" Before="InstallFiles"><![CDATA[(NOT Installed) AND (NOT SKIPGROUPCHECK) AND ADD_TO_FIM_SYNC_ADMINS AND (&AUTOSYNCSERVICE=3)]]></Custom>-->
 
-      <Custom Action="CA_SetPropertyValueAsSystem" Before="AddServiceAccountToFimSyncAdminsAsSystem">(NOT Installed) AND GROUP_FIM_SYNC_ADMINS_IS_LOCAL</Custom>
-      <Custom Action="AddServiceAccountToFimSyncAdminsAsSystem" After="InstallFiles">(NOT Installed) AND GROUP_FIM_SYNC_ADMINS_IS_LOCAL</Custom>
+      <Custom Action="CA_SetPropertyValueAsSystem" Before="AddServiceAccountToFimSyncAdminsAsSystem"><![CDATA[(NOT Installed) AND GROUP_FIM_SYNC_ADMINS_IS_LOCAL AND (&AUTOSYNCSERVICE=3)]]></Custom>
+      <Custom Action="AddServiceAccountToFimSyncAdminsAsSystem" After="InstallFiles"><![CDATA[(NOT Installed) AND GROUP_FIM_SYNC_ADMINS_IS_LOCAL AND (&AUTOSYNCSERVICE=3)]]></Custom>
 
-      <Custom Action="CA_SetPropertyValueAsCaller" Before="AddServiceAccountToFimSyncAdminsAsCaller">(NOT Installed) AND GROUP_FIM_SYNC_ADMINS_IS_DOMAIN</Custom>
-      <Custom Action="AddServiceAccountToFimSyncAdminsAsCaller" After="InstallFiles">(NOT Installed) AND GROUP_FIM_SYNC_ADMINS_IS_DOMAIN</Custom>
+      <Custom Action="CA_SetPropertyValueAsCaller" Before="AddServiceAccountToFimSyncAdminsAsCaller"><![CDATA[(NOT Installed) AND GROUP_FIM_SYNC_ADMINS_IS_DOMAIN AND (&AUTOSYNCSERVICE=3)]]></Custom>
+      <Custom Action="AddServiceAccountToFimSyncAdminsAsCaller" After="InstallFiles"><![CDATA[(NOT Installed) AND GROUP_FIM_SYNC_ADMINS_IS_DOMAIN AND (&AUTOSYNCSERVICE=3)]]></Custom>
+
+      <Custom Action="CA_SetPropertyValueAddSpnsToServiceAccount" Before="AddSpnsToServiceAccount"><![CDATA[(NOT Installed) AND (&AUTOSYNCSERVICE=3)]]></Custom>
+      <Custom Action="AddSpnsToServiceAccount" After="InstallFiles"><![CDATA[(NOT Installed) AND (&AUTOSYNCSERVICE=3)]]></Custom>
 
     </InstallExecuteSequence>
 

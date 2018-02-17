@@ -123,8 +123,8 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                int? value = RegistrySettings.ParametersKey.GetValue(nameof(NetTcpServerEnabled), 0) as int?;
-                return value.HasValue && value.Value != 0;
+                int value = (int)RegistrySettings.ParametersKey.GetValue(nameof(NetTcpServerEnabled), 1);
+                return value != 0;
             }
         }
 

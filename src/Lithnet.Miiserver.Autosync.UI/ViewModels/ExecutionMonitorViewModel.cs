@@ -14,13 +14,15 @@ using Timer = System.Timers.Timer;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 {
-    public class ExecutionMonitorViewModel : ViewModelBase<object>, IEventCallBack
+    public class ExecutionMonitorViewModel : ViewModelBase<object>, IEventCallBack, IDisposable
     {
         private EventClient client;
 
         private Timer pingTimer;
 
         private int faultedCount;
+
+        private bool disposed;
 
         public ExecutionMonitorViewModel(KeyValuePair<Guid, string> ma)
             : base(ma)
@@ -274,7 +276,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                     Command = new DelegateCommand(t => { }, t => this.CanAddToExecutionQueue())
                 };
 
-                ConfigClient c = App.GetDefaultConfigClient();
+                ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                 c.InvokeThenClose(u =>
                 {
                     foreach (string rp in c.GetManagementAgentRunProfileNames(this.ManagementAgentID, true).OrderBy(t => t))
@@ -306,7 +308,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 try
                 {
-                    ConfigClient c = App.GetDefaultConfigClient();
+                    ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                     c.AddToExecutionQueue(this.ManagementAgentID, runProfileName);
                 }
                 catch (EndpointNotFoundException ex)
@@ -329,7 +331,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 try
                 {
-                    ConfigClient c = App.GetDefaultConfigClient();
+                    ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                     c.InvokeThenClose(x => x.Stop(this.ManagementAgentID, cancelRun));
                 }
                 catch (Exception ex)
@@ -361,7 +363,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 try
                 {
-                    ConfigClient c = App.GetDefaultConfigClient();
+                    ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                     c.InvokeThenClose(x => x.CancelRun(this.ManagementAgentID));
                 }
                 catch (Exception ex)
@@ -378,7 +380,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 try
                 {
-                    ConfigClient c = App.GetDefaultConfigClient();
+                    ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                     c.InvokeThenClose(x => x.Start(this.ManagementAgentID));
                 }
                 catch (Exception ex)
@@ -396,6 +398,11 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void SubscribeToStateChanges()
         {
+            if (this.disposed)
+            {
+                return;
+            }
+
             Trace.WriteLine($"Attempting to open event channel for {this.ManagementAgentName}/{this.ManagementAgentID}");
             InstanceContext i = new InstanceContext(this);
             this.IsConnected = false;
@@ -405,7 +412,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 try
                 {
                     this.DisplayState = "Disconnected";
-                    this.client = App.GetDefaultEventClient(i);
+                    this.client = ConnectionManager.GetDefaultEventClient(i);
                     this.client.Open();
                     this.client.Register(this.ManagementAgentID);
                     this.IsConnected = true;
@@ -445,7 +452,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void StartPingTimer()
         {
-            if (!App.IsConnectedToLocalhost())
+            if (ConnectionManager.ConnectViaNetTcp)
             {
                 this.pingTimer = new Timer();
                 this.pingTimer.Interval = TimeSpan.FromSeconds(60).TotalMilliseconds;
@@ -502,12 +509,33 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void CleanupAndRestartClient()
         {
+            if (this.disposed)
+            {
+                return;
+            }
+
             if (this.faultedCount > 5)
             {
                 throw new ApplicationException($"An unrecoverable error occurred trying to reestablish the monitor channel for {this.ManagementAgentName}");
             }
 
             this.SubscribeToStateChanges();
+        }
+
+        public void Dispose()
+        {
+            this.disposed = true;
+
+            this.pingTimer?.Stop();
+            this.pingTimer?.Dispose();
+
+            try
+            {
+                this.client.Abort();
+            }
+            catch
+            {
+            }
         }
     }
 }

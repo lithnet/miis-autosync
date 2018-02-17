@@ -1,18 +1,14 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.ServiceModel;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Input;
 using Lithnet.Common.Presentation;
-using MahApps.Metro.Controls;
 using Microsoft.Win32;
 using System.Linq;
-using System.Threading.Tasks;
+using Lithnet.Miiserver.AutoSync.UI.Windows;
 using PropertyChanged;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
@@ -25,7 +21,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public ConfigFileViewModel ConfigFile { get; set; }
 
-        public string DisplayName => "Lithnet AutoSync" + (App.IsConnectedToLocalhost() ? string.Empty : $" - {App.Hostname}") + (this.IsDirty ? "*" : string.Empty);
+        public string DisplayName => "Lithnet AutoSync" + (ConnectionManager.ConnectedHost == null ? string.Empty : $" - {ConnectionManager.ConnectedHost}") + (this.IsDirty ? "*" : string.Empty);
 
         public Cursor Cursor { get; set; }
 
@@ -62,6 +58,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.AddDependentPropertyNotification("IsDirty", nameof(this.DisplayName));
             this.AddDependentPropertyNotification("IsDirty", nameof(this.RevertOrUndoLabel));
 
+            this.Commands.AddItem("Connect", "_Connect...", new KeyGesture(Key.C, ModifierKeys.Control | ModifierKeys.Shift), x => this.Connect());
             this.Commands.AddItem("Save", "_Commit changes", new KeyGesture(Key.S, ModifierKeys.Control), x => this.Save(), x => this.CanSave());
             this.Commands.AddItem("Revert", "Re_load config", new KeyGesture(Key.R, ModifierKeys.Control), x => this.Revert());
             this.Commands.AddItem("Export", "_Backup configuration...", new KeyGesture(Key.B, ModifierKeys.Control | ModifierKeys.Shift), x => this.Export(), x => this.CanExport());
@@ -77,7 +74,18 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             Application.Current.MainWindow.Closing += this.MainWindow_Closing;
 
             ViewModelBase.ViewModelIsDirtySet += this.ViewModelBase_ViewModelIsDirtySet;
-            this.SetupExecutionMonitors();
+        }
+
+        private void Connect()
+        {
+            App.UpdateFocusedBindings();
+
+            if (!this.ContinueOnUnsavedChanges())
+            {
+                return;
+            }
+
+            App.Reconnect(this);
         }
 
         private void SetupExecutionMonitors()
@@ -86,7 +94,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
             try
             {
-                ConfigClient c = App.GetDefaultConfigClient();
+                ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                 Debug.WriteLine("Getting management agent names");
                 c.InvokeThenClose(x => maNames = x.GetManagementAgentNameIDs());
                 Debug.WriteLine("Got management agent names");
@@ -147,6 +155,52 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.ResetConfigViewModel();
         }
 
+        internal void AbortExecutionMonitors()
+        {
+            if (this.ExecutionMonitor == null)
+            {
+                return;
+            }
+
+            foreach (var item in this.ExecutionMonitor)
+            {
+                item.Dispose();
+            }
+        }
+
+        internal void Initialize()
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                ConnectingDialog connectingDialog = new ConnectingDialog();
+
+                try
+                {
+                    connectingDialog.CaptionText = $"Connecting to {UserSettings.AutoSyncServerHost}";
+                    connectingDialog.DataContext = connectingDialog;
+
+                    connectingDialog.Show();
+                    connectingDialog.Activate();
+
+                    App.DoEvents();
+
+                    this.SetupExecutionMonitors();
+                    this.ResetConfigViewModel();
+
+                    this.RaisePropertyChanged(nameof(this.DisplayName));
+
+                    if (this.ExecutionMonitor != null)
+                    {
+                        this.ExecutionMonitor.IsSelected = true;
+                    }
+                }
+                finally
+                {
+                    connectingDialog.Hide();
+                }
+            });
+        }
+
         internal void ResetConfigViewModel()
         {
             try
@@ -156,7 +210,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 ConfigFile file = null;
 
 
-                ConfigClient c = App.GetDefaultConfigClient();
+                ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                 c.InvokeThenClose(x => file = x.GetConfig());
 
                 if (file == null)
@@ -192,7 +246,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void Import()
         {
-            this.UpdateFocusedBindings();
+            App.UpdateFocusedBindings();
 
             if (!this.ContinueOnUnsavedChanges())
             {
@@ -231,7 +285,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             try
             {
                 this.Cursor = Cursors.Wait;
-                ConfigClient c = App.GetDefaultConfigClient();
+                ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                 f = c.ValidateConfig(f);
                 c.InvokeThenClose(x => x.PutConfig(f));
                 this.AskToRestartService();
@@ -254,7 +308,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void Save()
         {
-            this.UpdateFocusedBindings();
+            App.UpdateFocusedBindings();
 
             try
             {
@@ -285,7 +339,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                ConfigClient c = App.GetDefaultConfigClient();
+                ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                 c.InvokeThenClose(t => t.PutConfig(this.ConfigFile.Model));
                 this.Commit();
             }
@@ -327,7 +381,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                ConfigClient c = App.GetDefaultConfigClient();
+                ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                 List<Guid> pendingRestartGuids = c.GetManagementAgentsPendingRestart()?.ToList();
 
                 if (pendingRestartGuids != null && pendingRestartGuids.Count > 0)
@@ -369,7 +423,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void Export()
         {
-            this.UpdateFocusedBindings();
+            App.UpdateFocusedBindings();
 
             if (this.HasErrors)
             {
@@ -413,7 +467,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void MainWindow_Closing(object sender, CancelEventArgs e)
         {
-            this.UpdateFocusedBindings();
+            App.UpdateFocusedBindings();
 
             if (!this.ContinueOnUnsavedChanges())
             {
@@ -423,7 +477,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void Close()
         {
-            this.UpdateFocusedBindings();
+            App.UpdateFocusedBindings();
 
             if (!this.ContinueOnUnsavedChanges())
             {
@@ -464,31 +518,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
 
             return true;
-        }
-
-        private void UpdateFocusedBindings()
-        {
-            object focusedItem = Keyboard.FocusedElement;
-
-            if (focusedItem == null)
-            {
-                return;
-            }
-
-            BindingExpression expression = (focusedItem as TextBox)?.GetBindingExpression(TextBox.TextProperty);
-            expression?.UpdateSource();
-
-            expression = (focusedItem as ComboBox)?.GetBindingExpression(ComboBox.TextProperty);
-            expression?.UpdateSource();
-
-            expression = (focusedItem as PasswordBox)?.GetBindingExpression(PasswordBoxBindingHelper.PasswordProperty);
-            expression?.UpdateSource();
-
-            expression = (focusedItem as TimeSpanControl)?.GetBindingExpression(TimeSpanControl.ValueProperty);
-            expression?.UpdateSource();
-
-            expression = (focusedItem as DateTimePicker)?.GetBindingExpression(DateTimePicker.SelectedDateProperty);
-            expression?.UpdateSource();
         }
     }
 }

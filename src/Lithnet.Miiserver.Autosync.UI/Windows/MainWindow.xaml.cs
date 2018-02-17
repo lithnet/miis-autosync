@@ -11,16 +11,6 @@ namespace Lithnet.Miiserver.AutoSync.UI
         public MainWindow()
         {
             this.InitializeComponent();
-
-            MainWindowViewModel m = new MainWindowViewModel();
-
-            this.DataContext = m;
-            m.ResetConfigViewModel();
-
-            if (m.ExecutionMonitor != null)
-            {
-                m.ExecutionMonitor.IsSelected = true;
-            }
         }
     }
 }

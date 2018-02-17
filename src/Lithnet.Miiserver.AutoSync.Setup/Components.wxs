@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
      xmlns:util='http://schemas.microsoft.com/wix/UtilExtension'
-   xmlns:http='http://schemas.microsoft.com/wix/HttpExtension'>
+     xmlns:http='http://schemas.microsoft.com/wix/HttpExtension'
+     xmlns:fire='http://schemas.microsoft.com/wix/FirewallExtension'>
+
   <Fragment>
     <DirectoryRef Id="APPROOTDIR">
       <Component Id="EventSource" Guid="*" Win64="yes" >
@@ -47,24 +49,26 @@
 
         <util:PerformanceCategory Id="PerformanceCounter" Name="Lithnet AutoSync" MultiInstance="yes" DefaultLanguage="english">
           <util:PerformanceCounter Name="Queue length" Type="numberOfItems64"  Help="Shows the current number of jobs in the execution queue"/>
-          <util:PerformanceCounter Name="Runs/10 min" Type="numberOfItems64"  Help="Shows the total number of jobs executed"/>
-
-          <util:PerformanceCounter Name="Wait time % - sync lock" Type="numberOfItems64"  />
-          <util:PerformanceCounter Name="Wait time % - exclusive lock" Type="numberOfItems64"  />
-          <util:PerformanceCounter Name="Wait time %" Type="numberOfItems64"  />
-
-          <util:PerformanceCounter Name="Wait time average - sync lock" Type="numberOfItems64"  />
-          <util:PerformanceCounter Name="Wait time average - exclusive lock" Type="numberOfItems64"  />
-          <util:PerformanceCounter Name="Wait time average" Type="numberOfItems64" />
-
-          <util:PerformanceCounter Name="Execution time average" Type="numberOfItems64" />
-
-          <util:PerformanceCounter Name="Execution time %" Type="numberOfItems64"  />
-
-          <util:PerformanceCounter Name="Idle time %" Type="numberOfItems64"  />
-
-
+          <util:PerformanceCounter Name="Runs/10 min" Type="numberOfItems64"  Help="Shows the total number of runs executed in the last 10 minuntes"/>
+          <util:PerformanceCounter Name="Wait time % - sync lock" Type="numberOfItems64" Help="The percentage of time the controller has spent waiting for the sync lock"/>
+          <util:PerformanceCounter Name="Wait time % - exclusive lock" Type="numberOfItems64" Help="The percentage of time the controller has spent waiting for the exclusive lock" />
+          <util:PerformanceCounter Name="Wait time %" Type="numberOfItems64" Help="The percentage of time the controller has spent in the waiting state" />
+          <util:PerformanceCounter Name="Wait time average - sync lock" Type="numberOfItems64" Help="The average amount of time (in seconds) the controller has spent waiting for the sync lock" />
+          <util:PerformanceCounter Name="Wait time average - exclusive lock" Type="numberOfItems64" Help="The average amount of time (in seconds) the controller has spent waiting for the exclusive lock" />
+          <util:PerformanceCounter Name="Wait time average" Type="numberOfItems64" Help="The average amount of time (in seconds) the controller has spent in the waiting state"/>
+          <util:PerformanceCounter Name="Execution time average" Type="numberOfItems64" Help="The average amount of time (in seconds) the controller has spent in the executing state" />
+          <util:PerformanceCounter Name="Execution time %" Type="numberOfItems64" Help="The percentage of time the controller has spent in the executing state" />
+          <util:PerformanceCounter Name="Idle time %" Type="numberOfItems64" Help="The percentage of time the controller has spent in the idle state"  />
         </util:PerformanceCategory>
+      
+        <fire:FirewallException Id="AutoSyncServerTcpPort"
+                                Name="Lithnet AutoSync - Remote Management"
+                                Protocol="tcp"
+                                Port="54338"
+                                Scope="any"
+                                IgnoreFailure="yes"
+                                Profile="all" />
+
       </Component>
 
       <Component Id="cmpb79b2c604b1748aa9606e987e86aad3a" Guid="*" Win64="yes">
@@ -121,7 +125,7 @@
       <ComponentRef Id="cmpB0A7A00F68064A1CBAC65F08E16234FF"/>
       <ComponentRef Id="cmpF5883C13B9AC434D8CDB1F0271451D48"/>
     </ComponentGroup>
-    <ComponentGroup Id="Binaries">
+    <ComponentGroup Id="Service">
       <ComponentRef Id="EventSource"/>
       <ComponentRef Id="cmpb05fc8933594449d9aad05ca620a4331"/>
       <ComponentRef Id="cmpb79b2c604b1748aa9606e987e86aad3a"/>

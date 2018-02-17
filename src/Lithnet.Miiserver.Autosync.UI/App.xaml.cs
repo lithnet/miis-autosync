@@ -1,14 +1,17 @@
-﻿using Lithnet.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.ServiceModel;
 using System.ServiceProcess;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Media;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using Lithnet.Logging;
+using Lithnet.Miiserver.AutoSync.UI.ViewModels;
+using MahApps.Metro.Controls;
 
 namespace Lithnet.Miiserver.AutoSync.UI
 {
@@ -17,6 +20,11 @@ namespace Lithnet.Miiserver.AutoSync.UI
     /// </summary>
     public partial class App : Application
     {
+        private bool hasThrown;
+
+        private object lockObject = new object();
+
+
         internal const string HelpBaseUrl = "https://github.com/lithnet/miis-autosync/wiki/";
 
         internal const string NullPlaceholder = "(none)";
@@ -42,76 +50,33 @@ namespace Lithnet.Miiserver.AutoSync.UI
                         Program.SetupOutOfBandInstance();
                     }).Wait();
                 }
-
-                return;
             }
 #endif
+            this.InitializeComponent();
 
-            try
+            Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            MainWindow window = new MainWindow();
+            Application.Current.MainWindow = window;
+            Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
+            MainWindowViewModel m = new MainWindowViewModel();
+            window.DataContext = m;
+            window.Show();
+
+            Task.Factory.StartNew(() =>
             {
-                ConfigClient c = App.GetDefaultConfigClient();
-                Trace.WriteLine($"Attempting to connect to the AutoSync service at {c.Endpoint.Address}");
-                c.Open();
-                Trace.WriteLine($"Connected to the AutoSync service");
-            }
-            catch (EndpointNotFoundException ex)
-            {
-                Trace.WriteLine(ex);
-                this.ShowDummyWindow();
-                MessageBox.Show(
-                    $"Could not contact the AutoSync service. Ensure the Lithnet AutoSync service is running",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-                Environment.Exit(1);
-            }
-            catch (System.TimeoutException ex)
-            {
-                Trace.WriteLine(ex);
-                this.ShowDummyWindow();
-                MessageBox.Show(
-                    $"Could not contact the AutoSync service. Ensure the Lithnet AutoSync service is running",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-                Environment.Exit(1);
-            }
-            catch (System.ServiceModel.Security.SecurityNegotiationException ex)
-            {
-                Trace.WriteLine(ex);
-                this.ShowDummyWindow();
-                MessageBox.Show($"There was an error trying to establish a secure session with the AutoSync server\n\n{ex.Message}", "Security error", MessageBoxButton.OK, MessageBoxImage.Error);
-                Environment.Exit(5);
-            }
-            catch (System.ServiceModel.Security.SecurityAccessDeniedException ex)
-            {
-                Trace.WriteLine(ex);
-                this.ShowDummyWindow();
-                MessageBox.Show("You do not have permission to manage the AutoSync service", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Error);
-                Environment.Exit(5);
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine(ex);
-                this.ShowDummyWindow();
-                MessageBox.Show(
-                    $"An unexpected error occurred communicating with the AutoSync service. Restart the AutoSync service and try again",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-                Environment.Exit(1);
-            }
+                ConnectionManager.TryConnectWithDialog(false, true, window);
+                m.Initialize();
+            });
         }
 
-        private void ShowDummyWindow()
+        internal static void Reconnect(MainWindowViewModel vm)
         {
-            Window t = new Window() { AllowsTransparency = true, ShowInTaskbar = false, WindowStyle = WindowStyle.None, Background = Brushes.Transparent };
-            t.Show();
+            if (ConnectionManager.TryConnectWithDialog(true, false, Application.Current.MainWindow))
+            {
+                vm.AbortExecutionMonitors();
+                vm.Initialize();
+            }
         }
-
-        private bool hasThrown;
-
-        private object lockObject = new object();
 
         internal static string ToDelimitedString(IEnumerable<string> items)
         {
@@ -180,40 +145,40 @@ namespace Lithnet.Miiserver.AutoSync.UI
             }
         }
 
-        internal static EventClient GetDefaultEventClient(InstanceContext ctx)
+        internal static void DoEvents()
         {
-            if (App.IsConnectedToLocalhost())
-            {
-                return EventClient.GetNamedPipesClient(ctx);
-            }
-            else
-            {
-                return EventClient.GetNetTcpClient(ctx, UserSettings.AutoSyncServerHost, UserSettings.AutoSyncServerPort, UserSettings.AutoSyncServerIdentity);
-            }
+            Application.Current.Dispatcher.Invoke(new Action(delegate { }), DispatcherPriority.Background);
         }
 
-        public static ConfigClient GetDefaultConfigClient()
-        {
-            if (App.IsConnectedToLocalhost())
-            {
-                return ConfigClient.GetNamedPipesClient();
-            }
-            else
-            {
-                return ConfigClient.GetNetTcpClient(UserSettings.AutoSyncServerHost, UserSettings.AutoSyncServerPort, UserSettings.AutoSyncServerIdentity);
-            }
-        }
-
-        public static bool IsConnectedToLocalhost()
-        {
-            return string.Equals(UserSettings.AutoSyncServerHost, "localhost", StringComparison.OrdinalIgnoreCase);
-        }
-
-        public static string Hostname => UserSettings.AutoSyncServerHost;
 
         internal static BitmapImage GetImageResource(string name)
         {
             return new BitmapImage(new Uri($"pack://application:,,,/Resources/{name}", UriKind.Absolute));
+        }
+
+        internal static void UpdateFocusedBindings()
+        {
+            object focusedItem = Keyboard.FocusedElement;
+
+            if (focusedItem == null)
+            {
+                return;
+            }
+
+            BindingExpression expression = (focusedItem as TextBox)?.GetBindingExpression(TextBox.TextProperty);
+            expression?.UpdateSource();
+
+            expression = (focusedItem as ComboBox)?.GetBindingExpression(ComboBox.TextProperty);
+            expression?.UpdateSource();
+
+            expression = (focusedItem as PasswordBox)?.GetBindingExpression(PasswordBoxBindingHelper.PasswordProperty);
+            expression?.UpdateSource();
+
+            expression = (focusedItem as TimeSpanControl)?.GetBindingExpression(TimeSpanControl.ValueProperty);
+            expression?.UpdateSource();
+
+            expression = (focusedItem as DateTimePicker)?.GetBindingExpression(DateTimePicker.SelectedDateProperty);
+            expression?.UpdateSource();
         }
     }
 }

@@ -115,6 +115,7 @@
     <Compile Include="EventService\EventService.cs" />
     <Compile Include="EventService\IEventService.cs" />
     <Compile Include="EventService\IEventCallback.cs" />
+    <Compile Include="Exceptions\UnsupportedVersionException.cs" />
     <Compile Include="Exceptions\NoSuchManagementAgentException.cs" />
     <Compile Include="Exceptions\SyncEngineStoppedException.cs" />
     <Compile Include="Exceptions\ThresholdExceededException.cs" />

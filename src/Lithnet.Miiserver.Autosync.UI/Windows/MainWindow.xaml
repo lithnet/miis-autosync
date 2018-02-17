@@ -29,8 +29,10 @@
         <KeyBinding Key="R"
                     Modifiers="Control+Shift"
                     Command="{Binding Path=Commands.Import}" />
+        <KeyBinding Key="C"
+                    Modifiers="Control+Shift"
+                    Command="{Binding Path=Commands.Connect}" />
     </Window.InputBindings>
-
 
     <Grid>
 
@@ -53,6 +55,12 @@
                 <MenuItem Header="_File">
                     <MenuItem.ItemsSource>
                         <CompositeCollection>
+                            <MenuItem Header="{Binding Path=Commands.Connect.Text}" 
+                                      InputGestureText="{Binding Path=Commands.Connect.GestureText}"
+                                      Command="{Binding Path=Commands.Connect}" />
+
+                            <Separator />
+
                             <MenuItem Header="{Binding Path=Commands.Save.Text}" 
                                       InputGestureText="{Binding Path=Commands.Save.GestureText}"
                                       Command="{Binding Path=Commands.Save}" />

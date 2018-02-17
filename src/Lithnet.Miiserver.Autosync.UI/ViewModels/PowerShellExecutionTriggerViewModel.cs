@@ -19,9 +19,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             : base(model)
         {
             this.typedModel = model;
-            this.Commands.Add("Browse", new DelegateCommand(t => this.Browse()));
-            this.Commands.Add("New", new DelegateCommand(t => this.New()));
-            this.Commands.Add("Edit", new DelegateCommand(t => this.Edit(), u => this.CanEdit()));
+            this.Commands.Add("Browse", new DelegateCommand(t => this.Browse(), t => this.CanEditFiles));
+            this.Commands.Add("New", new DelegateCommand(t => this.New(), t => this.CanEditFiles));
+            this.Commands.Add("Edit", new DelegateCommand(t => this.Edit(), u => this.CanEditFiles && this.CanEdit()));
             this.AddIsDirtyProperty(nameof(this.ScriptPath));
             this.AddIsDirtyProperty(nameof(this.Interval));
             this.AddIsDirtyProperty(nameof(this.ExceptionBehaviour));
@@ -94,6 +94,10 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         public string Type => this.Model.Type;
 
         public string Description => this.Model.Description;
+
+        public bool CanEditFiles => ConnectionManager.ConnectedToLocalHost;
+
+        public bool ShowRemoteEditWarning => !ConnectionManager.ConnectedToLocalHost;
 
         private void New()
         {

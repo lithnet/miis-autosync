@@ -5,6 +5,8 @@ namespace Lithnet.Miiserver.AutoSync.UI
 {
     internal class UserSettings
     {
+        public const int DefaultTcpPort = 54338;
+
         private static RegistryKey userSettingsKey;
 
         public static RegistryKey UserSettingsKey
@@ -20,37 +22,32 @@ namespace Lithnet.Miiserver.AutoSync.UI
             }
         }
 
-        public static int ReconnectInterval
-        {
-            get
-            {
-                return (int)UserSettings.UserSettingsKey.GetValue(nameof(ReconnectInterval), 10000);
-            }
-        }
+        public static int ReconnectInterval => (int)UserSettings.UserSettingsKey.GetValue(nameof(ReconnectInterval), 10000);
 
         public static string AutoSyncServerHost
         {
-            get
-            {
-                return (string)UserSettings.UserSettingsKey.GetValue(nameof(AutoSyncServerHost), "localhost");
-            }
+            get => (string)UserSettings.UserSettingsKey.GetValue(nameof(AutoSyncServerHost), "localhost");
+            set => UserSettings.UserSettingsKey.SetValue(nameof(AutoSyncServerHost), value);
         }
 
         public static int AutoSyncServerPort
         {
-            get
-            {
-                return (int)UserSettings.UserSettingsKey.GetValue(nameof(AutoSyncServerPort), 54338);
-            }
+            get => (int)UserSettings.UserSettingsKey.GetValue(nameof(AutoSyncServerPort), DefaultTcpPort);
+            set => UserSettings.UserSettingsKey.SetValue(nameof(AutoSyncServerPort), value > 0 ? value : DefaultTcpPort);
         }
 
-        public static string AutoSyncServerIdentity
+        public static bool AutoConnect
         {
-            get
-            {
-                return (string)UserSettings.UserSettingsKey.GetValue(nameof(AutoSyncServerIdentity), "autosync/{0}");
-            }
+            get => (int)UserSettings.UserSettingsKey.GetValue(nameof(UserSettings.AutoConnect), 0) != 0;
+            set => UserSettings.UserSettingsKey.SetValue(nameof(AutoConnect), value ? 1 : 0);
         }
 
+        public static bool UseNetTcpForLocalHost
+        {
+            get => (int)UserSettings.UserSettingsKey.GetValue(nameof(UserSettings.UseNetTcpForLocalHost), 0) != 0;
+            set => UserSettings.UserSettingsKey.SetValue(nameof(UseNetTcpForLocalHost), value ? 1 : 0);
+        }
+        
+        public static string AutoSyncServerIdentity => (string)UserSettings.UserSettingsKey.GetValue(nameof(AutoSyncServerIdentity), null);
     }
 }

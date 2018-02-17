@@ -24,6 +24,9 @@ namespace Lithnet.Miiserver.AutoSync
         [OperationContract]
         bool IsPendingRestart();
 
+        [OperationContract]
+        int GetServiceContractVersion();
+
         [OperationContract(IsOneWay = true)]
         void Stop(Guid managementAgentID, bool cancelRun);
 
@@ -86,5 +89,11 @@ namespace Lithnet.Miiserver.AutoSync
 
         [OperationContract]
         string GetAutoSyncServiceAccountName();
+
+        [OperationContract]
+        byte[] GetFileContent(string path);
+
+        [OperationContract]
+        void PutFileContent(string path, byte[] content);
     }
 }

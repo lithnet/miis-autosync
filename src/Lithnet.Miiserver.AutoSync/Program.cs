@@ -133,7 +133,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 if (!CheckSyncEnginePermissions())
                 {
-                    throw new UnauthorizedAccessException("The user must be a member of the FIMSyncAdmins or FIMSyncOperators group");
+                    throw new UnauthorizedAccessException("The user must be a member of the FIMSyncAdmins group");
                 }
 
                 Program.LoadConfiguration();

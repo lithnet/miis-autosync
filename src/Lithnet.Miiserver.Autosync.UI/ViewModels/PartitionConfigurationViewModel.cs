@@ -167,7 +167,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
             try
             {
-                ConfigClient c = App.GetDefaultConfigClient();
+                ConfigClient c = ConnectionManager.GetDefaultConfigClient();
                 c.InvokeThenClose(u => items.AddRange(c.GetManagementAgentRunProfileNamesForPartition(this.maconfig.ManagementAgentID, this.ID, includeMultiStep)));
             }
             catch (Exception ex)
