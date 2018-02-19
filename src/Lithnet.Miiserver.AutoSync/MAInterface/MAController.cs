@@ -401,7 +401,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                     this.State.UpdateExecutionStatus(ControllerState.Waiting, "Staging run", action.RunProfileName, this.Queue.GetQueueItemNames());
 
-                    this.execController.TakeLocksAndExecute(action);
+                    this.execController.InvokeControllerScriptAndExecute(action);
                 }
             }
             catch (OperationCanceledException)

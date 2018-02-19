@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using NLog;
@@ -65,6 +66,30 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
+        public static void WaitAndTakeLockWithSemaphore(SemaphoreSlim semaphore, SemaphoreSlim sem, string name, CancellationTokenSource ts, string managementAgentName, [CallerMemberName] string caller = "")
+        {
+            bool gotLock = false;
+
+            try
+            {
+                LockController.Debug(managementAgentName, $"SYNCOBJECT: WAIT: {name}: {caller}");
+                sem.Wait(ts.Token);
+                ts.Token.ThrowIfCancellationRequested();
+                gotLock = true;
+                LockController.Debug(managementAgentName, $"SYNCOBJECT: LOCKED: {name}: {caller}");
+                LockController.WaitAndTakeLock(semaphore, name, ts, managementAgentName, caller);
+                ts.Token.ThrowIfCancellationRequested();
+            }
+            finally
+            {
+                if (gotLock)
+                {
+                    sem.Release();
+                    LockController.Debug(managementAgentName, $"SYNCOBJECT: UNLOCKED: {name}: {caller}");
+                }
+            }
+        }
+
         public static void Wait(WaitHandle[] waitHandles, string name, CancellationTokenSource ts, string managementAgentName, [CallerMemberName] string caller = "")
         {
             LockController.Debug(managementAgentName, $"LOCK: WAIT: {name}: {caller}");
@@ -78,6 +103,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
 
             ts.Token.ThrowIfCancellationRequested();
+
             LockController.Debug(managementAgentName, $"LOCK: CLEARED: {name}: {caller}");
         }
 
@@ -92,6 +118,14 @@ namespace Lithnet.Miiserver.AutoSync
         {
             LockController.Debug(managementAgentName, $"LOCK: RELEASE: {name}: {caller}");
             mre.Set();
+        }
+
+        public static bool TakeLock(SemaphoreSlim mre, string name, CancellationTokenSource ts, string managementAgentName, [CallerMemberName] string caller = "")
+        {
+            LockController.Debug(managementAgentName, $"LOCK: TAKE: {name}: {caller}");
+            mre.Wait(ts.Token);
+            ts.Token.ThrowIfCancellationRequested();
+            return true;
         }
 
         public static void ReleaseLock(SemaphoreSlim mre, string name, string managementAgentName, [CallerMemberName] string caller = "")

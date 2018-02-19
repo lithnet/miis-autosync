@@ -17,17 +17,8 @@ namespace Lithnet.Miiserver.AutoSync
         public PerformanceCounter RunCount { get; }
 
         public PerformanceCounter WaitTime { get; }
-
-        public PerformanceCounter WaitTimeSyncLock { get; }
-
-        public PerformanceCounter WaitTimeExclusiveLock { get; }
-
-
+        
         public PerformanceCounter WaitTimeAverage { get; }
-
-        public PerformanceCounter WaitTimeAverageSyncLock { get; }
-
-        public PerformanceCounter WaitTimeAverageExclusiveLock { get; }
 
         private PerformanceCounter ExecutionTimeAverage { get; }
 
@@ -35,18 +26,20 @@ namespace Lithnet.Miiserver.AutoSync
 
         public PerformanceCounter IdleTimePercent { get; }
 
-
         public PerformanceCounter CurrentQueueLength { get; }
 
+        public static void MeasureCommand(Action command, Action<TimeSpan> addElapsed)
+        {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            command();
+            stopwatch.Stop();
+            addElapsed(stopwatch.Elapsed);
+        }
 
         public MAControllerPerfCounters(string maName)
         {
             this.RunCount = MAControllerPerfCounters.CreateCounter("Runs/10 min", maName);
-            this.WaitTimeAverageSyncLock = MAControllerPerfCounters.CreateCounter("Wait time average - sync lock", maName);
-            this.WaitTimeAverageExclusiveLock = MAControllerPerfCounters.CreateCounter("Wait time average - exclusive lock", maName);
             this.WaitTimeAverage = MAControllerPerfCounters.CreateCounter("Wait time average", maName);
-            this.WaitTimeSyncLock = MAControllerPerfCounters.CreateCounter("Wait time % - sync lock", maName);
-            this.WaitTimeExclusiveLock = MAControllerPerfCounters.CreateCounter("Wait time % - exclusive lock", maName);
             this.WaitTime = MAControllerPerfCounters.CreateCounter("Wait time %", maName);
             this.ExecutionTimeAverage = MAControllerPerfCounters.CreateCounter("Execution time average", maName);
             this.ExecutionTimeTotal = MAControllerPerfCounters.CreateCounter("Execution time %", maName);
@@ -86,11 +79,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.ExecutionTimeAverage.RawValue = 0;
             this.IdleTimePercent.RawValue = 0;
             this.WaitTime.RawValue = 0;
-            this.WaitTimeExclusiveLock.RawValue = 0;
-            this.WaitTimeSyncLock.RawValue = 0;
             this.WaitTimeAverage.RawValue = 0;
-            this.WaitTimeAverageExclusiveLock.RawValue = 0;
-            this.WaitTimeAverageSyncLock.RawValue = 0;
             this.RunCount.RawValue = 0;
 
             this.executionTimeCounts = 0;
@@ -99,14 +88,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.waitTimeCounts = 0;
             this.waitTimeTotal = new TimeSpan();
 
-            this.waitTimeSyncCounts = 0;
-            this.waitTimeSync = new TimeSpan();
-
-            this.waitTimeExclusiveCounts = 0;
-            this.waitTimeExclusive = new TimeSpan();
-
             this.executionHistory.Clear();
-
         }
 
         private static PerformanceCounter CreateCounter(string name, string maName)
@@ -139,30 +121,10 @@ namespace Lithnet.Miiserver.AutoSync
         private int waitTimeCounts;
         private TimeSpan waitTimeTotal;
 
-        public void AddWaitTime(TimeSpan value)
+        public void AddWaitTimeTotal(TimeSpan value)
         {
             this.waitTimeTotal = this.waitTimeTotal.Add(value);
             this.waitTimeCounts++;
-            this.UpdateCounters();
-        }
-
-        private int waitTimeSyncCounts;
-        private TimeSpan waitTimeSync;
-
-        public void AddWaitTimeSync(TimeSpan value)
-        {
-            this.waitTimeSync = this.waitTimeSync.Add(value);
-            this.waitTimeSyncCounts++;
-            this.UpdateCounters();
-        }
-
-        private int waitTimeExclusiveCounts;
-        private TimeSpan waitTimeExclusive;
-
-        public void AddWaitTimeExclusive(TimeSpan value)
-        {
-            this.waitTimeExclusive = this.waitTimeExclusive.Add(value);
-            this.waitTimeExclusiveCounts++;
             this.UpdateCounters();
         }
 
@@ -175,18 +137,6 @@ namespace Lithnet.Miiserver.AutoSync
                 if (elapsed <= 0)
                 {
                     return;
-                }
-
-                if (this.waitTimeExclusiveCounts > 0)
-                {
-                    this.WaitTimeAverageExclusiveLock.RawValue = Convert.ToInt64(this.waitTimeExclusive.TotalSeconds / this.waitTimeExclusiveCounts);
-                    this.WaitTimeExclusiveLock.RawValue = (long) (this.waitTimeExclusive.TotalSeconds / this.activeTimer.Elapsed.TotalSeconds * 100);
-                }
-
-                if (this.waitTimeSyncCounts > 0)
-                {
-                    this.WaitTimeAverageSyncLock.RawValue = Convert.ToInt64(this.waitTimeSync.TotalSeconds / this.waitTimeSyncCounts);
-                    this.WaitTimeSyncLock.RawValue = (long) (this.waitTimeSync.TotalSeconds / this.activeTimer.Elapsed.TotalSeconds * 100);
                 }
 
                 if (this.waitTimeCounts > 0)
