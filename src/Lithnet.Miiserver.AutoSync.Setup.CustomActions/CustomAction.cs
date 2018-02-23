@@ -191,10 +191,10 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
                 throw new NoMatchingPrincipalException($"The group {groupName} could not be found");
             }
 
-            SecurityIdentifier userSid = CustomActions.GetSidIfWellKnownNetworkOrSystemAccount(account);
+            SecurityIdentifier wellKnownSid = CustomActions.GetSidIfWellKnownNetworkOrSystemAccount(account);
             Principal principal;
 
-            if (userSid == null)
+            if (wellKnownSid == null)
             {
                 principal = CustomActions.FindInDomainOrMachine(account);
 
@@ -208,7 +208,7 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
                 if (group.ContextType == ContextType.Machine)
                 {
                     PrincipalContext context = new PrincipalContext(ContextType.Machine);
-                    principal = Principal.FindByIdentity(context, IdentityType.Sid, userSid.ToString());
+                    principal = Principal.FindByIdentity(context, IdentityType.Sid, wellKnownSid.ToString());
                 }
                 else
                 {
@@ -219,7 +219,7 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
 
             IADsGroup nativeGroup = (IADsGroup)((DirectoryEntry)group.GetUnderlyingObject()).NativeObject;
 
-            if (CustomActions.IsUserInGroup(nativeGroup, userSid))
+            if (CustomActions.IsPrincipalInGroup(nativeGroup, principal))
             {
                 session.Log($"User {account} was already in group {groupName}");
                 return;
@@ -253,7 +253,7 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
             }
             catch (System.Runtime.InteropServices.COMException e)
             {
-                if (e.HResult == -2147019886) //unchecked((int)0x80071392))
+                if ((uint)e.HResult == 0x80071392 || (uint)e.HResult == 0x80070562)
                 {
                     //session.Log($"User {account} was already in group {groupName} - 0x80071392");
                     return;
@@ -263,7 +263,12 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
             }
         }
 
-        private static bool IsUserInGroup(IADsGroup nativeGroup, SecurityIdentifier userSid)
+        private static bool IsPrincipalInGroup(IADsGroup nativeGroup, Principal principal)
+        {
+            return CustomActions.IsSidInGroup(nativeGroup, principal.Sid);
+        }
+
+        private static bool IsSidInGroup(IADsGroup nativeGroup, SecurityIdentifier userSid)
         {
             foreach (object item in nativeGroup.Members())
             {
