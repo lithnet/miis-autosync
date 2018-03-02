@@ -51,6 +51,15 @@
     <Reference Include="Lithnet.Common.Presentation, Version=1.0.6476.24596, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Lithnet.Common.Presentation.1.0.6476.24596\lib\net40\Lithnet.Common.Presentation.dll</HintPath>
     </Reference>
+    <Reference Include="Lithnet.Miiserver.Client, Version=1.0.6629.39725, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Lithnet.Miiserver.Client.1.0.6629.39725\lib\net45\Lithnet.Miiserver.Client.dll</HintPath>
+    </Reference>
+    <Reference Include="LiveCharts, Version=0.9.7.0, Culture=neutral, PublicKeyToken=0bc1f845d1ebb8df, processorArchitecture=MSIL">
+      <HintPath>..\packages\LiveCharts.0.9.7\lib\net45\LiveCharts.dll</HintPath>
+    </Reference>
+    <Reference Include="LiveCharts.Wpf, Version=0.9.7.0, Culture=neutral, PublicKeyToken=0bc1f845d1ebb8df, processorArchitecture=MSIL">
+      <HintPath>..\packages\LiveCharts.Wpf.0.9.7\lib\net45\LiveCharts.Wpf.dll</HintPath>
+    </Reference>
     <Reference Include="MahApps.Metro, Version=1.5.0.23, Culture=neutral, PublicKeyToken=f4fb5a3c4d1e5b4f, processorArchitecture=MSIL">
       <HintPath>..\packages\MahApps.Metro.1.5.0\lib\net45\MahApps.Metro.dll</HintPath>
     </Reference>
@@ -91,6 +100,9 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="ConnectionManager.cs" />
+    <Compile Include="Controls\CounterDetailControl.xaml.cs">
+      <DependentUpon>CounterDetailControl.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\TreeViewItemControl.xaml.cs">
       <DependentUpon>TreeViewItemControl.xaml</DependentUpon>
     </Compile>
@@ -111,8 +123,11 @@
     <Compile Include="ViewModels\ExecutionMonitorViewModel.cs" />
     <Compile Include="ViewModels\ExecutionMonitorsViewModel.cs" />
     <Compile Include="ViewModels\LoggedMessageViewModel.cs" />
+    <Compile Include="ViewModels\StepDetailsCollectionViewModel.cs" />
     <Compile Include="ViewModels\PartitionConfigurationCollectionViewModel.cs" />
     <Compile Include="ViewModels\PartitionConfigurationViewModel.cs" />
+    <Compile Include="ViewModels\StepDetailsViewModel.cs" />
+    <Compile Include="ViewModels\RunDetailsViewModel.cs" />
     <Compile Include="ViewModels\RunProfileResultViewModel.cs" />
     <Compile Include="ViewModels\ConnectDialogViewModel.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />
@@ -125,6 +140,13 @@
     <Compile Include="ViewModels\MAControllerConfigurationCollectionViewModel.cs" />
     <Compile Include="ViewModels\IntervalExecutionTriggerViewModel.cs" />
     <Compile Include="ViewModels\PowerShellExecutionTriggerViewModel.cs" />
+    <Compile Include="Windows\RunDetailsWindow.xaml.cs">
+      <DependentUpon>RunDetailsWindow.xaml</DependentUpon>
+    </Compile>
+    <Page Include="Controls\CounterDetailControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Controls\TreeViewItemControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -132,6 +154,18 @@
     <Page Include="ResourceDictionaries\ErrorNotifications.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\StepDetailsView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\RunDetailsView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\ExecutionMonitorView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\ExecutionMonitorsView.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -234,6 +268,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\PowerShellExecutionTriggerView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Windows\RunDetailsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ServiceModel;
+using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync
 {
@@ -14,5 +16,11 @@ namespace Lithnet.Miiserver.AutoSync
         
         [OperationContract]
         bool Ping(Guid managementAgentID);
+
+        [OperationContract]
+        string GetRunDetail(Guid managementAgentID, int runNumber);
+
+        [OperationContract]
+        IEnumerable<CSObjectRef> GetStepDetail(Guid stepID, string statisticsType);
     }
 }

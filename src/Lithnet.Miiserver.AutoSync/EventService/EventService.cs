@@ -5,6 +5,7 @@ using System.Linq;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
 using System.ServiceModel.Description;
+using Lithnet.Miiserver.Client;
 using NLog;
 
 namespace Lithnet.Miiserver.AutoSync
@@ -181,6 +182,16 @@ namespace Lithnet.Miiserver.AutoSync
 
             // Not registered
             return false;
+        }
+
+        public string GetRunDetail(Guid managementAgentID, int runNumber)
+        {
+            return SyncServer.GetRunDetail(managementAgentID, runNumber).GetOuterXml();
+        }
+
+        public IEnumerable<CSObjectRef> GetStepDetail(Guid stepID, string statisticsType)
+        {
+            return SyncServer.GetStepDetailCSObjectRefs(stepID, statisticsType);
         }
 
         private static string RemoteHost

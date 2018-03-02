@@ -64,14 +64,14 @@
                 <ListView.Resources>
                     <DataTemplate x:Key="StatusColumnTemplate">
                         <StackPanel Orientation="Horizontal">
-                            <Image Source="{Binding Path=StatusIcon}" Height="16" Width="16" />
+                            <Image Source="{Binding Path=DisplayIcon}" Height="16" Width="16" />
                             <Image Source="{Binding Path=LockIcon}" Height="16" Width="16" />
                         </StackPanel>
                     </DataTemplate>
 
                     <DataTemplate x:Key="LastRunStatusTemplate">
                         <StackPanel Orientation="Horizontal">
-                            <Image Source="{Binding Path=DisplayIcon}" ToolTip="{Binding Path=LastRun}" />
+                            <Image Source="{Binding Path=LastRunResultIcon}" ToolTip="{Binding Path=LastRun}" />
                             <TextBlock Text="{Binding Path=LastRun}" Margin="5 0 0 0"/>
                         </StackPanel>
                     </DataTemplate>

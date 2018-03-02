@@ -1,0 +1,101 @@
+﻿<ResourceDictionary  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                     xmlns:viewModels="clr-namespace:Lithnet.Miiserver.AutoSync.UI.ViewModels"
+                     mc:Ignorable="d"  >
+
+    <DataTemplate DataType="{x:Type viewModels:RunDetailsViewModel}">
+        <DataTemplate.Resources>
+            <Style TargetType="{x:Type TextBlock}">
+                <Setter Property="Margin" Value="5 0 0 5" />
+            </Style>
+            <Style TargetType="{x:Type StackPanel}">
+                <Setter Property="Margin" Value="5 0 0 5" />
+            </Style>
+        </DataTemplate.Resources>
+        <Grid Margin="10" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Margin="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Run profile" />
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Path=RunProfileName}" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Result" />
+                <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" >
+                    <Image Source="{Binding Path=ResultIcon}" Height="16" Width="16"/>
+                    <TextBlock Text="{Binding Path=Result}" Margin="5 0 0 0" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Run number" />
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Path=RunNumber}" />
+
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="Start date"  />
+                <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding Path=FormattedStartDate}"  />
+
+                <TextBlock Grid.Row="1" Grid.Column="2" Text="End date" />
+                <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding Path=FormattedEndDate}" />
+
+                <TextBlock Grid.Row="2" Grid.Column="2" Text="User" />
+                <TextBlock Grid.Row="2" Grid.Column="3" Text="{Binding Path=SecurityID}"/>
+            </Grid>
+
+            <Grid Grid.Row="1" Margin="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Text="Steps"/>
+
+                <ListView Grid.Row="1" Grid.Column="0" Name="ListViewMain" DataContext="{Binding}" BorderThickness="1" MinWidth="100"
+                          ItemsSource="{Binding Path=Steps}">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource MetroListViewItem}">
+                            <Setter Property="IsSelected"
+                                    Value="{Binding Path=IsSelected, Mode=TwoWay}" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="{Binding Path=ResultIcon}" Height="16" Width="16"/>
+                                <TextBlock Text="{Binding DisplayName}" Margin="10"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+
+                <ContentControl Content="{Binding Path=SelectedItem, ElementName=ListViewMain}" 
+                                Grid.Row="1"  Grid.Column="1" Margin="10">
+                    <ContentControl.Resources>
+                        <ResourceDictionary Source="/ResourceDictionaries/ItemViewDictionary.xaml"/>
+                    </ContentControl.Resources>
+                </ContentControl>
+
+            </Grid>
+        </Grid>
+    </DataTemplate>
+</ResourceDictionary>
+ 
+ 
+ 

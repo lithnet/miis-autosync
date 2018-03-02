@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
@@ -27,6 +28,9 @@ namespace Lithnet.Miiserver.AutoSync
 
         [DataMember]
         public string ExecutionQueue { get; set; }
+
+        [DataMember]
+        public ExecutionParameters[] ExecutionQueueItems { get; set; }
 
         [DataMember]
         public string Message { get; set; }

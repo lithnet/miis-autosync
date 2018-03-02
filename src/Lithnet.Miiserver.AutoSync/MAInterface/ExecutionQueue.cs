@@ -118,6 +118,7 @@ namespace Lithnet.Miiserver.AutoSync
                     this.logger.LogInfo($"Added {p.RunProfileName} to the execution queue (triggered by: {source})");
                 }
 
+                p.AddTime = DateTime.UtcNow;
                 //this.counters.CurrentQueueLength.Increment();
 
                 this.UpdateExecutionQueueState();
@@ -135,6 +136,7 @@ namespace Lithnet.Miiserver.AutoSync
         private void UpdateExecutionQueueState()
         {
             this.status.ExecutionQueue = this.GetQueueItemNames();
+            this.status.ExecutionQueueItems = this.internalList.ToArray();
         }
 
         public string GetQueueItemNames(string currentlyExecuting = null)

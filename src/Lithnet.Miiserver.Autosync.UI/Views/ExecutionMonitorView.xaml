@@ -1,0 +1,160 @@
+﻿<ResourceDictionary  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                     xmlns:local="clr-namespace:Lithnet.Common.Presentation;assembly=Lithnet.Common.Presentation"
+                     xmlns:viewModels="clr-namespace:Lithnet.Miiserver.AutoSync.UI.ViewModels"
+                     xmlns:cm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+                     xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+                     mc:Ignorable="d" >
+
+    <DataTemplate DataType="{x:Type viewModels:ExecutionMonitorViewModel}">
+        <Grid>
+            <Grid.Resources>
+                <CollectionViewSource x:Key="SortedItems" Source="{Binding}">
+                    <CollectionViewSource.SortDescriptions>
+                        <cm:SortDescription PropertyName="Disabled"/>
+                        <cm:SortDescription PropertyName="DisplayName"/>
+                    </CollectionViewSource.SortDescriptions>
+                </CollectionViewSource>
+            </Grid.Resources>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <ToolBarTray Grid.Row="0">
+                <ToolBar Height="36">
+                    <Button Command="{Binding Path=Commands.Start}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="/Resources/Run.ico" Height="16" Width="16"/>
+                            <TextBlock Margin="3,0,0,0">Start</TextBlock>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding Path=Commands.Stop}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="/Resources/Stop.ico" Height="16" Width="16"/>
+                            <TextBlock Margin="3,0,0,0">Stop</TextBlock>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding Path=Commands.StopAndCancelRun}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="/Resources/Cancel.ico" Height="16" Width="16"/>
+                            <TextBlock Margin="3,0,0,0">Stop and cancel runs</TextBlock>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding Path=Commands.ClearQueue}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="/Resources/Cancel.ico" Height="16" Width="16"/>
+                            <TextBlock Margin="3,0,0,0">ClearQueue</TextBlock>
+                        </StackPanel>
+                    </Button>
+                </ToolBar>
+            </ToolBarTray>
+
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <StackPanel   Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
+                    <TextBlock Text="Controller status: " FontSize="20"/>
+                    <TextBlock Text="{Binding Path=DisplayState}" FontSize="20"/>
+                    <Image Source="{Binding Path=StatusIcon}" />
+                </StackPanel>
+                <StackPanel  Grid.Row="1" Grid.Column="0" Orientation="Horizontal">
+                    <TextBlock Text="Last "/>
+                    <ComboBox Text="Hour"></ComboBox>
+                </StackPanel>
+
+                <Grid Grid.Row="2" Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="200"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <lvc:PieChart Grid.Row="0" Grid.Column="0" HorizontalAlignment="Center" Series="{Binding Path=ResultSeries}"/>
+                    <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Center" Text="Results"/>
+
+
+                    <lvc:PieChart Grid.Row="0" Grid.Column="1" HorizontalAlignment="Center">
+                        <lvc:PieChart.Series>
+                            <lvc:PieSeries Title="Executing" Values="3" DataLabels="True" />
+                            <lvc:PieSeries Title="Waiting" Values="5" DataLabels="True"/>
+                            <lvc:PieSeries Title="Idle" Values="2" DataLabels="True" />
+                        </lvc:PieChart.Series>
+                    </lvc:PieChart>
+                    <TextBlock Grid.Row="1" Grid.Column="1" HorizontalAlignment="Center" Text="Time"/>
+
+                    <Grid Grid.Row="0" Grid.Column="2" Grid.RowSpan="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Average Execution Time: 44s"/>
+                        <TextBlock Grid.Row="1" Text="Average Wait Time: 188s"/>
+                        <TextBlock Grid.Row="2" Text="Runs: 41"/>
+                        <TextBlock Grid.Row="3" Text="Some other stat: 66"/>
+                    </Grid>
+                </Grid>
+
+                <Grid Grid.Row="3" Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Run history"/>
+
+                    <ListView  Grid.Column="0" 
+                           Grid.Row="1"
+                           BorderThickness="1"
+                           ScrollViewer.VerticalScrollBarVisibility="Auto" 
+                           ItemsSource="{Binding Path=RunHistory}" >
+                        <ListView.Resources>
+                            <DataTemplate x:Key="ImageTemplate">
+                                <Image Source="{Binding Path=DisplayIcon}" />
+                            </DataTemplate>
+                            <DataTemplate x:Key="LinkTemplate">
+                                <TextBlock  Name="urlToContent" >
+                                        <Hyperlink Name="hlkURL"  Command="{Binding Path=Commands.OpenRun}" CommandParameter="{Binding Path=RunNumber}">
+                                            <TextBlock Text="{Binding Path=Result}"/>  
+                                        </Hyperlink>
+                                    </TextBlock>
+                            </DataTemplate>
+                        </ListView.Resources>
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn CellTemplate="{StaticResource ImageTemplate}"/>
+                                <GridViewColumn Header="Start date" DisplayMemberBinding="{Binding Path=FormattedStartDate}"/>
+                                <GridViewColumn Header="Finish date" DisplayMemberBinding="{Binding Path=FormattedEndDate}"/>
+                                <GridViewColumn Header="Run profile" DisplayMemberBinding="{Binding Path=RunProfileName}"/>
+                                <GridViewColumn Header="Result" CellTemplate="{StaticResource LinkTemplate}" Width="200"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+
+                </Grid>
+            </Grid>
+
+        </Grid>
+    </DataTemplate>
+</ResourceDictionary>
+ 
+ 
+ 

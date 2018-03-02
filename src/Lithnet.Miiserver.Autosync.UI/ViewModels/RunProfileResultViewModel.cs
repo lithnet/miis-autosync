@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media.Imaging;
 using Lithnet.Common.Presentation;
 using PropertyChanged;
@@ -13,9 +14,13 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
     {
         private RunProfileExecutionCompleteEventArgs e;
 
-        public RunProfileResultViewModel(RunProfileExecutionCompleteEventArgs e)
+        private Action<int> openRunDelegate;
+
+        public RunProfileResultViewModel(Action<int> openRunDelegate, RunProfileExecutionCompleteEventArgs e)
         {
+            this.Commands.AddItem("OpenRun", this.OpenRun);
             this.e = e;
+            this.openRunDelegate = openRunDelegate;
         }
 
         public string FormattedEndDate => this.EndDate?.ToString("g");
@@ -33,27 +38,11 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         public string Result => this.e.Result;
 
         [DependsOn(nameof(Result))]
-        public new BitmapImage DisplayIcon
+        public BitmapImage ResultIcon => App.GetIconForRunResult(this.Result);
+       
+        private void OpenRun(object parameter)
         {
-            get
-            {
-                if (this.Result == null)
-                {
-                    return null;
-                }
-
-                if (this.Result == "success")
-                {
-                    return App.GetImageResource("circle-green.ico");
-                }
-
-                if (this.Result.StartsWith("completed-", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    return App.GetImageResource("circle-yellow.ico");
-                }
-
-                return App.GetImageResource("circle-red.ico");
-            }
+            this.openRunDelegate(this.RunNumber);
         }
     }
 }

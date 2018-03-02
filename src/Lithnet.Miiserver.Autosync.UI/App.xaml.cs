@@ -28,7 +28,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
         private object lockObject = new object();
 
         private static Logger logger;
-        
+
         internal const string HelpBaseUrl = "https://github.com/lithnet/miis-autosync/wiki/";
 
         internal const string NullPlaceholder = "(none)";
@@ -41,7 +41,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
             AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
             TaskScheduler.UnobservedTaskException += this.TaskScheduler_UnobservedTaskException;
             Application.Current.DispatcherUnhandledException += this.Dispatcher_UnhandledException;
-            
+
 #if DEBUG
             if (Debugger.IsAttached)
             {
@@ -217,6 +217,26 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
             expression = (focusedItem as DateTimePicker)?.GetBindingExpression(DateTimePicker.SelectedDateProperty);
             expression?.UpdateSource();
+        }
+
+        internal static BitmapImage GetIconForRunResult(string result)
+        {
+            if (result == null)
+            {
+                return null;
+            }
+
+            if (result == "success")
+            {
+                return App.GetImageResource("circle-green.ico");
+            }
+
+            if (result.StartsWith("completed-", StringComparison.InvariantCultureIgnoreCase))
+            {
+                return App.GetImageResource("circle-yellow.ico");
+            }
+
+            return App.GetImageResource("circle-red.ico");
         }
     }
 }

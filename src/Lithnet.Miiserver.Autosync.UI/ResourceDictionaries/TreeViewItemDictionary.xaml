@@ -58,9 +58,12 @@
         <controls:TreeViewItemControl/>
     </HierarchicalDataTemplate>
 
-    <HierarchicalDataTemplate DataType="{x:Type viewModels:ExecutionMonitorsViewModel}"
-                              >
+    <HierarchicalDataTemplate DataType="{x:Type viewModels:ExecutionMonitorsViewModel}" ItemsSource="{Binding}">
         <controls:TreeViewItemControl/>
     </HierarchicalDataTemplate>
 
+    <HierarchicalDataTemplate DataType="{x:Type viewModels:ExecutionMonitorViewModel}"
+                              ItemsSource="{Binding}">
+        <controls:TreeViewItemControl x:Name="Item"/>
+    </HierarchicalDataTemplate>
 </ResourceDictionary>

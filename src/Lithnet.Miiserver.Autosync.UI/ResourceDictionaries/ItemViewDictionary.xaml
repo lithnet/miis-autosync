@@ -5,7 +5,10 @@
         <ResourceDictionary Source="/Views/SettingsView.xaml" />
         <ResourceDictionary Source="/Views/MAControllerConfigurationCollectionView.xaml" />
         <ResourceDictionary Source="/Views/ExecutionMonitorsView.xaml" />
+        <ResourceDictionary Source="/Views/ExecutionMonitorView.xaml" />
         <ResourceDictionary Source="/Views/ConfigFileView.xaml" />
+        <ResourceDictionary Source="/Views/RunDetailsView.xaml" />
+        <ResourceDictionary Source="/Views/StepDetailsView.xaml" />
     </ResourceDictionary.MergedDictionaries>
 </ResourceDictionary>
             

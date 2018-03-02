@@ -46,7 +46,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             if (System.Diagnostics.Debugger.IsAttached)
             {
-                DebuggerTarget debug = new DebuggerTarget("debug-window") { Layout = "${longdate}|${level:uppercase=true:padding=5}| ${message}" };
+                DebuggerTarget debug = new DebuggerTarget("debug-window") { Layout = "${longdate}|${level:uppercase=true:padding=5}| ${message}${newline}${exception:format=ToString}" };
                 LogManager.Configuration.AddTarget(debug);
                 LogManager.Configuration.LoggingRules.Add(new LoggingRule("*", LogLevel.Trace, debug));
             }

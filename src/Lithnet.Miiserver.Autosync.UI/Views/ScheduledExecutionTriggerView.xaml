@@ -48,7 +48,7 @@
                        Content="Starting from"/>
                 <controls:DateTimePicker 
                     Grid.Row="3" 
-                    Grid.Column="1"
+                    Grid.Column="1" 
                     SelectedDate="{Binding StartDateTime, Mode=TwoWay}" 
                     Culture="{Binding Culture}"
                     Margin="10 0 0 5" />

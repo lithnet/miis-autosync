@@ -1,0 +1,170 @@
+﻿<ResourceDictionary  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                     xmlns:viewModels="clr-namespace:Lithnet.Miiserver.AutoSync.UI.ViewModels"
+                     xmlns:controls="clr-namespace:Lithnet.Miiserver.AutoSync.UI.Controls"
+                     mc:Ignorable="d" >
+
+    <DataTemplate DataType="{x:Type viewModels:StepDetailsViewModel}">
+        <DataTemplate.Resources>
+            <Style TargetType="{x:Type TextBlock}">
+                <Setter Property="Margin" Value="5 0 0 5" />
+            </Style>
+            <Style TargetType="{x:Type StackPanel}">
+                <Setter Property="Margin" Value="5 0 0 5" />
+            </Style>
+        </DataTemplate.Resources>
+        <Grid Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Step number"/>
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Path=StepNumber}"/>
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Step"/>
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Path=StepTypeDescription}"/>
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Result"/>
+                <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
+                    <Image Source="{Binding Path=ResultIcon}" Height="16" Width="16"/>
+                    <TextBlock Text="{Binding Path=StepResult}"/>
+                </StackPanel>
+
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="Start date"/>
+                <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding Path=FormattedStartDate}"/>
+
+                <TextBlock Grid.Row="1" Grid.Column="2" Text="End date"/>
+                <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding Path=FormattedEndDate}"/>
+
+                <TextBlock Grid.Row="2" Grid.Column="2" Text="Server connection"/>
+                <TextBlock Grid.Row="2" Grid.Column="3" Text="{Binding Path=ServerConnectionDetails}"/>
+
+            </Grid>
+
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TabControl>
+                    <TabItem Header="Export statistics" Visibility="{Binding Path=ShowExportCounters, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                    </TabItem>
+
+                    <TabItem Header="Synchronization statistics" Visibility="{Binding Path=ShowSyncCounters, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                    </TabItem>
+
+                    <TabItem Header="Import statistics" Visibility="{Binding Path=ShowImportCounters, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Unchanged"/>
+                            <controls:CounterDetailControl Grid.Row="0" Grid.Column="1" 
+                                                           Value="{Binding Path=StagingCounters.StageNoChange}" 
+                                                           ShowDetail="{Binding Path=StagingCounters.StageNoChangeDetail.HasDetail}"
+                                                           Command="{Binding Path=Commands.ShowStepDetail}"
+                                                           CommandParameter="{Binding Path=StagingCounters.StageNoChangeDetail}"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Adds"/>
+                            <controls:CounterDetailControl Grid.Row="1" Grid.Column="1"
+                                                           Value="{Binding Path=StagingCounters.StageAdd}" 
+                                                           ShowDetail="{Binding Path=StagingCounters.StageAddDetail.HasDetail}"
+                                                           Command="{Binding Path=Commands.ShowStepDetail}"
+                                                           CommandParameter="{Binding Path=StagingCounters.StageAddDetail}"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Updates"/>
+                            <controls:CounterDetailControl Grid.Row="2" Grid.Column="1"
+                                                           Value="{Binding Path=StagingCounters.StageUpdate}" 
+                                                           ShowDetail="{Binding Path=StagingCounters.StageUpdateDetail.HasDetail}"
+                                                           Command="{Binding Path=Commands.ShowStepDetail}"
+                                                           CommandParameter="{Binding Path=StagingCounters.StageUpdateDetail}"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Renames"/>
+                            <controls:CounterDetailControl Grid.Row="3" Grid.Column="1"
+                                                           Value="{Binding Path=StagingCounters.StageRename}" 
+                                                           ShowDetail="{Binding Path=StagingCounters.StageRenameDetail.HasDetail}"
+                                                           Command="{Binding Path=Commands.ShowStepDetail}"
+                                                           CommandParameter="{Binding Path=StagingCounters.StageRenameDetail}"/>
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Deletes"/>
+                            <controls:CounterDetailControl Grid.Row="4" Grid.Column="1"
+                                                           Value="{Binding Path=StagingCounters.StageDelete}" 
+                                                           ShowDetail="{Binding Path=StagingCounters.StageDeleteDetail.HasDetail}"
+                                                           Command="{Binding Path=Commands.ShowStepDetail}"
+                                                           CommandParameter="{Binding Path=StagingCounters.StageDeleteDetail}"/>
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Delete adds"/>
+                            <controls:CounterDetailControl Grid.Row="5" Grid.Column="1"
+                                                           Value="{Binding Path=StagingCounters.StageDeleteAdd}" 
+                                                           ShowDetail="{Binding Path=StagingCounters.StageDeleteAddDetail.HasDetail}"
+                                                           Command="{Binding Path=Commands.ShowStepDetail}"
+                                                           CommandParameter="{Binding Path=StagingCounters.StageDeleteAddDetail}"/>
+
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Staging errors"/>
+                            <controls:CounterDetailControl Grid.Row="6" Grid.Column="1"
+                                                           Value="{Binding Path=StagingCounters.StageFailure}" 
+                                                           ShowDetail="{Binding Path=StagingCounters.StageFailureDetail.HasDetail}"
+                                                           Command="{Binding Path=Commands.ShowStepDetail}"
+                                                           CommandParameter="{Binding Path=StagingCounters.StageFailureDetail}"/>
+
+
+                            <TextBlock Grid.Row="7" Grid.Column="0" Text="Filtered deletions"/>
+                            <controls:CounterDetailControl Grid.Row="7" Grid.Column="1" 
+                                                           Value="{Binding Path=DiscoveryCounters.FilteredDeletions}" 
+                                                           ShowDetail="{Binding Path=DiscoveryCounters.FilteredDeletionsDetail.HasDetail}"
+                                                           Command="{Binding Path=Commands.ShowStepDetail}"
+                                                           CommandParameter="{Binding Path=DiscoveryCounters.FilteredDeletionsDetail}"/>
+
+                            <TextBlock Grid.Row="8" Grid.Column="0" Text="Filtered objects"/>
+                            <controls:CounterDetailControl Grid.Row="8" Grid.Column="1" 
+                                                           Value="{Binding Path=DiscoveryCounters.FilteredObjects}" 
+                                                           ShowDetail="{Binding Path=DiscoveryCounters.FilteredObjectsDetail.HasDetail}"
+                                                           Command="{Binding Path=Commands.ShowStepDetail}"
+                                                           CommandParameter="{Binding Path=DiscoveryCounters.FilteredObjectsDetail}"/>
+                        </Grid>
+                    </TabItem>
+                </TabControl>
+            </Grid>
+        </Grid>
+    </DataTemplate>
+</ResourceDictionary>
+ 
+ 
+ 

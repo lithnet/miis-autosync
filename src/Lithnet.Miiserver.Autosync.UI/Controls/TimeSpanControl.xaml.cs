@@ -23,9 +23,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
         private static void OnValueChanged(DependencyObject obj, DependencyPropertyChangedEventArgs e)
         {
-            TimeSpanControl control = obj as TimeSpanControl;
-
-            if (control == null)
+            if (!(obj is TimeSpanControl control))
             {
                 return;
             }
@@ -37,9 +35,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
         private static void OnMinMaxValueChanged(DependencyObject obj, DependencyPropertyChangedEventArgs e)
         {
-            TimeSpanControl control = obj as TimeSpanControl;
-
-            if (control == null)
+            if (!(obj is TimeSpanControl control))
             {
                 return;
             }
@@ -150,9 +146,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
         private static void OnTimeChanged(DependencyObject obj, DependencyPropertyChangedEventArgs e)
         {
-            TimeSpanControl control = obj as TimeSpanControl;
-
-            if (control == null)
+            if (!(obj is TimeSpanControl control))
             {
                 return;
             }

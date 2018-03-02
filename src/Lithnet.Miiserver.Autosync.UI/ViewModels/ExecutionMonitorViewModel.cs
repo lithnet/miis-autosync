@@ -6,8 +6,15 @@ using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
+using System.Xml;
 using Lithnet.Common.Presentation;
+using Lithnet.Miiserver.AutoSync.UI.Windows;
+using Lithnet.Miiserver.Client;
+using LiveCharts;
+using LiveCharts.Wpf;
 using NLog;
 using PropertyChanged;
 using Timer = System.Timers.Timer;
@@ -26,7 +33,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-
         public ExecutionMonitorViewModel(KeyValuePair<Guid, string> ma)
             : base(ma)
         {
@@ -36,6 +42,10 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.RunHistory = new ObservableCollection<RunProfileResultViewModel>();
             this.SubscribeToStateChanges();
             this.PopulateMenuItems();
+
+            this.Commands.AddItem("Start", x => this.Start(), x => this.CanStart());
+            this.Commands.AddItem("Stop", x => this.Stop(false), x => this.CanStop());
+            this.Commands.AddItem("StopAndCancelRuns", x => this.Stop(true), x => this.CanStop());
         }
 
         private Guid ManagementAgentID { get; set; }
@@ -44,7 +54,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public bool IsConnected { get; set; }
 
-        public BitmapImage StatusIcon
+        public new BitmapImage DisplayIcon
         {
             get
             {
@@ -104,13 +114,13 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         public bool ThresholdExceeded { get; private set; }
 
         public bool HasError { get; private set; }
-        
+
         public string ExecutingRunProfile { get; private set; }
 
-        [AlsoNotifyFor(nameof(LastRun), nameof(DisplayIcon))]
+        [AlsoNotifyFor(nameof(LastRun), nameof(ExecutionMonitorViewModel.LastRunResultIcon))]
         public string LastRunProfileResult { get; private set; }
 
-        [AlsoNotifyFor(nameof(LastRun), nameof(DisplayIcon))]
+        [AlsoNotifyFor(nameof(LastRun), nameof(ExecutionMonitorViewModel.LastRunResultIcon))]
         public string LastRunProfileName { get; private set; }
 
         public string LastRun => this.LastRunProfileName == null ? null : $"{this.LastRunProfileName}: {this.LastRunProfileResult}";
@@ -127,7 +137,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         [AlsoNotifyFor(nameof(LockIcon))]
         public bool HasExclusiveLock { get; private set; }
-
 
         [AlsoNotifyFor(nameof(LockIcon))]
         public bool HasSyncLock { get; private set; }
@@ -158,7 +167,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
         }
 
-
         public void MAStatusChanged(MAStatus status)
         {
             this.Message = status.ThresholdExceeded ? "Threshold exceeded" : status.Message;
@@ -176,7 +184,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.Disabled = this.ControlState == ControlState.Disabled;
         }
 
-        public new BitmapImage DisplayIcon => this.lastRunResult?.DisplayIcon;
+        public BitmapImage LastRunResultIcon => this.lastRunResult?.ResultIcon;
 
         public void RunProfileExecutionComplete(RunProfileExecutionCompleteEventArgs e)
         {
@@ -212,6 +220,10 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private RunProfileResultViewModel lastRunResult;
 
+        public SeriesCollection ResultSeries { get; } = new SeriesCollection();
+
+        public Dictionary<string, int> ResultCounters = new Dictionary<string, int>();
+
         private void AddRunProfileHistory(RunProfileExecutionCompleteEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(e.RunProfileName))
@@ -219,11 +231,44 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 return;
             }
 
-            RunProfileResultViewModel t = new RunProfileResultViewModel(e);
+            RunProfileResultViewModel t = new RunProfileResultViewModel(this.OpenRunDetails, e);
 
             this.lastRunResult = t;
             this.LastRunProfileName = t.RunProfileName;
             this.LastRunProfileResult = t.Result;
+
+            if (!this.ResultCounters.ContainsKey(e.Result))
+            {
+                this.ResultCounters.Add(e.Result, 0);
+            }
+
+            this.ResultCounters[e.Result]++;
+
+            PieSeries item = this.ResultSeries.OfType<PieSeries>().FirstOrDefault(u => u.Title == e.Result);
+
+            if (item == null)
+            {
+                item = new PieSeries();
+                item.Title = e.Result;
+                var hash = Math.Abs(e.Result.GetHashCode() % 70);
+
+                if (e.Result == "success")
+                {
+                    item.Fill = Brushes.Green;
+                }
+                else if (e.Result.StartsWith("completed"))
+                {
+                    item.Fill = new SolidColorBrush(Color.FromRgb(255, (byte)(hash + 165), (byte)hash));
+                }
+                else
+                {
+                    item.Fill = new SolidColorBrush(Color.FromRgb(255, (byte)hash, (byte)hash));
+                }
+
+                this.ResultSeries.Add(item);
+            }
+
+            item.Values = new ChartValues<int>() { this.ResultCounters[e.Result] };
 
             Application.Current.Dispatcher.Invoke(() =>
             {
@@ -353,6 +398,39 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             return this.ExecutionState != ControllerState.Idle;
         }
 
+        private void OpenRunDetails(int runNumber)
+        {
+            Task.Run(() =>
+            {
+                try
+                {
+                    string result = this.client.GetRunDetail(this.ManagementAgentID, runNumber);
+                    XmlDocument doc = new XmlDocument();
+                    doc.LoadXml(result);
+
+                    RunDetails r = new RunDetails(doc.FirstChild);
+
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        RunDetailsWindow window = new RunDetailsWindow();
+                        window.DataContext = new RunDetailsViewModel(r, this.GetStepDetails);
+
+                        window.Show();
+                    });
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, "Could not load the run profile results");
+                    Application.Current.Dispatcher.Invoke(() => MessageBox.Show($"Could not load the run profile results\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error));
+                }
+            });
+        }
+
+        private IEnumerable<CSObjectRef> GetStepDetails(Guid stepId, string statisticsType)
+        {
+            return this.client.GetStepDetail(stepId, statisticsType);
+        }
+
         private void CancelRun()
         {
             Task.Run(() =>
@@ -365,7 +443,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 catch (Exception ex)
                 {
                     logger.Error(ex, "Could not cancel the management agent");
-                    MessageBox.Show($"Could not cancel the management agent\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Application.Current.Dispatcher.Invoke(() => MessageBox.Show($"Could not cancel the management agent\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error));
                 }
             });
         }
@@ -382,7 +460,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 catch (Exception ex)
                 {
                     logger.Error(ex, "Could not start the management agent");
-                    MessageBox.Show($"Could not start the management agent\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Application.Current.Dispatcher.Invoke(() => MessageBox.Show($"Could not start the management agent\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error));
                 }
             });
         }
@@ -472,7 +550,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 }
             }
         }
-        
+
         private void InnerChannel_Faulted(object sender, EventArgs e)
         {
             logger.Warn($"Closing faulted event channel on client side for {this.ManagementAgentName}/{this.ManagementAgentID}");

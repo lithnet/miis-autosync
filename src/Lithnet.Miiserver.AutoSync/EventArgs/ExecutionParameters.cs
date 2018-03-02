@@ -1,21 +1,33 @@
 ﻿using System;
+using System.Runtime.Serialization;
 
 namespace Lithnet.Miiserver.AutoSync
 {
+    [DataContract]
     public class ExecutionParameters
     {
+        [DataMember]
         public bool Exclusive { get; set; }
 
+        [DataMember]
         public bool RunImmediate { get; set; }
 
+        [DataMember]
         public string RunProfileName { get; set; }
 
+        [DataMember]
         public MARunProfileType RunProfileType { get; set; }
 
+        [DataMember]
         public Guid PartitionID { get; set; }
 
+        [DataMember]
         public long QueueID { get; set; }
 
+        [DataMember]
+        public DateTime AddTime { get; internal set; }
+
+        [DataMember]
         public string PartitionName { get; set; }
 
         public ExecutionParameters()
@@ -33,6 +45,7 @@ namespace Lithnet.Miiserver.AutoSync
         }
 
         public ExecutionParameters(string runProfileName, bool exclusive, bool runImmediate)
+        : this()
         {
             this.RunProfileName = runProfileName;
             this.Exclusive = exclusive;
@@ -55,6 +68,7 @@ namespace Lithnet.Miiserver.AutoSync
         }
 
         public ExecutionParameters(MARunProfileType runProfileType, Guid partitionID, bool exclusive, bool runImmediate)
+        : this()
         {
             this.RunProfileType = runProfileType;
             this.PartitionID = partitionID;
@@ -63,6 +77,7 @@ namespace Lithnet.Miiserver.AutoSync
         }
 
         public ExecutionParameters(MARunProfileType runProfileType, string partitionName, bool exclusive, bool runImmediate)
+        : this()
         {
             this.RunProfileType = runProfileType;
             this.PartitionName = partitionName;
