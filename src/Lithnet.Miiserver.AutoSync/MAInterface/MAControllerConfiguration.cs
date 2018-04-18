@@ -174,7 +174,7 @@ namespace Lithnet.Miiserver.AutoSync
             switch (type)
             {
                 case MARunProfileType.DeltaImport:
-                    return partition.ScheduledImportRunProfileName;
+                    return partition.DeltaImportRunProfileName;
 
                 case MARunProfileType.FullImport:
                     return partition.FullImportRunProfileName;
