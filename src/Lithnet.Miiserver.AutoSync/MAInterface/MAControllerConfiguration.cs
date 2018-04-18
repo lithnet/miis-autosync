@@ -70,6 +70,7 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     if (c.ID == p.ID || string.Equals(c.Name, p.Name, StringComparison.OrdinalIgnoreCase))
                     {
+                        logger.Trace($"Matched existing partition {c.ID}/{p.ID}/{c.Name}/{p.Name}");
                         c.UpdateConfiguration(p);
                         found = true;
                         break;
@@ -78,16 +79,20 @@ namespace Lithnet.Miiserver.AutoSync
 
                 if (!found)
                 {
+                    logger.Trace($"Partition is missing from MA {c.ID}/{c.Name}");
                     c.IsMissing = true;
                 }
             }
 
             foreach (Partition p in ma.Partitions.Values.Where(t => t.Selected && this.Partitions.GetItemOrNull(t.ID) == null))
             {
+                logger.Trace($"New partition found in MA {p.ID}/{p.Name}");
                 PartitionConfiguration c = new PartitionConfiguration(p);
                 MAConfigDiscovery.DoAutoRunProfileDiscovery(c, ma);
                 this.Partitions.Add(c);
             }
+
+            logger.Trace($"{this.Partitions.Count} partitions are defined for the controller");
         }
 
         [DataMember(Name = "partitions")]
@@ -153,6 +158,14 @@ namespace Lithnet.Miiserver.AutoSync
                 return null;
             }
 
+            if (!p.IsActive)
+            {
+                logger.Warn($"Could not map run profile {type} for partition {partitionName} ({p.ID}) because the partition is not active");
+                return null;
+            }
+
+            logger.Trace($"Found partition {p.ID} from name {partitionName}");
+
             return this.GetRunProfileName(type, p);
         }
 
@@ -161,7 +174,7 @@ namespace Lithnet.Miiserver.AutoSync
             switch (type)
             {
                 case MARunProfileType.DeltaImport:
-                    return partition.ScheduledImportRunProfileName;
+                    return partition.DeltaImportRunProfileName;
 
                 case MARunProfileType.FullImport:
                     return partition.FullImportRunProfileName;
