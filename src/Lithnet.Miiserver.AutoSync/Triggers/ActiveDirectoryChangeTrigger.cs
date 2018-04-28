@@ -68,7 +68,7 @@ namespace Lithnet.Miiserver.AutoSync
                 return null;
             }
 
-            return new NetworkCredential(this.Username, this.Password?.Value);
+            return new NetworkCredential(ActiveDirectoryChangeTrigger.GetUserNameFromFullyQualifiedName(this.Username), this.Password?.Value, ActiveDirectoryChangeTrigger.GetDomainOrNullFromFullyQualifiedName(this.Username));
         }
 
         [DataMember(Name = "username")]
@@ -107,16 +107,19 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 this.stopped = false;
                 LdapDirectoryIdentifier directory = new LdapDirectoryIdentifier(this.HostName);
+                NetworkCredential creds = this.GetCredentialPackage();
 
-                if (this.HasCredentials)
+                if (creds != null)
                 {
-                    this.connection = new LdapConnection(directory, this.GetCredentialPackage());
+                    this.Log($"Connecting to {this.HostName} as {this.Username}");
+                    this.connection = new LdapConnection(directory, creds);
                 }
                 else
                 {
+                    this.Log($"Connecting to {this.HostName} as {Thread.CurrentPrincipal.Identity.Name}");
                     this.connection = new LdapConnection(directory);
                 }
-
+                
                 List<string> attributesToGet = new List<string>() { ActiveDirectoryChangeTrigger.ObjectClassAttribute };
                 attributesToGet.AddRange(ActiveDirectoryChangeTrigger.TimeStampAttributesToIgnore);
 
@@ -135,6 +138,8 @@ namespace Lithnet.Miiserver.AutoSync
                     PartialResultProcessing.ReturnPartialResultsAndNotifyCallback,
                     this.Notify,
                     r);
+
+                this.Log($"Listening for changes from {this.HostName}");
             }
             catch (Exception ex)
             {
@@ -376,6 +381,54 @@ namespace Lithnet.Miiserver.AutoSync
         private void OnDeserializing(StreamingContext context)
         {
             this.Initialize();
+        }
+        
+        private static string GetDomainOrNullFromFullyQualifiedName(string fqname)
+        {
+            if (string.IsNullOrWhiteSpace(fqname))
+            {
+                return null;
+            }
+
+            int sindex = fqname.IndexOf('\\');
+
+            if (sindex > -1)
+            {
+                return fqname.Substring(0, sindex);
+            }
+
+            sindex = fqname.IndexOf('@');
+
+            if (sindex > -1)
+            {
+                return fqname.Substring(sindex + 1, fqname.Length - sindex - 1);
+            }
+
+            return null;
+        }
+
+        private static string GetUserNameFromFullyQualifiedName(string fqname)
+        {
+            if (string.IsNullOrWhiteSpace(fqname))
+            {
+                return fqname;
+            }
+
+            int sindex = fqname.IndexOf('\\');
+
+            if (sindex > -1)
+            {
+                return fqname.Substring(sindex + 1, fqname.Length - sindex - 1);
+            }
+
+            sindex = fqname.IndexOf('@');
+
+            if (sindex > -1)
+            {
+                return fqname.Substring(0, sindex);
+            }
+
+            return fqname;
         }
     }
 }

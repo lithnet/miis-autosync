@@ -21,8 +21,8 @@
                     <RowDefinition/>
                     <RowDefinition/>
                     <RowDefinition/>
-                    <RowDefinition Height="5"/>
                     <RowDefinition/>
+                    <RowDefinition Height="5"/>
                     <RowDefinition/>
                     <RowDefinition/>
                 </Grid.RowDefinitions>
@@ -45,10 +45,10 @@
                          Margin="10 0 0 5"
                          Text="{Binding BaseDN}" />
 
-                <TextBlock Grid.Row="3" 
+                <TextBlock Grid.Row="4" 
                            Grid.Column="0" 
                            Text="Object classes"/>
-                <TextBox Grid.Row="3" 
+                <TextBox Grid.Row="4" 
                          Grid.Column="1" 
                          Margin="10 0 0 5"
                          Text="{Binding ObjectClasses}" />

@@ -88,7 +88,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             return s?.ExportCounters?.HasChanges ?? false;
         }
-        
+
         public static TResult InvokeThenClose<TChannel, TResult>(this TChannel client, Func<TChannel, TResult> function) where TChannel : ICommunicationObject
         {
             try

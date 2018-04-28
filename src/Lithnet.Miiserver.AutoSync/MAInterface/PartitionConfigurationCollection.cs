@@ -52,7 +52,7 @@ namespace Lithnet.Miiserver.AutoSync
 
         public PartitionConfiguration GetItemOrNull(string name)
         {
-            return this.FirstOrDefault(t => t.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+            return this.SingleOrDefault(t => t.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase));
         }
 
         public PartitionConfiguration GetDefaultOrFirstActivePartition()
