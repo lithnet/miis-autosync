@@ -30,9 +30,9 @@ namespace Lithnet.Miiserver.AutoSync
         [DataMember(Name = "run-immediate")]
         public bool RunImmediate { get; set; }
 
-        private double RemainingMilliseconds { get; set; }
+        private bool HasFired { get; set; }
 
-        private void SetRemainingMilliseconds()
+        private TimeSpan GetFirstInterval()
         {
             if (this.Interval.TotalSeconds < 1)
             {
@@ -47,23 +47,41 @@ namespace Lithnet.Miiserver.AutoSync
             DateTime triggerTime = this.StartDateTime;
             DateTime now = DateTime.Now;
 
+            if (triggerTime > now)
+            {
+                return triggerTime - now;
+            }
+            
+            TimeSpan difference = now - triggerTime;
+
+            int intervals = (int)(difference.Ticks / this.Interval.Ticks);
+
+            triggerTime = triggerTime.AddTicks(intervals * this.Interval.Ticks);
+
             while (triggerTime < now)
             {
                 triggerTime = triggerTime.Add(this.Interval);
             }
 
-            this.Log("Scheduling next event for " + triggerTime);
-            this.RemainingMilliseconds = (triggerTime - now).TotalMilliseconds;
+            this.Log($"Scheduling first event for {triggerTime} and will repeat every {this.Interval}");
+            return triggerTime - now;
         }
 
         private void CheckTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            ExecutionParameters p= new ExecutionParameters();
-            p.RunProfileName = this.RunProfileName;
-            p.Exclusive = this.Exclusive;
-            p.RunImmediate = this.RunImmediate;
+            ExecutionParameters p = new ExecutionParameters
+            {
+                RunProfileName = this.RunProfileName,
+                Exclusive = this.Exclusive,
+                RunImmediate = this.RunImmediate
+            };
+
             this.Fire(p);
-            this.ResetTimer();
+
+            if (!this.HasFired)
+            {
+                this.RevertToStandardInterval();
+            }
         }
 
         public override void Start(string managementAgentName)
@@ -82,20 +100,27 @@ namespace Lithnet.Miiserver.AutoSync
                 return;
             }
 
-            this.ResetTimer();
+            this.SetupTimer();
         }
 
-        private void ResetTimer()
+        private void SetupTimer()
         {
-            this.SetRemainingMilliseconds();
             this.checkTimer = new Timer
             {
-                Interval = this.RemainingMilliseconds,
+                Interval = this.GetFirstInterval().TotalMilliseconds,
                 AutoReset = false
             };
 
             this.checkTimer.Elapsed += this.CheckTimer_Elapsed;
             this.checkTimer.Start();
+        }
+
+        private void RevertToStandardInterval()
+        {
+            this.checkTimer.Interval = this.Interval.TotalMilliseconds;
+            this.checkTimer.AutoReset = true;
+            this.checkTimer.Start();
+            this.HasFired = true;
         }
 
         public override void Stop()
