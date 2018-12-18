@@ -1440,7 +1440,6 @@ namespace Lithnet.Miiserver.AutoSync
                 this.LogInfo("Starting action processing queue");
                 this.UpdateExecutionStatus(ControllerState.Idle, null, null);
 
-                // ReSharper disable once InconsistentlySynchronizedField
                 foreach (ExecutionParameters action in this.pendingActions.GetConsumingEnumerable(this.controllerCancellationTokenSource.Token))
                 {
                     this.controllerCancellationTokenSource.Token.ThrowIfCancellationRequested();

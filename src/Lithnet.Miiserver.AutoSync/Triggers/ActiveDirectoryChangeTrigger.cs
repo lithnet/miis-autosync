@@ -177,7 +177,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                     if (DateTime.Now < this.nextTriggerAfter)
                     {
-                        this.Trace("Discarding change because next trigger time has not been reached");
+                        //this.Trace("Discarding change because next trigger time has not been reached");
                         return;
                     }
 

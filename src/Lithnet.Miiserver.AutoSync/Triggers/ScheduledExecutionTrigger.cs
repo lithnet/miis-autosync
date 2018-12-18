@@ -100,6 +100,7 @@ namespace Lithnet.Miiserver.AutoSync
                 return;
             }
 
+            this.HasFired = false;
             this.SetupTimer();
         }
 
