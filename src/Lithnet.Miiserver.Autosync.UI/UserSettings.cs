@@ -40,7 +40,7 @@ namespace Lithnet.Miiserver.AutoSync.UI
         {
             get
             {
-                return (int)UserSettings.UserSettingsKey.GetValue(nameof(AutoSyncServerPort), 54338);
+                return (int)UserSettings.UserSettingsKey.GetValue(nameof(AutoSyncServerPort), 41338);
             }
         }
 

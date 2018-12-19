@@ -140,7 +140,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             get
             {
-                return (int)RegistrySettings.ParametersKey.GetValue(nameof(NetTcpBindPort), 54338);
+                return (int)RegistrySettings.ParametersKey.GetValue(nameof(NetTcpBindPort), 41338);
             }
         }
 
