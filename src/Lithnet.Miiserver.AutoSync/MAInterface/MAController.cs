@@ -818,6 +818,15 @@ namespace Lithnet.Miiserver.AutoSync
                             this.counters.RunCount.Increment();
                             stopwatch.Start();
                             result = this.ma.ExecuteRunProfile(e.RunProfileName, ts.Token);
+                            
+                            // The WMI call sometimes returns while still completing referential updates
+                            while (result == "completing-referential-updates")
+                            {
+                                this.Trace("Waiting for referential updates to complete");
+                                this.Wait(RegistrySettings.CompletingRefUpdatesSleepInterval, nameof(RegistrySettings.CompletingRefUpdatesSleepInterval), ts);
+                                result = this.ma.GetLastRun().LastStepStatus;
+                            }
+
                             stopwatch.Stop();
 
                             this.counters.AddExecutionTime(stopwatch.Elapsed);
@@ -849,7 +858,6 @@ namespace Lithnet.Miiserver.AutoSync
                     this.Trace("Getting run results");
                     r = this.ma.GetLastRun();
                     this.lastRunNumber = r.RunNumber;
-
                     this.Trace("Got run results");
 
                     this.RaiseRunProfileComplete(r.RunProfileName, r.LastStepStatus, r.RunNumber, r.StartTime, r.EndTime);

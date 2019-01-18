@@ -125,7 +125,7 @@ namespace Lithnet.Miiserver.AutoSync
                 throw new SyncEngineStoppedException("The MIM Synchronization service is not running");
             }
         }
-
+    
         public static string[] GetNtAccountName(string accountName)
         {
             if (accountName.Contains("\\"))

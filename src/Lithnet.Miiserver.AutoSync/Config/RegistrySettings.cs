@@ -211,6 +211,23 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
+        public static TimeSpan CompletingRefUpdatesSleepInterval
+        {
+            get
+            {
+                int seconds = (int)RegistrySettings.ParametersKey.GetValue(nameof(CompletingRefUpdatesSleepInterval), 0);
+
+                if (seconds > 0)
+                {
+                    return new TimeSpan(0, 0, seconds);
+                }
+                else
+                {
+                    return TimeSpan.FromSeconds(5);
+                }
+            }
+        }
+
         public static TimeSpan ExecutionStaggerInterval
         {
             get
