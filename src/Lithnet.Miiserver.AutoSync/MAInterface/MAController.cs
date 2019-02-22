@@ -51,8 +51,7 @@ namespace Lithnet.Miiserver.AutoSync
         private CancellationTokenSource jobCancellationTokenSource;
         private Dictionary<string, string> perProfileLastRunStatus;
         private ManagementAgent ma;
-        private BlockingCollection<ExecutionParameters> pendingActions;
-        private ExecutionParameterCollection pendingActionList;
+        private ActionQueue<ExecutionParameters> pendingActions;
         private MAControllerScript controllerScript;
         private Task internalTask;
         private PartitionDetectionMode detectionMode;
@@ -818,7 +817,7 @@ namespace Lithnet.Miiserver.AutoSync
                             this.counters.RunCount.Increment();
                             stopwatch.Start();
                             result = this.ma.ExecuteRunProfile(e.RunProfileName, ts.Token);
-                            
+
                             // The WMI call sometimes returns while still completing referential updates
                             while (result == "completing-referential-updates")
                             {
@@ -1201,8 +1200,7 @@ namespace Lithnet.Miiserver.AutoSync
                 gotLock = true;
                 this.ControlState = ControlState.Starting;
                 this.InternalStatus.ThresholdExceeded = false;
-                this.pendingActionList = new ExecutionParameterCollection();
-                this.pendingActions = new BlockingCollection<ExecutionParameters>(this.pendingActionList);
+                this.pendingActions = new ActionQueue<ExecutionParameters>();
                 this.perProfileLastRunStatus = new Dictionary<string, string>();
 
                 this.Setup(config);
@@ -1352,7 +1350,6 @@ namespace Lithnet.Miiserver.AutoSync
                 this.StopImportTimers();
                 this.ExecutionTriggers.Clear();
                 this.counters.Stop();
-                this.pendingActionList = null;
                 this.pendingActions = null;
                 this.internalTask = null;
                 this.InternalStatus.Clear();
@@ -1448,7 +1445,7 @@ namespace Lithnet.Miiserver.AutoSync
                 this.LogInfo("Starting action processing queue");
                 this.UpdateExecutionStatus(ControllerState.Idle, null, null);
 
-                foreach (ExecutionParameters action in this.pendingActions.GetConsumingEnumerable(this.controllerCancellationTokenSource.Token))
+                foreach (ExecutionParameters action in this.pendingActions.Consume(this.controllerCancellationTokenSource.Token))
                 {
                     this.controllerCancellationTokenSource.Token.ThrowIfCancellationRequested();
                     this.counters.CurrentQueueLength.Decrement();
@@ -2117,18 +2114,18 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                 }
 
-                if (this.pendingActions.ToArray().Contains(p))
+                if (this.pendingActions.Contains(p))
                 {
-                    if (p.RunImmediate && this.pendingActions.Count > 1)
+                    if (p.RunImmediate)
                     {
-                        this.LogInfo($"Moving {p.RunProfileName} to the front of the execution queue");
-                        this.pendingActionList.MoveToFront(p);
-                    }
-                    else
-                    {
-                        this.LogInfo($"{p.RunProfileName} requested by {source} was ignored because the run profile was already queued");
+                        if (this.pendingActions.MoveToFrontIfExists(p))
+                        {
+                            this.LogInfo($"Moved {p.RunProfileName} to the front of the execution queue");
+                            return;
+                        }
                     }
 
+                    this.LogInfo($"{p.RunProfileName} requested by {source} was ignored because the run profile was already queued");
                     return;
                 }
 
@@ -2147,13 +2144,12 @@ namespace Lithnet.Miiserver.AutoSync
 
                 if (p.RunImmediate)
                 {
-                    this.pendingActions.Add(p, this.controllerCancellationTokenSource.Token);
-                    this.pendingActionList.MoveToFront(p);
+                    this.pendingActions.AddToFront(p);
                     this.LogInfo($"Added {p.RunProfileName} to the front of the execution queue (triggered by: {source})");
                 }
                 else
                 {
-                    this.pendingActions.Add(p, this.controllerCancellationTokenSource.Token);
+                    this.pendingActions.Add(p);
                     this.LogInfo($"Added {p.RunProfileName} to the execution queue (triggered by: {source})");
                 }
 

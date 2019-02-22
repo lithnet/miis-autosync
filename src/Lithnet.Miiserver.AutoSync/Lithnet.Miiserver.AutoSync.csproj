@@ -117,11 +117,11 @@
     <Compile Include="Exceptions\NoSuchManagementAgentException.cs" />
     <Compile Include="Exceptions\SyncEngineStoppedException.cs" />
     <Compile Include="Exceptions\ThresholdExceededException.cs" />
+    <Compile Include="MAInterface\ActionQueue.cs" />
     <Compile Include="MAInterface\PartitionConfigurationCollection.cs" />
     <Compile Include="MAInterface\MAControllerConfigurationCollection.cs" />
     <Compile Include="MAInterface\MAStatus.cs" />
     <Compile Include="ExecutionEngine.cs" />
-    <Compile Include="MAInterface\ExecutionParameterCollection.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Mail\MessageBuilder.cs" />
     <Compile Include="Mail\MessageSender.cs" />
