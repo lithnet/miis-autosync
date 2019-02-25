@@ -1,18 +1,15 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Lithnet.Miiserver.AutoSync
 {
-    internal class ActionQueue<T>
+    internal class ActionQueue<T> where T : ExecutionParameters
     {
         private List<T> queue;
         private readonly SemaphoreSlim itemNotification;
-        private readonly SemaphoreSlim completeAdding;
+        private readonly CancellationTokenSource completeAddingCancellationToken;
         private bool complete;
         private object lockItem;
 
@@ -22,67 +19,10 @@ namespace Lithnet.Miiserver.AutoSync
             this.lockItem = new object();
             this.queue = new List<T>();
             this.itemNotification = new SemaphoreSlim(0);
-            this.completeAdding = new SemaphoreSlim(0);
+            this.completeAddingCancellationToken = new CancellationTokenSource();
         }
 
-        public void Add(T item)
-        {
-            if (this.complete)
-            {
-                throw new InvalidOperationException();
-            }
-
-            lock (this.lockItem)
-            {
-                this.queue.Add(item);
-            }
-
-            this.itemNotification.Release();
-        }
-
-        public void AddToFront(T item)
-        {
-            if (this.complete)
-            {
-                throw new InvalidOperationException();
-            }
-
-            lock (this.lockItem)
-            {
-                this.queue.Insert(0, item);
-            }
-
-            this.itemNotification.Release();
-        }
-
-        public void MoveToFront(T item)
-        {
-            if (this.complete)
-            {
-                throw new InvalidOperationException();
-            }
-
-            lock (this.lockItem)
-            {
-                this.queue.Remove(item);
-                this.queue.Insert(0, item);
-            }
-        }
-
-        public bool Contains(T item)
-        {
-            if (this.complete)
-            {
-                throw new InvalidOperationException();
-            }
-
-            lock (this.lockItem)
-            {
-                return this.queue.Contains(item);
-            }
-        }
-
-        public bool MoveToFrontIfExists(T item)
+        public bool Add(T item)
         {
             if (this.complete)
             {
@@ -93,18 +33,34 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 if (this.queue.Contains(item))
                 {
-                    if (this.queue.Count == 1)
+                    if (item.RunImmediate)
                     {
-                        return false;
+                        if (this.queue.Count == 1)
+                        {
+                            return false;
+                        }
+
+                        this.queue.Remove(item);
+                        this.queue.Insert(0, item);
                     }
 
-                    this.queue.Remove(item);
-                    this.queue.Insert(0, item);
-                    return true;
+                    return false;
+                }
+                else
+                {
+                    if (item.RunImmediate)
+                    {
+                        this.queue.Insert(0, item);
+                    }
+                    else
+                    {
+                        this.queue.Add(item);
+                    }
                 }
             }
 
-            return false;
+            this.itemNotification.Release();
+            return true;
         }
 
         public void CompleteAdding()
@@ -115,34 +71,44 @@ namespace Lithnet.Miiserver.AutoSync
             }
 
             this.complete = true;
-            this.completeAdding.Release();
+            this.completeAddingCancellationToken.Cancel();
         }
 
         public IEnumerable<T> Consume(CancellationToken token)
         {
             while (!token.IsCancellationRequested)
             {
-                WaitHandle.WaitAny(new[] { this.itemNotification.AvailableWaitHandle, this.completeAdding.AvailableWaitHandle, token.WaitHandle });
+                this.itemNotification.Wait(CancellationTokenSource.CreateLinkedTokenSource(token, this.completeAddingCancellationToken.Token).Token);
 
                 if (this.complete || token.IsCancellationRequested)
                 {
                     yield break;
                 }
 
+                T item = null;
+
                 lock (this.lockItem)
                 {
-                    T item = this.queue[0];
-                    this.queue.RemoveAt(0);
+                    if (this.queue.Count > 0)
+                    {
+                        item = this.queue[0];
+                        this.queue.RemoveAt(0);
+                    }
+                }
+
+                if (item != null)
+                {
                     yield return item;
                 }
             }
         }
 
-        public T[] ToArray()
+        public override string ToString()
         {
             lock (this.lockItem)
             {
-                return this.queue.ToArray();
+                return string.Join(", ", this.queue.Select(t => t.RunProfileName)
+                );
             }
         }
     }

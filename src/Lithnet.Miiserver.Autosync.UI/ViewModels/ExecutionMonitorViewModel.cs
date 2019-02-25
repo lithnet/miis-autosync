@@ -43,7 +43,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             get
             {
-                if (this.ThresholdExceeded)
+                if (this.ErrorState != ErrorState.None)
                 {
                     return App.GetImageResource("Blocked.png");
                 }
@@ -90,7 +90,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public string Message { get; private set; }
 
-        public bool ThresholdExceeded { get; private set; }
+        public ErrorState ErrorState { get; private set; }
 
         public string ExecutingRunProfile { get; private set; }
 
@@ -148,7 +148,26 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public void MAStatusChanged(MAStatus status)
         {
-            this.Message = status.ThresholdExceeded ? "Threshold exceeded" : status.Message;
+            switch (status.ErrorState)
+            {
+                case ErrorState.ControllerFaulted:
+                    this.Message = "An unexpected error occurred in the controller";
+                    break;
+
+                case ErrorState.None:
+                    this.Message = status.Message;
+                    break;
+
+                case ErrorState.ThresholdExceeded:
+                    this.Message = "Threshold exceeded";
+                    break;
+
+                case ErrorState.UnexpectedChange:
+                    this.Message = "The controller was terminated due to unexpected changes";
+                    break;
+
+            }
+
             this.ExecutingRunProfile = status.ExecutingRunProfile;
             this.ExecutionQueue = status.ExecutionQueue;
             this.DisplayState = status.DisplayState;
@@ -157,7 +176,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.HasExclusiveLock = status.HasExclusiveLock;
             this.HasSyncLock = status.HasSyncLock;
             this.HasForeignLock = status.HasForeignLock;
-            this.ThresholdExceeded = status.ThresholdExceeded;
+            this.ErrorState = status.ErrorState;
 
             this.Disabled = this.ControlState == ControlState.Disabled;
         }

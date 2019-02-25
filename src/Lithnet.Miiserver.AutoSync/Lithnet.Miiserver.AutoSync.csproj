@@ -98,6 +98,7 @@
     <Compile Include="ConfigService\IConfigService.cs" />
     <Compile Include="Config\ConfigFile.cs" />
     <Compile Include="Config\Settings.cs" />
+    <Compile Include="Enums\ErrorState.cs" />
     <Compile Include="Enums\ExecutionErrorBehaviour.cs" />
     <Compile Include="Enums\AutoImportScheduling.cs" />
     <Compile Include="Enums\ControlState.cs" />

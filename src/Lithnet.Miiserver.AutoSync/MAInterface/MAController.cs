@@ -1084,7 +1084,7 @@ namespace Lithnet.Miiserver.AutoSync
 
             if (this.controllerScript.HasStoppedMA)
             {
-                this.Stop(false, false, false);
+                this.Stop(false, false, ErrorState.UnexpectedChange);
                 return;
             }
 
@@ -1164,7 +1164,7 @@ namespace Lithnet.Miiserver.AutoSync
             else
             {
                 this.LogWarn($"Controller indicated that management agent controller should stop further processing on this MA. Run Profile {this.ExecutingRunProfile}");
-                this.Stop(false, false, false);
+                this.Stop(false, false, ErrorState.UnexpectedChange);
             }
         }
 
@@ -1199,7 +1199,7 @@ namespace Lithnet.Miiserver.AutoSync
                 this.WaitAndTakeLock(this.serviceControlLock, nameof(this.serviceControlLock), this.controllerCancellationTokenSource);
                 gotLock = true;
                 this.ControlState = ControlState.Starting;
-                this.InternalStatus.ThresholdExceeded = false;
+                this.InternalStatus.ErrorState = ErrorState.None;
                 this.pendingActions = new ActionQueue<ExecutionParameters>();
                 this.perProfileLastRunStatus = new Dictionary<string, string>();
 
@@ -1236,6 +1236,7 @@ namespace Lithnet.Miiserver.AutoSync
                     catch (Exception ex)
                     {
                         this.LogError(ex, "The controller encountered a unrecoverable error");
+                        this.Stop(false, false, ErrorState.ControllerFaulted);
                     }
                 }, this.controllerCancellationTokenSource.Token);
 
@@ -1246,7 +1247,7 @@ namespace Lithnet.Miiserver.AutoSync
             catch (Exception ex)
             {
                 logger.Error(ex, "An error occurred starting the controller");
-                this.Stop(false, false, false);
+                this.Stop(false, false, ErrorState.ControllerFaulted);
                 this.Message = $"Startup error: {ex.Message}";
             }
             finally
@@ -1282,7 +1283,7 @@ namespace Lithnet.Miiserver.AutoSync
             }
         }
 
-        public void Stop(bool cancelRun, bool waitForInternalTask, bool thresholdExceeded)
+        public void Stop(bool cancelRun, bool waitForInternalTask, ErrorState errorState = ErrorState.None)
         {
             bool gotLock = false;
 
@@ -1355,9 +1356,9 @@ namespace Lithnet.Miiserver.AutoSync
                 this.InternalStatus.Clear();
                 this.ControlState = ControlState.Stopped;
 
-                if (thresholdExceeded)
+                if (errorState != ErrorState.None)
                 {
-                    this.InternalStatus.ThresholdExceeded = true;
+                    this.InternalStatus.ErrorState = errorState;
                     this.RaiseStateChange();
                 }
 
@@ -1418,7 +1419,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 this.LogWarn($"Threshold was exceeded on management agent run profile {this.ExecutingRunProfile}. The controller will be stopped\n{ex.Message}");
                 this.SendThresholdExceededMail(ex.RunDetails, ex.Message);
-                this.Stop(false, false, true);
+                this.Stop(false, false, ErrorState.ThresholdExceeded);
                 throw;
             }
             catch (Exception ex)
@@ -1618,7 +1619,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 this.LogWarn($"Threshold was exceeded on management agent run profile {this.ExecutingRunProfile}. The controller will be stopped\n{ex.Message}");
                 this.SendThresholdExceededMail(ex.RunDetails, ex.Message);
-                this.Stop(false, false, true);
+                this.Stop(false, false, ErrorState.ThresholdExceeded);
             }
             finally
             {
@@ -1772,7 +1773,7 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 this.LogWarn($"Threshold was exceeded on management agent run profile {this.ExecutingRunProfile}. The controller will be stopped\n{ex.Message}");
                 this.SendThresholdExceededMail(ex.RunDetails, ex.Message);
-                this.Stop(false, false, true);
+                this.Stop(false, false, ErrorState.ThresholdExceeded);
             }
             finally
             {
@@ -2114,43 +2115,23 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                 }
 
-                if (this.pendingActions.Contains(p))
+                p.QueueID = Interlocked.Increment(ref MAController.CurrentQueueID);
+                this.Trace($"Got queue request for {p.RunProfileName} with id {p.QueueID}");
+
+                if (this.pendingActions.Add(p))
                 {
                     if (p.RunImmediate)
                     {
-                        if (this.pendingActions.MoveToFrontIfExists(p))
-                        {
-                            this.LogInfo($"Moved {p.RunProfileName} to the front of the execution queue");
-                            return;
-                        }
+                        this.LogInfo($"Added {p.RunProfileName} to the front of the execution queue (triggered by: {source})");
                     }
-
-                    this.LogInfo($"{p.RunProfileName} requested by {source} was ignored because the run profile was already queued");
-                    return;
-                }
-
-                // Removing this as it may caused changes to go unseen. e.g an import is in progress, 
-                // a snapshot is taken, but new items become available during the import of the snapshot
-
-                //if (p.RunProfileName.Equals(this.ExecutingRunProfile, StringComparison.OrdinalIgnoreCase))
-                //{
-                //    this.Trace($"Ignoring queue request for {p.RunProfileName} as it is currently executing");
-                //    return;
-                //}
-
-                p.QueueID = Interlocked.Increment(ref MAController.CurrentQueueID);
-
-                this.Trace($"Got queue request for {p.RunProfileName} with id {p.QueueID}");
-
-                if (p.RunImmediate)
-                {
-                    this.pendingActions.AddToFront(p);
-                    this.LogInfo($"Added {p.RunProfileName} to the front of the execution queue (triggered by: {source})");
+                    else
+                    {
+                        this.LogInfo($"Added {p.RunProfileName} to the execution queue (triggered by: {source})");
+                    }
                 }
                 else
                 {
-                    this.pendingActions.Add(p);
-                    this.LogInfo($"Added {p.RunProfileName} to the execution queue (triggered by: {source})");
+                    this.LogInfo($"{p.RunProfileName} requested by {source} was ignored because the run profile was already queued");
                 }
 
                 this.counters.CurrentQueueLength.Increment();
@@ -2173,7 +2154,7 @@ namespace Lithnet.Miiserver.AutoSync
             // the event an add or remove is in progress. Other functions such as ToList are generic and can cause
             // collection modified exceptions when enumerating the values
 
-            string queuedNames = string.Join(",", this.pendingActions.ToArray().Select(t => t.RunProfileName));
+            string queuedNames = this.pendingActions.ToString();
 
             if (includeExecuting && this.ExecutingRunProfile != null)
             {

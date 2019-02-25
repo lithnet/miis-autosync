@@ -59,7 +59,7 @@ namespace Lithnet.Miiserver.AutoSync
         public bool HasForeignLock { get; internal set; }
 
         [DataMember]
-        public bool ThresholdExceeded { get; internal set; }
+        public ErrorState ErrorState { get; internal set; }
         
         public void Clear()
         {
