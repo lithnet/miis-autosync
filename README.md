@@ -24,12 +24,10 @@ AutoSync follows the Microsoft guidelines when it comes to running multiple mana
 ### Download the software
 Download the [current release](https://github.com/lithnet/miis-autosync/releases/)
 
-### How can I contribute to the project
-Found an issue?
-*   [Log it](https://github.com/lithnet/miis-autosync/issues)
-
-Want to fix an issue?
-*   Clone the project and submit a pull request
+## How can I contribute to the project?
+* Found an issue and want us to fix it? [Log it](https://github.com/lithnet/miis-autosync/issues)
+* Want to fix an issue yourself or add functionality? Clone the project and submit a pull request
+* Make a [donation](https://lithnet.io/donate) and help us cover our costs
 
 ### Keep up to date
 *   [Visit my blog](http://blog.lithiumblue.com)
