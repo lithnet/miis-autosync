@@ -341,7 +341,8 @@ namespace Lithnet.Miiserver.AutoSync
         public static bool CanCreateForMA(ManagementAgent ma)
         {
             return ma.Category.Equals("AD", StringComparison.OrdinalIgnoreCase) ||
-                   ma.Category.Equals("ADAM", StringComparison.OrdinalIgnoreCase);
+                   ma.Category.Equals("ADAM", StringComparison.OrdinalIgnoreCase) ||
+                   ma.Category.Equals("AD GAL", StringComparison.OrdinalIgnoreCase);
         }
 
         public ActiveDirectoryChangeTrigger(ManagementAgent ma)
