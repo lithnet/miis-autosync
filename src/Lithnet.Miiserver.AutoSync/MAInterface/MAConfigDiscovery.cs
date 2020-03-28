@@ -121,6 +121,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                 case "ADAM":
                 case "AD":
+                case "AD GAL":
                     ActiveDirectoryChangeTrigger t2 = new ActiveDirectoryChangeTrigger(ma);
                     config.Triggers.Add(t2);
                     break;
