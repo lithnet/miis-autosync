@@ -50,7 +50,7 @@ namespace Lithnet.Miiserver.AutoSync
         public override string Type => TypeDescription;
 
         public override string Description => $"{this.DisabledText}{System.IO.Path.GetFileName(this.ScriptPath)}";
-        
+
         [DataMember(Name = "interval")]
         public TimeSpan Interval { get; set; }
 
@@ -101,6 +101,7 @@ namespace Lithnet.Miiserver.AutoSync
                 }
 
                 bool cmdletRequiresCredentials = c.Parameters.ContainsKey("credentials");
+                bool cmdletRequiresMaName = c.Parameters.ContainsKey("maname");
 
                 PSCredential creds = this.GetCredentialPackage();
 
@@ -108,20 +109,23 @@ namespace Lithnet.Miiserver.AutoSync
                 {
                     this.LogError("Credentials were provided for the PowerShell script, but the Get-RunProfileToExecute function did not contain a 'credentials' parameter. See the wiki topic (https://github.com/lithnet/miis-autosync/wiki/Powershell-script-trigger) for more information");
                 }
-                
+
                 while (!this.cancellationToken.Token.IsCancellationRequested)
                 {
                     this.cancellationToken.Token.ThrowIfCancellationRequested();
 
                     this.powershell.ResetState();
 
+                    this.powershell.AddCommand("Get-RunProfileToExecute");
+
                     if (cmdletRequiresCredentials)
                     {
-                        this.powershell.AddCommand("Get-RunProfileToExecute").AddParameter("credentials", creds);
+                        this.powershell.AddParameter("credentials", creds);
                     }
-                    else
+
+                    if (cmdletRequiresMaName)
                     {
-                        this.powershell.AddCommand("Get-RunProfileToExecute");
+                        this.powershell.AddParameter("maname", this.ManagementAgentName);
                     }
 
                     Collection<PSObject> results;
