@@ -312,7 +312,7 @@ namespace Lithnet.Miiserver.AutoSync
 #if DEBUG
         public static void SetupOutOfBandInstance()
         {
-            LogManager.Configuration = new XmlLoggingConfiguration(@"D:\github\lithnet\miis-autosync\src\Lithnet.Miiserver.AutoSync\bin\Debug\Lithnet.Miiserver.AutoSync.exe.config");
+            LogManager.Configuration = new XmlLoggingConfiguration(@"D:\dev\git\lithnet\miis-autosync\src\Lithnet.Miiserver.AutoSync\bin\Debug\Lithnet.Miiserver.AutoSync.exe.config");
 
             foreach (LoggingRule item in LogManager.Configuration.LoggingRules.Where(t => t.Targets.Any(u => u.Name == "autosync-service-file")))
             {
