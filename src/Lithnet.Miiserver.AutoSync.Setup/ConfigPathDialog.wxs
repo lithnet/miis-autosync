@@ -26,7 +26,7 @@
         <Control Id="SvcAdminsLabel" Type="Text"  X="15"  Y="130" Height="15" Width="51"  Text="Group name:" />
         <Control Id="SvcAdminstxt" Type="Edit"    X="90"  Y="130" Height="15" Width="200" Property="SERVICE_ADMINS_GROUP"/>
 
-        <Control Id="AddAccountLabel" Type="Text" X="15"  Y="160" Height="30" Width="348" TabSkip="no" Text="The AutoSync service account specified above needs to be a member of the MIM Sync Admins group. This installer will not be able to continue if these permissions are not available" />
+        <Control Id="AddAccountLabel" Type="Text" X="15"  Y="160" Height="30" Width="348" TabSkip="no" Text="The AutoSync service account specified above needs to be a member of the MIM Sync Admins group. This installer will not be able to continue if these permissions are not available." />
         <Control Id="check1" Type="CheckBox"      X="90"  Y="180" Height="15" Width="220" Text="Add the service account to the group during installation" Property="ADD_TO_FIM_SYNC_ADMINS" CheckBoxValue="1"/>
         <Control Id="label5" Type="Text"          X="15"  Y="200" Height="15" Width="75"  Text="MIM Admins group:" />
         <Control Id="AdminGroupEdit" Type="Edit"  X="90"  Y="200" Height="15" Width="220" Property="GROUP_FIM_SYNC_ADMINS_NAME" >

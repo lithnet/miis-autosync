@@ -99,7 +99,7 @@ namespace Lithnet.Miiserver.AutoSync.Setup.CustomActions
                 throw new NoMatchingPrincipalException($"The group {groupName} could not be found");
             }
 
-            UserPrincipal user = (UserPrincipal)CustomActions.FindInDomainOrMachine(account, out isMachine);
+            var user = CustomActions.FindInDomainOrMachine(account, out isMachine);
 
             if (user == null)
             {
