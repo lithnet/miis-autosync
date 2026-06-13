@@ -1,5 +1,4 @@
-﻿using Lithnet.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.ServiceModel;
@@ -7,8 +6,8 @@ using System.ServiceProcess;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using Wpf.Ui.Appearance;
 
 namespace Lithnet.Miiserver.AutoSync.UI
 {
@@ -103,6 +102,14 @@ namespace Lithnet.Miiserver.AutoSync.UI
             }
         }
 
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            // Match the current Windows light/dark app theme on launch. The main window
+            // additionally calls SystemThemeWatcher.Watch to track later OS theme changes.
+            ApplicationThemeManager.ApplySystemTheme();
+            base.OnStartup(e);
+        }
+
         private void ShowDummyWindow()
         {
             Window t = new Window() { AllowsTransparency = true, ShowInTaskbar = false, WindowStyle = WindowStyle.None, Background = Brushes.Transparent };
@@ -169,8 +176,8 @@ namespace Lithnet.Miiserver.AutoSync.UI
 
                 this.hasThrown = true;
 
-                Logger.WriteLine("Unhandled exception in application");
-                Logger.WriteLine(e.ToString());
+                Trace.WriteLine("Unhandled exception in application");
+                Trace.WriteLine(e.ToString());
                 MessageBox.Show(
                     $"An unexpected error occurred and the editor will terminate\n\n {e.Message}",
                     "Error",
@@ -210,10 +217,5 @@ namespace Lithnet.Miiserver.AutoSync.UI
         }
 
         public static string Hostname => UserSettings.AutoSyncServerHost;
-
-        internal static BitmapImage GetImageResource(string name)
-        {
-            return new BitmapImage(new Uri($"pack://application:,,,/Resources/{name}", UriKind.Absolute));
-        }
     }
 }

@@ -75,10 +75,10 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 item.IsDirtySet += this.MAConfigParametersViewModel_IsDirtySet;
             }
 
-            this.DisplayIcon = App.GetImageResource("Settings.ico");
-
             this.PopulateMenuItems();
         }
+
+        public Wpf.Ui.Controls.SymbolRegular IconSymbol => Wpf.Ui.Controls.SymbolRegular.Server24;
 
         private void PopulateMenuItems()
         {
@@ -86,10 +86,10 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             {
                 this.MenuItems = new ObservableCollection<MenuItemViewModelBase>();
 
-                this.MenuItems.Add(new MenuItemViewModel()
+                this.MenuItems.Add(new SymbolMenuItemViewModel()
                 {
                     Header = "Remove missing management agent...",
-                    Icon = App.GetImageResource("Cancel.ico"),
+                    Symbol = Wpf.Ui.Controls.SymbolRegular.Delete24,
                     Command = new DelegateCommand(t => this.Remove(), t => this.CanRemove()),
                 });
             }
@@ -299,7 +299,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                AddTriggerWindow window = new AddTriggerWindow { DataContext = this };
+                AddTriggerWindow window = new AddTriggerWindow { DataContext = this, Owner = System.Windows.Application.Current.MainWindow };
                 this.GetAllowedTypesForMa();
                 this.SelectedTrigger = this.AllowedTriggers?.FirstOrDefault();
 

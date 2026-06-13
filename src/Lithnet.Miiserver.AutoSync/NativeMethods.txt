@@ -1,0 +1,15 @@
+OpenSCManager
+OpenService
+CreateService
+DeleteService
+ChangeServiceConfig
+ChangeServiceConfig2
+SERVICE_DESCRIPTIONW
+SC_MANAGER_ALL_ACCESS
+SERVICE_ALL_ACCESS
+LsaOpenPolicy
+LsaAddAccountRights
+LsaClose
+LsaNtStatusToWinError
+POLICY_CREATE_ACCOUNT
+POLICY_LOOKUP_NAMES

@@ -2,7 +2,7 @@
                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
                      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-                     xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
+                     xmlns:wpfui="http://schemas.lepo.co/wpfui/2022/xaml"
                      xmlns:viewModels="clr-namespace:Lithnet.Miiserver.AutoSync.UI.ViewModels"
                      xmlns:ui="clr-namespace:Lithnet.Miiserver.AutoSync.UI"
                      mc:Ignorable="d" >
@@ -119,14 +119,14 @@
                                 Grid.Row="2"
                                 Grid.Column="0"
                                 Content="Mail host port"/>
-                                <controls:NumericUpDown  Grid.Row="2"
+                                <wpfui:NumberBox Grid.Row="2"
                                                      Grid.Column="1"
-                                                     Value="{Binding MailPort}" 
+                                                     Value="{Binding MailPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                                                      Minimum="0" 
                                                      Margin="10 0 0 5" 
                                                      HorizontalAlignment="Left"
                                                      Width="Auto"
-                                                     HasDecimals="False"/>
+                                                     MaxDecimalPlaces="0"/>
 
                                 <Label
                                 Grid.Row="3"
@@ -217,14 +217,14 @@
                                 Grid.Row="13"
                                 Grid.Column="0"
                                 Content="Maximum number of error records to include in report"/>
-                                <controls:NumericUpDown  Grid.Row="13"
+                                <wpfui:NumberBox Grid.Row="13"
                                                      Grid.Column="1"
-                                                     Value="{Binding MailMaxErrors}" 
+                                                     Value="{Binding MailMaxErrors, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                                                      Minimum="0" 
                                                      Margin="10 0 0 5" 
                                                      HorizontalAlignment="Left"
                                                      Width="Auto"
-                                                     HasDecimals="False"/>
+                                                     MaxDecimalPlaces="0"/>
                             </Grid>
                         </TabItem>
 

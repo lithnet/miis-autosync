@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Timers;
@@ -9,6 +9,17 @@ namespace Lithnet.Miiserver.AutoSync
     internal class MAControllerPerfCounters
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
+
+        /// <summary>
+        /// The performance counter category. This category is created by the installer
+        /// (see Setup.RegisterPerformanceCounters); this class only consumes it.
+        /// </summary>
+        internal const string CategoryName = "Lithnet AutoSync";
+
+        // True only when all counters were opened successfully. When the category is missing
+        // (e.g. a manual/dev run without the installer), counter reporting is disabled rather
+        // than allowed to throw out of the constructor and take the controller down with it.
+        private readonly bool enabled;
 
         private Stopwatch activeTimer;
 
@@ -41,23 +52,36 @@ namespace Lithnet.Miiserver.AutoSync
 
         public MAControllerPerfCounters(string maName)
         {
-            this.RunCount = MAControllerPerfCounters.CreateCounter("Runs/10 min", maName);
-            this.WaitTimeAverageSyncLock = MAControllerPerfCounters.CreateCounter("Wait time average - sync lock", maName);
-            this.WaitTimeAverageExclusiveLock = MAControllerPerfCounters.CreateCounter("Wait time average - exclusive lock", maName);
-            this.WaitTimeAverage = MAControllerPerfCounters.CreateCounter("Wait time average", maName);
-            this.WaitTimeSyncLock = MAControllerPerfCounters.CreateCounter("Wait time % - sync lock", maName);
-            this.WaitTimeExclusiveLock = MAControllerPerfCounters.CreateCounter("Wait time % - exclusive lock", maName);
-            this.WaitTime = MAControllerPerfCounters.CreateCounter("Wait time %", maName);
-            this.ExecutionTimeAverage = MAControllerPerfCounters.CreateCounter("Execution time average", maName);
-            this.ExecutionTimeTotal = MAControllerPerfCounters.CreateCounter("Execution time %", maName);
-            this.CurrentQueueLength = MAControllerPerfCounters.CreateCounter("Queue length", maName);
-            this.IdleTimePercent = MAControllerPerfCounters.CreateCounter("Idle time %", maName);
-
             this.activeTimer = new Stopwatch();
             this.timer = new Timer();
             this.timer.Interval = TimeSpan.FromSeconds(5).TotalMilliseconds;
             this.timer.Elapsed += this.Timer_Elapsed;
             this.executionHistory = new List<DateTime>();
+
+            try
+            {
+                this.RunCount = MAControllerPerfCounters.CreateCounter("Runs/10 min", maName);
+                this.WaitTimeAverageSyncLock = MAControllerPerfCounters.CreateCounter("Wait time average - sync lock", maName);
+                this.WaitTimeAverageExclusiveLock = MAControllerPerfCounters.CreateCounter("Wait time average - exclusive lock", maName);
+                this.WaitTimeAverage = MAControllerPerfCounters.CreateCounter("Wait time average", maName);
+                this.WaitTimeSyncLock = MAControllerPerfCounters.CreateCounter("Wait time % - sync lock", maName);
+                this.WaitTimeExclusiveLock = MAControllerPerfCounters.CreateCounter("Wait time % - exclusive lock", maName);
+                this.WaitTime = MAControllerPerfCounters.CreateCounter("Wait time %", maName);
+                this.ExecutionTimeAverage = MAControllerPerfCounters.CreateCounter("Execution time average", maName);
+                this.ExecutionTimeTotal = MAControllerPerfCounters.CreateCounter("Execution time %", maName);
+                this.CurrentQueueLength = MAControllerPerfCounters.CreateCounter("Queue length", maName);
+                this.IdleTimePercent = MAControllerPerfCounters.CreateCounter("Idle time %", maName);
+
+                this.enabled = true;
+            }
+            catch (Exception ex)
+            {
+                // The category is created by the installer. If it is missing (or the counters
+                // cannot be opened), disable reporting instead of failing the controller --
+                // performance counters are non-critical telemetry.
+                logger.Warn(ex, $"Performance counters are unavailable; performance reporting for '{maName}' is disabled. Ensure the '{MAControllerPerfCounters.CategoryName}' category is registered (this is done by the installer).");
+                this.enabled = false;
+            }
         }
 
         private void Timer_Elapsed(object sender, ElapsedEventArgs e)
@@ -67,6 +91,11 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void Stop()
         {
+            if (!this.enabled)
+            {
+                return;
+            }
+
             this.timer?.Stop();
             this.activeTimer?.Stop();
             this.ResetValues();
@@ -74,9 +103,47 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void Start()
         {
+            if (!this.enabled)
+            {
+                return;
+            }
+
             this.activeTimer.Restart();
             this.ResetValues();
             this.timer.Start();
+        }
+
+        /// <summary>Increments the run counter, if performance counters are available.</summary>
+        public void IncrementRunCount()
+        {
+            if (!this.enabled)
+            {
+                return;
+            }
+
+            this.RunCount.Increment();
+        }
+
+        /// <summary>Increments the queue-length counter, if performance counters are available.</summary>
+        public void IncrementQueueLength()
+        {
+            if (!this.enabled)
+            {
+                return;
+            }
+
+            this.CurrentQueueLength.Increment();
+        }
+
+        /// <summary>Decrements the queue-length counter, if performance counters are available.</summary>
+        public void DecrementQueueLength()
+        {
+            if (!this.enabled)
+            {
+                return;
+            }
+
+            this.CurrentQueueLength.Decrement();
         }
 
         private void ResetValues()
@@ -113,7 +180,7 @@ namespace Lithnet.Miiserver.AutoSync
         {
             return new PerformanceCounter()
             {
-                CategoryName = "Lithnet AutoSync",
+                CategoryName = MAControllerPerfCounters.CategoryName,
                 CounterName = name,
                 MachineName = ".",
                 InstanceLifetime = PerformanceCounterInstanceLifetime.Global,
@@ -129,6 +196,11 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void AddExecutionTime(TimeSpan value)
         {
+            if (!this.enabled)
+            {
+                return;
+            }
+
             this.executionTimeTotal = this.executionTimeTotal.Add(value);
             this.executionTimeCounts++;
             this.executionHistory.Add(DateTime.Now);
@@ -141,6 +213,11 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void AddWaitTime(TimeSpan value)
         {
+            if (!this.enabled)
+            {
+                return;
+            }
+
             this.waitTimeTotal = this.waitTimeTotal.Add(value);
             this.waitTimeCounts++;
             this.UpdateCounters();
@@ -151,6 +228,11 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void AddWaitTimeSync(TimeSpan value)
         {
+            if (!this.enabled)
+            {
+                return;
+            }
+
             this.waitTimeSync = this.waitTimeSync.Add(value);
             this.waitTimeSyncCounts++;
             this.UpdateCounters();
@@ -161,6 +243,11 @@ namespace Lithnet.Miiserver.AutoSync
 
         public void AddWaitTimeExclusive(TimeSpan value)
         {
+            if (!this.enabled)
+            {
+                return;
+            }
+
             this.waitTimeExclusive = this.waitTimeExclusive.Add(value);
             this.waitTimeExclusiveCounts++;
             this.UpdateCounters();
@@ -168,6 +255,11 @@ namespace Lithnet.Miiserver.AutoSync
 
         private void UpdateCounters()
         {
+            if (!this.enabled)
+            {
+                return;
+            }
+
             try
             {
                 double elapsed = this.activeTimer.Elapsed.TotalSeconds;

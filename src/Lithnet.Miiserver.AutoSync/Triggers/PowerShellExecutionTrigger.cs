@@ -224,6 +224,9 @@ namespace Lithnet.Miiserver.AutoSync
                     }
                 }
 
+                this.powershell?.Dispose();
+                this.powershell = null;
+
                 this.Trace($"{this.DisplayName}: Stopped");
             }
             catch (AggregateException e)

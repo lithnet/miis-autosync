@@ -54,14 +54,14 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
         }
 
+        public Wpf.Ui.Controls.SymbolRegular IconSymbol => Wpf.Ui.Controls.SymbolRegular.Pulse24;
+
         public ExecutionMonitorsViewModel(IList<object> items)
             : base(items, ExecutionMonitorsViewModel.ViewModelResolver)
         {
             this.Commands.AddItem("StartEngine", x => this.StartEngine(), x => this.CanStartEngine());
             this.Commands.AddItem("StopEngine", x => this.StopEngine(false), x => this.CanStopEngine());
             this.Commands.AddItem("StopEngineAndCancelRuns", x => this.StopEngine(true), x => this.CanStopEngine());
-
-            this.DisplayIcon = App.GetImageResource("Monitor.ico");
 
             ExecutionMonitorViewModel vm = this.ViewModels.FirstOrDefault();
             if (vm != null)

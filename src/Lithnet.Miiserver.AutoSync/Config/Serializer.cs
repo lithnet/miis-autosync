@@ -104,36 +104,36 @@ namespace Lithnet.Miiserver.AutoSync
                 writerSettings.NewLineChars = Environment.NewLine;
                 writerSettings.NamespaceHandling = NamespaceHandling.OmitDuplicates;
                 
-                XmlWriter writer = XmlWriter.Create(stream, writerSettings);
-                
-                DataContractSerializer serializer;
+                using (XmlWriter writer = XmlWriter.Create(stream, writerSettings))
+                {
+                    DataContractSerializer serializer;
 
-                if (surrogate == null)
-                {
-                    serializer = new DataContractSerializer(typeof(T));
-                }
-                else
-                {
-                    serializer = new DataContractSerializer(typeof(T), null, int.MaxValue, false, false, surrogate);
-                }
-
-                if (namespacePrefixes == null || namespacePrefixes.Count == 0)
-                {
-                    serializer.WriteObject(writer, obj);
-                }
-                else
-                {
-                    serializer.WriteStartObject(writer, obj);
-                    foreach (KeyValuePair<string, string> prefix in namespacePrefixes)
+                    if (surrogate == null)
                     {
-                        writer.WriteAttributeString("xmlns", prefix.Key, null, prefix.Value);
+                        serializer = new DataContractSerializer(typeof(T));
                     }
-                    serializer.WriteObjectContent(writer, obj);
-                    serializer.WriteEndObject(writer);
-                }
+                    else
+                    {
+                        serializer = new DataContractSerializer(typeof(T), null, int.MaxValue, false, false, surrogate);
+                    }
 
-                writer.Flush();
-                writer.Close();
+                    if (namespacePrefixes == null || namespacePrefixes.Count == 0)
+                    {
+                        serializer.WriteObject(writer, obj);
+                    }
+                    else
+                    {
+                        serializer.WriteStartObject(writer, obj);
+                        foreach (KeyValuePair<string, string> prefix in namespacePrefixes)
+                        {
+                            writer.WriteAttributeString("xmlns", prefix.Key, null, prefix.Value);
+                        }
+                        serializer.WriteObjectContent(writer, obj);
+                        serializer.WriteEndObject(writer);
+                    }
+
+                    writer.Flush();
+                }
             }
         }
     }

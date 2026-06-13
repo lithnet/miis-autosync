@@ -9,7 +9,6 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using Lithnet.Common.Presentation;
-using MahApps.Metro.Controls;
 using Microsoft.Win32;
 using System.Linq;
 using System.Threading.Tasks;
@@ -40,8 +39,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             }
         }
 
-        public Visibility StatusBarVisibility { get; set; }
-
         public string RevertOrUndoLabel
         {
             get
@@ -70,8 +67,6 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.Commands.AddItem("About", "_About...", x => this.About());
             this.Commands.AddItem("Import", "R_estore configuration...", new KeyGesture(Key.R, ModifierKeys.Control | ModifierKeys.Shift), x => this.Import(), x => this.CanImport());
 
-
-            this.StatusBarVisibility = Visibility.Collapsed;
 
             this.Cursor = Cursors.Arrow;
             Application.Current.MainWindow.Closing += this.MainWindow_Closing;
@@ -130,7 +125,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         private void About()
         {
-            Windows.About w = new Windows.About();
+            Windows.About w = new Windows.About { Owner = System.Windows.Application.Current.MainWindow };
             w.ShowDialog();
         }
 
@@ -487,7 +482,13 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             expression = (focusedItem as TimeSpanControl)?.GetBindingExpression(TimeSpanControl.ValueProperty);
             expression?.UpdateSource();
 
-            expression = (focusedItem as DateTimePicker)?.GetBindingExpression(DateTimePicker.SelectedDateProperty);
+            expression = (focusedItem as Wpf.Ui.Controls.NumberBox)?.GetBindingExpression(Wpf.Ui.Controls.NumberBox.ValueProperty);
+            expression?.UpdateSource();
+
+            expression = (focusedItem as Wpf.Ui.Controls.CalendarDatePicker)?.GetBindingExpression(Wpf.Ui.Controls.CalendarDatePicker.DateProperty);
+            expression?.UpdateSource();
+
+            expression = (focusedItem as Wpf.Ui.Controls.TimePicker)?.GetBindingExpression(Wpf.Ui.Controls.TimePicker.TimeProperty);
             expression?.UpdateSource();
         }
     }

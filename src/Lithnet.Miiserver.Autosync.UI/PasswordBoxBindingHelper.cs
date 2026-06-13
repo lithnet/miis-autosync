@@ -37,12 +37,16 @@ namespace Lithnet.Miiserver.AutoSync.UI
         {
             PasswordBox passwordBox = dp as PasswordBox;
             if (passwordBox == null)
+            {
                 return;
+            }
 
-            // If we're being called because we set the value of the property we're bound to (from inside 
+            // If we're being called because we set the value of the property we're bound to (from inside
             // HandlePasswordChanged, then do nothing - we already have the latest value).
             if ((bool)passwordBox.GetValue(SettingPasswordProperty))
+            {
                 return;
+            }
 
             // If this is the initial set (see the comment on PasswordProperty), set ourselves up
             if (!(bool)passwordBox.GetValue(PasswordInitializedProperty))

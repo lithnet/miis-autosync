@@ -1,12 +1,12 @@
 ﻿using System.Windows;
-using MahApps.Metro.Controls;
+using Wpf.Ui.Controls;
 
 namespace Lithnet.Miiserver.AutoSync.UI.Windows
 {
     /// <summary>
     /// Interaction logic for AddTriggerWindow.xaml
     /// </summary>
-    public partial class AddTriggerWindow : MetroWindow
+    public partial class AddTriggerWindow : FluentWindow
     {
         public AddTriggerWindow()
         {

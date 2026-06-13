@@ -1,0 +1,140 @@
+# Build and GitHub-release pipeline for Lithnet MIIS AutoSync.
+#
+# Consumes the shared "release-tools" templates for the Advanced Installer build and for
+# Authenticode code signing (signing uses the Lithnet code-signing Key Vault via the
+# ProductionServices Azure service connection / managed identity - no secrets in this file).
+#
+# Signing split:
+#   * codesign.yaml signs the Lithnet binaries we build (Lithnet*.exe, Lithnet*.dll).
+#   * build-advanced-installer-package.yaml (sign: true) signs the MSI and the internal
+#     PowerShell scripts that Advanced Installer packages.
+#
+# This product publishes ONLY to GitHub releases. release-tools has no GitHub-publish
+# template (it targets packages.lithnet.io), so the signed MSI is published with the native
+# GitHubRelease@1 task (the pattern used by acma / resourcemanagement-client).
+#
+# PREREQUISITE: the AutoSync.aip harvested file list must be re-synced to the current
+# dependencies (remove MahApps.Metro, add Wpf.Ui and the other WPF-UI dependencies) and the
+# PowerShell script files in the .aip must be marked DigSign so AI signs them under sign:true.
+
+name: $(build.version)
+
+trigger: none
+
+pool:
+  vmImage: 'windows-latest'
+
+resources:
+  repositories:
+  - repository: release_tools
+    type: git
+    name: release-tools/release-tools
+    ref: master
+
+variables:
+  - name: buildConfiguration
+    value: Release
+  - name: build.version.major
+    value: 2
+  - name: build.version.minor
+    value: 0
+  - name: build.version.revision
+    value: $[counter(format('{0}.{1}', variables['build.version.major'], variables['build.version.minor']), 0)]
+  - name: build.version
+    value: $(build.version.major).$(build.version.minor).$(build.version.revision)
+  - name: product.description
+    value: Lithnet AutoSync
+  # Azure service connection with read access to the Lithnet code-signing Key Vault.
+  - name: codeSigningSubscription
+    value: ProductionServices
+  # release-tools signing "environment" (dev|preview|prod) - selects the signing vault config.
+  - name: signEnvironment
+    value: prod
+  # The folder the .aip harvests its payload from (the Editor build output). The build is
+  # directed here with -o so it matches the .aip SourcePath
+  # (..\Lithnet.Miiserver.Autosync.UI\bin\Release\net48), avoiding the x64 output subfolder.
+  - name: editorBinPath
+    value: '$(Build.SourcesDirectory)/src/Lithnet.Miiserver.Autosync.UI/bin/Release/net48'
+
+stages:
+- stage: build
+  displayName: Build, sign and package
+  jobs:
+  - job: build_job
+    displayName: Build, sign, package
+    steps:
+    - template: templates/checkout.yaml@release_tools
+
+    - task: NuGetAuthenticate@1
+
+    # Build the Editor project into the exact folder the .aip harvests. Its output contains
+    # the editor exe, the AutoSync service exe, and every dependency the installer packages.
+    - task: DotNetCoreCLI@2
+      displayName: Build editor and service
+      inputs:
+        command: build
+        projects: 'src/Lithnet.Miiserver.Autosync.UI/Lithnet.Miiserver.AutoSync.Editor.csproj'
+        arguments: '-c $(buildConfiguration) -p:Version=$(build.version) -o "$(editorBinPath)"'
+
+    - task: PublishSymbols@2
+      displayName: Publish symbols
+      inputs:
+        SearchPattern: '$(editorBinPath)/**/*.pdb'
+        IndexSources: false
+        SymbolServerType: 'TeamServices'
+
+    # Sign the Lithnet binaries before packaging, so the MSI embeds signed payloads.
+    - template: templates/codesign.yaml@release_tools
+      parameters:
+        path:
+        - '$(editorBinPath)/Lithnet*.exe'
+        - '$(editorBinPath)/Lithnet*.dll'
+        environment: $(signEnvironment)
+        azureSubscription: $(codeSigningSubscription)
+        description: $(product.description)
+
+    # Build the MSI from the .aip. sign: true => Advanced Installer signs the MSI and the
+    # packaged PowerShell scripts during the build.
+    - template: templates/build-advanced-installer-package.yaml@release_tools
+      parameters:
+        aipPath: 'src/Lithnet.Miiserver.AutoSync.Setup/AutoSync.aip'
+        azureSubscription: $(codeSigningSubscription)
+        environment: $(signEnvironment)
+        outputFolder: '$(Build.ArtifactStagingDirectory)'
+        sign: true
+
+    - task: PublishPipelineArtifact@1
+      displayName: Publish installer artifact
+      inputs:
+        targetPath: '$(Build.ArtifactStagingDirectory)'
+        artifact: installer
+
+- stage: publish_github
+  displayName: Publish to GitHub
+  dependsOn: build
+  jobs:
+  - deployment: publish_github_job
+    displayName: Publish signed MSI to GitHub releases
+    environment: GitHub
+    pool:
+      vmImage: windows-2022
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: none
+          - download: current
+            artifact: installer
+          - task: GitHubRelease@1
+            inputs:
+              gitHubConnection: github.com_lithnet
+              repositoryName: '$(Build.Repository.Name)'
+              action: create
+              tagSource: userSpecifiedTag
+              tag: v$(build.version)
+              title: v$(build.version)
+              assets: '$(Pipeline.Workspace)/installer/*.msi'
+              isPreRelease: true
+              addChangeLog: true
+              changeLogCompareToRelease: lastFullRelease
+              changeLogType: commitBased

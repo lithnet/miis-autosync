@@ -1,16 +1,13 @@
-﻿<Application x:Class="Lithnet.Miiserver.AutoSync.UI.App"
+<Application x:Class="Lithnet.Miiserver.AutoSync.UI.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:wpfui="http://schemas.lepo.co/wpfui/2022/xaml"
              StartupUri="Windows/MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Controls.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Fonts.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Colors.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Accents/Cobalt.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Accents/BaseLight.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Controls.AnimatedSingleRowTabControl.xaml" />
+                <wpfui:ThemesDictionary Theme="Light" />
+                <wpfui:ControlsDictionary />
                 <ResourceDictionary Source="/ResourceDictionaries/ErrorNotifications.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

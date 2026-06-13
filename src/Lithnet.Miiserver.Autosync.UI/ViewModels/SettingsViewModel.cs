@@ -46,12 +46,11 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.AddIsDirtyProperty(nameof(this.MailSendAllErrorInstances));
             this.AddIsDirtyProperty(nameof(this.MailIgnoreReturnCodes));
             this.AddIsDirtyProperty(nameof(this.RunMode));
-
-            this.DisplayIcon = App.GetImageResource("SettingsFile.ico");
-
         }
 
         public string DisplayName => "Settings";
+
+        public Wpf.Ui.Controls.SymbolRegular IconSymbol => Wpf.Ui.Controls.SymbolRegular.Settings24;
 
         public bool RunHistoryClear
         {

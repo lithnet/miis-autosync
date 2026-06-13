@@ -6,7 +6,7 @@ using Lithnet.Miiserver.Client;
 
 namespace Lithnet.Miiserver.AutoSync
 {
-    public class MAControllerScript
+    public class MAControllerScript : IDisposable
     {
         private MAControllerConfiguration config;
 
@@ -159,6 +159,12 @@ namespace Lithnet.Miiserver.AutoSync
             {
                 logger.Error(ex, $"{this.config.ManagementAgentName}: ExecutionComplete handler threw an exception");
             }
+        }
+
+        public void Dispose()
+        {
+            this.powershell?.Dispose();
+            this.powershell = null;
         }
     }
 }

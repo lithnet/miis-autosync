@@ -193,6 +193,11 @@ namespace Lithnet.Miiserver.AutoSync
 
                         IList<string> objectClasses = r.Attributes[ActiveDirectoryChangeTrigger.ObjectClassAttribute].GetValues(typeof(string)).OfType<string>().ToList();
 
+                        if (this.ObjectClasses == null)
+                        {
+                            continue;
+                        }
+
                         if (!this.ObjectClasses.Intersect(objectClasses, StringComparer.OrdinalIgnoreCase).Any())
                         {
                             continue;
@@ -292,6 +297,8 @@ namespace Lithnet.Miiserver.AutoSync
                 }
 
                 this.stopped = true;
+                this.connection?.Dispose();
+                this.connection = null;
             }
             catch (Exception ex)
             {

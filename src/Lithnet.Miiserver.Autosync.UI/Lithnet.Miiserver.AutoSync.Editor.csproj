@@ -1,361 +1,58 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{0F56EDA9-CF7F-4C49-A67B-3FCD434D4902}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Lithnet.Miiserver.AutoSync.UI</RootNamespace>
-    <AssemblyName>Lithnet.Miiserver.AutoSync.Editor</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <WarningLevel>4</WarningLevel>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
-    <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup>
-    <ApplicationIcon>autosync.ico</ApplicationIcon>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="Costura, Version=1.6.2.0, Culture=neutral, PublicKeyToken=9919ef960d84173d, processorArchitecture=MSIL">
-      <HintPath>..\packages\Costura.Fody.1.6.2\lib\dotnet\Costura.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Lithnet.Common.ObjectModel, Version=1.0.6258.25160, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Lithnet.Common.ObjectModel.1.0.6258.25160\lib\net40\Lithnet.Common.ObjectModel.dll</HintPath>
-    </Reference>
-    <Reference Include="Lithnet.Common.Presentation, Version=1.0.6476.24596, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Lithnet.Common.Presentation.1.0.6476.24596\lib\net40\Lithnet.Common.Presentation.dll</HintPath>
-    </Reference>
-    <Reference Include="Lithnet.Logging, Version=1.0.5774.20685, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Lithnet.Logging.1.0.5774.20685\lib\net40\Lithnet.Logging.dll</HintPath>
-    </Reference>
-    <Reference Include="MahApps.Metro, Version=1.5.0.23, Culture=neutral, PublicKeyToken=f4fb5a3c4d1e5b4f, processorArchitecture=MSIL">
-      <HintPath>..\packages\MahApps.Metro.1.5.0\lib\net45\MahApps.Metro.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Expression.Interactions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Windows.Interactivity.WPF.2.0.20525\lib\net40\Microsoft.Expression.Interactions.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
-      <HintPath>..\packages\NLog.4.4.12\lib\net45\NLog.dll</HintPath>
-    </Reference>
-    <Reference Include="PropertyChanged, Version=1.53.0.0, Culture=neutral, PublicKeyToken=ee3ee20bcf148ddd, processorArchitecture=MSIL">
-      <HintPath>..\packages\PropertyChanged.Fody.1.53.0\lib\netstandard10\PropertyChanged.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Linq" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.ServiceModel" />
-    <Reference Include="System.ServiceProcess" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Windows.Interactivity, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\MahApps.Metro.1.5.0\lib\net45\System.Windows.Interactivity.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="System.Xml" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Xaml">
-      <RequiredTargetFramework>4.0</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="WindowsBase" />
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
-  </ItemGroup>
-  <ItemGroup>
-    <ApplicationDefinition Include="App.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </ApplicationDefinition>
-    <Compile Include="Controls\TreeViewItemControl.xaml.cs">
-      <DependentUpon>TreeViewItemControl.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="OnlineHelpProvider.cs" />
-    <Compile Include="PasswordBoxBindingHelper.cs" />
-    <Compile Include="Controls\TimeSpanControl.xaml.cs">
-      <DependentUpon>TimeSpanControl.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Converters\TypeDescriptionConverter.cs" />
-    <Compile Include="UserSettings.cs" />
-    <Compile Include="ViewModels\ActiveDirectoryChangeTriggerViewModel.cs" />
-    <Compile Include="ViewModels\ExecutionMonitorViewModel.cs" />
-    <Compile Include="ViewModels\ExecutionMonitorsViewModel.cs" />
-    <Compile Include="ViewModels\LoggedMessageViewModel.cs" />
-    <Compile Include="ViewModels\PartitionConfigurationCollectionViewModel.cs" />
-    <Compile Include="ViewModels\PartitionConfigurationViewModel.cs" />
-    <Compile Include="ViewModels\RunProfileResultViewModel.cs" />
-    <Compile Include="ViewModels\SettingsViewModel.cs" />
-    <Compile Include="ViewModels\MAExecutionTriggerViewModel.cs" />
-    <Compile Include="ViewModels\MainWindowViewModel.cs" />
-    <Compile Include="ViewModels\FimServicePendingImportTriggerViewModel.cs" />
-    <Compile Include="ViewModels\ConfigFileViewModel.cs" />
-    <Compile Include="ViewModels\MAExecutionTriggersViewModel.cs" />
-    <Compile Include="ViewModels\ScheduledExecutionTriggerViewModel.cs" />
-    <Compile Include="ViewModels\MAControllerConfigurationCollectionViewModel.cs" />
-    <Compile Include="ViewModels\IntervalExecutionTriggerViewModel.cs" />
-    <Compile Include="ViewModels\PowerShellExecutionTriggerViewModel.cs" />
-    <Page Include="Controls\TreeViewItemControl.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="ResourceDictionaries\ErrorNotifications.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\ExecutionMonitorsView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Views\ConfigFileView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Views\MAControllerConfigurationCollectionView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Views\SettingsView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Windows\About.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Windows\AddTriggerWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Windows\CreateMprWindow.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Windows\MainWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Compile Include="App.xaml.cs">
-      <DependentUpon>App.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="ViewModels\MAControllerConfigurationViewModel.cs" />
-    <Compile Include="Windows\About.xaml.cs">
-      <DependentUpon>About.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Windows\AddTriggerWindow.xaml.cs">
-      <DependentUpon>AddTriggerWindow.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Windows\CreateMprWindow.xaml.cs">
-      <DependentUpon>CreateMprWindow.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Windows\MainWindow.xaml.cs">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Compile>
-    <Page Include="ResourceDictionaries\TriggerViewDictionary.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="ResourceDictionaries\ItemViewDictionary.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="ResourceDictionaries\TreeViewItemDictionary.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Controls\TimeSpanControl.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\ScheduledExecutionTriggerView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Views\IntervalExecutionTriggerView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Views\MAControllerConfigurationView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\ActiveDirectoryChangeTriggerView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Views\FimServicePendingImportTriggerView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Views\PowerShellExecutionTriggerView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Properties\AssemblyInfo.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-    </Compile>
-    <EmbeddedResource Include="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <None Include="packages.config">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-    <AppDesigner Include="Properties\" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config">
-      <SubType>Designer</SubType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="autosync.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="FodyWeavers.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Lithnet.Miiserver.AutoSync\Lithnet.Miiserver.AutoSync.csproj">
-      <Project>{9a7026f9-297e-4d2a-849c-7b0287cd3f9d}</Project>
-      <Name>Lithnet.Miiserver.AutoSync</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Cancel.ico" />
-    <Resource Include="Resources\Pause.ico" />
-    <Resource Include="Resources\Pause.png" />
-    <Resource Include="Resources\Restart.png" />
-    <Resource Include="Resources\Run.ico" />
-    <Resource Include="Resources\Run.png" />
-    <Resource Include="Resources\Stop.png" />
-    <Resource Include="Resources\Hourglass.png" />
-    <Resource Include="Resources\Timer.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Clock1.png" />
-    <Resource Include="Resources\Clock2.png" />
-    <Resource Include="Resources\Diamond.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Stop.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Activity.ico" />
-    <Resource Include="Resources\Measure.ico" />
-    <Resource Include="Resources\Monitor.ico" />
-    <Resource Include="Resources\Refresh_grey.ico" />
-    <Resource Include="Resources\Settings.ico" />
-    <Resource Include="Resources\SettingsFile.ico" />
-    <Resource Include="Resources\SettingsGroup.ico" />
-    <Resource Include="Resources\SyncArrow.ico" />
-    <Resource Include="Resources\SyncArrow_inverse.ico" />
-    <Resource Include="Resources\Watch.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\circle-green.ico" />
-    <Resource Include="Resources\circle-red.ico" />
-    <Resource Include="Resources\circle-yellow.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Lock.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\fLock.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\sLock.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\dot-medium.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\autosync-256.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <SplashScreen Include="Resources\splashscreen.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Blocked.png" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets" Condition="Exists('..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets')" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets'))" />
-    <Error Condition="!Exists('..\packages\Costura.Fody.1.6.2\build\dotnet\Costura.Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Costura.Fody.1.6.2\build\dotnet\Costura.Fody.targets'))" />
-  </Target>
-  <PropertyGroup>
-    <PostBuildEvent>call %25BuildToolsPath%25\sign-and-save-symbols.bat $(TargetPath) $(TargetDir) $(ProjectName)</PostBuildEvent>
-  </PropertyGroup>
-  <Import Project="..\packages\Costura.Fody.1.6.2\build\dotnet\Costura.Fody.targets" Condition="Exists('..\packages\Costura.Fody.1.6.2\build\dotnet\Costura.Fody.targets')" />
-  <Target Name="PostBuildMacros">
-    <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
-      <Output TaskParameter="Assemblies" ItemName="Targets" />
-    </GetAssemblyIdentity>
-    <ItemGroup>
-      <VersionNumber Include="@(Targets->'%(Version)')" />
-    </ItemGroup>
-  </Target>
-  <PropertyGroup>
-    <PostBuildEventDependsOn>
-      $(PostBuildEventDependsOn);
-      PostBuildMacros;
-    </PostBuildEventDependsOn>
-  </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net48</TargetFramework>
+		<UseWPF>true</UseWPF>
+		<RootNamespace>Lithnet.Miiserver.AutoSync.UI</RootNamespace>
+		<AssemblyName>Lithnet.Miiserver.AutoSync.Editor</AssemblyName>
+		<ApplicationIcon>autosync.ico</ApplicationIcon>
+		<Company>Lithnet</Company>
+		<Product>AutoSync</Product>
+		<Authors>Lithnet</Authors>
+		<Description>Lithnet AutoSync</Description>
+		<Copyright>(c) $([System.DateTime]::Now.ToString('yyyy')) Lithnet Pty Ltd</Copyright>
+		<Version>2.0.0</Version>
+		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+		<Platform>x64</Platform>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Reference Include="System" />
+		<Reference Include="System.Core" />
+		<Reference Include="System.Data" />
+		<Reference Include="System.Data.DataSetExtensions" />
+		<Reference Include="System.Runtime.Serialization" />
+		<Reference Include="System.ServiceModel" />
+		<Reference Include="System.ServiceProcess" />
+		<Reference Include="System.Windows.Forms" />
+		<Reference Include="System.Xml" />
+		<Reference Include="System.Xml.Linq" />
+		<Reference Include="Microsoft.CSharp" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Lithnet.Common.ObjectModel" Version="1.0.6476.24589" />
+		<PackageReference Include="Lithnet.Common.Presentation" Version="1.0.6476.24596" />
+		<PackageReference Include="WPF-UI" Version="4.3.0" />
+		<PackageReference Include="NLog" Version="4.7.15" />
+		<PackageReference Include="PropertyChanged.Fody" Version="3.4.1" PrivateAssets="All" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Lithnet.Miiserver.AutoSync\Lithnet.Miiserver.AutoSync.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Remove="autosync.ico" />
+		<Resource Include="autosync.ico" />
+		<None Remove="Resources\autosync-256.png" />
+		<Resource Include="Resources\autosync-256.png" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Remove="Resources\splashscreen.png" />
+		<SplashScreen Include="Resources\splashscreen.png" />
+	</ItemGroup>
+
 </Project>

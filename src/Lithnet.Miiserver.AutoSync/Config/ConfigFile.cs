@@ -101,6 +101,11 @@ namespace Lithnet.Miiserver.AutoSync
 
                 MAControllerConfiguration c = this.ManagementAgents.GetItemOrDefault(id.Value);
 
+                if (c == null)
+                {
+                    continue;
+                }
+
                 foreach (PartitionConfiguration p in c.Partitions.ActiveConfigurations)
                 {
                     p.AutoImportEnabled = node.SelectSingleNode("a:auto-import-scheduling", mgr)?.InnerText == "enabled";
@@ -211,7 +216,6 @@ namespace Lithnet.Miiserver.AutoSync
 
             if (f.DoSchemaUpdate(file))
             {
-//#warning Save not enabled
                 ConfigFile.Save(f, file);
             }
 

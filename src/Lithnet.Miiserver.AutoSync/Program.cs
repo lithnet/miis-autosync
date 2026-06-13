@@ -70,8 +70,23 @@ namespace Lithnet.Miiserver.AutoSync
         /// </summary>
         public static void Main(string[] args)
         {
+            // Register the global unhandled-exception handlers before any other work so
+            // that failures in the installer service-registration verbs are also captured.
+            // Those verbs run as a deferred LocalSystem MSI custom action, a context where
+            // NLog's temp-file logging is unreliable (the write is silently dropped) and
+            // where msiexec does not capture the process output, so an install failure would
+            // otherwise produce no actionable diagnostics. The Windows event log written by
+            // the handler (via Setup.WriteEventLogError) is the reliable channel there.
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
+
+            // Handle installer service-registration verbs ("setup install-service" /
+            // "setup uninstall-service") before any normal startup. Setup.Process returns
+            // true when it has handled a verb, in which case we exit.
+            if (Setup.Process(args))
+            {
+                return;
+            }
 
             Program.SetupLogger();
 
@@ -102,13 +117,40 @@ namespace Lithnet.Miiserver.AutoSync
 
         private static void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
-            Program.logger.Error(e.Exception, "A task exception was not observed");
+            // The logger is not configured until SetupLogger() runs, which is after the
+            // installer verb path; guard against a null logger so the handler is safe to
+            // register early.
+            if (Program.logger != null)
+            {
+                Program.logger.Error(e.Exception, "A task exception was not observed");
+            }
+
             e.SetObserved();
         }
 
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            Program.logger.Fatal((Exception)e.ExceptionObject, "An unhandled exception has occurred in the service");
+            Exception ex = e.ExceptionObject as Exception;
+
+            // Write to the Windows event log first. This handler also covers the installer
+            // service-registration path, which runs before SetupLogger() (so Program.logger
+            // is null) and executes as a LocalSystem MSI custom action where file-based
+            // logging is unreliable. The event log is always reachable in that context, so
+            // it is the catch-all that guarantees an install/service failure is diagnosable.
+            Setup.WriteEventLogError("An unhandled exception has occurred in Lithnet AutoSync." + Environment.NewLine + (ex != null ? ex.ToString() : Convert.ToString(e.ExceptionObject)));
+
+            if (Program.logger != null)
+            {
+                try
+                {
+                    Program.logger.Fatal(ex, "An unhandled exception has occurred in the service");
+                }
+                catch
+                {
+                    // NLog logging is best-effort here; the event log above is the reliable channel.
+                }
+            }
+
             Environment.Exit(1);
         }
 

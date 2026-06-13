@@ -1,273 +1,67 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{9A7026F9-297E-4D2A-849C-7B0287CD3F9D}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Lithnet.Miiserver.AutoSync</RootNamespace>
-    <AssemblyName>Lithnet.Miiserver.AutoSync</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <AllowedReferenceRelatedFileExtensions>.pdb</AllowedReferenceRelatedFileExtensions>
-    <TargetFrameworkProfile />
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;LOCKDEBUG</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject>Lithnet.Miiserver.AutoSync.Program</StartupObject>
-  </PropertyGroup>
-  <PropertyGroup>
-    <ApplicationIcon>autosync.ico</ApplicationIcon>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="AngleSharp, Version=0.9.5.41771, Culture=neutral, PublicKeyToken=e83494dcdc6d31ea, processorArchitecture=MSIL">
-      <HintPath>..\packages\AngleSharp.0.9.5\lib\net45\AngleSharp.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Costura, Version=1.6.2.0, Culture=neutral, PublicKeyToken=9919ef960d84173d, processorArchitecture=MSIL">
-      <HintPath>..\packages\Costura.Fody.1.6.2\lib\dotnet\Costura.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Lithnet.Miiserver.Client, Version=1.0.6954.35963, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Lithnet.Miiserver.Client.1.0.6954.35963\lib\net45\Lithnet.Miiserver.Client.dll</HintPath>
-    </Reference>
-    <Reference Include="Lithnet.ResourceManagement.Client, Version=1.0.6297.14599, Culture=neutral, PublicKeyToken=bd0636700c1e2538, processorArchitecture=MSIL">
-      <HintPath>..\packages\Lithnet.ResourceManagement.Client.1.0.6297.14599\lib\net40\Lithnet.ResourceManagement.Client.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.ResourceManagement, Version=4.1.3451.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Lithnet.ResourceManagement.Client.1.0.6297.14599\lib\net40\Microsoft.ResourceManagement.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.11.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
-      <HintPath>..\packages\NLog.4.4.12\lib\net45\NLog.dll</HintPath>
-    </Reference>
-    <Reference Include="PreMailer.Net, Version=1.5.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\PreMailer.Net.1.5.3\lib\net45\PreMailer.Net.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.DirectoryServices.Protocols" />
-    <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\WindowsPowerShell\3.0\System.Management.Automation.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="System.Net" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.Security" />
-    <Reference Include="System.ServiceModel" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.ServiceProcess" />
-    <Reference Include="System.Xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="ConfigService\ConfigClient.cs" />
-    <Compile Include="ConfigService\ConfigService.cs" />
-    <Compile Include="ConfigService\ConfigServiceAuthorizationManager.cs" />
-    <Compile Include="ConfigService\ConfigServiceConfiguration.cs" />
-    <Compile Include="ConfigService\IConfigService.cs" />
-    <Compile Include="Config\ConfigFile.cs" />
-    <Compile Include="Config\Settings.cs" />
-    <Compile Include="Enums\ErrorState.cs" />
-    <Compile Include="Enums\ExecutionErrorBehaviour.cs" />
-    <Compile Include="Enums\AutoImportScheduling.cs" />
-    <Compile Include="Enums\ControlState.cs" />
-    <Compile Include="Enums\ControllerState.cs" />
-    <Compile Include="Enums\PartitionDetectionMode.cs" />
-    <Compile Include="Enums\RunMode.cs" />
-    <Compile Include="EventArgs\MessageLoggedEventArgs.cs" />
-    <Compile Include="EventArgs\RunProfileExecutionCompleteEventArgs.cs" />
-    <Compile Include="EventArgs\TriggerMessageEventArgs.cs" />
-    <Compile Include="EventArgs\MAStatusChangedEventArgs.cs" />
-    <Compile Include="EventService\EventClient.cs" />
-    <Compile Include="EventService\EventServiceConfiguration.cs" />
-    <Compile Include="EventService\EventServiceAuthorizationManager.cs" />
-    <Compile Include="EventService\EventService.cs" />
-    <Compile Include="EventService\IEventService.cs" />
-    <Compile Include="EventService\IEventCallback.cs" />
-    <Compile Include="Exceptions\NoSuchManagementAgentException.cs" />
-    <Compile Include="Exceptions\SyncEngineStoppedException.cs" />
-    <Compile Include="Exceptions\ThresholdExceededException.cs" />
-    <Compile Include="MAInterface\ActionQueue.cs" />
-    <Compile Include="MAInterface\PartitionConfigurationCollection.cs" />
-    <Compile Include="MAInterface\MAControllerConfigurationCollection.cs" />
-    <Compile Include="MAInterface\MAStatus.cs" />
-    <Compile Include="ExecutionEngine.cs" />
-    <Compile Include="Extensions.cs" />
-    <Compile Include="Mail\MessageBuilder.cs" />
-    <Compile Include="Mail\MessageSender.cs" />
-    <Compile Include="MAInterface\PartitionConfiguration.cs" />
-    <Compile Include="MAInterface\Thresholds.cs" />
-    <Compile Include="PerfCounters.cs" />
-    <Compile Include="PersistentSearch\CallBackEventBridge.cs" />
-    <Compile Include="MAInterface\MAControllerScript.cs" />
-    <Compile Include="PersistentSearch\PersistentSearchChangeType.cs" />
-    <Compile Include="PersistentSearch\PersistentSearchControl.cs" />
-    <Compile Include="PersistentSearch\PersistentSearchOptions.cs" />
-    <Compile Include="EventArgs\ExecutionParameters.cs" />
-    <Compile Include="EventArgs\ExecutionTriggerEventArgs.cs" />
-    <Compile Include="Config\ProtectedString.cs" />
-    <Compile Include="Config\Serializer.cs" />
-    <Compile Include="Config\RegistrySettings.cs" />
-    <Compile Include="Triggers\ActiveDirectoryChangeTrigger.cs" />
-    <Compile Include="Global.cs" />
-    <Compile Include="MAInterface\MAExecutionTriggerDiscovery.cs" />
-    <Compile Include="MAInterface\MAConfigDiscovery.cs" />
-    <Compile Include="MAInterface\MAControllerConfiguration.cs" />
-    <Compile Include="Enums\MARunProfileType.cs" />
-    <Compile Include="Triggers\MAExecutionTrigger.cs" />
-    <Compile Include="Triggers\PowerShellExecutionTrigger.cs" />
-    <Compile Include="Triggers\ScheduledExecutionTrigger.cs" />
-    <Compile Include="Triggers\IntervalExecutionTrigger.cs" />
-    <Compile Include="Triggers\FimServicePendingImportTrigger.cs" />
-    <Compile Include="Triggers\IMAExecutionTrigger.cs" />
-    <Compile Include="MAInterface\MAController.cs" />
-    <Compile Include="AutoSyncService.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="AutoSyncService.Designer.cs">
-      <DependentUpon>AutoSyncService.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="EventArgs\SyncCompleteEventArgs.cs" />
-    <Compile Include="Exceptions\UnexpectedChangeException.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-    <None Include="Examples\Trigger-ACMA-WeeklyFS.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Examples\Controller-ACMA.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Examples\Trigger-ACMA-NightlyFI.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Examples\Trigger-LdapMA-PersistentSearch.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Examples\Trigger-ADMA-DeltaImportEvery5Minutes.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Examples\Trigger-ACMA-CheckPendingImports.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="autosync.ico" />
-    <Resource Include="autosync.png" />
-    <None Include="FodyWeavers.xml" />
-    <EmbeddedResource Include="Resources\ErrorTableFragment.html" />
-    <EmbeddedResource Include="Resources\StepTableFragment.html" />
-    <EmbeddedResource Include="Resources\RunSummaryFragment.html" />
-    <EmbeddedResource Include="Resources\EmailTemplate.html" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\TriggerErrorFragment.html" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\ThresholdExceededFragment.html" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <UsingTask TaskName="CosturaCleanup" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll" TaskFactory="CodeTaskFactory">
-    <ParameterGroup>
-      <Config Output="false" Required="true" ParameterType="Microsoft.Build.Framework.ITaskItem" />
-      <Files Output="false" Required="true" ParameterType="Microsoft.Build.Framework.ITaskItem[]" />
-    </ParameterGroup>
-    <Task Evaluate="true">
-      <Reference xmlns="http://schemas.microsoft.com/developer/msbuild/2003" Include="System.Xml" />
-      <Reference xmlns="http://schemas.microsoft.com/developer/msbuild/2003" Include="System.Xml.Linq" />
-      <Using xmlns="http://schemas.microsoft.com/developer/msbuild/2003" Namespace="System" />
-      <Using xmlns="http://schemas.microsoft.com/developer/msbuild/2003" Namespace="System.IO" />
-      <Using xmlns="http://schemas.microsoft.com/developer/msbuild/2003" Namespace="System.Xml.Linq" />
-      <Code xmlns="http://schemas.microsoft.com/developer/msbuild/2003" Type="Fragment" Language="cs"><![CDATA[
-var config = XElement.Load(Config.ItemSpec).Elements("Costura").FirstOrDefault();
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-if (config == null) return true;
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net48</TargetFramework>
+		<RootNamespace>Lithnet.Miiserver.AutoSync</RootNamespace>
+		<AssemblyName>Lithnet.Miiserver.AutoSync</AssemblyName>
+		<StartupObject>Lithnet.Miiserver.AutoSync.Program</StartupObject>
+		<ApplicationIcon>autosync.ico</ApplicationIcon>
+		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+		<GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+		<Company>Lithnet</Company>
+		<Product>AutoSync</Product>
+		<Authors>Lithnet</Authors>
+		<Description>Lithnet AutoSync</Description>
+		<Copyright>(c) $([System.DateTime]::Now.ToString('yyyy')) Lithnet Pty Ltd</Copyright>
+		<Version>2.0.0</Version>
+		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<LangVersion>latest</LangVersion>
+		<Platform>x64</Platform>
+	</PropertyGroup>
 
-var excludedAssemblies = new List<string>();
-var attribute = config.Attribute("ExcludeAssemblies");
-if (attribute != null)
-    foreach (var item in attribute.Value.Split('|').Select(x => x.Trim()).Where(x => x != string.Empty))
-        excludedAssemblies.Add(item);
-var element = config.Element("ExcludeAssemblies");
-if (element != null)
-    foreach (var item in element.Value.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).Where(x => x != string.Empty))
-        excludedAssemblies.Add(item);
+	<PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+		<DefineConstants>$(DefineConstants);LOCKDEBUG</DefineConstants>
+	</PropertyGroup>
 
-var filesToCleanup = Files.Select(f => f.ItemSpec).Where(f => !excludedAssemblies.Contains(Path.GetFileNameWithoutExtension(f), StringComparer.InvariantCultureIgnoreCase));
+	<ItemGroup>
+		<Reference Include="System" />
+		<Reference Include="System.Core" />
+		<Reference Include="System.Data" />
+		<Reference Include="System.DirectoryServices.Protocols" />
+		<Reference Include="System.Net" />
+		<Reference Include="System.Runtime.Serialization" />
+		<Reference Include="System.Security" />
+		<Reference Include="System.ServiceModel" />
+		<Reference Include="System.ServiceProcess" />
+		<Reference Include="System.Xml" />
+		<Reference Include="Microsoft.CSharp" />
+		<Reference Include="System.Management.Automation">
+			<HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\WindowsPowerShell\3.0\System.Management.Automation.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+	</ItemGroup>
 
-foreach (var item in filesToCleanup)
-  File.Delete(item);
-]]></Code>
-    </Task>
-  </UsingTask>
-  <Target Name="CleanReferenceCopyLocalPaths" AfterTargets="AfterBuild;NonWinFodyTarget">
-    <CosturaCleanup Config="FodyWeavers.xml" Files="@(ReferenceCopyLocalPaths->'$(OutDir)%(DestinationSubDirectory)%(Filename)%(Extension)')" />
-  </Target>
-  <Import Project="..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets" Condition="Exists('..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets')" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets'))" />
-    <Error Condition="!Exists('..\packages\Costura.Fody.1.6.2\build\dotnet\Costura.Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Costura.Fody.1.6.2\build\dotnet\Costura.Fody.targets'))" />
-  </Target>
-  <PropertyGroup>
-    <PostBuildEvent>call %25BuildToolsPath%25\sign-and-save-symbols.bat $(TargetPath) $(TargetDir) $(ProjectName)</PostBuildEvent>
-  </PropertyGroup>
-  <Import Project="..\packages\Costura.Fody.1.6.2\build\dotnet\Costura.Fody.targets" Condition="Exists('..\packages\Costura.Fody.1.6.2\build\dotnet\Costura.Fody.targets')" />
-  <Target Name="PostBuildMacros">
-    <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
-      <Output TaskParameter="Assemblies" ItemName="Targets" />
-    </GetAssemblyIdentity>
-    <ItemGroup>
-      <VersionNumber Include="@(Targets->'%(Version)')" />
-    </ItemGroup>
-  </Target>
-  <PropertyGroup>
-    <PostBuildEventDependsOn>
-      $(PostBuildEventDependsOn);
-      PostBuildMacros;
-    </PostBuildEventDependsOn>
-  </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+	<ItemGroup>
+		<PackageReference Include="Lithnet.ResourceManagement.Client" Version="2.0.15" />
+		<PackageReference Include="NLog" Version="4.7.15" />
+		<PackageReference Include="PreMailer.Net" Version="1.5.3" />
+		<PackageReference Include="Lithnet.Miiserver.Client" Version="2.0.5" />
+		<PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.275">
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Remove="Resources\*.html" />
+		<EmbeddedResource Include="Resources\*.html" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="Examples\*.ps1">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
 </Project>

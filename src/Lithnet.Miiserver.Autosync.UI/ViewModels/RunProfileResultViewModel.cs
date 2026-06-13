@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Media.Imaging;
 using Lithnet.Common.Presentation;
 using PropertyChanged;
 
@@ -33,7 +28,31 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         public string Result => this.e.Result;
 
         [DependsOn(nameof(Result))]
-        public new BitmapImage DisplayIcon
+        public Wpf.Ui.Controls.SymbolRegular DisplaySymbol
+        {
+            get
+            {
+                if (this.Result == null)
+                {
+                    return Wpf.Ui.Controls.SymbolRegular.Empty;
+                }
+
+                if (this.Result == "success")
+                {
+                    return Wpf.Ui.Controls.SymbolRegular.CheckmarkCircle24;
+                }
+
+                if (this.Result.StartsWith("completed-", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return Wpf.Ui.Controls.SymbolRegular.Warning24;
+                }
+
+                return Wpf.Ui.Controls.SymbolRegular.ErrorCircle24;
+            }
+        }
+
+        [DependsOn(nameof(Result))]
+        public System.Windows.Media.Brush DisplayBrush
         {
             get
             {
@@ -44,15 +63,15 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
                 if (this.Result == "success")
                 {
-                    return App.GetImageResource("circle-green.ico");
+                    return StatusBrushes.Success;
                 }
 
                 if (this.Result.StartsWith("completed-", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    return App.GetImageResource("circle-yellow.ico");
+                    return StatusBrushes.Warning;
                 }
 
-                return App.GetImageResource("circle-red.ico");
+                return StatusBrushes.Error;
             }
         }
     }

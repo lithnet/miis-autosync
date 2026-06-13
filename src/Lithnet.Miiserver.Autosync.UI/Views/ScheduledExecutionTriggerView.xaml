@@ -2,7 +2,7 @@
                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
                      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-                     xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
+                     xmlns:wpfui="http://schemas.lepo.co/wpfui/2022/xaml"
                      xmlns:ui="clr-namespace:Lithnet.Miiserver.AutoSync.UI"
                      xmlns:viewModels="clr-namespace:Lithnet.Miiserver.AutoSync.UI.ViewModels"
                      mc:Ignorable="d" >
@@ -46,12 +46,29 @@
                 <Label Grid.Row="3"
                        Grid.Column="0" 
                        Content="Starting from"/>
-                <controls:DateTimePicker 
-                    Grid.Row="3" 
-                    Grid.Column="1"
-                    SelectedDate="{Binding StartDateTime, Mode=TwoWay}" 
-                    Culture="{Binding Culture}"
-                    Margin="10 0 0 5" />
+                <StackPanel Grid.Row="3"
+                            Grid.Column="1"
+                            Orientation="Horizontal"
+                            Margin="10 0 0 5">
+                    <DatePicker SelectedDate="{Binding StartDate, Mode=TwoWay}"
+                                MinWidth="120"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Margin="0 0 8 0"/>
+                    <wpfui:NumberBox Value="{Binding StartHour, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Minimum="0" Maximum="23" MaxDecimalPlaces="0"
+                                     SpinButtonPlacementMode="Inline"
+                                     ClearButtonEnabled="False"
+                                     Width="120"
+                                     VerticalAlignment="Center"/>
+                    <TextBlock Text=":" Margin="4 0 4 0" VerticalAlignment="Center"/>
+                    <wpfui:NumberBox Value="{Binding StartMinute, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Minimum="0" Maximum="59" MaxDecimalPlaces="0"
+                                     SpinButtonPlacementMode="Inline"
+                                     ClearButtonEnabled="False"
+                                     Width="120"
+                                     VerticalAlignment="Center"/>
+                </StackPanel>
 
                 <CheckBox Grid.Row="4" Grid.Column="1" Margin="10 0 0 5" Content="Run profile must be executed exclusively" IsChecked="{Binding Path=Exclusive}"/>
                 <CheckBox Grid.Row="5" Grid.Column="1" Margin="10 0 0 5" Content="Add run profile to the front of the queue" IsChecked="{Binding Path=RunImmediate}"/>

@@ -1,6 +1,9 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:wpfui="http://schemas.lepo.co/wpfui/2022/xaml"
 >
+
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 
     <ControlTemplate x:Key="RedUnderlineError" >
         <StackPanel>
@@ -79,6 +82,31 @@
 
         <Setter Property="Validation.ErrorTemplate"
                 Value="{StaticResource ValidationErrorTemplate}" />
+        <!-- Remove the default horizontal padding so the checkbox box left-aligns with
+             text inputs that share the same column. Vertical padding is preserved. -->
+        <Setter Property="Padding" Value="0,5,0,6" />
+    </Style>
+
+    <!-- WPF-UI does not ship a GridSplitter style, so the default renders as a bright bar
+         in dark mode. Give it a themed background. -->
+    <Style TargetType="{x:Type GridSplitter}">
+        <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+    </Style>
+
+    <!-- Numeric fields don't need the inherited TextBox clear button; it crowds small
+         fields and gets in the way of editing the value. -->
+    <Style TargetType="{x:Type wpfui:NumberBox}" BasedOn="{StaticResource {x:Type wpfui:NumberBox}}">
+        <Setter Property="ClearButtonEnabled" Value="False" />
+    </Style>
+
+    <!-- WPF-UI's default Label foreground (LabelForeground) is a muted colour that reads as
+         too light for form field labels. Use the primary text colour so labels match the
+         other text in both themes. -->
+    <Style TargetType="{x:Type Label}" BasedOn="{StaticResource {x:Type Label}}">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <!-- Zero the default padding so Label captions line up with TextBlock captions used
+             elsewhere for the same purpose. -->
+        <Setter Property="Padding" Value="0" />
     </Style>
 
     <Style TargetType="{x:Type ListBox}"

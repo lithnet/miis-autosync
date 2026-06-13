@@ -14,6 +14,11 @@ namespace Lithnet.Miiserver.AutoSync
 
         public ProtectedString(string value)
         {
+            if (value == null)
+            {
+                return;
+            }
+
             this.Value = value.ToSecureString();
         }
 

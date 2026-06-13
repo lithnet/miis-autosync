@@ -7,14 +7,15 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
     internal class MAControllerConfigurationCollectionViewModel : ListViewModel<MAControllerConfigurationViewModel, MAControllerConfiguration>
     {
         public string DisplayName => "Management agent controllers";
-        
+
+        public Wpf.Ui.Controls.SymbolRegular IconSymbol => Wpf.Ui.Controls.SymbolRegular.Folder24;
+
         private ConfigFileViewModel config;
 
         public MAControllerConfigurationCollectionViewModel(MAControllerConfigurationCollection items, ConfigFileViewModel configFile)
             : base((IList<MAControllerConfiguration>)items, MAControllerConfigurationCollectionViewModel.ViewModelResolver)
         {
             this.config = configFile;
-            this.DisplayIcon = App.GetImageResource("SettingsGroup.ico");
             this.AddIsDirtyProperty(nameof(this.Description));
             this.SortedItems = new CollectionViewSource();
             this.SortedItems.Source = this.ViewModels;

@@ -7,7 +7,6 @@ using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Media.Imaging;
 using Lithnet.Common.Presentation;
 using PropertyChanged;
 using Timer = System.Timers.Timer;
@@ -39,43 +38,73 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public bool IsConnected { get; set; }
 
-        public BitmapImage StatusIcon
+        public Wpf.Ui.Controls.SymbolRegular StatusSymbol
         {
             get
             {
                 if (this.ErrorState != ErrorState.None)
                 {
-                    return App.GetImageResource("Blocked.png");
+                    return Wpf.Ui.Controls.SymbolRegular.ErrorCircle24;
                 }
 
                 switch (this.DisplayState)
                 {
-
                     case "Disabled":
-                        return App.GetImageResource("Stop.png");
+                        return Wpf.Ui.Controls.SymbolRegular.Prohibited24;
 
                     case "Idle":
-                        return App.GetImageResource("dot-medium.png");
+                        return Wpf.Ui.Controls.SymbolRegular.Circle24;
 
                     case "Paused":
-                        return App.GetImageResource("Pause.png");
+                        return Wpf.Ui.Controls.SymbolRegular.Pause24;
 
                     case "Processing":
                     case "Running":
-                        return App.GetImageResource("Run.png");
+                        return Wpf.Ui.Controls.SymbolRegular.Play24;
 
                     case "Pausing":
                     case "Resuming":
                     case "Starting":
                     case "Waiting":
                     case "Stopping":
-                        return App.GetImageResource("Hourglass.png");
+                        return Wpf.Ui.Controls.SymbolRegular.ArrowClockwise24;
 
                     case "Stopped":
-                        return App.GetImageResource("Stop.png");
+                        return Wpf.Ui.Controls.SymbolRegular.Stop24;
 
                     default:
-                        return null;
+                        return Wpf.Ui.Controls.SymbolRegular.Empty;
+                }
+            }
+        }
+
+        public System.Windows.Media.Brush StatusBrush
+        {
+            get
+            {
+                if (this.ErrorState != ErrorState.None)
+                {
+                    return StatusBrushes.Error;
+                }
+
+                switch (this.DisplayState)
+                {
+                    case "Processing":
+                    case "Running":
+                        return StatusBrushes.Running;
+
+                    case "Paused":
+                        return StatusBrushes.Paused;
+
+                    case "Pausing":
+                    case "Resuming":
+                    case "Starting":
+                    case "Waiting":
+                    case "Stopping":
+                        return StatusBrushes.Transitional;
+
+                    default:
+                        return StatusBrushes.Inactive;
                 }
             }
         }
@@ -90,18 +119,20 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public string Message { get; private set; }
 
+        [AlsoNotifyFor(nameof(StatusSymbol), nameof(StatusBrush))]
         public ErrorState ErrorState { get; private set; }
 
         public string ExecutingRunProfile { get; private set; }
 
-        [AlsoNotifyFor(nameof(LastRun), nameof(DisplayIcon))]
+        [AlsoNotifyFor(nameof(LastRun), nameof(DisplaySymbol), nameof(DisplayBrush))]
         public string LastRunProfileResult { get; private set; }
 
-        [AlsoNotifyFor(nameof(LastRun), nameof(DisplayIcon))]
+        [AlsoNotifyFor(nameof(LastRun), nameof(DisplaySymbol), nameof(DisplayBrush))]
         public string LastRunProfileName { get; private set; }
 
         public string LastRun => this.LastRunProfileName == null ? null : $"{this.LastRunProfileName}: {this.LastRunProfileResult}";
 
+        [AlsoNotifyFor(nameof(StatusSymbol), nameof(StatusBrush))]
         public string DisplayState { get; private set; }
 
         public ControlState ControlState { get; private set; }
@@ -112,36 +143,33 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
 
         public ObservableCollection<RunProfileResultViewModel> RunHistory { get; private set; }
 
-        [AlsoNotifyFor(nameof(LockIcon))]
+        [AlsoNotifyFor(nameof(LockSymbol), nameof(HasLock))]
         public bool HasExclusiveLock { get; private set; }
 
 
-        [AlsoNotifyFor(nameof(LockIcon))]
+        [AlsoNotifyFor(nameof(LockSymbol), nameof(HasLock))]
         public bool HasSyncLock { get; private set; }
 
-        [AlsoNotifyFor(nameof(LockIcon))]
+        [AlsoNotifyFor(nameof(LockSymbol), nameof(HasLock))]
         public bool HasForeignLock { get; private set; }
 
-        public BitmapImage LockIcon
+        public bool HasLock => this.HasExclusiveLock || this.HasSyncLock || this.HasForeignLock;
+
+        public Wpf.Ui.Controls.SymbolRegular LockSymbol
         {
             get
             {
-                if (this.HasExclusiveLock)
+                if (this.HasForeignLock)
                 {
-                    return App.GetImageResource("Lock.ico");
+                    return Wpf.Ui.Controls.SymbolRegular.LockMultiple24;
                 }
-                else if (this.HasSyncLock)
+
+                if (this.HasExclusiveLock || this.HasSyncLock)
                 {
-                    return App.GetImageResource("sLock.ico");
+                    return Wpf.Ui.Controls.SymbolRegular.LockClosed24;
                 }
-                else if (this.HasForeignLock)
-                {
-                    return App.GetImageResource("fLock.ico");
-                }
-                else
-                {
-                    return null;
-                }
+
+                return Wpf.Ui.Controls.SymbolRegular.Empty;
             }
         }
 
@@ -181,7 +209,9 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
             this.Disabled = this.ControlState == ControlState.Disabled;
         }
 
-        public new BitmapImage DisplayIcon => this.lastRunResult?.DisplayIcon;
+        public Wpf.Ui.Controls.SymbolRegular DisplaySymbol => this.lastRunResult?.DisplaySymbol ?? Wpf.Ui.Controls.SymbolRegular.Empty;
+
+        public System.Windows.Media.Brush DisplayBrush => this.lastRunResult?.DisplayBrush;
 
         public void RunProfileExecutionComplete(RunProfileExecutionCompleteEventArgs e)
         {
@@ -248,39 +278,40 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             this.MenuItems = new ObservableCollection<MenuItemViewModelBase>();
 
-            this.MenuItems.Add(new MenuItemViewModel()
+            this.MenuItems.Add(new SymbolMenuItemViewModel()
             {
                 Header = "Start",
-                Icon = App.GetImageResource("Run.ico"),
+                Symbol = Wpf.Ui.Controls.SymbolRegular.Play24,
                 Command = new DelegateCommand(t => this.Start(), t => this.CanStart()),
             });
 
-            this.MenuItems.Add(new MenuItemViewModel()
+            this.MenuItems.Add(new SymbolMenuItemViewModel()
             {
                 Header = "Stop",
-                Icon = App.GetImageResource("Stop.ico"),
+                Symbol = Wpf.Ui.Controls.SymbolRegular.Stop24,
                 Command = new DelegateCommand(t => this.Stop(false), t => this.CanStop()),
             });
 
-            this.MenuItems.Add(new MenuItemViewModel()
+            this.MenuItems.Add(new SymbolMenuItemViewModel()
             {
                 Header = "Stop and cancel run",
-                Icon = App.GetImageResource("Stop.ico"),
+                Symbol = Wpf.Ui.Controls.SymbolRegular.Prohibited24,
                 Command = new DelegateCommand(t => this.Stop(true), t => this.CanStop() && this.CanCancelRun()),
             });
 
-            this.MenuItems.Add(new MenuItemViewModel()
+            this.MenuItems.Add(new SymbolMenuItemViewModel()
             {
                 Header = "Cancel run",
-                Icon = App.GetImageResource("Cancel.ico"),
+                Symbol = Wpf.Ui.Controls.SymbolRegular.DismissCircle24,
                 Command = new DelegateCommand(t => this.CancelRun(), t => this.CanCancelRun()),
             });
 
             try
             {
-                MenuItemViewModel addrp = new MenuItemViewModel()
+                SymbolMenuItemViewModel addrp = new SymbolMenuItemViewModel()
                 {
                     Header = "Add run profile to execution queue",
+                    Symbol = Wpf.Ui.Controls.SymbolRegular.AddCircle24,
                     Command = new DelegateCommand(t => { }, t => this.CanAddToExecutionQueue())
                 };
 
@@ -289,7 +320,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
                 {
                     foreach (string rp in c.GetManagementAgentRunProfileNames(this.ManagementAgentID, true).OrderBy(t => t))
                     {
-                        addrp.MenuItems.Add(new MenuItemViewModel()
+                        addrp.MenuItems.Add(new SymbolMenuItemViewModel()
                         {
                             Header = rp,
                             Command = new DelegateCommand(t => this.AddToExecutionQueue(rp)),

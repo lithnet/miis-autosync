@@ -228,6 +228,7 @@ namespace Lithnet.Miiserver.AutoSync
             this.Configuration = config;
             this.InternalStatus.ActiveVersion = config.Version;
             this.ControlState = config.Disabled ? ControlState.Disabled : ControlState.Stopped;
+            this.controllerScript?.Dispose();
             this.controllerScript = new MAControllerScript(config);
             this.AttachTrigger(config.Triggers?.ToArray());
         }
@@ -814,7 +815,7 @@ namespace Lithnet.Miiserver.AutoSync
 
                         try
                         {
-                            this.counters.RunCount.Increment();
+                            this.counters.IncrementRunCount();
                             stopwatch.Start();
                             result = this.ma.ExecuteRunProfile(e.RunProfileName, ts.Token);
 
@@ -1449,7 +1450,7 @@ namespace Lithnet.Miiserver.AutoSync
                 foreach (ExecutionParameters action in this.pendingActions.Consume(this.controllerCancellationTokenSource.Token))
                 {
                     this.controllerCancellationTokenSource.Token.ThrowIfCancellationRequested();
-                    this.counters.CurrentQueueLength.Decrement();
+                    this.counters.DecrementQueueLength();
 
                     this.UpdateExecutionStatus(ControllerState.Waiting, "Staging run", action.RunProfileName, this.GetQueueItemNames(false));
 
@@ -2134,7 +2135,7 @@ namespace Lithnet.Miiserver.AutoSync
                     this.LogInfo($"{p.RunProfileName} requested by {source} was ignored because the run profile was already queued");
                 }
 
-                this.counters.CurrentQueueLength.Increment();
+                this.counters.IncrementQueueLength();
 
                 this.UpdateExecutionQueueState();
 

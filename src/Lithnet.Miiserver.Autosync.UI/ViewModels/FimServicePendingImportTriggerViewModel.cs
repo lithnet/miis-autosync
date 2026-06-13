@@ -65,7 +65,7 @@ namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
         {
             try
             {
-                CreateMprWindow window = new CreateMprWindow();
+                CreateMprWindow window = new CreateMprWindow { Owner = System.Windows.Application.Current.MainWindow };
                 this.MimServiceHost = this.MimServiceHost ?? this.HostName;
                 this.MprName = this.MprName ?? "_AutoSync service account can read msidmCompletedTime attribute on Request objects";
                 this.SetName = this.SetName ?? "_AutoSync service account";

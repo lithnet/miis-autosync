@@ -11,7 +11,6 @@
 [Dd]ebugPublic/
 [Rr]elease/
 x64/
-build/
 bld/
 [Bb]in/
 [Oo]bj/
@@ -192,3 +191,8 @@ ModelManifest.xml
 
 # Visual Studio 2015 cache/options directory
 .vs/
+/src/Lithnet.Miiserver.Autosync.UI/FodyWeavers.xsd
+
+# Advanced Installer build output and cache
+*-SetupFiles/
+*-cache/

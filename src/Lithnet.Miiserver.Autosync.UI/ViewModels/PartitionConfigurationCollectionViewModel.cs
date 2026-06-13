@@ -1,7 +1,4 @@
-﻿using System.Linq;
-
-using System.Collections.Generic;
-using System.Windows.Data;
+﻿using System.Collections.Generic;
 using Lithnet.Common.Presentation;
 
 namespace Lithnet.Miiserver.AutoSync.UI.ViewModels
