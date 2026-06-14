@@ -98,6 +98,7 @@ stages:
     - template: templates/build-advanced-installer-package.yaml@release_tools
       parameters:
         aipPath: '$(Build.SourcesDirectory)/src/Lithnet.Miiserver.AutoSync.Setup/AutoSync.aip'
+        aipPackageName: 'Lithnet.AutoSync.msi'
         azureSubscription: $(codeSigningSubscription)
         environment: $(signEnvironment)
         outputFolder: '$(Build.ArtifactStagingDirectory)'
