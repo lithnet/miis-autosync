@@ -17,7 +17,7 @@
     <ROW Property="ProductCode" Value="1033:{FDA08453-468E-42DE-803C-CE49F3530F70} " Type="16"/>
     <ROW Property="ProductLanguage" Value="1033"/>
     <ROW Property="ProductName" Value="Lithnet AutoSync"/>
-    <ROW Property="ProductVersion" Value="1.2.0.0" Options="32"/>
+    <ROW Property="ProductVersion" Value="2.0.0.0" Options="4"/>
     <ROW Property="SERVICE_NAME" Value="autosync"/>
     <ROW Property="SecureCustomProperties" Value="OLDPRODUCTS;AI_NEWERPRODUCTFOUND;SERVICE_USERNAME;SERVICE_PASSWORD;GROUP_FIM_SYNC_ADMINS_NAME;SKIPGROUPCHECK;ADD_TO_FIM_SYNC_ADMINS"/>
     <ROW Property="UpgradeCode" Value="{028A57DF-28CE-47B0-9B3E-18B523A643D4}"/>
