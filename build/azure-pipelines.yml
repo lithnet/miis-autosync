@@ -17,7 +17,7 @@
 # dependencies (remove MahApps.Metro, add Wpf.Ui and the other WPF-UI dependencies) and the
 # PowerShell script files in the .aip must be marked DigSign so AI signs them under sign:true.
 
-name: $(build.version)
+name: $(build.version.major).$(build.version.minor).$(build.version.revision)
 
 trigger: none
 
