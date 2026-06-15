@@ -47,7 +47,7 @@
 		<PackageReference Include="Lithnet.ResourceManagement.Client" Version="2.0.15" />
 		<PackageReference Include="NLog" Version="4.7.15" />
 		<PackageReference Include="PreMailer.Net" Version="1.5.3" />
-		<PackageReference Include="Lithnet.Miiserver.Client" Version="2.0.5" />
+		<PackageReference Include="Lithnet.Miiserver.Client" Version="2.0.6" />
 		<PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.275">
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
