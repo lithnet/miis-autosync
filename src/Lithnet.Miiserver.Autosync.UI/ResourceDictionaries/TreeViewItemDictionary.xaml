@@ -5,7 +5,29 @@
                     xmlns:wpfui="http://schemas.lepo.co/wpfui/2022/xaml"
                     xmlns:local="clr-namespace:Lithnet.Common.Presentation;assembly=Lithnet.Common.Presentation">
 
-    <ContextMenu x:Key="ItemContextMenu" controls:ContextMenuBuilder.ItemsSource="{Binding Path=MenuItems}" />
+    <ContextMenu x:Key="ItemContextMenu" ItemsSource="{Binding Path=MenuItems}"
+                 UsesItemContainerTemplate="True"
+                 ItemContainerTemplateSelector="{StaticResource MenuItemTemplateSelector}"
+                 controls:ContextMenuThemeBehavior.IsThemeAware="True">
+        <ContextMenu.Resources>
+            <ItemContainerTemplate DataType="{x:Type viewModels:SymbolMenuItemViewModel}">
+                <MenuItem Header="{Binding Path=Header}" Command="{Binding Path=Command}"
+                          ItemsSource="{Binding Path=MenuItems}" UsesItemContainerTemplate="True"
+                          ItemContainerTemplateSelector="{StaticResource MenuItemTemplateSelector}">
+                    <MenuItem.Icon>
+                        <wpfui:SymbolIcon Symbol="{Binding Path=Symbol}" FontSize="16" />
+                    </MenuItem.Icon>
+                </MenuItem>
+            </ItemContainerTemplate>
+            <ItemContainerTemplate DataType="{x:Type local:SeparatorViewModel}">
+                <Separator>
+                    <Separator.Style>
+                        <Style TargetType="{x:Type Separator}" BasedOn="{StaticResource ResourceKey={x:Static MenuItem.SeparatorStyleKey}}" />
+                    </Separator.Style>
+                </Separator>
+            </ItemContainerTemplate>
+        </ContextMenu.Resources>
+    </ContextMenu>
 
     <HierarchicalDataTemplate DataType="{x:Type viewModels:ConfigFileViewModel}"
                               ItemsSource="{Binding Path=ChildNodes}">

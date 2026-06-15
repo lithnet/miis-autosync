@@ -26,33 +26,29 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <ToolBarTray Grid.Row="0">
-                <ToolBar Height="36">
-                    <Button Command="{Binding Path=Commands.StartEngine}">
-                        <StackPanel Orientation="Horizontal">
-                            <wpfui:SymbolIcon Symbol="Play24" FontSize="16" VerticalAlignment="Center"/>
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center">Start all</TextBlock>
-                        </StackPanel>
-                    </Button>
-                    <Button Command="{Binding Path=Commands.StopEngine}">
-                        <StackPanel Orientation="Horizontal">
-                            <wpfui:SymbolIcon Symbol="Stop24" FontSize="16" VerticalAlignment="Center"/>
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center">Stop all</TextBlock>
-                        </StackPanel>
-                    </Button>
-
-                    <Button Command="{Binding Path=Commands.StopEngineAndCancelRuns}">
-                        <StackPanel Orientation="Horizontal">
-                            <wpfui:SymbolIcon Symbol="DismissCircle24" FontSize="16" VerticalAlignment="Center"/>
-                            <TextBlock Margin="6,0,0,0" VerticalAlignment="Center">Stop all and cancel runs</TextBlock>
-                        </StackPanel>
-                    </Button>
-
-                    <StackPanel Orientation="Horizontal" Margin="10 0 0 0">
-                        <CheckBox IsChecked="{Binding Path=AutoStartEnabled}" Content="Automatically start controllers when service starts" VerticalContentAlignment="Center"/>
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0 0 0 8">
+                <Button Command="{Binding Path=Commands.StartEngine}" Margin="0 0 6 0">
+                    <StackPanel Orientation="Horizontal">
+                        <wpfui:SymbolIcon Symbol="Play24" FontSize="16" VerticalAlignment="Center"/>
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center">Start all</TextBlock>
                     </StackPanel>
-                </ToolBar>
-            </ToolBarTray>
+                </Button>
+                <Button Command="{Binding Path=Commands.StopEngine}" Margin="0 0 6 0">
+                    <StackPanel Orientation="Horizontal">
+                        <wpfui:SymbolIcon Symbol="Stop24" FontSize="16" VerticalAlignment="Center"/>
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center">Stop all</TextBlock>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding Path=Commands.StopEngineAndCancelRuns}">
+                    <StackPanel Orientation="Horizontal">
+                        <wpfui:SymbolIcon Symbol="DismissCircle24" FontSize="16" VerticalAlignment="Center"/>
+                        <TextBlock Margin="6,0,0,0" VerticalAlignment="Center">Stop all and cancel runs</TextBlock>
+                    </StackPanel>
+                </Button>
+
+                <CheckBox IsChecked="{Binding Path=AutoStartEnabled}" Content="Automatically start controllers when service starts"
+                          VerticalAlignment="Center" Margin="16 0 0 0"/>
+            </StackPanel>
 
 
 
@@ -79,7 +75,29 @@
                         </StackPanel>
                     </DataTemplate>
 
-                    <ContextMenu x:Key="ItemContextMenu" controls:ContextMenuBuilder.ItemsSource="{Binding Path=MenuItems}" />
+                    <ContextMenu x:Key="ItemContextMenu" ItemsSource="{Binding Path=MenuItems}"
+                                 UsesItemContainerTemplate="True"
+                                 ItemContainerTemplateSelector="{StaticResource MenuItemTemplateSelector}"
+                                 controls:ContextMenuThemeBehavior.IsThemeAware="True">
+                        <ContextMenu.Resources>
+                            <ItemContainerTemplate DataType="{x:Type viewModels:SymbolMenuItemViewModel}">
+                                <MenuItem Header="{Binding Path=Header}" Command="{Binding Path=Command}"
+                                          ItemsSource="{Binding Path=MenuItems}" UsesItemContainerTemplate="True"
+                                          ItemContainerTemplateSelector="{StaticResource MenuItemTemplateSelector}">
+                                    <MenuItem.Icon>
+                                        <wpfui:SymbolIcon Symbol="{Binding Path=Symbol}" FontSize="16" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                            </ItemContainerTemplate>
+                            <ItemContainerTemplate DataType="{x:Type local:SeparatorViewModel}">
+                                <Separator>
+                                    <Separator.Style>
+                                        <Style TargetType="{x:Type Separator}" BasedOn="{StaticResource ResourceKey={x:Static MenuItem.SeparatorStyleKey}}" />
+                                    </Separator.Style>
+                                </Separator>
+                            </ItemContainerTemplate>
+                        </ContextMenu.Resources>
+                    </ContextMenu>
 
                 </wpfui:ListView.Resources>
                 <wpfui:ListView.ItemContainerStyle>
