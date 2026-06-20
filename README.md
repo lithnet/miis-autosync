@@ -29,7 +29,7 @@ Download the [current release](https://github.com/lithnet/miis-autosync/releases
 * Want to fix an issue yourself or add functionality? Clone the project and submit a pull request
 
 ## Enterprise support
-Lithnet offer enterprise support plans for our open-source products. Deploy our tools with confidence that you have the backing of the dedicated Lithnet support team if you run into any issues, have questions, or need advice. Simply fill out the [request form](https://lithnet.io/products/mim), let us know the number of users you are managing with your MIM implementation, and we'll put together a quote.
+Lithnet offer enterprise support plans for our open-source products. Deploy our tools with confidence that you have the backing of the dedicated Lithnet support team if you run into any issues, have questions, or need advice. Simply fill out the [request form](https://lithnet.io/products/mim?utm_source=github&utm_medium=readme&utm_campaign=mim-ups), let us know the number of users you are managing with your MIM implementation, and we'll put together a quote.
 
 ### Keep up to date
 *   [Visit our blog](http://blog.lithnet.io)
